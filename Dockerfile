@@ -12,7 +12,8 @@ FROM alpine:latest
 
 
 RUN apk update --no-cache && \
-    adduser -S -D -H -h / jtso
+    adduser -S -D -H -h / jtso && \
+    addgroup jtso
 
 USER 0
 RUN mkdir -p /etc/jtso
