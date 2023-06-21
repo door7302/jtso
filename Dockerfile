@@ -11,11 +11,9 @@ RUN go build -o ./jtso -ldflags "${LDFLAGS}" ./main.go
 FROM alpine:latest
 
 
-RUN apk update --no-cache && \
-    adduser -S -D -H -h / jtso && \
-    addgroup jtso
+RUN apk update --no-cache && 
 
-USER jtso
+USER 0
 COPY --from=builder /build/jtso /
 
 EXPOSE 8081
