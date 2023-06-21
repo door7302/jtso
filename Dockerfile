@@ -23,6 +23,7 @@ RUN chown -R jtso:jtso /etc/jtso
 RUN chown -R jtso:jtso /var/log
 
 USER jtso
+RUN touch /var/log/jtso.log
 COPY --from=builder /build/jtso /
 
 EXPOSE 8081

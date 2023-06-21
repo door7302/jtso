@@ -17,7 +17,7 @@ var (
 
 func StartLogger() {
 
-	f, err := os.OpenFile("/var/log/jtso_enricher.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("/var/log/jtso.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
 	if err != nil {
 		fmt.Printf("Error opening file: %v", err)
