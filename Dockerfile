@@ -17,4 +17,4 @@ COPY --from=builder /build/jtso /
 
 EXPOSE 8081
 
-ENTRYPOINT ["./jtso"]
+ENTRYPOINT ["./jtso --config config.yml"]
