@@ -17,7 +17,9 @@ RUN apk update --no-cache && \
 
 USER 0
 RUN mkdir -p /etc/jtso
+
 RUN chown -R jtso:jtso /etc/jtso
+RUN chown -R jtso:jtso /var/log
 
 USER jtso
 COPY --from=builder /build/jtso /
