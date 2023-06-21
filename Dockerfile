@@ -11,7 +11,7 @@ RUN go build -o ./jtso -ldflags "${LDFLAGS}" ./main.go
 FROM alpine:latest
 
 
-RUN apk update --no-cache && 
+RUN apk update --no-cache 
 
 USER 0
 COPY --from=builder /build/jtso /
