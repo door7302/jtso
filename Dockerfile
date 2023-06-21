@@ -10,14 +10,14 @@ RUN go build -o ./jtso -ldflags "${LDFLAGS}" ./main.go
 
 FROM alpine:latest
 
-USER 0
-RUN mkdir -p /etc/jtso
-
 RUN apk update --no-cache && \
-    adduser -S -D -H -h / flow
-USER flow
+    adduser -S -D -H -h / jtso
+
+USER jtso
 COPY --from=builder /build/jtso /
+
+RUN mkdir -p /etc/jtso
 
 EXPOSE 8081
 
-ENTRYPOINT ["ls -lia"]
+ENTRYPOINT ["./jtso --config /etc/jtso/config.yml"]
