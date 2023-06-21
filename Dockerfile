@@ -12,9 +12,10 @@ FROM alpine:latest
 
 RUN apk update --no-cache && \
     adduser -S -D -H -h / flow
-USER flow 
+USER jtso 
 COPY --from=builder /build/jtso /
+RUN mkdir -p /etc/jtso
 
 EXPOSE 8081
 
-ENTRYPOINT ["./jtso --config config.yml"]
+ENTRYPOINT ["./jtso --config /etc/jtso/config.yml"]
