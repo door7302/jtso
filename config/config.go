@@ -14,22 +14,13 @@ type PortalConfig struct {
 	Port int
 }
 
-type InstanceConfig struct {
-	Name string
-	Rtrs []string
-}
-
 type NetconfConfig struct {
 	Port       int
 	RpcTimeout int
-	User       string
-	Pwd        string
 }
 
 type GnmiConfig struct {
 	Port       int
-	User       string
-	Pwd        string
 	UseTls     bool
 	SkipVerify bool
 }
@@ -41,11 +32,11 @@ type EnricherConfig struct {
 	Port     int
 }
 type ConfigContainer struct {
-	Instances []*InstanceConfig
-	Enricher  *EnricherConfig
-	Portal    *PortalConfig
-	Netconf   *NetconfConfig
-	Gnmi      *GnmiConfig
+	//Instances []*InstanceConfig
+	Enricher *EnricherConfig
+	Portal   *PortalConfig
+	Netconf  *NetconfConfig
+	Gnmi     *GnmiConfig
 }
 
 func NewConfigContainer(f string) *ConfigContainer {
@@ -60,13 +51,10 @@ func NewConfigContainer(f string) *ConfigContainer {
 
 	logger.Log.Info("Read configuration file")
 
-	// Set default value forthe 3 instances
-	viper.SetDefault("modules.telegraf_instances.instance1.name", "")
-	viper.SetDefault("modules.telegraf_instances.instance2.name", "")
-	viper.SetDefault("modules.telegraf_instances.instance3.name", "")
-	viper.SetDefault("modules.telegraf_instances.instance1.routers", []string{})
-	viper.SetDefault("modules.telegraf_instances.instance2.routers", []string{})
-	viper.SetDefault("modules.telegraf_instances.instance3.routers", []string{})
+	// Set default value for the 3 instances
+	//viper.SetDefault("modules.telegraf_instances.mx.routers", []string{})
+	//viper.SetDefault("modules.telegraf_instances.ptx.routers", []string{})
+	//viper.SetDefault("modules.telegraf_instances.acx.routers", []string{})
 
 	// Ser default value for portal
 	viper.SetDefault("modules.portal.port", 8080)
@@ -80,32 +68,29 @@ func NewConfigContainer(f string) *ConfigContainer {
 	// Set default value for Netconf
 	viper.SetDefault("protocols.netconf.port", 830)
 	viper.SetDefault("protocols.netconf.rpc_timeout", 60)
-	viper.SetDefault("protocols.netconf.username", "lab")
-	viper.SetDefault("protocols.netconf.password", "lab123")
 
 	// Set default value for gnmi
 	viper.SetDefault("protocols.gnmi.port", 9339)
-	viper.SetDefault("protocols.gnmi.username", "lab")
-	viper.SetDefault("protocols.gnmi.password", "lab123")
 	viper.SetDefault("protocols.gnmi.use_tls", false)
 	viper.SetDefault("protocols.gnmi.skip_verify", true)
 
-	inst := make([]*InstanceConfig, 3)
+	/* inst := make([]*InstanceConfig, 3)
 	inst[0] = &InstanceConfig{
-		Name: viper.GetString("modules.telegraf_instances.instance1.name"),
-		Rtrs: viper.GetStringSlice("modules.telegraf_instances.instance1.routers"),
+		Name: "mx",
+		Rtrs: viper.GetStringSlice("modules.telegraf_instances.mx.routers"),
 	}
 	inst[1] = &InstanceConfig{
-		Name: viper.GetString("modules.telegraf_instances.instance2.name"),
-		Rtrs: viper.GetStringSlice("modules.telegraf_instances.instance2.routers"),
+		Name: "ptx",
+		Rtrs: viper.GetStringSlice("modules.telegraf_instances.ptx.routers"),
 	}
 	inst[2] = &InstanceConfig{
-		Name: viper.GetString("modules.telegraf_instances.instance3.name"),
-		Rtrs: viper.GetStringSlice("modules.telegraf_instances.instance3.routers"),
+		Name: "acx",
+		Rtrs: viper.GetStringSlice("modules.telegraf_instances.acx.routers"),
 	}
+	*/
 
 	return &ConfigContainer{
-		Instances: inst,
+		//Instances: inst,
 		Portal: &PortalConfig{
 			Port: viper.GetInt("modules.portal.port"),
 		},
@@ -118,13 +103,9 @@ func NewConfigContainer(f string) *ConfigContainer {
 		Netconf: &NetconfConfig{
 			Port:       viper.GetInt("protocols.netconf.port"),
 			RpcTimeout: viper.GetInt("protocols.netconf.rpc_timeout"),
-			User:       viper.GetString("protocols.netconf.username"),
-			Pwd:        viper.GetString("protocols.netconf.password"),
 		},
 		Gnmi: &GnmiConfig{
 			Port:       viper.GetInt("protocols.gnmi.port"),
-			User:       viper.GetString("protocols.gnmi.username"),
-			Pwd:        viper.GetString("protocols.gnmi.password"),
 			UseTls:     viper.GetBool("protocols.gnmi.use_tls"),
 			SkipVerify: viper.GetBool("protocols.gnmi.skip_verify"),
 		},

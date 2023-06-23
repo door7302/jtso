@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/labstack/echo/v4 v4.10.2
+	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/openshift-telco/go-netconf-client v1.0.5
 	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/viper v1.15.0

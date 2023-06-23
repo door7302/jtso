@@ -2,25 +2,11 @@ protocols:
   netconf:
     port: 8080
     rpc_timeout: 10 
-    username: "regress"
-    password: "MaRtInI"
   gnmi:
     port: 9339
-    username: "regress"
-    password: "MaRtInI"
     use_tls: false
     skip_verify: true 
 modules:
-  telegraf_instances:
-    instance1: 
-      name: "mx"
-      routers:
-        - "rtme-mx-25.englab.juniper.net"
-        - "rtme-mx-22.englab.juniper.net"
-    instance2: 
-      name: "ptx"
-    instance3: 
-      name: "acx"
   enricher:
     folder: "./"
     interval: 720

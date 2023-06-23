@@ -7,7 +7,7 @@ import (
 
 type RawData struct {
 	RtrName    string
-	Profile    string
+	Family     string
 	IfInfo     *Ifdesc
 	HwInfo     *Hw
 	LacpInfo   *Lacp

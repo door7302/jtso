@@ -56,55 +56,55 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 	m.Mu.Lock()
 
 	// init Map
-	_, ok := m.Meta[rd.Profile]
+	_, ok := m.Meta[rd.Family]
 	if !ok {
-		m.Meta[rd.Profile] = make(map[string]map[string]map[string]string)
+		m.Meta[rd.Family] = make(map[string]map[string]map[string]string)
 	}
-	_, ok = m.Meta[rd.Profile][rd.RtrName]
+	_, ok = m.Meta[rd.Family][rd.RtrName]
 	if !ok {
-		m.Meta[rd.Profile][rd.RtrName] = map[string]map[string]string{}
+		m.Meta[rd.Family][rd.RtrName] = map[string]map[string]string{}
 	}
 
 	// ADD physical / logical interface description
 	for _, phy := range rd.IfInfo.Physicals {
 		phy_name := strings.Trim(phy.Name, "\n")
 		phy_desc := strings.Trim(phy.Desc, "\n")
-		_, ok := m.Meta[rd.Profile][rd.RtrName][phy_name]
+		_, ok := m.Meta[rd.Family][rd.RtrName][phy_name]
 		if !ok {
-			m.Meta[rd.Profile][rd.RtrName][phy_name] = make(map[string]string)
+			m.Meta[rd.Family][rd.RtrName][phy_name] = make(map[string]string)
 		}
-		m.Meta[rd.Profile][rd.RtrName][phy_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(phy_desc, " ", "", -1), "-", "_", -1))
+		m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(phy_desc, " ", "", -1), "-", "_", -1))
 		// Add also the parent LAG name if physical interface is a child link.
 		val, ok := rd.LacpDigest.LacpMap[phy_name]
 		if ok {
-			m.Meta[rd.Profile][rd.RtrName][phy_name]["LAG"] = val
+			m.Meta[rd.Family][rd.RtrName][phy_name]["LAG"] = val
 		}
 	}
 	for _, lgl := range rd.IfInfo.Logicals {
 		lgl_name := strings.Trim(lgl.Name, "\n")
 		lgl_desc := strings.Trim(lgl.Desc, "\n")
-		_, ok := m.Meta[rd.Profile][rd.RtrName][lgl_name]
+		_, ok := m.Meta[rd.Family][rd.RtrName][lgl_name]
 		if !ok {
-			m.Meta[rd.Profile][rd.RtrName][lgl_name] = make(map[string]string)
+			m.Meta[rd.Family][rd.RtrName][lgl_name] = make(map[string]string)
 		}
-		m.Meta[rd.Profile][rd.RtrName][lgl_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(lgl_desc, " ", "", -1), "-", "_", -1))
+		m.Meta[rd.Family][rd.RtrName][lgl_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(lgl_desc, " ", "", -1), "-", "_", -1))
 	}
 	// add HW info
 	// Chassis model
-	_, ok = m.Meta[rd.Profile][rd.RtrName]["LEVEL1TAG"]
+	_, ok = m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"]
 	if !ok {
-		m.Meta[rd.Profile][rd.RtrName]["LEVEL1TAG"] = make(map[string]string)
+		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"] = make(map[string]string)
 	}
-	m.Meta[rd.Profile][rd.RtrName]["LEVEL1TAG"]["MODEL"] = strings.Trim(rd.HwInfo.Chassis.Desc, "\n")
+	m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"]["MODEL"] = strings.Trim(rd.HwInfo.Chassis.Desc, "\n")
 	// For each LC add a TAG
 	for _, mod := range rd.HwInfo.Chassis.Modules {
 		slot := strings.Trim(strings.Replace(mod.Name, " ", "", 1), "\n")
 		if strings.Contains(slot, "FPC") {
-			_, ok := m.Meta[rd.Profile][rd.RtrName][slot]
+			_, ok := m.Meta[rd.Family][rd.RtrName][slot]
 			if !ok {
-				m.Meta[rd.Profile][rd.RtrName][slot] = make(map[string]string)
+				m.Meta[rd.Family][rd.RtrName][slot] = make(map[string]string)
 			}
-			m.Meta[rd.Profile][rd.RtrName][slot]["HW_TYPE"] = strings.Trim(mod.Desc, "\n")
+			m.Meta[rd.Family][rd.RtrName][slot]["HW_TYPE"] = strings.Trim(mod.Desc, "\n")
 		}
 	}
 	m.Mu.Unlock()
@@ -127,7 +127,7 @@ func (m *Metadata) MarshallMeta(f string) error {
 			m.Mu.Unlock()
 			return err
 		}
-		logger.Log.Infof("Metadata file for %s profile has been generated", k)
+		logger.Log.Infof("Metadata file for %s Family has been generated", k)
 	}
 	m.Mu.Unlock()
 	return nil

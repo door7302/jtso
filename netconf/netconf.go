@@ -18,7 +18,7 @@ type RouterTask struct {
 	Name    string
 	User    string
 	Pwd     string
-	Profile string
+	Family  string
 	Port    int
 	Timeout int
 	Wg      *sync.WaitGroup
@@ -45,7 +45,7 @@ func (r *RouterTask) Work() error {
 	rawData.LacpInfo = new(xml.Lacp)
 	rawData.LacpDigest = new(xml.LacpDigest)
 	rawData.RtrName = r.Name
-	rawData.Profile = r.Profile
+	rawData.Family = r.Family
 
 	var hasIf, hasHw, hasLacp bool
 
