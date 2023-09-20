@@ -1,11 +1,16 @@
 package portal
 
 type (
-	Entry struct {
+	TabRtr struct {
 		Hostname  string
 		Shortname string
 		Family    string
 		Login     string
+	}
+
+	TabAsso struct {
+		Shortname string
+		Profiles  string
 	}
 
 	NewRouter struct {
@@ -20,9 +25,13 @@ type (
 		Hostname string `json:"hostname"`
 	}
 
-	UpdateProfle struct {
-		Hostname string `json:"hostname"`
-		Profile  string `json:"profile"`
+	AddProfile struct {
+		ShortName string   `json:"shortname"`
+		Profiles  []string `json:"profiles"`
+	}
+
+	DelProfile struct {
+		ShortName string `json:"shortname"`
 	}
 
 	Reply struct {

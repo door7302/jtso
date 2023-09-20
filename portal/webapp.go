@@ -46,12 +46,13 @@ func New(p int) *WebApp {
 	wapp.GET("/", routeIndex)
 	wapp.GET("/index.html", routeIndex)
 	wapp.GET("/routers.html", routeRouters)
-	wapp.GET("/profils.html", routeProfils)
+	wapp.GET("/profiles.html", routeProfiles)
 
 	// configure POST routers
 	wapp.POST("/addrouter", routeAddRouter)
 	wapp.POST("/delrouter", routeDelRouter)
-	wapp.POST("/updateprofile", routeUpdateProfile)
+	wapp.POST("/addprofile", routeAddProfile)
+	wapp.POST("/delprofile", routeDelProfile)
 
 	// return app
 	return &WebApp{
@@ -71,17 +72,31 @@ func routeIndex(c echo.Context) error {
 }
 
 func routeRouters(c echo.Context) error {
-	var lr []Entry
-	lr = make([]Entry, 0)
+	var lr []TabRtr
+	lr = make([]TabRtr, 0)
 
 	for _, r := range sqlite.RtrList {
-		lr = append(lr, Entry{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Login: r.Login})
+		lr = append(lr, TabRtr{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Login: r.Login})
 	}
 	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr})
 }
 
-func routeProfils(c echo.Context) error {
-	return nil
+func routeProfiles(c echo.Context) error {
+	var lr []TabAsso
+	lr = make([]TabAsso, 0)
+
+	for _, r := range sqlite.AssoList {
+		var asso string
+		for i, a := range r.Assos {
+			if i != len(r.Assos)-1 {
+				asso += a + " ; "
+			} else {
+				asso += a
+			}
+		}
+		lr = append(lr, TabAsso{Shortname: r.Shortname, Profiles: asso})
+	}
+	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Assos": lr})
 }
 
 func routeAddRouter(c echo.Context) error {
@@ -122,21 +137,40 @@ func routeDelRouter(c echo.Context) error {
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router deleted"})
 }
 
-func routeUpdateProfile(c echo.Context) error {
+func routeAddProfile(c echo.Context) error {
 	var err error
 
-	r := new(UpdateProfle)
+	r := new(AddProfile)
 
 	err = c.Bind(r)
 	if err != nil {
-		logger.Log.Errorf("Unable to parse Post request for updating router profile: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update the router profile"})
+		logger.Log.Errorf("Unable to parse Post request for adding router profile: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to adding the router profile"})
 	}
-	err = sqlite.UpdateRouterProfile(r.Hostname, r.Profile)
+	err = sqlite.AddAsso(r.ShortName, r.Profiles)
 	if err != nil {
-		logger.Log.Errorf("Unable to update router profile in DB: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update router profile in DB"})
+		logger.Log.Errorf("Unable to adding router profile in DB: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to adding router profile in DB"})
 	}
-	logger.Log.Infof("Profile of router %s has been successfully updated", r.Hostname)
+	logger.Log.Infof("Profile of router %s has been successfully updated", r.ShortName)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile updated"})
+}
+
+func routeDelProfile(c echo.Context) error {
+	var err error
+
+	r := new(DelProfile)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for deleting router profile: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete the router profile"})
+	}
+	err = sqlite.DelAsso(r.ShortName)
+	if err != nil {
+		logger.Log.Errorf("Unable to delete router profile in DB: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete router profile in DB"})
+	}
+	logger.Log.Infof("Profile of router %s has been successfully deleted", r.ShortName)
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile deleted"})
 }

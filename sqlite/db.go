@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"jtso/logger"
+	"strings"
 	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -15,12 +16,19 @@ type RtrEntry struct {
 	Login     string
 	Pwd       string
 	Family    string
-	Profile   string
+	Profile   int
+}
+
+type AssoEntry struct {
+	Id        int
+	Shortname string
+	Assos     []string
 }
 
 var db *sql.DB
 var dbMu *sync.Mutex
 var RtrList []*RtrEntry
+var AssoList []*AssoEntry
 
 func Init(f string) error {
 	var err error
@@ -32,7 +40,7 @@ func Init(f string) error {
 		logger.Log.Infof("Error while opening DB %s - err: %v", f, err)
 		return err
 	}
-	const create string = `
+	const createRtr string = `
 		CREATE TABLE IF NOT EXISTS routers (
 		id INTEGER NOT NULL PRIMARY KEY,
 		name TEST,
@@ -40,11 +48,22 @@ func Init(f string) error {
 		login TEXT,
 		pwd TEXT,
 		family TEXT,
-		profile TEXT
+		profile INTEGER
 		);`
 
-	if _, err := db.Exec(create); err != nil {
-		logger.Log.Infof("Error while init DB %s - err: %v", f, err)
+	const createAsso string = `
+		CREATE TABLE IF NOT EXISTS associations (
+		id INTEGER NOT NULL PRIMARY KEY,
+		name TEST,
+		listing TEST,
+		);`
+
+	if _, err := db.Exec(createRtr); err != nil {
+		logger.Log.Infof("Error while init DB %s Table routers - err: %v", f, err)
+		return err
+	}
+	if _, err := db.Exec(createAsso); err != nil {
+		logger.Log.Infof("Error while init DB %s Table associations - err: %v", f, err)
 		return err
 	}
 	err = LoadAll()
@@ -63,6 +82,41 @@ func AddRouter(n string, s string, l string, p string, f string) error {
 	return err
 }
 
+func DelAsso(n string) error {
+	dbMu.Lock()
+	if _, err := db.Exec("DELETE FROM association WHERE name=?;", n); err != nil {
+		logger.Log.Errorf("Error while removing association for router %s - err: %v", n, err)
+		dbMu.Unlock()
+		return err
+	}
+	dbMu.Unlock()
+	err := updateRouterProfile(n, 0)
+	err = LoadAll()
+	return err
+}
+
+func AddAsso(n string, a []string) error {
+	dbMu.Lock()
+	// convert list to string
+	var asso string
+	for i, v := range a {
+		if i != len(a)-1 {
+			asso += v + "|"
+		} else {
+			asso += v
+		}
+	}
+	if _, err := db.Exec("INSERT INTO associations VALUES(NULL,?,?);", n, asso); err != nil {
+		logger.Log.Errorf("Error while adding router %s - err: %v", n, err)
+		dbMu.Unlock()
+		return err
+	}
+	dbMu.Unlock()
+	err := updateRouterProfile(n, 1)
+	err = LoadAll()
+	return err
+}
+
 func DelRouter(n string) error {
 	dbMu.Lock()
 	if _, err := db.Exec("DELETE FROM routers WHERE name=?;", n); err != nil {
@@ -75,9 +129,9 @@ func DelRouter(n string) error {
 	return err
 }
 
-func UpdateRouterProfile(n string, p string) error {
+func updateRouterProfile(n string, p int) error {
 	dbMu.Lock()
-	if _, err := db.Exec("UPDATE routers SET profile=? WHERE name=?;", p, n); err != nil {
+	if _, err := db.Exec("UPDATE routers SET profile=? WHERE short=?;", p, n); err != nil {
 		logger.Log.Errorf("Error while updating router profile %s - err: %v", n, err)
 		dbMu.Unlock()
 		return err
@@ -101,12 +155,34 @@ func LoadAll() error {
 		i := RtrEntry{}
 		err = rows.Scan(&i.Id, &i.Hostname, &i.Shortname, &i.Login, &i.Pwd, &i.Family, &i.Profile)
 		if err != nil {
-			logger.Log.Errorf("Error while parsing rows - err: %v", err)
+			logger.Log.Errorf("Error while parsing routers rows - err: %v", err)
 			dbMu.Unlock()
 			return err
 		}
 		RtrList = append(RtrList, &i)
 	}
+
+	AssoList = make([]*AssoEntry, 0)
+	rows, err = db.Query("SELECT * FROM associations;")
+	if err != nil {
+		logger.Log.Errorf("Error while selecting associations - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		i := AssoEntry{}
+		var tmpList string
+		err = rows.Scan(&i.Id, &i.Shortname, &tmpList)
+		if err != nil {
+			logger.Log.Errorf("Error while parsing associations rows - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+		i.Assos = strings.Split(tmpList, "|")
+		AssoList = append(AssoList, &i)
+	}
+
 	dbMu.Unlock()
 	return nil
 

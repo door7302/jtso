@@ -122,7 +122,7 @@ func collect(cfg *config.ConfigContainer, ctx context.Context, m *output.Metadat
 	// count the number of router with a profile assigned
 	numTasks := 0
 	for _, rtr := range sqlite.RtrList {
-		if rtr.Profile != "" {
+		if rtr.Profile == 1 {
 			numTasks++
 		}
 	}
@@ -136,7 +136,7 @@ func collect(cfg *config.ConfigContainer, ctx context.Context, m *output.Metadat
 		// iter on all the intances
 		for _, rtr := range sqlite.RtrList {
 			// only for routers with a Profile assigned
-			if rtr.Profile != "" {
+			if rtr.Profile == 1 {
 				p.AddWork(&netconf.RouterTask{
 					Name:    rtr.Hostname,
 					User:    rtr.Login,

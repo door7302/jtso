@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>jts-portal</title>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
+    <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
+    <link rel="stylesheet" href="css/alertify.min.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-light navbar-expand-md py-3">
+        <div class="container"><img src="img/logo.png" width="129" height="67"><a class="navbar-brand d-flex align-items-center" href="#"><span>Juniper Telemetry Stack</span></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navcol-2">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="routers.html" >Routers</a></li>
+                    <li class="nav-item"><a class="nav-link" active href="profiles.html" style="border-color: rgba(0, 0, 0, 0.65);">Profiles</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Current profile associations</h4>
+            <div class="table-responsive">
+                <table id="ListRtrs" class="table">
+                    <thead>
+                        <tr>
+                            <th>Router</th>
+                            <th>Profile(s)</th>
+                            <th width="5%">Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Assos}}
+                        <tr>
+                            <td>{{.Shortname}}</td>
+                            <td>{{.Profiles}}</td>
+                            <td  class="d-xxl-flex justify-content-xxl-center"><button onclick="removeAsso('{{.Shortname}}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Profile associations Management</h4>
+            <form style="margin-top: 10px;"><label class="form-label">Select a Router:</label><select id="Router-asso" class="form-select">
+                    <option value="mx" selected="">router1</option>
+                    <option value="ptx">router1</option>
+                    <option value="acx">router3</option>
+                </select></form><input onclick="addAsso();" class="btn btn-primary" type="submit" value="Add" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+        </div>
+    </div>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="js/alertify.min.js"></script>
+    <script src="js/profiles.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+</body>
+
+</html>
