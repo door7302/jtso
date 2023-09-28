@@ -45,8 +45,8 @@ func Collect(cfg *config.ConfigContainer) {
 			if rtr.Profile == 1 {
 				p.AddWork(&netconf.RouterTask{
 					Name:    strings.TrimSpace(rtr.Hostname),
-					User:    rtr.Login,
-					Pwd:     rtr.Pwd,
+					User:    sqlite.ActiveCred.NetconfUser,
+					Pwd:     sqlite.ActiveCred.NetconfPwd,
 					Family:  rtr.Family,
 					Port:    cfg.Netconf.Port,
 					Timeout: cfg.Netconf.RpcTimeout,

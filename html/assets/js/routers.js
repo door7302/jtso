@@ -1,17 +1,10 @@
 function addRouter() {
     var h = document.getElementById("Hostname").value;
     var s = document.getElementById("Shortname").value;
-    var u = document.getElementById("Username").value;
-    var p = document.getElementById("Password").value;
     var f = document.getElementById("Family").value;
-    var t = document.getElementById("Usetls").checked;
-    
-    var tls = "no"
-    if (t) {
-      tls = "yes"
-    }
 
-    var dataToSend = {"hostname": h, "shortname": s, "login": u, "password": p, "family": f, "usetls":tls};
+
+    var dataToSend = {"hostname": h, "shortname": s, "family": f};
     // send data
     $(function() {
         $.ajax({
@@ -22,13 +15,10 @@ function addRouter() {
             dataType: "json",
             success : function(json) {
               if (json.status == "OK") {
-                var row = $("<tr><td>"+s+"</td><td>"+h+"</td><td>"+f+"</td><td>"+u+"</td><td>"+tls+'</td><td class="d-xxl-flex justify-content-xxl-center"><button onclick="remove("'+h+'", this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td></tr>')
+                var row = $("<tr><td>"+s+"</td><td>"+h+"</td><td>"+f+'</td><td class="d-xxl-flex justify-content-xxl-center"><button onclick="remove("'+s+'", this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td></tr>')
                 $("#ListRtrs").append(row);
                 document.getElementById("Hostname").value="";
                 document.getElementById("Shortname").value="";
-                document.getElementById("Username").value="";
-                document.getElementById("Password").value="";
-                document.getElementById("Usetls").checked = false;
                 alertify.success("Router "+s+" has been successfulfy added");
               }
               else {
@@ -43,7 +33,8 @@ function addRouter() {
 }
 
 function remove(name, td) { 
-  var dataToSend = {"hostname": name};
+  var dataToSend = {"shortname": name};
+
   // send data
   $(function() {
     $.ajax({

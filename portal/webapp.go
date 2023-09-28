@@ -56,12 +56,14 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/index.html", routeIndex)
 	wapp.GET("/routers.html", routeRouters)
 	wapp.GET("/profiles.html", routeProfiles)
+	wapp.GET("/cred.html", routeCred)
 
 	// configure POST routers
 	wapp.POST("/addrouter", routeAddRouter)
 	wapp.POST("/delrouter", routeDelRouter)
 	wapp.POST("/addprofile", routeAddProfile)
 	wapp.POST("/delprofile", routeDelProfile)
+	wapp.POST("/updatecred", routeUptCred)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -85,25 +87,30 @@ func routeIndex(c echo.Context) error {
 
 func routeRouters(c echo.Context) error {
 	// Get all routers from db
-	var lr []TabRtr
-	lr = make([]TabRtr, 0)
+	var lr []NewRouter
+	lr = make([]NewRouter, 0)
 
 	for _, r := range sqlite.RtrList {
-		lr = append(lr, TabRtr{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Login: r.Login, Usetls: r.Usetls})
+		lr = append(lr, NewRouter{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family})
 	}
 	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr})
 }
 
+func routeCred(c echo.Context) error {
+
+	return c.Render(http.StatusOK, "cred.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser, "Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd, "Usetls": sqlite.ActiveCred.UseTls})
+}
+
 func routeProfiles(c echo.Context) error {
 	// Get all routers from db
-	var lr []TabRtr
+	var lr []NewRouter
 	var lp []string
 
-	lr = make([]TabRtr, 0)
+	lr = make([]NewRouter, 0)
 	lp = make([]string, 0)
 
 	for _, r := range sqlite.RtrList {
-		lr = append(lr, TabRtr{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Login: r.Login, Usetls: r.Usetls})
+		lr = append(lr, NewRouter{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family})
 	}
 	association.ProfileLock.Lock()
 	for k, _ := range association.ActiveProfiles {
@@ -139,7 +146,7 @@ func routeAddRouter(c echo.Context) error {
 		logger.Log.Errorf("Unable to parse Post request for creating a new router: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to create the router"})
 	}
-	err = sqlite.AddRouter(r.Hostname, r.ShortName, r.Login, r.Password, r.Family, r.Usetls)
+	err = sqlite.AddRouter(r.Hostname, r.Shortname, r.Family)
 	if err != nil {
 		logger.Log.Errorf("Unable to add a new router in DB: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to add router in DB"})
@@ -158,12 +165,21 @@ func routeDelRouter(c echo.Context) error {
 		logger.Log.Errorf("Unable to parse Post request for deleting a router: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete the router"})
 	}
-	err = sqlite.DelRouter(r.Hostname)
+	f, err := sqlite.CheckAsso(r.Shortname)
+	if err != nil {
+		logger.Log.Errorf("Unable to check router profile in DB: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to check router profile in DB"})
+	}
+	if f {
+		logger.Log.Errorf("Router can't be removed - there is an association: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "You can't remove a router associated to a Profile"})
+	}
+	err = sqlite.DelRouter(r.Shortname)
 	if err != nil {
 		logger.Log.Errorf("Unable to delete router from DB: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete router from DB"})
 	}
-	logger.Log.Infof("Router %s has been successfully removed", r.Hostname)
+	logger.Log.Infof("Router %s has been successfully removed", r.Shortname)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router deleted"})
 }
 
@@ -178,21 +194,21 @@ func routeAddProfile(c echo.Context) error {
 		logger.Log.Errorf("Unable to parse Post request for adding router profile: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to adding the router profile"})
 	}
-	f, err = sqlite.CheckAsso(r.ShortName)
+	f, err = sqlite.CheckAsso(r.Shortname)
 	if err != nil {
 		logger.Log.Errorf("Unable to adding router profile in DB: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to adding router profile in DB"})
 	}
 	if f {
-		logger.Log.Errorf("Router %s is already assigned to a profile", r.ShortName)
+		logger.Log.Errorf("Router %s is already assigned to a profile", r.Shortname)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Router is already assigned to a profile."})
 	}
-	err = sqlite.AddAsso(r.ShortName, r.Profiles)
+	err = sqlite.AddAsso(r.Shortname, r.Profiles)
 	if err != nil {
 		logger.Log.Errorf("Unable to adding router profile in DB: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to adding router profile in DB"})
 	}
-	logger.Log.Infof("Profile of router %s has been successfully updated", r.ShortName)
+	logger.Log.Infof("Profile of router %s has been successfully updated", r.Shortname)
 	logger.Log.Info("Force the metadata update")
 
 	go worker.Collect(collectCfg.cfg)
@@ -210,12 +226,32 @@ func routeDelProfile(c echo.Context) error {
 		logger.Log.Errorf("Unable to parse Post request for deleting router profile: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete the router profile"})
 	}
-	err = sqlite.DelAsso(r.ShortName)
+	err = sqlite.DelAsso(r.Shortname)
 	if err != nil {
 		logger.Log.Errorf("Unable to delete router profile in DB: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete router profile in DB"})
 	}
-	logger.Log.Infof("Profile of router %s has been successfully deleted", r.ShortName)
+	logger.Log.Infof("Profile of router %s has been successfully deleted", r.Shortname)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile deleted"})
+
+}
+
+func routeUptCred(c echo.Context) error {
+	var err error
+
+	r := new(Credential)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for updating credentials: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update credentials"})
+	}
+	err = sqlite.UpdateCredentials(r.NetconfUser, r.NetconfPwd, r.GnmiUser, r.GnmiPwd, r.UseTls)
+	if err != nil {
+		logger.Log.Errorf("Unable to update credentials: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update credentials"})
+	}
+	logger.Log.Infof("Credentials have been successfully deleted")
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Credentials have been updated"})
 
 }

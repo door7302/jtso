@@ -1,14 +1,6 @@
 package portal
 
 type (
-	TabRtr struct {
-		Hostname  string
-		Shortname string
-		Family    string
-		Login     string
-		Usetls    string
-	}
-
 	TabAsso struct {
 		Shortname string
 		Profiles  string
@@ -16,28 +8,33 @@ type (
 
 	NewRouter struct {
 		Hostname  string `json:"hostname"`
-		ShortName string `json:"shortname"`
-		Login     string `json:"login"`
-		Password  string `json:"password"`
+		Shortname string `json:"shortname"`
 		Family    string `json:"family"`
-		Usetls    string `json:"usetls"`
 	}
 
 	DeletedRouter struct {
-		Hostname string `json:"hostname"`
+		Shortname string `json:"shortname"`
 	}
 
 	AddProfile struct {
-		ShortName string   `json:"shortname"`
+		Shortname string   `json:"shortname"`
 		Profiles  []string `json:"profiles"`
 	}
 
 	DelProfile struct {
-		ShortName string `json:"shortname"`
+		Shortname string `json:"shortname"`
 	}
 
 	Reply struct {
 		Status string `json:"status"`
 		Msg    string `json:"msg"`
+	}
+
+	Credential struct {
+		NetconfUser string `json:"netuser"`
+		NetconfPwd  string `json:"netpwd"`
+		GnmiUser    string `json:"gnmiuser"`
+		GnmiPwd     string `json:"gnmipwd"`
+		UseTls      string `json:"usetls"`
 	}
 )

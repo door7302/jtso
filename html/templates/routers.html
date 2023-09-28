@@ -18,6 +18,7 @@
             <div class="collapse navbar-collapse" id="navcol-2">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="cred.html">Credentials</a></li>
                     <li class="nav-item"><a class="nav-link active" href="routers.html" style="border-color: rgba(0, 0, 0, 0.65);">Routers</a></li>
                     <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
                 </ul>
@@ -29,20 +30,12 @@
         <div class="card-body">
             <h4 class="card-title">Router Management</h4>
             <form><label class="form-label">Short Name:</label><input id="Shortname" class="form-control" type="text"></form>
-            <form><label class="form-label" style="margin-top: 10px;">Hostname or IP:</label><input id="Hostname" class="form-control" type="text"></form>
-            <form><label class="form-label" style="margin-top: 10px;">Username:</label><input id="Username" class="form-control" type="text"></form>
-            <form style="margin-top: 10px;"><label class="form-label">Password:</label><input id="Password" class="form-control" type="password"></form>
-            <div style="margin-top: 10px;" class="form-check">
-                <input class="form-check-input" type="checkbox" value="" id="Usetls">
-                <label class="form-check-label" for="flexCheckDefault">
-                  Use TLS for gNMI?
-                </label>
-              </div>
+            <form><label class="form-label" style="margin-top: 10px;">Hostname or IP:</label><input id="Hostname" class="form-control" type="text"></form>   
             <form style="margin-top: 10px;"><label class="form-label">Family:</label>&nbsp;<select id="Family" class="selectpicker">
                     <option value="mx" selected="">MX Series</option>
                     <option value="ptx">PTX Series</option>
                     <option value="acx">ACX Series</option>
-                </select></form><input onclick="addRouter();" class="btn btn-primary" type="submit" value="Add" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+                </select></form><input onclick="addRouter();" class="btn btn-primary" type="submit" value="Add Router" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
         </div>
     </div>
     <div class="card">
@@ -55,8 +48,6 @@
                             <th>Name</th>
                             <th>Hostname</th>
                             <th>Family</th>
-                            <th>Login (Netconf/gNMI)</th>
-                            <th>Use TLS</th>
                             <th width="5%">Delete</th>
                         </tr>
                     </thead>
@@ -66,9 +57,7 @@
                             <td>{{.Shortname}}</td>
                             <td>{{.Hostname}}</td>
                             <td>{{.Family}}</td>
-                            <td>{{.Login}}</td>
-                            <td>{{.Usetls}}</td>
-                            <td  class="d-xxl-flex justify-content-xxl-center"><button onclick="remove('{{.Hostname}}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td>
+                            <td  class="d-xxl-flex justify-content-xxl-center"><button onclick="remove('{{.Shortname}}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td>
                         </tr>
                         {{end}}
                     </tbody>
