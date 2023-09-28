@@ -9,6 +9,7 @@ require (
 	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/viper v1.15.0
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
+	github.com/walle/targz v0.0.0-20140417120357-57fe4206da5a
 	golang.org/x/crypto v0.9.0
 )
 

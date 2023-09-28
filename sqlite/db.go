@@ -16,6 +16,7 @@ type RtrEntry struct {
 	Login     string
 	Pwd       string
 	Family    string
+	Usetls    string
 	Profile   int
 }
 
@@ -48,14 +49,15 @@ func Init(f string) error {
 		login TEXT,
 		pwd TEXT,
 		family TEXT,
+		tls TEST,
 		profile INTEGER
 		);`
 
 	const createAsso string = `
 		CREATE TABLE IF NOT EXISTS associations (
 		id INTEGER NOT NULL PRIMARY KEY,
-		name TEST,
-		listing TEST,
+		name TEXT,
+		listing TEXT
 		);`
 
 	if _, err := db.Exec(createRtr); err != nil {
@@ -70,9 +72,23 @@ func Init(f string) error {
 	return err
 }
 
-func AddRouter(n string, s string, l string, p string, f string) error {
+func CheckAsso(n string) (bool, error) {
 	dbMu.Lock()
-	if _, err := db.Exec("INSERT INTO routers VALUES(NULL,?,?,?,?,?,?);", n, s, l, p, f, ""); err != nil {
+	rows, err := db.Query("SELECT * FROM associations where name=?;", n)
+	if err != nil {
+		logger.Log.Errorf("Error while selecting associations - err: %v", err)
+		dbMu.Unlock()
+		return false, err
+	}
+	defer rows.Close()
+	flag := rows.Next()
+	dbMu.Unlock()
+	return flag, nil
+}
+
+func AddRouter(n string, s string, l string, p string, f string, t string) error {
+	dbMu.Lock()
+	if _, err := db.Exec("INSERT INTO routers VALUES(NULL,?,?,?,?,?,?,?);", n, s, l, p, f, t, 0); err != nil {
 		logger.Log.Errorf("Error while adding router %s - err: %v", n, err)
 		dbMu.Unlock()
 		return err
@@ -84,7 +100,7 @@ func AddRouter(n string, s string, l string, p string, f string) error {
 
 func DelAsso(n string) error {
 	dbMu.Lock()
-	if _, err := db.Exec("DELETE FROM association WHERE name=?;", n); err != nil {
+	if _, err := db.Exec("DELETE FROM associations WHERE name=?;", n); err != nil {
 		logger.Log.Errorf("Error while removing association for router %s - err: %v", n, err)
 		dbMu.Unlock()
 		return err
@@ -96,6 +112,7 @@ func DelAsso(n string) error {
 }
 
 func AddAsso(n string, a []string) error {
+
 	dbMu.Lock()
 	// convert list to string
 	var asso string
@@ -153,7 +170,7 @@ func LoadAll() error {
 	defer rows.Close()
 	for rows.Next() {
 		i := RtrEntry{}
-		err = rows.Scan(&i.Id, &i.Hostname, &i.Shortname, &i.Login, &i.Pwd, &i.Family, &i.Profile)
+		err = rows.Scan(&i.Id, &i.Hostname, &i.Shortname, &i.Login, &i.Pwd, &i.Family, &i.Usetls, &i.Profile)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing routers rows - err: %v", err)
 			dbMu.Unlock()

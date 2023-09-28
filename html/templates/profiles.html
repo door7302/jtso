@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
     <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/bootstrap-multiselect.css">
 </head>
 
 <body>
@@ -17,12 +18,38 @@
             <div class="collapse navbar-collapse" id="navcol-2">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="routers.html" >Routers</a></li>
-                    <li class="nav-item"><a class="nav-link" active href="profiles.html" style="border-color: rgba(0, 0, 0, 0.65);">Profiles</a></li>
+                    <li class="nav-item"><a class="nav-link" href="routers.html" >Routers</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="profiles.html" style="border-color: rgba(0, 0, 0, 0.65);">Profiles</a></li>
                 </ul>
             </div>
         </div>
     </nav>
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Profile associations Management</h4>
+            <form style="margin-top: 10px;">
+                <label class="form-label">Select a Router:</label>&nbsp;
+                <select id="router" class="selectpicker" data-width="auto">
+                {{range .Rtrs}}
+                    <option value="{{.Shortname}}">{{.Shortname}}</option>
+                {{end}}
+                </select>
+                </br>
+                </br>
+                <label class="form-label">Select profile(s):</label>&nbsp;
+                <select id="profiles" class="selectpicker" data-width="auto" data-actions-box="true" multiple>
+                    {{range .Profiles}}
+                    <option value="{{.}}">{{.}} profile</option>
+                    {{end}}
+                </select>
+            </form>
+                
+                <input onclick="addAsso();" class="btn btn-primary" type="submit" value="Add" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+        </div>
+
+
+        
+    </div>
     <div class="card">
         <div class="card-body">
             <h4 class="card-title">Current profile associations</h4>
@@ -48,20 +75,12 @@
             </div>
         </div>
     </div>
-    <div class="card">
-        <div class="card-body">
-            <h4 class="card-title">Profile associations Management</h4>
-            <form style="margin-top: 10px;"><label class="form-label">Select a Router:</label><select id="Router-asso" class="form-select">
-                    <option value="mx" selected="">router1</option>
-                    <option value="ptx">router1</option>
-                    <option value="acx">router3</option>
-                </select></form><input onclick="addAsso();" class="btn btn-primary" type="submit" value="Add" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
-        </div>
-    </div>
+    
+    <script src="js/jquery-3.4.1.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="js/alertify.min.js"></script>
+    <script src="js/bootstrap-multiselect.js"></script>
     <script src="js/profiles.js"></script>
-    <script src="js/jquery-3.4.1.min.js"></script>
 </body>
 
 </html>

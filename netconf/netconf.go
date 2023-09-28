@@ -50,12 +50,14 @@ func (r *RouterTask) Work() error {
 	var hasIf, hasHw, hasLacp bool
 
 	session, err := netconf.DialSSH(fmt.Sprintf("%s:%d", r.Name, r.Port), sshConfig)
-	defer session.Close()
 
 	if err != nil {
 		logger.Log.Errorf("[%s] Unable to open Netconf session: %v", r.Name, err)
 		return err
 	}
+
+	defer session.Close()
+
 	capabilities := netconf.DefaultCapabilities
 	err = session.SendHello(&message.Hello{Capabilities: capabilities})
 	if err != nil {

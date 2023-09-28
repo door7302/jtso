@@ -6,6 +6,7 @@ type (
 		Shortname string
 		Family    string
 		Login     string
+		Usetls    string
 	}
 
 	TabAsso struct {
@@ -19,6 +20,7 @@ type (
 		Login     string `json:"login"`
 		Password  string `json:"password"`
 		Family    string `json:"family"`
+		Usetls    string `json:"usetls"`
 	}
 
 	DeletedRouter struct {

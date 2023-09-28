@@ -2,9 +2,9 @@ package output
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"jtso/logger"
 	"jtso/xml"
+	"os"
 	"strings"
 	"sync"
 )
@@ -17,14 +17,15 @@ type Metadata struct {
 	Meta map[string]map[string]map[string]map[string]string
 }
 
+var MyMeta *Metadata
+
 // Initialize the new meta map
-func New() *Metadata {
+func init() {
 	// init the metadata
-	meta := &Metadata{
+	MyMeta = &Metadata{
 		Mu:   new(sync.Mutex),
 		Meta: make(map[string]map[string]map[string]map[string]string),
 	}
-	return meta
 }
 
 // Clear the Meta map
@@ -122,7 +123,7 @@ func (m *Metadata) MarshallMeta(f string) error {
 			m.Mu.Unlock()
 			return err
 		}
-		err = ioutil.WriteFile(f+"metadata_"+k+".json", json, 0666)
+		err = os.WriteFile(f+"metadata_"+k+".json", json, 0666)
 		if err != nil {
 			m.Mu.Unlock()
 			return err

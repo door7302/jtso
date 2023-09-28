@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
     <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/bootstrap-multiselect.css">
 </head>
 
 <body>
@@ -23,6 +24,27 @@
             </div>
         </div>
     </nav>
+    
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Router Management</h4>
+            <form><label class="form-label">Short Name:</label><input id="Shortname" class="form-control" type="text"></form>
+            <form><label class="form-label" style="margin-top: 10px;">Hostname or IP:</label><input id="Hostname" class="form-control" type="text"></form>
+            <form><label class="form-label" style="margin-top: 10px;">Username:</label><input id="Username" class="form-control" type="text"></form>
+            <form style="margin-top: 10px;"><label class="form-label">Password:</label><input id="Password" class="form-control" type="password"></form>
+            <div style="margin-top: 10px;" class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="Usetls">
+                <label class="form-check-label" for="flexCheckDefault">
+                  Use TLS for gNMI?
+                </label>
+              </div>
+            <form style="margin-top: 10px;"><label class="form-label">Family:</label>&nbsp;<select id="Family" class="selectpicker">
+                    <option value="mx" selected="">MX Series</option>
+                    <option value="ptx">PTX Series</option>
+                    <option value="acx">ACX Series</option>
+                </select></form><input onclick="addRouter();" class="btn btn-primary" type="submit" value="Add" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+        </div>
+    </div>
     <div class="card">
         <div class="card-body">
             <h4 class="card-title">Current routers</h4>
@@ -34,6 +56,7 @@
                             <th>Hostname</th>
                             <th>Family</th>
                             <th>Login (Netconf/gNMI)</th>
+                            <th>Use TLS</th>
                             <th width="5%">Delete</th>
                         </tr>
                     </thead>
@@ -44,6 +67,7 @@
                             <td>{{.Hostname}}</td>
                             <td>{{.Family}}</td>
                             <td>{{.Login}}</td>
+                            <td>{{.Usetls}}</td>
                             <td  class="d-xxl-flex justify-content-xxl-center"><button onclick="remove('{{.Hostname}}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td>
                         </tr>
                         {{end}}
@@ -52,24 +76,12 @@
             </div>
         </div>
     </div>
-    <div class="card">
-        <div class="card-body">
-            <h4 class="card-title">Router Management</h4>
-            <form><label class="form-label">Short Name:</label><input id="Shortname" class="form-control" type="text"></form>
-            <form><label class="form-label" style="margin-top: 10px;">Hostname or IP:</label><input id="Hostname" class="form-control" type="text"></form>
-            <form><label class="form-label" style="margin-top: 10px;">Username:</label><input id="Username" class="form-control" type="text"></form>
-            <form style="margin-top: 10px;"><label class="form-label">Password:</label><input id="Password" class="form-control" type="password"></form>
-            <form style="margin-top: 10px;"><label class="form-label">Family:</label><select id="Family" class="form-select">
-                    <option value="mx" selected="">MX Series</option>
-                    <option value="ptx">PTX Series</option>
-                    <option value="acx">ACX Series</option>
-                </select></form><input onclick="addRouter();" class="btn btn-primary" type="submit" value="Add" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
-        </div>
-    </div>
+    <script src="js/jquery-3.4.1.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="js/alertify.min.js"></script>
+    <script src="js/bootstrap-multiselect.js"></script>
     <script src="js/routers.js"></script>
-    <script src="js/jquery-3.4.1.min.js"></script>
+
 </body>
 
 </html>
