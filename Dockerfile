@@ -13,6 +13,7 @@ FROM alpine:latest
 RUN apk update --no-cache 
 
 USER 0
+ADD /html /html
 COPY --from=builder /build/jtso /
 RUN mkdir -p /etc/jsto 
 RUN mkdir -p /var/shared/telegraf
