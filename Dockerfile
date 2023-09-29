@@ -21,4 +21,4 @@ RUN mkdir -p /var/shared/grafana
 
 EXPOSE 8081
 
-ENTRYPOINT ["./jtso --config config.yaml"]
+ENTRYPOINT ["./jtso"]
