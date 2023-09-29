@@ -1,7 +1,7 @@
 function saveCred() {
-    var u = document.getElementById("Username").value;
+    var u = document.getElementById("Username").value.trim();
     var p = document.getElementById("Password").value;
-    var u2 = document.getElementById("Username2").value;
+    var u2 = document.getElementById("Username2").value.trim();
     var p2 = document.getElementById("Password2").value;
     var t = document.getElementById("Usetls").checked;
     
@@ -22,7 +22,7 @@ function saveCred() {
             success : function(json) {
               if (json.status == "OK") {
       
-                alertify.success("Crendentials have been successfulfy added");
+                alertify.success("Crendentials have been successfulfy updated");
               }
               else {
                 alertify.alert("JSTO...", json.msg);

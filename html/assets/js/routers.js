@@ -1,6 +1,6 @@
 function addRouter() {
-    var h = document.getElementById("Hostname").value;
-    var s = document.getElementById("Shortname").value;
+    var h = document.getElementById("Hostname").value.trim();
+    var s = document.getElementById("Shortname").value.trim();
     var f = document.getElementById("Family").value;
 
 

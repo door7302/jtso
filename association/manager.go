@@ -43,7 +43,7 @@ func init() {
 }
 
 func PeriodicCheck() {
-	logger.Log.Info("Start periodic update of the profile - scanning is starting")
+	logger.Log.Info("Start periodic update of the profile db - scanning is starting")
 
 	// reset current flag for Active profile
 	ProfileLock.Lock()
@@ -53,14 +53,14 @@ func PeriodicCheck() {
 	}
 
 	// retrieve all tgz
-	dir, err := os.Open("profiles/")
+	dir, err := os.Open("/var/profiles/")
 	if err != nil {
-		logger.Log.Errorf("Unable to open active_profiles directory: %v", err)
+		logger.Log.Errorf("Unable to open /var/active_profiles directory: %v", err)
 		return
 	}
 	files, err := dir.ReadDir(0)
 	if err != nil {
-		logger.Log.Errorf("Unable to read active_profiles directory: %v", err)
+		logger.Log.Errorf("Unable to read /var/active_profiles directory: %v", err)
 		return
 	}
 
@@ -71,7 +71,7 @@ func PeriodicCheck() {
 			entry, _ := ActiveProfiles[filename]
 			// existing profile - check if update
 			// compute the hash of the file
-			tmpFile, err := os.Open("profiles/" + filename + ".tgz")
+			tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
 			if err != nil {
 				logger.Log.Errorf("Unable to open file %s: %v", filename, err)
 				continue
@@ -92,14 +92,14 @@ func PeriodicCheck() {
 					logger.Log.Errorf("Unable to remove profile %s: %v", filename, err)
 					continue
 				}
-				err = targz.Extract("profiles/"+filename+".tgz", "active_profiles/")
+				err = targz.Extract("/var/profiles/"+filename+".tgz", "/var/active_profiles/")
 				if err != nil {
 					logger.Log.Errorf("Unable to extract new profile %s: %v", filename, err)
 					continue
 				}
 
 				// update definition JSON file
-				jsonFile, err := os.Open("active_profiles/" + filename + "/definition.json")
+				jsonFile, err := os.Open("/var/active_profiles/" + filename + "/definition.json")
 				if err != nil {
 					logger.Log.Errorf("Unable to open defintion.json for profile %s: %v", filename, err)
 					continue
@@ -124,7 +124,7 @@ func PeriodicCheck() {
 			entry.Definition = new(DefProfile)
 
 			// compute the hash of the file
-			tmpFile, err := os.Open("profiles/" + filename + ".tgz")
+			tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
 			if err != nil {
 				logger.Log.Errorf("Unable to open file %s: %v", filename, err)
 				continue
@@ -139,14 +139,14 @@ func PeriodicCheck() {
 			MD5String := hex.EncodeToString(hashInBytes)
 			entry.Hash = MD5String
 
-			err = targz.Extract("profiles/"+filename+".tgz", "active_profiles/")
+			err = targz.Extract("/var/profiles/"+filename+".tgz", "/var/active_profiles/")
 			if err != nil {
 				logger.Log.Errorf("Unable to extract new profile %s: %v", filename, err)
 				continue
 			}
 
 			// open definition JSON file
-			jsonFile, err := os.Open("active_profiles/" + filename + "/definition.json")
+			jsonFile, err := os.Open("/var/active_profiles/" + filename + "/definition.json")
 			if err != nil {
 				logger.Log.Errorf("Unable to open defintion.json for profile %s: %v", filename, err)
 				continue
@@ -167,7 +167,7 @@ func PeriodicCheck() {
 	for k, v := range ActiveProfiles {
 		if !v.Present {
 			// Update profile
-			err := os.RemoveAll("active_profiles/" + v.Filename)
+			err := os.RemoveAll("/var/active_profiles/" + v.Filename)
 			if err != nil {
 				logger.Log.Errorf("Unable to remove profile %s: %v", v.Filename, err)
 			}
@@ -177,5 +177,5 @@ func PeriodicCheck() {
 		}
 	}
 	ProfileLock.Unlock()
-	logger.Log.Info("End of the periodic update of the profile")
+	logger.Log.Info("End of the periodic update of the profiles db")
 }

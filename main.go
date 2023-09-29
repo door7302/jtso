@@ -90,8 +90,10 @@ func main() {
 		}
 	}()
 
-	// Trigger a first run
+	// Trigger a first run of some background processes
+	association.PeriodicCheck()
 	go worker.Collect(Cfg)
+	go association.ConfigueStack(Cfg, "all")
 
 	// Waiting exit
 	c := make(chan os.Signal, 1)

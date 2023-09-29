@@ -1,5 +1,5 @@
 function addAsso() {
-  var r = document.getElementById("router").value;
+  var r = document.getElementById("router").value.trim();
   var all_selected = document.getElementById('profiles').options
   var selected = [];
   var raw_selected = ""

@@ -21,7 +21,6 @@ type NetconfConfig struct {
 
 type GnmiConfig struct {
 	Port       int
-	UseTls     bool
 	SkipVerify bool
 }
 
@@ -51,11 +50,6 @@ func NewConfigContainer(f string) *ConfigContainer {
 
 	logger.Log.Info("Read configuration file")
 
-	// Set default value for the 3 instances
-	//viper.SetDefault("modules.telegraf_instances.mx.routers", []string{})
-	//viper.SetDefault("modules.telegraf_instances.ptx.routers", []string{})
-	//viper.SetDefault("modules.telegraf_instances.acx.routers", []string{})
-
 	// Ser default value for portal
 	viper.SetDefault("modules.portal.port", 8080)
 
@@ -71,23 +65,7 @@ func NewConfigContainer(f string) *ConfigContainer {
 
 	// Set default value for gnmi
 	viper.SetDefault("protocols.gnmi.port", 9339)
-	viper.SetDefault("protocols.gnmi.use_tls", false)
 	viper.SetDefault("protocols.gnmi.skip_verify", true)
-
-	/* inst := make([]*InstanceConfig, 3)
-	inst[0] = &InstanceConfig{
-		Name: "mx",
-		Rtrs: viper.GetStringSlice("modules.telegraf_instances.mx.routers"),
-	}
-	inst[1] = &InstanceConfig{
-		Name: "ptx",
-		Rtrs: viper.GetStringSlice("modules.telegraf_instances.ptx.routers"),
-	}
-	inst[2] = &InstanceConfig{
-		Name: "acx",
-		Rtrs: viper.GetStringSlice("modules.telegraf_instances.acx.routers"),
-	}
-	*/
 
 	return &ConfigContainer{
 		//Instances: inst,
@@ -106,7 +84,6 @@ func NewConfigContainer(f string) *ConfigContainer {
 		},
 		Gnmi: &GnmiConfig{
 			Port:       viper.GetInt("protocols.gnmi.port"),
-			UseTls:     viper.GetBool("protocols.gnmi.use_tls"),
 			SkipVerify: viper.GetBool("protocols.gnmi.skip_verify"),
 		},
 	}

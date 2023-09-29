@@ -1,0 +1,187 @@
+package association
+
+import (
+	"io"
+	"jtso/config"
+	"jtso/logger"
+	"jtso/sqlite"
+	"os"
+	"strconv"
+	"text/template"
+)
+
+const PATH_MX string = "/var/shared/telegraf/mx/telegraf.d/"
+const PATH_PTX string = "/var/shared//telegraf/ptx/telegraf.d/"
+const PATH_ACX string = "/var/shared//telegraf/acx/telegraf.d/"
+const PATH_GRAFANA string = "/var/shared/grafana/data/dashboards/"
+
+func ConfigueStack(cfg *config.ConfigContainer, family string) error {
+
+	logger.Log.Infof("Time to reconfigure JTS components for family %s", family)
+
+	var temp *template.Template
+	var familes []string
+	var readDirectory *os.File
+
+	// create the slice for which families we have to reconfigure the stack
+	if family == "all" {
+		familes = make([]string, 3)
+		familes[0] = "mx"
+		familes[1] = "ptx"
+		familes[2] = "acx"
+	} else {
+		familes = make([]string, 1)
+		familes[0] = family
+	}
+
+	// first create per type > per profile structure
+	var cfgHierarchy map[string]map[string][]*sqlite.RtrEntry
+	cfgHierarchy = make(map[string]map[string][]*sqlite.RtrEntry)
+	for _, v := range sqlite.RtrList {
+		if v.Profile == 1 {
+			pfound := false
+			var asso []string
+			for _, v2 := range sqlite.AssoList {
+				if v.Shortname == v2.Shortname {
+					pfound = true
+					asso = v2.Assos
+				}
+			}
+			if pfound {
+				for _, p := range asso {
+
+					_, ok := cfgHierarchy[v.Family][p]
+					if !ok {
+						cfgHierarchy[v.Family] = make(map[string][]*sqlite.RtrEntry)
+					}
+					cfgHierarchy[v.Family][p] = append(cfgHierarchy[v.Family][p], v)
+				}
+			}
+		}
+	}
+
+	// now recreate the telegraf config per family
+	for _, f := range familes {
+		var directory string
+		// remove all file of telegraf directory
+		switch f {
+		case "mx":
+			readDirectory, _ = os.Open(PATH_MX)
+			directory = PATH_MX
+		case "ptx":
+			readDirectory, _ = os.Open(PATH_PTX)
+			directory = PATH_PTX
+		case "acx":
+			readDirectory, _ = os.Open(PATH_ACX)
+			directory = PATH_ACX
+		}
+		allFiles, _ := readDirectory.Readdir(0)
+
+		for f := range allFiles {
+			file := allFiles[f]
+
+			fileName := file.Name()
+			filePath := directory + fileName
+
+			err := os.Remove(filePath)
+			if err != nil {
+				logger.Log.Errorf("Unable to clean the file %s: %v", filePath, err)
+			}
+		}
+
+		// now parse all profiles of a given family
+		for p, rtrs := range cfgHierarchy[f] {
+			var filename string
+			// extract definition of the profile
+			switch f {
+			case "mx":
+				filename = ActiveProfiles[p].Definition.TelCfg.MxCfg
+			case "ptx":
+				filename = ActiveProfiles[p].Definition.TelCfg.PtxCfg
+			case "acx":
+				filename = ActiveProfiles[p].Definition.TelCfg.AcxCfg
+			}
+			tls := false
+			if sqlite.ActiveCred.UseTls == "yes" {
+				tls = true
+			}
+
+			rendRtrs := make([]string, 0)
+			for _, r := range rtrs {
+				rendRtrs = append(rendRtrs, r.Hostname+":"+strconv.Itoa(cfg.Gnmi.Port))
+			}
+			// render profile
+			temp = template.Must(template.ParseFiles("/var/active_profiles/" + p + "/" + filename))
+			renderFile, err := os.Create(directory + filename)
+			if err != nil {
+				logger.Log.Errorf("Unable to open the target rendering file - err: %v", err)
+				continue
+			}
+			defer renderFile.Close()
+			err = temp.Execute(renderFile, map[string]interface{}{"rtrs": rendRtrs, "username": sqlite.ActiveCred.GnmiUser, "password": sqlite.ActiveCred.GnmiPwd, "tls": tls})
+			if err != nil {
+				logger.Log.Errorf("Unable to write into render telegraf file - err: %v", err)
+				continue
+			}
+		}
+
+	}
+	// create the list of active profile dashboard name and copy the new version of each dashboard
+	var excludeDash []string
+	excludeDash = make([]string, 0)
+	excludeDash = append(excludeDash, "home.json")
+	for _, v := range cfgHierarchy {
+		for p, _ := range v {
+			for _, d := range ActiveProfiles[p].Definition.GrafaCfg {
+				excludeDash = append(excludeDash, d)
+				source, err := os.Open("/var/active_profiles/" + p + "/" + d) //open the source file
+				if err != nil {
+					logger.Log.Errorf("Unable to open the source dashboard %s - err: %v", d, err)
+					continue
+				}
+				defer source.Close()
+				destination, err := os.Create(PATH_GRAFANA + d) //create the destination file
+				if err != nil {
+					logger.Log.Errorf("Unable to open the destination dashboard %s - err: %v", d, err)
+					continue
+				}
+				defer destination.Close()
+				_, err = io.Copy(destination, source) //copy the contents of source to destination file
+				if err != nil {
+					logger.Log.Errorf("Unable to update the dashboard %s - err: %v", d, err)
+					continue
+				}
+			}
+		}
+	}
+
+	// Now clean grafana dashbord directory and keep only dashbords related to active profiles
+	readDirectory, _ = os.Open(PATH_GRAFANA)
+	allFiles, _ := readDirectory.Readdir(0)
+	for f := range allFiles {
+		file := allFiles[f]
+
+		fileName := file.Name()
+		filePath := PATH_GRAFANA + fileName
+
+		//exclude home dashboard and active dashboards profile
+		found := false
+		for _, v := range excludeDash {
+			if v == fileName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			err := os.Remove(filePath)
+			if err != nil {
+				logger.Log.Errorf("Unable to clean the file %s: %v", filePath, err)
+				continue
+			}
+		}
+	}
+	// restart Grafana Container :
+
+	logger.Log.Infof("All JTS components reconfigured for family %s", family)
+	return nil
+}

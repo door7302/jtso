@@ -212,6 +212,7 @@ func routeAddProfile(c echo.Context) error {
 	logger.Log.Info("Force the metadata update")
 
 	go worker.Collect(collectCfg.cfg)
+	go association.ConfigueStack(collectCfg.cfg, "all")
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile updated"})
 
 }
