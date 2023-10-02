@@ -82,7 +82,7 @@ func (w *WebApp) Run() {
 }
 
 func routeIndex(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World!")
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{})
 }
 
 func routeRouters(c echo.Context) error {
