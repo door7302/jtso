@@ -13,7 +13,7 @@ import (
 const PATH_MX string = "/var/shared/telegraf/mx/telegraf.d/"
 const PATH_PTX string = "/var/shared//telegraf/ptx/telegraf.d/"
 const PATH_ACX string = "/var/shared//telegraf/acx/telegraf.d/"
-const PATH_GRAFANA string = "/var/shared/grafana/data/dashboards/"
+const PATH_GRAFANA string = "/var/shared/grafana/dashboards/"
 
 func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
