@@ -1,6 +1,7 @@
 package association
 
 import (
+	"context"
 	"io"
 	"jtso/config"
 	"jtso/logger"
@@ -8,6 +9,9 @@ import (
 	"os"
 	"strconv"
 	"text/template"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
 )
 
 const PATH_MX string = "/var/shared/telegraf/mx/telegraf.d/"
@@ -175,12 +179,39 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		if !found {
 			err := os.Remove(filePath)
 			if err != nil {
-				logger.Log.Errorf("Unable to clean the file %s: %v", filePath, err)
+
 				continue
 			}
 		}
 	}
-	// restart Grafana Container :
+	// restart Containers :
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		logger.Log.Errorf("Unable to open Docker session: %v", err)
+		return err
+	}
+	defer cli.Close()
+
+	timeout := 10
+
+	// Restart grafana
+	err = cli.ContainerRestart(context.Background(), "grafana", container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
+	if err != nil {
+		logger.Log.Errorf("Unable to restart Grafana container: %v", err)
+		return err
+	}
+	logger.Log.Info("Grafana container has been restarted")
+
+	// Restart telegraf instance(s)
+	for _, f := range familes {
+		err = cli.ContainerRestart(context.Background(), "telegraf-"+f, container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
+		if err != nil {
+			logger.Log.Errorf("Unable to restart Grafana container: %v", err)
+			continue
+		}
+		logger.Log.Info("telegraf-" + f + " container has been restarted")
+	}
 
 	logger.Log.Infof("All JTS components reconfigured for family %s", family)
 	return nil
