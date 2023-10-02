@@ -65,40 +65,88 @@ func PeriodicCheck() {
 	}
 
 	for _, file := range files {
-		filename := strings.Replace(file.Name(), ".tgz", "", -1)
+		if strings.Contains(file.Name(), "tgz") {
+			filename := strings.Replace(file.Name(), ".tgz", "", -1)
 
-		if _, ok := ActiveProfiles[filename]; ok {
-			entry, _ := ActiveProfiles[filename]
-			// existing profile - check if update
-			// compute the hash of the file
-			tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
-			if err != nil {
-				logger.Log.Errorf("Unable to open file %s: %v", filename, err)
-				continue
-			}
-			hash := md5.New()
-			if _, err := io.Copy(hash, tmpFile); err != nil {
-				logger.Log.Errorf("Unable to compute hash for file %s: %v", filename, err)
-				continue
-			}
-			defer tmpFile.Close()
-			hashInBytes := hash.Sum(nil)[:16]
-			MD5String := hex.EncodeToString(hashInBytes)
-
-			if ActiveProfiles[filename].Hash != MD5String {
-				// Update profile
-				err := os.RemoveAll("active_profile/" + filename + "/")
+			if _, ok := ActiveProfiles[filename]; ok {
+				entry, _ := ActiveProfiles[filename]
+				// existing profile - check if update
+				// compute the hash of the file
+				tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
 				if err != nil {
-					logger.Log.Errorf("Unable to remove profile %s: %v", filename, err)
+					logger.Log.Errorf("Unable to open file %s: %v", filename, err)
 					continue
 				}
+				hash := md5.New()
+				if _, err := io.Copy(hash, tmpFile); err != nil {
+					logger.Log.Errorf("Unable to compute hash for file %s: %v", filename, err)
+					continue
+				}
+				defer tmpFile.Close()
+				hashInBytes := hash.Sum(nil)[:16]
+				MD5String := hex.EncodeToString(hashInBytes)
+
+				if ActiveProfiles[filename].Hash != MD5String {
+					// Update profile
+					err := os.RemoveAll("active_profile/" + filename + "/")
+					if err != nil {
+						logger.Log.Errorf("Unable to remove profile %s: %v", filename, err)
+						continue
+					}
+					err = targz.Extract("/var/profiles/"+filename+".tgz", "/var/active_profiles/")
+					if err != nil {
+						logger.Log.Errorf("Unable to extract new profile %s: %v", filename, err)
+						continue
+					}
+
+					// update definition JSON file
+					jsonFile, err := os.Open("/var/active_profiles/" + filename + "/definition.json")
+					if err != nil {
+						logger.Log.Errorf("Unable to open defintion.json for profile %s: %v", filename, err)
+						continue
+					}
+					defer jsonFile.Close()
+
+					byteValue, _ := io.ReadAll(jsonFile)
+					entry.Definition = new(DefProfile)
+					// push json into definition structure
+					json.Unmarshal(byteValue, entry.Definition)
+					entry.Hash = MD5String
+				}
+
+				entry.Present = true
+				ActiveProfiles[filename] = entry
+
+			} else {
+				// new profile detected
+				entry := FileTgz{}
+				entry.Filename = filename
+				entry.Present = true
+				entry.Definition = new(DefProfile)
+
+				// compute the hash of the file
+				tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
+				if err != nil {
+					logger.Log.Errorf("Unable to open file %s: %v", filename, err)
+					continue
+				}
+				hash := md5.New()
+				if _, err := io.Copy(hash, tmpFile); err != nil {
+					logger.Log.Errorf("Unable to compute hash for file %s: %v", filename, err)
+					continue
+				}
+				defer tmpFile.Close()
+				hashInBytes := hash.Sum(nil)[:16]
+				MD5String := hex.EncodeToString(hashInBytes)
+				entry.Hash = MD5String
+
 				err = targz.Extract("/var/profiles/"+filename+".tgz", "/var/active_profiles/")
 				if err != nil {
 					logger.Log.Errorf("Unable to extract new profile %s: %v", filename, err)
 					continue
 				}
 
-				// update definition JSON file
+				// open definition JSON file
 				jsonFile, err := os.Open("/var/active_profiles/" + filename + "/definition.json")
 				if err != nil {
 					logger.Log.Errorf("Unable to open defintion.json for profile %s: %v", filename, err)
@@ -107,59 +155,13 @@ func PeriodicCheck() {
 				defer jsonFile.Close()
 
 				byteValue, _ := io.ReadAll(jsonFile)
-				entry.Definition = new(DefProfile)
+
 				// push json into definition structure
 				json.Unmarshal(byteValue, entry.Definition)
-				entry.Hash = MD5String
+
+				ActiveProfiles[filename] = entry
+				logger.Log.Infof("New profile %s detected and added to active profiles", filename)
 			}
-
-			entry.Present = true
-			ActiveProfiles[filename] = entry
-
-		} else {
-			// new profile detected
-			entry := FileTgz{}
-			entry.Filename = filename
-			entry.Present = true
-			entry.Definition = new(DefProfile)
-
-			// compute the hash of the file
-			tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
-			if err != nil {
-				logger.Log.Errorf("Unable to open file %s: %v", filename, err)
-				continue
-			}
-			hash := md5.New()
-			if _, err := io.Copy(hash, tmpFile); err != nil {
-				logger.Log.Errorf("Unable to compute hash for file %s: %v", filename, err)
-				continue
-			}
-			defer tmpFile.Close()
-			hashInBytes := hash.Sum(nil)[:16]
-			MD5String := hex.EncodeToString(hashInBytes)
-			entry.Hash = MD5String
-
-			err = targz.Extract("/var/profiles/"+filename+".tgz", "/var/active_profiles/")
-			if err != nil {
-				logger.Log.Errorf("Unable to extract new profile %s: %v", filename, err)
-				continue
-			}
-
-			// open definition JSON file
-			jsonFile, err := os.Open("/var/active_profiles/" + filename + "/definition.json")
-			if err != nil {
-				logger.Log.Errorf("Unable to open defintion.json for profile %s: %v", filename, err)
-				continue
-			}
-			defer jsonFile.Close()
-
-			byteValue, _ := io.ReadAll(jsonFile)
-
-			// push json into definition structure
-			json.Unmarshal(byteValue, entry.Definition)
-
-			ActiveProfiles[filename] = entry
-			logger.Log.Infof("New profile %s detected and added to active profiles", filename)
 		}
 	}
 
