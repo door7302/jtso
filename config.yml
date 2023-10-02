@@ -1,0 +1,16 @@
+protocols:
+  netconf:
+    port: 8080
+    rpc_timeout: 10 
+  gnmi:
+    port: 9339
+    skip_verify: true 
+modules:
+  enricher:
+    folder: "./"
+    interval: 720
+    workers: 2
+    port: 10000
+  portal:
+    port: 8080
+

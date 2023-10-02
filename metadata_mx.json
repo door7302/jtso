@@ -1,0 +1,42 @@
+{
+  "rtme-mx-22.englab.juniper.net": {
+    "FPC0": {
+      "HW_TYPE": "MPC7E 3D MRATE-12xQSFPP-XGE-XLGE-CGE"
+    },
+    "FPC1": {
+      "HW_TYPE": "MPC7E 3D MRATE-12xQSFPP-XGE-XLGE-CGE"
+    },
+    "FPC2": {
+      "HW_TYPE": "MPC10E 3D MRATE-15xQSFPP"
+    },
+    "LEVEL1TAG": {
+      "MODEL": "MX240"
+    },
+    "et-1/1/1": {
+      "DESC": "TEST_DESC_CLI"
+    },
+    "et-2/2/1": {
+      "DESC": "ENNI"
+    },
+    "et-2/2/1.111": {
+      "DESC": "UNIT111"
+    },
+    "et-2/2/2": {
+      "DESC": "TEST"
+    },
+    "et-2/2/2.0": {
+      "DESC": "MY_SUB_INTERFACE"
+    }
+  },
+  "rtme-mx-25.englab.juniper.net": {
+    "FPC0": {
+      "HW_TYPE": "MPC7E 3D MRATE-12xQSFPP-XGE-XLGE-CGE"
+    },
+    "FPC3": {
+      "HW_TYPE": "MPC 3D 16x 10GE"
+    },
+    "LEVEL1TAG": {
+      "MODEL": "MX480"
+    }
+  }
+}
