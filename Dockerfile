@@ -6,6 +6,9 @@ RUN apk --update --no-cache add git build-base gcc
 COPY . /build
 WORKDIR /build
 
+COPY go.mod go.sum ./
+RUN go mod download
+
 RUN go build -o ./jtso -ldflags "${LDFLAGS}" ./main.go 
 
 FROM alpine:latest
