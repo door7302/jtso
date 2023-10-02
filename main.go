@@ -53,7 +53,8 @@ func main() {
 	_, close := context.WithCancel(context.Background())
 
 	// Init the sqliteDB
-	err = sqlite.Init("./mydb.db")
+	//err = sqlite.Init("./jtso.db")
+	err = sqlite.Init("/etc/jtso/jtso.db")
 	if err != nil {
 		logger.Log.Errorf("unable to open DB... panic...: %v", err)
 		panic(err)
