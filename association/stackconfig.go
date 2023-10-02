@@ -205,12 +205,12 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// Restart telegraf instance(s)
 	for _, f := range familes {
-		err = cli.ContainerRestart(context.Background(), "telegraf-"+f, container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
+		err = cli.ContainerRestart(context.Background(), "telegraf_"+f, container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
 		if err != nil {
-			logger.Log.Errorf("Unable to restart Grafana container: %v", err)
+			logger.Log.Errorf("Unable to restart telegraf_"+f+" container: %v", err)
 			continue
 		}
-		logger.Log.Info("telegraf-" + f + " container has been restarted")
+		logger.Log.Info("telegraf_" + f + " container has been restarted")
 	}
 
 	logger.Log.Infof("All JTS components reconfigured for family %s", family)
