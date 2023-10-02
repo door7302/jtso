@@ -112,6 +112,7 @@ func PeriodicCheck() {
 					// push json into definition structure
 					json.Unmarshal(byteValue, entry.Definition)
 					entry.Hash = MD5String
+
 					logger.Log.Infof("Profile %s has been updated", filename)
 				}
 
