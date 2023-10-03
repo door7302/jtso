@@ -19,6 +19,8 @@ import (
 	"github.com/docker/docker/client"
 )
 
+const PATH_CERT string = "/var/cert/"
+
 type WebApp struct {
 	listen string
 	app    *echo.Echo
@@ -80,8 +82,18 @@ func New(cfg *config.ConfigContainer) *WebApp {
 }
 
 func (w *WebApp) Run() {
-	if err := w.app.Start(w.listen); err != http.ErrServerClosed {
-		logger.Log.Errorf("Web server stopped: %v", err)
+	if collectCfg.cfg.Portal.Https {
+		if err := w.app.StartTLS(w.listen, PATH_CERT+collectCfg.cfg.Portal.ServerCrt, PATH_CERT+collectCfg.cfg.Portal.ServerKey); err != http.ErrServerClosed {
+			logger.Log.Errorf("Unable to start HTTPS server: %v", err)
+			panic(err)
+		}
+		logger.Log.Infof("Https Server has been strated - listen to %s", w.listen)
+	} else {
+		if err := w.app.Start(w.listen); err != http.ErrServerClosed {
+			logger.Log.Errorf("Unable to start HTTP server: %v", err)
+			panic(err)
+		}
+		logger.Log.Infof("Http Server has been strated - listen to %s", w.listen)
 	}
 }
 

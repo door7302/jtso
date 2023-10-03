@@ -21,6 +21,7 @@ COPY --from=builder /build/jtso /
 RUN mkdir -p /etc/jtso
 RUN mkdir -p /var/shared/telegraf
 RUN mkdir -p /var/shared/grafana
+RUN mkdir -p /var/cert
 
 EXPOSE 8081
 

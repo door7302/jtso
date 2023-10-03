@@ -11,7 +11,10 @@ import (
 )
 
 type PortalConfig struct {
-	Port int
+	Https     bool
+	ServerCrt string
+	ServerKey string
+	Port      int
 }
 
 type NetconfConfig struct {
@@ -51,7 +54,10 @@ func NewConfigContainer(f string) *ConfigContainer {
 	logger.Log.Info("Read configuration file")
 
 	// Ser default value for portal
-	viper.SetDefault("modules.portal.port", 8080)
+	viper.SetDefault("modules.portal.https", false)
+	viper.SetDefault("modules.portal.server_crt", "")
+	viper.SetDefault("modules.portal.server_key", "")
+	viper.SetDefault("modules.portal.port", 8081)
 
 	// Ser default value for enricher
 	viper.SetDefault("modules.enricher.folder", "./")
@@ -70,7 +76,10 @@ func NewConfigContainer(f string) *ConfigContainer {
 	return &ConfigContainer{
 		//Instances: inst,
 		Portal: &PortalConfig{
-			Port: viper.GetInt("modules.portal.port"),
+			Port:      viper.GetInt("modules.portal.port"),
+			Https:     viper.GetBool("modules.portal.https"),
+			ServerCrt: viper.GetString("modules.portal.server_crt"),
+			ServerKey: viper.GetString("modules.portal.server_key"),
 		},
 		Enricher: &EnricherConfig{
 			Folder:   viper.GetString("modules.enricher.folder"),

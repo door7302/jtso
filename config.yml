@@ -12,5 +12,8 @@ modules:
     workers: 2
     port: 10000
   portal:
+    https: true
+    server_crt: ""
+    server_key: ""
     port: 8080
 
