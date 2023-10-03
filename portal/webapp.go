@@ -63,6 +63,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/routers.html", routeRouters)
 	wapp.GET("/profiles.html", routeProfiles)
 	wapp.GET("/cred.html", routeCred)
+	wapp.GET("/doc.html", routeDoc)
 
 	// configure POST routers
 	wapp.POST("/addrouter", routeAddRouter)
@@ -70,6 +71,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/addprofile", routeAddProfile)
 	wapp.POST("/delprofile", routeDelProfile)
 	wapp.POST("/updatecred", routeUptCred)
+	wapp.POST("/updatedoc", routeUptDoc)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -216,6 +218,21 @@ func routeProfiles(c echo.Context) error {
 	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp})
 }
 
+func routeDoc(c echo.Context) error {
+	// Get all profiles
+	var lp []string
+
+	lp = make([]string, 0)
+
+	association.ProfileLock.Lock()
+	for k, _ := range association.ActiveProfiles {
+		lp = append(lp, k)
+	}
+	association.ProfileLock.Unlock()
+
+	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Profiles": lp})
+}
+
 func routeAddRouter(c echo.Context) error {
 	var err error
 
@@ -335,4 +352,8 @@ func routeUptCred(c echo.Context) error {
 	logger.Log.Infof("Credentials have been successfully deleted")
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Credentials have been updated"})
 
+}
+
+func routeUptDoc(c echo.Context) error {
+	return nil
 }

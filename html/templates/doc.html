@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>jts-portal</title>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
+    <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
+    <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/bootstrap-multiselect.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-light navbar-expand-md py-3">
+        <div class="container"><img src="img/logo.png" width="129" height="67"><a class="navbar-brand d-flex align-items-center" href="#"><span>Juniper Telemetry Stack</span></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navcol-2">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="cred.html">Credentials</a></li>
+                    <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="profiles.html" style="border-color: rgba(0, 0, 0, 0.65);">Profiles</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Profile documentation</h4>
+            <form style="margin-top: 10px;">
+                <label class="form-label">Select profile:</label>&nbsp;
+                <select id="profiles" class="selectpicker" data-width="auto">
+                    {{range .Profiles}}
+                    <option value="{{.}}">{{.}} profile</option>
+                    {{end}}
+                </select>
+            </form>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Profile info</h4>
+            <div class="row g-0">
+                <div class="col-md-8">
+                  <img src="/var/active_profiles/optic/optic.png" class="img-fluid rounded-start" alt="pic not found">
+                </div>
+                <div class="col-md-4">
+                  <div class="card-body">
+                    <h5 class="card-title">Card title</h5>
+                    <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                    <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+                  </div>
+                </div>
+              </div>
+        </div>
+    </div>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="js/alertify.min.js"></script>
+    <script src="js/bootstrap-multiselect.js"></script>
+    <script src="js/routers.js"></script>
+
+</body>
+
+</html>
