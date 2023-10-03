@@ -62,6 +62,11 @@ func main() {
 
 	// init the webapp
 	webapp := portal.New(Cfg)
+	if Cfg.Portal.Https {
+		logger.Log.Infof("Start HTTPS Server - listen to %d", Cfg.Portal.Port)
+	} else {
+		logger.Log.Infof("Start HTTP Server  - listen to %d", Cfg.Portal.Port)
+	}
 	go webapp.Run()
 
 	// create a ticker to refresh the Enrichment struct
