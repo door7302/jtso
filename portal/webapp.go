@@ -133,7 +133,26 @@ func routeIndex(c echo.Context) error {
 		}
 	}
 
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso})
+	// Retrive number of active routers per Telegraf
+	numMX, numPTX, numACX := 0, 0, 0
+	for _, r := range sqlite.RtrList {
+		switch r.Family {
+		case "mx":
+			if r.Profile == 1 {
+				numMX++
+			}
+		case "ptx":
+			if r.Profile == 1 {
+				numPTX++
+			}
+		case "acx":
+			if r.Profile == 1 {
+				numACX++
+			}
+		}
+	}
+
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX})
 }
 
 func routeRouters(c echo.Context) error {
