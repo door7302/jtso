@@ -374,14 +374,14 @@ func routeUptDoc(c echo.Context) error {
 
 	tele := ""
 	if p.Definition.TelCfg.MxCfg != "" {
-		tele = tele + "&nbsp;" + p.Definition.TelCfg.MxCfg
+		tele = tele + "&nbsp; &nbsp;" + p.Definition.TelCfg.MxCfg
 	}
 	if p.Definition.TelCfg.PtxCfg != "" {
-		tele = tele + "&nbsp;" + p.Definition.TelCfg.PtxCfg
+		tele = tele + "&nbsp; &nbsp;" + p.Definition.TelCfg.PtxCfg
 	}
 
 	if p.Definition.TelCfg.AcxCfg != "" {
-		tele = tele + "&nbsp;" + p.Definition.TelCfg.AcxCfg
+		tele = tele + "&nbsp; &nbsp;" + p.Definition.TelCfg.AcxCfg
 	}
 	if tele == "" {
 		tele = "No Telegraf configuration attached to this profile"
@@ -389,7 +389,7 @@ func routeUptDoc(c echo.Context) error {
 
 	kapa := ""
 	for _, v := range p.Definition.KapaCfg {
-		kapa = kapa + "&nbsp;" + v
+		kapa = kapa + "&nbsp; &nbsp;" + v
 	}
 	if kapa == "" {
 		kapa = "No Kapacitor script attached to this profile"
@@ -397,7 +397,7 @@ func routeUptDoc(c echo.Context) error {
 
 	graf := ""
 	for _, v := range p.Definition.GrafaCfg {
-		graf = graf + "&nbsp;" + v
+		graf = graf + "&nbsp; &nbsp;" + v
 	}
 	if graf == "" {
 		graf = "No Grafana Dasboards attached to this profile"
