@@ -63,7 +63,6 @@ func main() {
 	// init the webapp
 	webapp := portal.New(Cfg)
 	go webapp.Run()
-	logger.Log.Infof("Start web server, listen to %d", Cfg.Portal.Port)
 
 	// create a ticker to refresh the Enrichment struct
 	ticker := time.NewTicker(Cfg.Enricher.Interval)

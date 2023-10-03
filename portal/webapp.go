@@ -87,13 +87,13 @@ func (w *WebApp) Run() {
 			logger.Log.Errorf("Unable to start HTTPS server: %v", err)
 			panic(err)
 		}
-		logger.Log.Infof("Https Server has been strated - listen to %s", w.listen)
+		logger.Log.Infof("Https Server has been started - listen to %s", w.listen)
 	} else {
 		if err := w.app.Start(w.listen); err != http.ErrServerClosed {
 			logger.Log.Errorf("Unable to start HTTP server: %v", err)
 			panic(err)
 		}
-		logger.Log.Infof("Http Server has been strated - listen to %s", w.listen)
+		logger.Log.Infof("Http Server has been started - listen to %s", w.listen)
 	}
 }
 
