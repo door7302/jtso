@@ -355,5 +355,54 @@ func routeUptCred(c echo.Context) error {
 }
 
 func routeUptDoc(c echo.Context) error {
-	return nil
+	var err error
+
+	r := new(UpdateDoc)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for updating documentation: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update documentation"})
+	}
+	association.ProfileLock.Lock()
+	p, ok := association.ActiveProfiles[r.Profile]
+	association.ProfileLock.Unlock()
+	if !ok {
+		logger.Log.Errorf("Unable to update documentation: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update documentation"})
+	}
+
+	tele := ""
+	if p.Definition.TelCfg.MxCfg != "" {
+		tele = tele + "&nbsp;" + p.Definition.TelCfg.MxCfg
+	}
+	if p.Definition.TelCfg.PtxCfg != "" {
+		tele = tele + "&nbsp;" + p.Definition.TelCfg.PtxCfg
+	}
+
+	if p.Definition.TelCfg.AcxCfg != "" {
+		tele = tele + "&nbsp;" + p.Definition.TelCfg.AcxCfg
+	}
+	if tele == "" {
+		tele = "No Telegraf configuration attached to this profile"
+	}
+
+	kapa := ""
+	for _, v := range p.Definition.KapaCfg {
+		kapa = kapa + "&nbsp;" + v
+	}
+	if kapa == "" {
+		kapa = "No Kapacitor script attached to this profile"
+	}
+
+	graf := ""
+	for _, v := range p.Definition.GrafaCfg {
+		graf = graf + "&nbsp;" + v
+	}
+	if graf == "" {
+		graf = "No Grafana Dasboards attached to this profile"
+	}
+
+	logger.Log.Infof("Documentation have been successfully updated")
+	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: tele, Graf: graf, Kapa: kapa})
 }

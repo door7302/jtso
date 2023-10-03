@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
     <link rel="stylesheet" href="css/alertify.min.css">
-    <link rel="stylesheet" href="css/bootstrap-multiselect.css">
 </head>
 
 <body>
@@ -31,7 +30,7 @@
             <h4 class="card-title">Profile documentation</h4>
             <form style="margin-top: 10px;">
                 <label class="form-label">Select profile:</label>&nbsp;
-                <select id="profiles" class="selectpicker" data-width="auto">
+                <select id="profiles" class="selectpicker" data-width="auto" onchange="updateDoc()">
                     {{range .Profiles}}
                     <option value="{{.}}">{{.}} profile</option>
                     {{end}}
@@ -41,16 +40,21 @@
     </div>
     <div class="card">
         <div class="card-body">
-            <h4 class="card-title">Profile info</h4>
+            <h4 class="card-title">Profile details</h4>
             <div class="row g-0">
                 <div class="col-md-8">
-                  <img src="img/optic.png" class="img-fluid rounded-start" alt="pic not found">
+                  <img id="profileImg" src="img/default.png" class="img-fluid rounded-start" alt="pic not found">
                 </div>
                 <div class="col-md-4">
                   <div class="card-body">
-                    <h5 class="card-title">Card title</h5>
-                    <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-                    <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+                    <h5 class="card-title">Description</h5>
+                    <p id="profileDesc" class="card-text">N/A</p>
+                    <h5 class="card-title">Telegraf Configuration(s)</h5>
+                    <p id="profileTele" class="card-text">N/A</p>
+                    <h5 class="card-title">Grafana Dashboard(s)</h5>
+                    <p id="profileGraf" class="card-text">N/A</p>
+                    <h5 class="card-title">Kapacitor Script(s)</h5>
+                    <p id="profileKapa" class="card-text">N/A</p>
                   </div>
                 </div>
               </div>
@@ -59,8 +63,7 @@
     <script src="js/jquery-3.4.1.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="js/alertify.min.js"></script>
-    <script src="js/bootstrap-multiselect.js"></script>
-    <script src="js/routers.js"></script>
+    <script src="js/doc.js"></script>
 
 </body>
 

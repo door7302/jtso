@@ -21,6 +21,10 @@ type (
 		Profiles  []string `json:"profiles"`
 	}
 
+	UpdateDoc struct {
+		Profile string `json:"profile"`
+	}
+
 	DelProfile struct {
 		Shortname string `json:"shortname"`
 	}
@@ -28,6 +32,15 @@ type (
 	Reply struct {
 		Status string `json:"status"`
 		Msg    string `json:"msg"`
+	}
+
+	ReplyDoc struct {
+		Status string `json:"status"`
+		Img    string `json:"img"`
+		Desc   string `json:"desc"`
+		Tele   string `json:"tele"`
+		Graf   string `json:"graf"`
+		Kapa   string `json:"kapa"`
 	}
 
 	Credential struct {
