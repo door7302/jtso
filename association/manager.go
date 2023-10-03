@@ -113,6 +113,25 @@ func PeriodicCheck() {
 					json.Unmarshal(byteValue, entry.Definition)
 					entry.Hash = MD5String
 
+					// Copy cheatsheet image in the right assets directory
+					source, err := os.Open("/var/active_profiles/" + filename + "/" + entry.Definition.Cheatsheet) //open the source file
+					if err != nil {
+						logger.Log.Errorf("Unable to open the Cheatsheet file %s - err: %v", entry.Definition.Cheatsheet, err)
+						continue
+					}
+					defer source.Close()
+					destination, err := os.Create("html/assets/img/" + entry.Definition.Cheatsheet) //create the destination file
+					if err != nil {
+						logger.Log.Errorf("Unable to open the destination Cheatsheet %s - err: %v", entry.Definition.Cheatsheet, err)
+						continue
+					}
+					defer destination.Close()
+					_, err = io.Copy(destination, source) //copy the contents of source to destination file
+					if err != nil {
+						logger.Log.Errorf("Unable to update the Cheatsheet %s - err: %v", entry.Definition.Cheatsheet, err)
+						continue
+					}
+
 					logger.Log.Infof("Profile %s has been updated", filename)
 				}
 
@@ -161,6 +180,25 @@ func PeriodicCheck() {
 				// push json into definition structure
 				json.Unmarshal(byteValue, entry.Definition)
 
+				// Copy cheatsheet image in the right assets directory
+				source, err := os.Open("/var/active_profiles/" + filename + "/" + entry.Definition.Cheatsheet) //open the source file
+				if err != nil {
+					logger.Log.Errorf("Unable to open the Cheatsheet file %s - err: %v", entry.Definition.Cheatsheet, err)
+					continue
+				}
+				defer source.Close()
+				destination, err := os.Create("html/assets/img/" + entry.Definition.Cheatsheet) //create the destination file
+				if err != nil {
+					logger.Log.Errorf("Unable to open the destination Cheatsheet %s - err: %v", entry.Definition.Cheatsheet, err)
+					continue
+				}
+				defer destination.Close()
+				_, err = io.Copy(destination, source) //copy the contents of source to destination file
+				if err != nil {
+					logger.Log.Errorf("Unable to update the Cheatsheet %s - err: %v", entry.Definition.Cheatsheet, err)
+					continue
+				}
+
 				ActiveProfiles[filename] = entry
 				logger.Log.Infof("New profile %s detected and added to active profiles", filename)
 			}
@@ -174,6 +212,10 @@ func PeriodicCheck() {
 			err := os.RemoveAll("/var/active_profiles/" + v.Filename)
 			if err != nil {
 				logger.Log.Errorf("Unable to remove profile %s: %v", v.Filename, err)
+			}
+			err = os.Remove("html/assets/img/" + v.Definition.Cheatsheet)
+			if err != nil {
+				logger.Log.Errorf("Unable to remove cheatsheet %s: %v", v.Definition.Cheatsheet, err)
 			}
 			logger.Log.Infof("Legacy profile %s remove it", v.Filename)
 			delete(ActiveProfiles, k)
