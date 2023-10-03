@@ -1,6 +1,7 @@
 package portal
 
 import (
+	"context"
 	"html/template"
 	"io"
 	"jtso/association"
@@ -13,6 +14,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 )
 
 type WebApp struct {
@@ -82,7 +86,54 @@ func (w *WebApp) Run() {
 }
 
 func routeIndex(c echo.Context) error {
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{})
+	teleMx, telePtx, teleAcx, influx, grafana, kapacitor, jtso := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
+	// check containers state
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		logger.Log.Errorf("Unable to open Docker session: %v", err)
+
+	}
+	defer cli.Close()
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	if err != nil {
+		logger.Log.Errorf("Unable to list container state: %v", err)
+
+	}
+	for _, container := range containers {
+		switch container.Names[0] {
+		case "/telegraf_mx":
+			if container.State == "running" {
+				teleMx = "ccffcc"
+			}
+		case "/telegraf_ptx":
+			if container.State == "running" {
+				telePtx = "ccffcc"
+			}
+		case "/telegraf_acx":
+			if container.State == "running" {
+				teleAcx = "ccffcc"
+			}
+		case "/grafana":
+			if container.State == "running" {
+				grafana = "ccffcc"
+			}
+		case "/kapacitor":
+			if container.State == "running" {
+				kapacitor = "ccffcc"
+			}
+		case "/influxdb":
+			if container.State == "running" {
+				influx = "ccffcc"
+			}
+		case "/jtso":
+			if container.State == "running" {
+				jtso = "ccffcc"
+			}
+		}
+	}
+
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso})
 }
 
 func routeRouters(c echo.Context) error {
