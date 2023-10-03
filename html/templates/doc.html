@@ -31,6 +31,7 @@
             <form style="margin-top: 10px;">
                 <label class="form-label">Select profile:</label>&nbsp;
                 <select id="profiles" class="selectpicker" data-width="auto" onchange="updateDoc()">
+                    <option value="default">Select a profile</option>
                     {{range .Profiles}}
                     <option value="{{.}}">{{.}} profile</option>
                     {{end}}
