@@ -51,6 +51,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp := echo.New()
 	//configure app
 	wapp.Use(middleware.Static("html/assets"))
+	wapp.Use(middleware.Static("/var/active_profiles"))
 
 	//Templating config
 	wapp.Renderer = &TemplateRegistry{
