@@ -1,19 +1,21 @@
 protocols:
   netconf:
-    port: 8080
+    port: 830
     rpc_timeout: 10 
   gnmi:
     port: 9339
     skip_verify: true 
 modules:
+  grafana:
+    port: 8080
   enricher:
-    folder: "./"
+    folder: "/var/metadata/"
     interval: 720
     workers: 2
     port: 10000
   portal:
-    https: true
+    https: false
     server_crt: ""
     server_key: ""
-    port: 8080
+    port: 80
 

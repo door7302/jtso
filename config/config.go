@@ -17,6 +17,10 @@ type PortalConfig struct {
 	Port      int
 }
 
+type GrafanaConfig struct {
+	Port int
+}
+
 type NetconfConfig struct {
 	Port       int
 	RpcTimeout int
@@ -34,7 +38,7 @@ type EnricherConfig struct {
 	Port     int
 }
 type ConfigContainer struct {
-	//Instances []*InstanceConfig
+	Grafana  *GrafanaConfig
 	Enricher *EnricherConfig
 	Portal   *PortalConfig
 	Netconf  *NetconfConfig
@@ -54,13 +58,16 @@ func NewConfigContainer(f string) *ConfigContainer {
 	logger.Log.Info("Read configuration file")
 
 	// Ser default value for portal
+	viper.SetDefault("modules.grafana.port", 8080)
+
+	// Ser default value for portal
 	viper.SetDefault("modules.portal.https", false)
 	viper.SetDefault("modules.portal.server_crt", "")
 	viper.SetDefault("modules.portal.server_key", "")
 	viper.SetDefault("modules.portal.port", 8081)
 
 	// Ser default value for enricher
-	viper.SetDefault("modules.enricher.folder", "./")
+	viper.SetDefault("modules.enricher.folder", "/var/metadata/")
 	viper.SetDefault("modules.enricher.interval", 720*time.Minute)
 	viper.SetDefault("modules.enricher.workers", 4)
 	viper.SetDefault("modules.enricher.port", 10000)
@@ -74,7 +81,9 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("protocols.gnmi.skip_verify", true)
 
 	return &ConfigContainer{
-		//Instances: inst,
+		Grafana: &GrafanaConfig{
+			Port: viper.GetInt("modules.grafana.port"),
+		},
 		Portal: &PortalConfig{
 			Port:      viper.GetInt("modules.portal.port"),
 			Https:     viper.GetBool("modules.portal.https"),

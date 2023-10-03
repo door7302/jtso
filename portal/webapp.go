@@ -98,6 +98,7 @@ func (w *WebApp) Run() {
 }
 
 func routeIndex(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
 	teleMx, telePtx, teleAcx, influx, grafana, kapacitor, jtso := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
 	// check containers state
 
@@ -164,10 +165,12 @@ func routeIndex(c echo.Context) error {
 		}
 	}
 
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX})
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "GrafanaPort": grafanaPort})
 }
 
 func routeRouters(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
+
 	// Get all routers from db
 	var lr []NewRouter
 	lr = make([]NewRouter, 0)
@@ -175,15 +178,16 @@ func routeRouters(c echo.Context) error {
 	for _, r := range sqlite.RtrList {
 		lr = append(lr, NewRouter{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family})
 	}
-	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr})
+	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
 }
 
 func routeCred(c echo.Context) error {
-
-	return c.Render(http.StatusOK, "cred.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser, "Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd, "Usetls": sqlite.ActiveCred.UseTls})
+	grafanaPort := collectCfg.cfg.Grafana.Port
+	return c.Render(http.StatusOK, "cred.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser, "Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd, "Usetls": sqlite.ActiveCred.UseTls, "GrafanaPort": grafanaPort})
 }
 
 func routeProfiles(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
 	// Get all routers from db
 	var lr []NewRouter
 	var lp []string
@@ -215,10 +219,11 @@ func routeProfiles(c echo.Context) error {
 		}
 		la = append(la, TabAsso{Shortname: r.Shortname, Profiles: asso})
 	}
-	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp})
+	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort})
 }
 
 func routeDoc(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
 	// Get all profiles
 	var lp []string
 
@@ -230,7 +235,7 @@ func routeDoc(c echo.Context) error {
 	}
 	association.ProfileLock.Unlock()
 
-	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Profiles": lp})
+	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort})
 }
 
 func routeAddRouter(c echo.Context) error {
