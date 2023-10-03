@@ -26,10 +26,10 @@ function updateDoc() {
               success : function(json) {
                 if (json.status == "OK") {
                   img.setAttribute('src', "img/" +json.img);
-                  desc.innerHTML= json.desc;
-                  tele.innerHTML= json.tele;
-                  graf.innerHTML= json.graf;
-                  kapa.innerHTML= json.kapa;
+                  desc.innerHTML= json.desc.trim();
+                  tele.innerHTML= json.tele.trim();
+                  graf.innerHTML= json.graf.trim();
+                  kapa.innerHTML= json.kapa.trim();
 
                 }
                 else {

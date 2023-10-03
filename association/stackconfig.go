@@ -115,7 +115,17 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				rendRtrs = append(rendRtrs, r.Hostname+":"+strconv.Itoa(cfg.Gnmi.Port))
 			}
 			// render profile
-			temp = template.Must(template.ParseFiles("/var/active_profiles/" + p + "/" + filename))
+			t, err := template.ParseFiles("/var/active_profiles/" + p + "/" + filename)
+			if err != nil {
+				logger.Log.Errorf("Unable to open the telegraf file for rendering %s - err: %v", filename, err)
+				continue
+			}
+			var mustErr error
+			temp = template.Must(t, mustErr)
+			if err != nil {
+				logger.Log.Errorf("Unable to render file %s - err: %v", filename, err)
+				continue
+			}
 			renderFile, err := os.Create(directory + filename)
 			if err != nil {
 				logger.Log.Errorf("Unable to open the target rendering file - err: %v", err)
