@@ -22,6 +22,7 @@ RUN mkdir -p /etc/jtso
 RUN mkdir -p /var/shared/telegraf
 RUN mkdir -p /var/shared/grafana
 RUN mkdir -p /var/cert
+RUN mkdir -p /var/metadata
 
 EXPOSE 8081
 
