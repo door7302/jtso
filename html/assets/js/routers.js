@@ -4,6 +4,7 @@ function addRouter() {
 
 
     var dataToSend = {"hostname": h, "shortname": s};
+    waitingDialog.show();
     // send data
     $(function() {
         $.ajax({
@@ -19,13 +20,16 @@ function addRouter() {
                 document.getElementById("Hostname").value="";
                 document.getElementById("Shortname").value="";
                 alertify.success("Router "+s+" has been successfulfy added");
+                waitingDialog.hide();
               }
               else {
                 alertify.alert("JSTO...", json.msg);
+                waitingDialog.hide();
               }             
             },    
             error : function(xhr, ajaxOptions, thrownError) {        
                 alertify.alert("JSTO...", "Unexpected error");
+                waitingDialog.hide();
             }
         });
     });
