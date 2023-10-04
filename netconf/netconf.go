@@ -27,7 +27,7 @@ type RouterTask struct {
 
 func GetFacts(r string, u string, p string, port int) (*xml.Version, error) {
 
-	logger.Log.Infof("[%s] Get Facts for new router", r)
+	logger.Log.Infof("[%s] Get Facts for new router - open seesion on port %d for username %s", r, port, u)
 
 	sshConfig := &ssh.ClientConfig{
 		User:            u,
