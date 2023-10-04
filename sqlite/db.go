@@ -14,6 +14,8 @@ type RtrEntry struct {
 	Hostname  string
 	Shortname string
 	Family    string
+	Model     string
+	Version   string
 	Profile   int
 }
 
@@ -54,6 +56,8 @@ func Init(f string) error {
 		name TEXT,
 		short TEXT,
 		family TEXT,
+		model TEXT,
+		version TEXT,
 		profile INTEGER
 		);`
 
@@ -104,9 +108,10 @@ func CheckAsso(n string) (bool, error) {
 	return flag, nil
 }
 
-func AddRouter(n string, s string, f string) error {
+func AddRouter(n string, s string, f string, m string, v string) error {
 	dbMu.Lock()
-	if _, err := db.Exec("INSERT INTO routers VALUES(NULL,?,?,?,?);", n, s, f, 0); err != nil {
+
+	if _, err := db.Exec("INSERT INTO routers VALUES(NULL,?,?,?,?,?,?);", n, s, f, m, v, 0); err != nil {
 		logger.Log.Errorf("Error while adding router %s - err: %v", n, err)
 		dbMu.Unlock()
 		return err

@@ -14,6 +14,13 @@ type RawData struct {
 	LacpDigest *LacpDigest
 }
 
+// Struct for unmarshalling version
+type Version struct {
+	XMLName xml.Name `xml:"software-information"`
+	Model   string   `xml:"product-model"`
+	Ver     string   `xml:"junos-version"`
+}
+
 // Structs for unmarshalling interfaces descriptions
 type Ifdesc struct {
 	XMLName   xml.Name `xml:"interface-information"`
@@ -98,8 +105,19 @@ type LacpDigest struct {
 	LacpMap map[string]string
 }
 
+// Parsing function for version
+func ParseVersion(s string) (*Version, error) {
+	logger.HandlePanic()
+	var i Version
+	// convert in byte array
+	b := []byte(s)
+	// unmarshall xml string
+	err := xml.Unmarshal(b, &i)
+	return &i, err
+}
+
 // Parsing function for interfaces description
-func ParseIfdesc(s string, r string) (*Ifdesc, error) {
+func ParseIfdesc(s string) (*Ifdesc, error) {
 	logger.HandlePanic()
 	var i Ifdesc
 	// convert in byte array
@@ -110,7 +128,7 @@ func ParseIfdesc(s string, r string) (*Ifdesc, error) {
 }
 
 // Parsing function for chassis hw
-func ParseChassis(s string, r string) (*Hw, error) {
+func ParseChassis(s string) (*Hw, error) {
 	logger.HandlePanic()
 	var i Hw
 	// convert in byte array
@@ -121,7 +139,7 @@ func ParseChassis(s string, r string) (*Hw, error) {
 }
 
 // Parsing function for Lacp interface
-func ParseLacp(s string, r string) (*Lacp, *LacpDigest, error) {
+func ParseLacp(s string) (*Lacp, *LacpDigest, error) {
 	logger.HandlePanic()
 	var i Lacp
 	data := new(LacpDigest)

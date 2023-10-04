@@ -33,11 +33,7 @@
             <h4 class="card-title">Router Management</h4>
             <form><label class="form-label">Short Name:</label><input id="Shortname" class="form-control" type="text"></form>
             <form><label class="form-label" style="margin-top: 10px;">Hostname or IP:</label><input id="Hostname" class="form-control" type="text"></form>   
-            <form style="margin-top: 10px;"><label class="form-label">Family:</label>&nbsp;<select id="Family" class="selectpicker">
-                    <option value="mx" selected="">MX Series</option>
-                    <option value="ptx">PTX Series</option>
-                    <option value="acx">ACX Series</option>
-                </select></form><input onclick="addRouter();" class="btn btn-primary" type="submit" value="Add Router" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+            <input onclick="addRouter();" class="btn btn-primary" type="submit" value="Add Router" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
         </div>
     </div>
     <div class="card">
@@ -50,6 +46,8 @@
                             <th>Name</th>
                             <th>Hostname</th>
                             <th>Family</th>
+                            <th>Model</th>
+                            <th>Version</th>
                             <th width="5%">Delete</th>
                         </tr>
                     </thead>
@@ -59,6 +57,8 @@
                             <td>{{.Shortname}}</td>
                             <td>{{.Hostname}}</td>
                             <td>{{.Family}}</td>
+                            <td>{{.Model}}</td>
+                            <td>{{.Version}}</td>
                             <td  class="d-xxl-flex justify-content-xxl-center"><button onclick="remove('{{.Shortname}}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td>
                         </tr>
                         {{end}}

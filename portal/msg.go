@@ -9,7 +9,14 @@ type (
 	NewRouter struct {
 		Hostname  string `json:"hostname"`
 		Shortname string `json:"shortname"`
+	}
+
+	RouterDetails struct {
+		Hostname  string `json:"hostname"`
+		Shortname string `json:"shortname"`
 		Family    string `json:"family"`
+		Model     string `json:"model"`
+		Version   string `json:"version"`
 	}
 
 	DeletedRouter struct {
@@ -32,6 +39,13 @@ type (
 	Reply struct {
 		Status string `json:"status"`
 		Msg    string `json:"msg"`
+	}
+
+	ReplyRouter struct {
+		Status  string `json:"status"`
+		Family  string `json:"family"`
+		Model   string `json:"model"`
+		Version string `json:"version"`
 	}
 
 	ReplyDoc struct {

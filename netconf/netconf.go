@@ -25,6 +25,49 @@ type RouterTask struct {
 	Jsonify *output.Metadata
 }
 
+func GetFacts(r string, u string, p string, port int) (*xml.Version, error) {
+
+	logger.Log.Infof("[%s] Get Facts for new router", r)
+
+	sshConfig := &ssh.ClientConfig{
+		User:            u,
+		Auth:            []ssh.AuthMethod{ssh.Password(p)},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+	var replyVersion *xml.Version
+
+	session, err := netconf.DialSSH(fmt.Sprintf("%s:%d", r, port), sshConfig)
+	if err != nil {
+		logger.Log.Errorf("[%s] Unable to open Netconf session: %v", r, err)
+		return nil, err
+	}
+
+	defer session.Close()
+	capabilities := netconf.DefaultCapabilities
+	err = session.SendHello(&message.Hello{Capabilities: capabilities})
+	if err != nil {
+		logger.Log.Errorf("[%s] Error while sending Hello: %v", r, err)
+		return nil, err
+	}
+
+	d := "<get-software-information></get-software-information>"
+	rpc := message.NewRPC(d)
+	reply, err := session.SyncRPC(rpc, int32(60))
+	if err != nil || reply == nil || strings.Contains(reply.Data, "<rpc-error>") {
+		logger.Log.Warnf("[%s] No Version information: %v", r, err)
+		return nil, err
+
+	} else {
+		// Unmarshall the reply
+		replyVersion, err = xml.ParseVersion(reply.Data)
+		if err != nil {
+			logger.Log.Warnf("[%s] Unable to parse version information: %v", r, err)
+			return nil, err
+		}
+	}
+	return replyVersion, nil
+}
+
 // The Worker function
 func (r *RouterTask) Work() error {
 	logger.HandlePanic()
@@ -73,7 +116,7 @@ func (r *RouterTask) Work() error {
 
 	} else {
 		// Unmarshall the reply
-		rawData.IfInfo, err = xml.ParseIfdesc(reply.Data, r.Name)
+		rawData.IfInfo, err = xml.ParseIfdesc(reply.Data)
 		if err != nil {
 			logger.Log.Warnf("[%s] Unable to parse interface description: %v", r.Name, err)
 		} else {
@@ -89,7 +132,7 @@ func (r *RouterTask) Work() error {
 		logger.Log.Warnf("[%s] No Chassis HW information: %v", r.Name, err)
 	} else {
 		// Unmarshall the reply
-		rawData.HwInfo, err = xml.ParseChassis(reply.Data, r.Name)
+		rawData.HwInfo, err = xml.ParseChassis(reply.Data)
 		if err != nil {
 			logger.Log.Warnf("[%s] Unable to parse chassis hardware: %v", r.Name, err)
 		} else {
@@ -104,7 +147,7 @@ func (r *RouterTask) Work() error {
 		logger.Log.Warnf("[%s] No LACP Interface information: %v", r.Name, err)
 	} else {
 		// Unmarshall the reply
-		rawData.LacpInfo, rawData.LacpDigest, err = xml.ParseLacp(reply.Data, r.Name)
+		rawData.LacpInfo, rawData.LacpDigest, err = xml.ParseLacp(reply.Data)
 		if err != nil {
 			logger.Log.Warnf("[%s] Unable to parse LACP Interface: %v", r.Name, err)
 		} else {

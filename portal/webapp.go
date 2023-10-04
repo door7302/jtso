@@ -7,10 +7,12 @@ import (
 	"jtso/association"
 	"jtso/config"
 	"jtso/logger"
+	"jtso/netconf"
 	"jtso/sqlite"
 	"jtso/worker"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -172,11 +174,11 @@ func routeRouters(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 
 	// Get all routers from db
-	var lr []NewRouter
-	lr = make([]NewRouter, 0)
+	var lr []RouterDetails
+	lr = make([]RouterDetails, 0)
 
 	for _, r := range sqlite.RtrList {
-		lr = append(lr, NewRouter{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family})
+		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
 	}
 	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
 }
@@ -189,14 +191,14 @@ func routeCred(c echo.Context) error {
 func routeProfiles(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	// Get all routers from db
-	var lr []NewRouter
+	var lr []RouterDetails
 	var lp []string
 
-	lr = make([]NewRouter, 0)
+	lr = make([]RouterDetails, 0)
 	lp = make([]string, 0)
 
 	for _, r := range sqlite.RtrList {
-		lr = append(lr, NewRouter{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family})
+		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
 	}
 	association.ProfileLock.Lock()
 	for k, _ := range association.ActiveProfiles {
@@ -248,13 +250,26 @@ func routeAddRouter(c echo.Context) error {
 		logger.Log.Errorf("Unable to parse Post request for creating a new router: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to create the router"})
 	}
-	err = sqlite.AddRouter(r.Hostname, r.Shortname, r.Family)
+	// here we need to issue a Netconf request to retrieve model and version
+	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Enricher.Port)
+	if err != nil {
+		logger.Log.Errorf("Unable to retrieve router facts: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve router facts"})
+	}
+	// derive family from model
+	var f string
+	if strings.ToLower(string(reply.Model[0])) == "m" {
+		f = strings.ToLower(string(reply.Model[0:2]))
+	} else {
+		f = strings.ToLower(string(reply.Model[0:3]))
+	}
+	err = sqlite.AddRouter(r.Hostname, r.Shortname, f, reply.Model, reply.Ver)
 	if err != nil {
 		logger.Log.Errorf("Unable to add a new router in DB: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to add router in DB"})
 	}
-	logger.Log.Infof("Router %s has been successfully added", r.Hostname)
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router added"})
+	logger.Log.Infof("Router %s has been successfully added - family %s - model %s - version %s", r.Hostname, f, reply.Model, reply.Ver)
+	return c.JSON(http.StatusOK, ReplyRouter{Status: "OK", Family: f, Model: reply.Model, Version: reply.Ver})
 }
 
 func routeDelRouter(c echo.Context) error {
