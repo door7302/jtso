@@ -13,6 +13,7 @@ function addAsso() {
  
   
   var dataToSend = {"shortname": r, "profiles": selected};
+  waitingDialog.show();
   // send data
   $(function() {
       $.ajax({
@@ -26,13 +27,16 @@ function addAsso() {
               var row = $("<tr><td>"+r+"</td><td>"+raw_selected+'</td><td class="d-xxl-flex justify-content-xxl-center"><button onclick="removeAsso("'+r+'", this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td></tr>')
               $("#ListRtrs").append(row);
               alertify.success("Profile(s) have been successfulfy added to router "+r)
+              waitingDialog.hide();
             }
             else {
               alertify.alert("JSTO...", json.msg);
+              waitingDialog.hide();
             }             
           },    
           error : function(xhr, ajaxOptions, thrownError) {        
               alertify.alert("JSTO...", "Unexpected error");
+              waitingDialog.hide();
           }
       });
   });

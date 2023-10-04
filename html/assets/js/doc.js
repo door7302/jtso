@@ -15,6 +15,7 @@ function updateDoc() {
     }
     else {
       var dataToSend = {"profile": p};
+      waitingDialog.show();
       // send data
       $(function() {
           $.ajax({
@@ -30,14 +31,17 @@ function updateDoc() {
                   tele.innerHTML= json.tele.trim();
                   graf.innerHTML= json.graf.trim();
                   kapa.innerHTML= json.kapa.trim();
+                  waitingDialog.hide();
 
                 }
                 else {
                   alertify.alert("JSTO...", json.msg);
+                  waitingDialog.hide();
                 }             
               },    
               error : function(xhr, ajaxOptions, thrownError) {        
                   alertify.alert("JSTO...", "Unexpected error");
+                  waitingDialog.hide();
               }
           });
       });
