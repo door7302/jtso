@@ -205,7 +205,7 @@ func LoadAll() error {
 	defer rows.Close()
 	for rows.Next() {
 		i := RtrEntry{}
-		err = rows.Scan(&i.Id, &i.Hostname, &i.Shortname, &i.Family, &i.Profile)
+		err = rows.Scan(&i.Id, &i.Hostname, &i.Shortname, &i.Family, &i.Model, &i.Version, &i.Profile)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing routers rows - err: %v", err)
 			dbMu.Unlock()
