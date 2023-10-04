@@ -393,21 +393,11 @@ func routeUptDoc(c echo.Context) error {
 	}
 
 	tele := ""
-	for i, v := range p.Definition.TelCfg.MxCfg {
-		if i == len(p.Definition.TelCfg.MxCfg)-1 {
-			tele += "Version " + v.Version + ": " + v.Config
-		} else {
-			tele += "Version " + v.Version + ": " + v.Config + "</br>"
-		}
-
+	for _, v := range p.Definition.TelCfg.MxCfg {
+		tele += "Version " + v.Version + ": " + v.Config + "</br>"
 	}
-	for i, v := range p.Definition.TelCfg.PtxCfg {
-		if i == len(p.Definition.TelCfg.PtxCfg)-1 {
-			tele += "Version " + v.Version + ": " + v.Config
-		} else {
-			tele += "Version " + v.Version + ": " + v.Config + "</br>"
-		}
-
+	for _, v := range p.Definition.TelCfg.PtxCfg {
+		tele += "Version " + v.Version + ": " + v.Config + "</br>"
 	}
 	for i, v := range p.Definition.TelCfg.AcxCfg {
 		if i == len(p.Definition.TelCfg.AcxCfg)-1 {
