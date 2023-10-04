@@ -395,25 +395,25 @@ func routeUptDoc(c echo.Context) error {
 	tele := ""
 	for i, v := range p.Definition.TelCfg.MxCfg {
 		if i == len(p.Definition.TelCfg.MxCfg)-1 {
-			tele = "Version " + v.Version + ": " + v.Config
+			tele += "Version " + v.Version + ": " + v.Config
 		} else {
-			tele = "Version " + v.Version + ": " + v.Config + "</br>"
+			tele += "Version " + v.Version + ": " + v.Config + "</br>"
 		}
 
 	}
 	for i, v := range p.Definition.TelCfg.PtxCfg {
 		if i == len(p.Definition.TelCfg.PtxCfg)-1 {
-			tele = "Version " + v.Version + ": " + v.Config
+			tele += "Version " + v.Version + ": " + v.Config
 		} else {
-			tele = "Version " + v.Version + ": " + v.Config + "</br>"
+			tele += "Version " + v.Version + ": " + v.Config + "</br>"
 		}
 
 	}
 	for i, v := range p.Definition.TelCfg.AcxCfg {
 		if i == len(p.Definition.TelCfg.AcxCfg)-1 {
-			tele = "Version " + v.Version + ": " + v.Config
+			tele += "Version " + v.Version + ": " + v.Config
 		} else {
-			tele = "Version " + v.Version + ": " + v.Config + "</br>"
+			tele += "Version " + v.Version + ": " + v.Config + "</br>"
 		}
 
 	}
@@ -424,9 +424,9 @@ func routeUptDoc(c echo.Context) error {
 	kapa := ""
 	for i, v := range p.Definition.KapaCfg {
 		if i == len(p.Definition.KapaCfg)-1 {
-			kapa = "Script:" + v
+			kapa += "Script: " + v
 		} else {
-			kapa = "Script:" + v + "</br>"
+			kapa += "Script: " + v + "</br>"
 		}
 
 	}
@@ -437,9 +437,9 @@ func routeUptDoc(c echo.Context) error {
 	graf := ""
 	for i, v := range p.Definition.GrafaCfg {
 		if i == len(p.Definition.GrafaCfg)-1 {
-			graf = "Script:" + v
+			graf += "Script: " + v
 		} else {
-			graf = "Script:" + v + "</br>"
+			graf += "Script: " + v + "</br>"
 		}
 
 	}
