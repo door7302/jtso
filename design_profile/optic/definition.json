@@ -8,7 +8,7 @@
         },
         {
           "version": "23.2",
-          "conf": "mx_optic_23.2.conf"
+          "conf": "mx_optic.23.2.conf"
           }
       ],
       "ptx":[ {
