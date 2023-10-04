@@ -393,35 +393,60 @@ func routeUptDoc(c echo.Context) error {
 	}
 
 	tele := ""
-	for _, v := range p.Definition.TelCfg.MxCfg {
-		tele = tele + "&nbsp; &nbsp;" + v.Config + "(" + v.Version + ")"
+	for i, v := range p.Definition.TelCfg.MxCfg {
+		if i == len(p.Definition.TelCfg.MxCfg)-1 {
+			tele = "Version " + v.Version + ": " + v.Config
+		} else {
+			tele = "Version " + v.Version + ": " + v.Config + "</br>"
+		}
+
 	}
-	for _, v := range p.Definition.TelCfg.PtxCfg {
-		tele = tele + "&nbsp; &nbsp;" + v.Config + "(" + v.Version + ")"
+	for i, v := range p.Definition.TelCfg.PtxCfg {
+		if i == len(p.Definition.TelCfg.PtxCfg)-1 {
+			tele = "Version " + v.Version + ": " + v.Config
+		} else {
+			tele = "Version " + v.Version + ": " + v.Config + "</br>"
+		}
+
 	}
-	for _, v := range p.Definition.TelCfg.AcxCfg {
-		tele = tele + "&nbsp; &nbsp;" + v.Config + "(" + v.Version + ")"
+	for i, v := range p.Definition.TelCfg.AcxCfg {
+		if i == len(p.Definition.TelCfg.AcxCfg)-1 {
+			tele = "Version " + v.Version + ": " + v.Config
+		} else {
+			tele = "Version " + v.Version + ": " + v.Config + "</br>"
+		}
+
 	}
 	if tele == "" {
-		tele = "&nbsp; &nbsp;No Telegraf configuration attached to this profile"
+		tele = "No Telegraf configuration attached to this profile"
 	}
 
 	kapa := ""
-	for _, v := range p.Definition.KapaCfg {
-		kapa = kapa + "&nbsp; &nbsp;" + v
+	for i, v := range p.Definition.KapaCfg {
+		if i == len(p.Definition.KapaCfg)-1 {
+			kapa = "Script:" + v
+		} else {
+			kapa = "Script:" + v + "</br>"
+		}
+
 	}
 	if kapa == "" {
-		kapa = "&nbsp; &nbsp;No Kapacitor script attached to this profile"
+		kapa = "No Kapacitor script attached to this profile"
 	}
 
 	graf := ""
-	for _, v := range p.Definition.GrafaCfg {
-		graf = graf + "&nbsp; &nbsp;" + v
+	for i, v := range p.Definition.GrafaCfg {
+		if i == len(p.Definition.GrafaCfg)-1 {
+			graf = "Script:" + v
+		} else {
+			graf = "Script:" + v + "</br>"
+		}
+
 	}
 	if graf == "" {
-		graf = "&nbsp; &nbsp;No Grafana Dasboards attached to this profile"
+		graf = "No Grafana Dasboards attached to this profile"
 	}
 
 	logger.Log.Infof("Documentation have been successfully updated")
-	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: "&nbsp; &nbsp;" + p.Definition.Description, Tele: tele, Graf: graf, Kapa: kapa})
+	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: tele, Graf: graf, Kapa: kapa})
 }
