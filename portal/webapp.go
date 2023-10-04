@@ -251,7 +251,7 @@ func routeAddRouter(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to create the router"})
 	}
 	// here we need to issue a Netconf request to retrieve model and version
-	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Enricher.Port)
+	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port)
 	if err != nil {
 		logger.Log.Errorf("Unable to retrieve router facts: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve router facts"})

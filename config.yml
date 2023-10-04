@@ -12,7 +12,6 @@ modules:
     folder: "/var/metadata/"
     interval: 720
     workers: 2
-    port: 10000
   portal:
     https: false
     server_crt: ""

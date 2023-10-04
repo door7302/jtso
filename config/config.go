@@ -35,7 +35,6 @@ type EnricherConfig struct {
 	Folder   string
 	Interval time.Duration
 	Workers  int
-	Port     int
 }
 type ConfigContainer struct {
 	Grafana  *GrafanaConfig
@@ -70,7 +69,6 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("modules.enricher.folder", "/var/metadata/")
 	viper.SetDefault("modules.enricher.interval", 720*time.Minute)
 	viper.SetDefault("modules.enricher.workers", 4)
-	viper.SetDefault("modules.enricher.port", 10000)
 
 	// Set default value for Netconf
 	viper.SetDefault("protocols.netconf.port", 830)
@@ -94,7 +92,6 @@ func NewConfigContainer(f string) *ConfigContainer {
 			Folder:   viper.GetString("modules.enricher.folder"),
 			Interval: viper.GetDuration("modules.enricher.interval") * time.Minute,
 			Workers:  viper.GetInt("modules.enricher.workers"),
-			Port:     viper.GetInt("modules.enricher.port"),
 		},
 		Netconf: &NetconfConfig{
 			Port:       viper.GetInt("protocols.netconf.port"),
