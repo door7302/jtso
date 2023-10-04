@@ -2,9 +2,21 @@
     "cheatsheet": "optic.png",
     "description": "This profile provides template for collecting optical data",
     "telegraf": {
-      "mx": "mx_optic.conf",
-      "ptx": "ptx_optic.conf",
-      "acx": "acx_optic.conf"
+      "mx": [ {
+        "version": "all",
+        "conf": "mx_optic.conf"
+        }
+      ],
+      "ptx":[ {
+        "version": "all",
+        "conf": "ptx_optic.conf"
+        }
+      ],
+      "acx": [ {
+        "version": "all",
+        "conf": "acx_optic.conf"
+        }
+      ]
     },
     "kapacitor": null,
     "grafana": [

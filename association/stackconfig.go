@@ -8,6 +8,7 @@ import (
 	"jtso/sqlite"
 	"os"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/docker/docker/api/types/container"
@@ -95,47 +96,81 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 		// now parse all profiles of a given family
 		for p, rtrs := range cfgHierarchy[f] {
-			var filename string
+
+			var filenames []Config
+			var perVersion map[string][]*sqlite.RtrEntry
+			perVersion = make(map[string][]*sqlite.RtrEntry)
+
 			// extract definition of the profile
 			switch f {
 			case "mx":
-				filename = ActiveProfiles[p].Definition.TelCfg.MxCfg
+				filenames = ActiveProfiles[p].Definition.TelCfg.MxCfg
 			case "ptx":
-				filename = ActiveProfiles[p].Definition.TelCfg.PtxCfg
+				filenames = ActiveProfiles[p].Definition.TelCfg.PtxCfg
 			case "acx":
-				filename = ActiveProfiles[p].Definition.TelCfg.AcxCfg
+				filenames = ActiveProfiles[p].Definition.TelCfg.AcxCfg
 			}
 			tls := false
 			if sqlite.ActiveCred.UseTls == "yes" {
 				tls = true
 			}
 
-			rendRtrs := make([]string, 0)
+			// Create the map - per version > routers
 			for _, r := range rtrs {
-				rendRtrs = append(rendRtrs, r.Hostname+":"+strconv.Itoa(cfg.Gnmi.Port))
+				keep_version := "all"
+				save_conf := ""
+				for _, c := range filenames {
+					if c.Version != "all" {
+						comp := strings.Compare(r.Version, c.Version)
+						if comp == -1 {
+							if keep_version != "all" {
+								comp := strings.Compare(c.Version, keep_version)
+								if comp == -1 {
+									keep_version = c.Version
+									save_conf = c.Config
+								}
+							} else {
+								keep_version = c.Version
+								save_conf = c.Config
+							}
+						}
+					} else {
+						save_conf = c.Config
+					}
+				}
+				perVersion[save_conf] = append(perVersion[keep_version], r)
 			}
-			// render profile
-			t, err := template.ParseFiles("/var/active_profiles/" + p + "/" + filename)
-			if err != nil {
-				logger.Log.Errorf("Unable to open the telegraf file for rendering %s - err: %v", filename, err)
-				continue
-			}
-			var mustErr error
-			temp = template.Must(t, mustErr)
-			if err != nil {
-				logger.Log.Errorf("Unable to render file %s - err: %v", filename, err)
-				continue
-			}
-			renderFile, err := os.Create(directory + filename)
-			if err != nil {
-				logger.Log.Errorf("Unable to open the target rendering file - err: %v", err)
-				continue
-			}
-			defer renderFile.Close()
-			err = temp.Execute(renderFile, map[string]interface{}{"rtrs": rendRtrs, "username": sqlite.ActiveCred.GnmiUser, "password": sqlite.ActiveCred.GnmiPwd, "tls": tls})
-			if err != nil {
-				logger.Log.Errorf("Unable to write into render telegraf file - err: %v", err)
-				continue
+
+			for filename, v := range perVersion {
+
+				rendRtrs := make([]string, 0)
+				for _, r := range v {
+					rendRtrs = append(rendRtrs, r.Hostname+":"+strconv.Itoa(cfg.Gnmi.Port))
+
+				}
+				// render profile
+				t, err := template.ParseFiles("/var/active_profiles/" + p + "/" + filename)
+				if err != nil {
+					logger.Log.Errorf("Unable to open the telegraf file for rendering %s - err: %v", filename, err)
+					continue
+				}
+				var mustErr error
+				temp = template.Must(t, mustErr)
+				if err != nil {
+					logger.Log.Errorf("Unable to render file %s - err: %v", filename, err)
+					continue
+				}
+				renderFile, err := os.Create(directory + filename)
+				if err != nil {
+					logger.Log.Errorf("Unable to open the target rendering file - err: %v", err)
+					continue
+				}
+				defer renderFile.Close()
+				err = temp.Execute(renderFile, map[string]interface{}{"rtrs": rendRtrs, "username": sqlite.ActiveCred.GnmiUser, "password": sqlite.ActiveCred.GnmiPwd, "tls": tls})
+				if err != nil {
+					logger.Log.Errorf("Unable to write into render telegraf file - err: %v", err)
+					continue
+				}
 			}
 		}
 

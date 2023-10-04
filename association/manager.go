@@ -13,10 +13,15 @@ import (
 	"github.com/walle/targz"
 )
 
+type Config struct {
+	Version string `json:"version"`
+	Config  string `json:"conf"`
+}
+
 type Telegraf struct {
-	MxCfg  string `json:"mx"`
-	PtxCfg string `json:"ptx"`
-	AcxCfg string `json:"acx"`
+	MxCfg  []Config `json:"mx"`
+	PtxCfg []Config `json:"ptx"`
+	AcxCfg []Config `json:"acx"`
 }
 
 type DefProfile struct {

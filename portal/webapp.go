@@ -393,18 +393,17 @@ func routeUptDoc(c echo.Context) error {
 	}
 
 	tele := ""
-	if p.Definition.TelCfg.MxCfg != "" {
-		tele = tele + "&nbsp; &nbsp;" + p.Definition.TelCfg.MxCfg
+	for _, v := range p.Definition.TelCfg.MxCfg {
+		tele = tele + "&nbsp; &nbsp;" + v.Config + "(" + v.Version + ")"
 	}
-	if p.Definition.TelCfg.PtxCfg != "" {
-		tele = tele + "&nbsp; &nbsp;" + p.Definition.TelCfg.PtxCfg
+	for _, v := range p.Definition.TelCfg.PtxCfg {
+		tele = tele + "&nbsp; &nbsp;" + v.Config + "(" + v.Version + ")"
 	}
-
-	if p.Definition.TelCfg.AcxCfg != "" {
-		tele = tele + "&nbsp; &nbsp;" + p.Definition.TelCfg.AcxCfg
+	for _, v := range p.Definition.TelCfg.AcxCfg {
+		tele = tele + "&nbsp; &nbsp;" + v.Config + "(" + v.Version + ")"
 	}
 	if tele == "" {
-		tele = "No Telegraf configuration attached to this profile"
+		tele = "&nbsp; &nbsp;No Telegraf configuration attached to this profile"
 	}
 
 	kapa := ""
@@ -412,7 +411,7 @@ func routeUptDoc(c echo.Context) error {
 		kapa = kapa + "&nbsp; &nbsp;" + v
 	}
 	if kapa == "" {
-		kapa = "No Kapacitor script attached to this profile"
+		kapa = "&nbsp; &nbsp;No Kapacitor script attached to this profile"
 	}
 
 	graf := ""
@@ -420,9 +419,9 @@ func routeUptDoc(c echo.Context) error {
 		graf = graf + "&nbsp; &nbsp;" + v
 	}
 	if graf == "" {
-		graf = "No Grafana Dasboards attached to this profile"
+		graf = "&nbsp; &nbsp;No Grafana Dasboards attached to this profile"
 	}
 
 	logger.Log.Infof("Documentation have been successfully updated")
-	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: tele, Graf: graf, Kapa: kapa})
+	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: "&nbsp; &nbsp;" + p.Definition.Description, Tele: tele, Graf: graf, Kapa: kapa})
 }
