@@ -394,16 +394,16 @@ func routeUptDoc(c echo.Context) error {
 
 	tele := ""
 	for _, v := range p.Definition.TelCfg.MxCfg {
-		tele += "Version " + v.Version + ": " + v.Config + "</br>"
+		tele += "For MX version " + v.Version + ": " + v.Config + "</br>"
 	}
 	for _, v := range p.Definition.TelCfg.PtxCfg {
-		tele += "Version " + v.Version + ": " + v.Config + "</br>"
+		tele += "For PTX version " + v.Version + ": " + v.Config + "</br>"
 	}
 	for i, v := range p.Definition.TelCfg.AcxCfg {
 		if i == len(p.Definition.TelCfg.AcxCfg)-1 {
-			tele += "Version " + v.Version + ": " + v.Config
+			tele += "For ACX version " + v.Version + ": " + v.Config
 		} else {
-			tele += "Version " + v.Version + ": " + v.Config + "</br>"
+			tele += "For ACX version " + v.Version + ": " + v.Config + "</br>"
 		}
 
 	}
@@ -427,9 +427,9 @@ func routeUptDoc(c echo.Context) error {
 	graf := ""
 	for i, v := range p.Definition.GrafaCfg {
 		if i == len(p.Definition.GrafaCfg)-1 {
-			graf += "Script: " + v
+			graf += "Dashboard: " + v
 		} else {
-			graf += "Script: " + v + "</br>"
+			graf += "Dashboard: " + v + "</br>"
 		}
 
 	}
