@@ -250,12 +250,27 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// Restart telegraf instance(s)
 	for _, f := range familes {
-		err = cli.ContainerRestart(context.Background(), "telegraf_"+f, container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
-		if err != nil {
-			logger.Log.Errorf("Unable to restart telegraf_"+f+" container: %v", err)
-			continue
+		cntr := 0
+		for _, rtrs := range cfgHierarchy[f] {
+			cntr += len(rtrs)
 		}
-		logger.Log.Info("telegraf_" + f + " container has been restarted")
+
+		// if cntr == 0 prefer shutdown the telegraf container
+		if cntr == 0 {
+			err = cli.ContainerStop(context.Background(), "telegraf_"+f, container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
+			if err != nil {
+				logger.Log.Errorf("Unable to stop telegraf_"+f+" container: %v", err)
+				continue
+			}
+			logger.Log.Info("telegraf_" + f + " container has been stopped - no more router attached")
+		} else {
+			err = cli.ContainerRestart(context.Background(), "telegraf_"+f, container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
+			if err != nil {
+				logger.Log.Errorf("Unable to restart telegraf_"+f+" container: %v", err)
+				continue
+			}
+			logger.Log.Info("telegraf_" + f + " container has been restarted")
+		}
 	}
 
 	logger.Log.Infof("All JTS components reconfigured for family %s", family)
