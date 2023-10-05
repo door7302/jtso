@@ -413,16 +413,32 @@ func routeUptDoc(c echo.Context) error {
 
 	tele := ""
 	for _, v := range p.Definition.TelCfg.MxCfg {
-		tele += "For MX version " + v.Version + ": " + v.Config + "</br>"
+		if v.Config == "all" {
+			tele += "For MX version " + v.Version + ": " + v.Config + "</br>"
+		} else {
+			tele += "For MX version <=" + v.Version + ": " + v.Config + "</br>"
+		}
 	}
 	for _, v := range p.Definition.TelCfg.PtxCfg {
-		tele += "For PTX version " + v.Version + ": " + v.Config + "</br>"
+		if v.Config == "all" {
+			tele += "For PTX version " + v.Version + ": " + v.Config + "</br>"
+		} else {
+			tele += "For PTX version <=" + v.Version + ": " + v.Config + "</br>"
+		}
 	}
 	for i, v := range p.Definition.TelCfg.AcxCfg {
 		if i == len(p.Definition.TelCfg.AcxCfg)-1 {
-			tele += "For ACX version " + v.Version + ": " + v.Config
+			if v.Config == "all" {
+				tele += "For ACX version " + v.Version + ": " + v.Config
+			} else {
+				tele += "For ACX version <=" + v.Version + ": " + v.Config + "</br>"
+			}
 		} else {
-			tele += "For ACX version " + v.Version + ": " + v.Config + "</br>"
+			if v.Config == "all" {
+				tele += "For ACX version " + v.Version + ": " + v.Config + "</br>"
+			} else {
+				tele += "For ACX version <=" + v.Version + ": " + v.Config + "</br>"
+			}
 		}
 
 	}
