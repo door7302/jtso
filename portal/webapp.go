@@ -329,7 +329,16 @@ func routeAddProfile(c echo.Context) error {
 	logger.Log.Info("Force the metadata update")
 
 	go worker.Collect(collectCfg.cfg)
-	go association.ConfigueStack(collectCfg.cfg, "all")
+	// find out the family of the router
+	fam := "all"
+	for _, i := range sqlite.RtrList {
+		if i.Shortname == r.Shortname {
+			fam = i.Family
+			break
+		}
+	}
+	// update the stack for the right family
+	go association.ConfigueStack(collectCfg.cfg, fam)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile updated"})
 
 }
@@ -350,6 +359,16 @@ func routeDelProfile(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete router profile in DB"})
 	}
 	logger.Log.Infof("Profile of router %s has been successfully deleted", r.Shortname)
+	// find out the family of the router
+	fam := "all"
+	for _, i := range sqlite.RtrList {
+		if i.Shortname == r.Shortname {
+			fam = i.Family
+			break
+		}
+	}
+	// update the stack for the right family
+	go association.ConfigueStack(collectCfg.cfg, fam)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile deleted"})
 
 }
