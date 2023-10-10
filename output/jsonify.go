@@ -3,6 +3,7 @@ package output
 import (
 	"encoding/json"
 	"jtso/logger"
+	"jtso/sqlite"
 	"jtso/xml"
 	"os"
 	"strings"
@@ -91,21 +92,119 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		m.Meta[rd.Family][rd.RtrName][lgl_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(lgl_desc, " ", "", -1), "-", "_", -1))
 	}
 	// add HW info
-	// Chassis model
+	// Chassis model + Version
+
+	// Find out the router entry to extract version already collected by the get Facts
+	var rtr *sqlite.RtrEntry
+	rtr = new(sqlite.RtrEntry)
+	family := ""
+	for _, r := range sqlite.RtrList {
+		if r.Hostname == rd.RtrName {
+			rtr = r
+			family = r.Family
+		}
+	}
 	_, ok = m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"]
 	if !ok {
 		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"] = make(map[string]string)
 	}
 	m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"]["MODEL"] = strings.Trim(rd.HwInfo.Chassis.Desc, "\n")
+	if rtr.Version != "" {
+		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"]["VERSION"] = strings.Trim(rtr.Version, "\n")
+	}
+
 	// For each LC add a TAG
 	for _, mod := range rd.HwInfo.Chassis.Modules {
-		slot := strings.Trim(strings.Replace(mod.Name, " ", "", 1), "\n")
-		if strings.Contains(slot, "FPC") {
-			_, ok := m.Meta[rd.Family][rd.RtrName][slot]
+		mSlot := strings.Trim(strings.Replace(mod.Name, " ", "", 1), "\n")
+
+		if strings.Contains(mSlot, "FPC") {
+			fpcSlot := strings.Replace(mSlot, "FPC", "", 1)
+			_, ok := m.Meta[rd.Family][rd.RtrName][mSlot]
 			if !ok {
-				m.Meta[rd.Family][rd.RtrName][slot] = make(map[string]string)
+				m.Meta[rd.Family][rd.RtrName][mSlot] = make(map[string]string)
 			}
-			m.Meta[rd.Family][rd.RtrName][slot]["HW_TYPE"] = strings.Trim(mod.Desc, "\n")
+			m.Meta[rd.Family][rd.RtrName][mSlot]["HW_TYPE"] = strings.Trim(mod.Desc, "\n")
+			for _, sm := range mod.SubMods {
+				smSlot := strings.Trim(strings.Replace(sm.Name, " ", "", 1), "\n")
+				if strings.Contains(smSlot, "MIC") {
+					for _, ssm := range sm.SubSubMods {
+						ssmSlot := strings.Trim(strings.Replace(ssm.Name, " ", "", 1), "\n")
+						if strings.Contains(ssmSlot, "PIC") {
+							picSlot := strings.Replace(ssmSlot, "PIC", "", 1)
+							for _, sssm := range ssm.SubSubSubMods {
+								sssmSlot := strings.Trim(strings.Replace(sssm.Name, " ", "", 1), "\n")
+								if strings.Contains(sssmSlot, "Xcvr") {
+									portSlot := strings.Replace(ssmSlot, "Xcvr", "", 1)
+									prfx := "et-"
+									key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
+									key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
+									if family == "mx" {
+										if strings.Contains(sssm.Desc, "1G") {
+											prfx = "ge-"
+										} else if strings.Contains(sssm.Desc, "1G") {
+											prfx = "xe-"
+										}
+										_, ok := m.Meta[rd.Family][rd.RtrName][key1]
+										if !ok {
+											m.Meta[rd.Family][rd.RtrName][key1] = make(map[string]string)
+										}
+										_, ok = m.Meta[rd.Family][rd.RtrName][key2]
+										if !ok {
+											m.Meta[rd.Family][rd.RtrName][key2] = make(map[string]string)
+										}
+										m.Meta[rd.Family][rd.RtrName][key1]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+										m.Meta[rd.Family][rd.RtrName][key2]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+									}
+								}
+							}
+						}
+
+					}
+				}
+				if strings.Contains(smSlot, "PIC") {
+					picSlot := strings.Replace(smSlot, "PIC", "", 1)
+					for _, ssm := range sm.SubSubMods {
+						ssmSlot := strings.Trim(strings.Replace(ssm.Name, " ", "", 1), "\n")
+						if strings.Contains(ssmSlot, "Xcvr") {
+							portSlot := strings.Replace(ssmSlot, "Xcvr", "", 1)
+							prfx := "et-"
+							key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
+							key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
+							if family == "mx" {
+								if strings.Contains(ssm.Desc, "1G") {
+									prfx = "ge-"
+								} else if strings.Contains(ssm.Desc, "1G") {
+									prfx = "xe-"
+								}
+								_, ok := m.Meta[rd.Family][rd.RtrName][key1]
+								if !ok {
+									m.Meta[rd.Family][rd.RtrName][key1] = make(map[string]string)
+								}
+								_, ok = m.Meta[rd.Family][rd.RtrName][key2]
+								if !ok {
+									m.Meta[rd.Family][rd.RtrName][key2] = make(map[string]string)
+								}
+								m.Meta[rd.Family][rd.RtrName][key1]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+								m.Meta[rd.Family][rd.RtrName][key2]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Derive a tag for HW optic to assign component_name to if_name
+	for _, m := range rd.HwInfo.Chassis.Modules {
+
+		for _, sm := range m.SubMods {
+			logger.Log.Debugf(" │  ├─ Sub-Module: %s - %s", strings.Trim(sm.Name, "\n"), strings.Trim(sm.Desc, "\n"))
+			for _, ssm := range sm.SubSubMods {
+				logger.Log.Debugf(" │  │  ├─ Sub-Sub-Module: %s - %s", strings.Trim(ssm.Name, "\n"), strings.Trim(ssm.Desc, "\n"))
+				for _, sssm := range ssm.SubSubSubMods {
+					logger.Log.Debugf(" │  │  │  ├─ Sub-Sub-Sub-Module: %s - %s", strings.Trim(sssm.Name, "\n"), strings.Trim(sssm.Desc, "\n"))
+				}
+			}
 		}
 	}
 	m.Mu.Unlock()
