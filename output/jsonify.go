@@ -123,7 +123,10 @@ func (m *Metadata) MarshallMeta(f string) error {
 			m.Mu.Unlock()
 			return err
 		}
-		logger.Log.Info("Target is:" + f + "metadata_" + k + ".json")
+		if f[len(f)-1:] != "/" {
+			f += "/"
+		}
+
 		err = os.WriteFile(f+"metadata_"+k+".json", json, 0666)
 		if err != nil {
 			logger.Log.Info("ISSUE")
