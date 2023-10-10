@@ -144,17 +144,17 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 										} else if strings.Contains(sssm.Desc, "1G") {
 											prfx = "xe-"
 										}
-										_, ok := m.Meta[rd.Family][rd.RtrName][key1]
-										if !ok {
-											m.Meta[rd.Family][rd.RtrName][key1] = make(map[string]string)
-										}
-										_, ok = m.Meta[rd.Family][rd.RtrName][key2]
-										if !ok {
-											m.Meta[rd.Family][rd.RtrName][key2] = make(map[string]string)
-										}
-										m.Meta[rd.Family][rd.RtrName][key1]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
-										m.Meta[rd.Family][rd.RtrName][key2]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
 									}
+									_, ok := m.Meta[rd.Family][rd.RtrName][key1]
+									if !ok {
+										m.Meta[rd.Family][rd.RtrName][key1] = make(map[string]string)
+									}
+									_, ok = m.Meta[rd.Family][rd.RtrName][key2]
+									if !ok {
+										m.Meta[rd.Family][rd.RtrName][key2] = make(map[string]string)
+									}
+									m.Meta[rd.Family][rd.RtrName][key1]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+									m.Meta[rd.Family][rd.RtrName][key2]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
 								}
 							}
 						}
@@ -176,17 +176,18 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 								} else if strings.Contains(ssm.Desc, "1G") {
 									prfx = "xe-"
 								}
-								_, ok := m.Meta[rd.Family][rd.RtrName][key1]
-								if !ok {
-									m.Meta[rd.Family][rd.RtrName][key1] = make(map[string]string)
-								}
-								_, ok = m.Meta[rd.Family][rd.RtrName][key2]
-								if !ok {
-									m.Meta[rd.Family][rd.RtrName][key2] = make(map[string]string)
-								}
-								m.Meta[rd.Family][rd.RtrName][key1]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
-								m.Meta[rd.Family][rd.RtrName][key2]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
 							}
+							_, ok := m.Meta[rd.Family][rd.RtrName][key1]
+							if !ok {
+								m.Meta[rd.Family][rd.RtrName][key1] = make(map[string]string)
+							}
+							_, ok = m.Meta[rd.Family][rd.RtrName][key2]
+							if !ok {
+								m.Meta[rd.Family][rd.RtrName][key2] = make(map[string]string)
+							}
+							m.Meta[rd.Family][rd.RtrName][key1]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+							m.Meta[rd.Family][rd.RtrName][key2]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+
 						}
 					}
 				}
