@@ -1,0 +1,25 @@
+{
+    "cheatsheet": "power.png",
+    "description": "This profile provides template for collecting power information",
+    "telegraf": {
+      "mx": [ {
+        "version": "all",
+        "conf": "all_power.conf"
+        }
+      ],
+      "ptx":[ {
+        "version": "all",
+        "conf": "all_power.conf"
+        }
+      ],
+      "acx": [ {
+        "version": "all",
+        "conf": "all_power.conf"
+        }
+      ]
+    },
+    "kapacitor": null,
+    "grafana": [
+      "power.json"
+    ]
+}
