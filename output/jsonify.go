@@ -14,7 +14,7 @@ type Metadata struct {
 	Mu *sync.Mutex
 	// 2 levels enrichment map
 	// Level 1 Router as a key
-	// Level 2 - Wellknown key LEVEL1TAGS or any other L2 key (interface, MPC...)
+	// Level 2 - Wellknown key LEVEL1TAGSS or any other L2 key (interface, MPC...)
 	Meta map[string]map[string]map[string]map[string]string
 }
 
@@ -104,13 +104,13 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 			family = r.Family
 		}
 	}
-	_, ok = m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"]
+	_, ok = m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]
 	if !ok {
-		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"] = make(map[string]string)
+		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"] = make(map[string]string)
 	}
-	m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"]["MODEL"] = strings.Trim(rd.HwInfo.Chassis.Desc, "\n")
+	m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["MODEL"] = strings.Trim(rd.HwInfo.Chassis.Desc, "\n")
 	if rtr.Version != "" {
-		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAG"]["VERSION"] = strings.Trim(rtr.Version, "\n")
+		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["VERSION"] = strings.Trim(rtr.Version, "\n")
 	}
 
 	// For each LC add a TAG

@@ -9,7 +9,7 @@
     "FPC2": {
       "HW_TYPE": "MPC10E 3D MRATE-15xQSFPP"
     },
-    "LEVEL1TAG": {
+    "LEVEL1TAGS": {
       "MODEL": "MX240"
     },
     "et-1/1/1": {
@@ -35,7 +35,7 @@
     "FPC3": {
       "HW_TYPE": "MPC 3D 16x 10GE"
     },
-    "LEVEL1TAG": {
+    "LEVEL1TAGS": {
       "MODEL": "MX480"
     }
   }
