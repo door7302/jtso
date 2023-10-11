@@ -4,17 +4,17 @@
     "telegraf": {
       "mx": [ {
         "version": "all",
-        "conf": "all_power.conf"
+        "conf": "mx_power.conf"
         }
       ],
       "ptx":[ {
         "version": "all",
-        "conf": "all_power.conf"
+        "conf": "ptx_power.conf"
         }
       ],
       "acx": [ {
         "version": "all",
-        "conf": "all_power.conf"
+        "conf": "acx_power.conf"
         }
       ]
     },
