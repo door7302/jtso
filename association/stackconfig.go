@@ -138,7 +138,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 						save_conf = c.Config
 					}
 				}
-				perVersion[save_conf] = append(perVersion[keep_version], r)
+				perVersion[save_conf] = append(perVersion[save_conf], r)
 			}
 
 			for filename, v := range perVersion {
