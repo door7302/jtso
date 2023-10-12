@@ -18,10 +18,496 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 26,
   "links": [],
   "liveNow": false,
   "panels": [
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "panels": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "center",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              },
+              "decimals": 3,
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "index": 0,
+                      "text": "N/A"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "watt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 2
+          },
+          "id": 1,
+          "options": {
+            "cellHeight": "lg",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "VERSION"
+              }
+            ]
+          },
+          "pluginVersion": "10.1.4",
+          "targets": [
+            {
+              "alias": "Field tag__component_name",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "jtsuid"
+              },
+              "groupBy": [],
+              "measurement": "POWER",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "select last(power_system_capacity) from POWER  where device=~/$device/ and component_name=~/(?i)chassis.*/  AND $timeFilter  group by device, VERSION, MODEL, component_name fill(0)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "table",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "*"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "device::tag",
+                  "operator": "=",
+                  "value": "rtme-mx-22.englab.juniper.net"
+                }
+              ]
+            }
+          ],
+          "title": "Chassis Info",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "component_name": true,
+                  "last": true,
+                  "last_allocated_power": true,
+                  "last_power_capacity_maximum": true,
+                  "last_power_capacity_usage": true,
+                  "last_power_dc_output": true,
+                  "last_power_input1_usage": true,
+                  "last_power_input2_usage": true,
+                  "last_power_maximum": true,
+                  "last_power_system_allocated": false,
+                  "last_power_usage": true,
+                  "last_power_zone_no": true,
+                  "last_temperature_ambient": true,
+                  "last_temperature_exhaust_a": true,
+                  "last_temperature_exhaust_b": true
+                },
+                "indexByName": {
+                  "MODEL": 2,
+                  "Time": 0,
+                  "VERSION": 3,
+                  "component_name": 4,
+                  "device": 1,
+                  "last": 5,
+                  "last_1": 6,
+                  "last_2": 7,
+                  "last_3": 8,
+                  "last_4": 9
+                },
+                "renameByName": {
+                  "component_name": "Component",
+                  "device": "Router",
+                  "last": "System Allocated",
+                  "last_1": "System Capacity",
+                  "last_2": "System Maximum",
+                  "last_3": "System Remaining",
+                  "last_4": "System Usage",
+                  "last_allocated_power": "",
+                  "last_power_capacity_maximum": "",
+                  "last_power_capacity_usage": "",
+                  "last_power_dc_output": "",
+                  "last_power_system_allocated": "System Allocated",
+                  "last_power_system_capacity": "System Capacity",
+                  "last_power_system_maximum": "System Maximum",
+                  "last_power_system_remaining": "System Remaing",
+                  "last_power_system_usage": "System Usage",
+                  "last_power_usage": "",
+                  "last_power_zone_0_allocated": "Zone 0 Allocated",
+                  "last_power_zone_0_capacity": "Zone 0 Capacity",
+                  "last_power_zone_0_maximum": "Zone 0 Maximum",
+                  "last_power_zone_0_remaining": "Zone 0 Remaining",
+                  "last_power_zone_0_usage": "Zone 0 Usage"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "center",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              },
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "index": 0,
+                      "text": "N/A"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "watt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 10
+          },
+          "id": 2,
+          "options": {
+            "cellHeight": "lg",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "VERSION"
+              }
+            ]
+          },
+          "pluginVersion": "10.1.4",
+          "targets": [
+            {
+              "alias": "Field tag__component_name",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "jtsuid"
+              },
+              "groupBy": [],
+              "measurement": "POWER",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "select last(power_system_allocated), last(power_system_capacity),  last(power_system_maximum), last(power_system_remaining), last(power_system_usage) from POWER  where device=~/$device/ and \n component_name=~/(?i)chassis.*/  AND $timeFilter group by device, component_name fill(0)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "table",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "*"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "device::tag",
+                  "operator": "=",
+                  "value": "rtme-mx-22.englab.juniper.net"
+                }
+              ]
+            }
+          ],
+          "title": "Chassis Power Details",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "component_name": true,
+                  "last_allocated_power": true,
+                  "last_power_capacity_maximum": true,
+                  "last_power_capacity_usage": true,
+                  "last_power_dc_output": true,
+                  "last_power_input1_usage": true,
+                  "last_power_input2_usage": true,
+                  "last_power_maximum": true,
+                  "last_power_system_allocated": false,
+                  "last_power_usage": true,
+                  "last_power_zone_no": true,
+                  "last_temperature_ambient": true,
+                  "last_temperature_exhaust_a": true,
+                  "last_temperature_exhaust_b": true
+                },
+                "indexByName": {
+                  "MODEL": 2,
+                  "Time": 0,
+                  "VERSION": 3,
+                  "component_name": 4,
+                  "device": 1,
+                  "last": 5,
+                  "last_1": 6,
+                  "last_2": 7,
+                  "last_3": 8,
+                  "last_4": 9
+                },
+                "renameByName": {
+                  "component_name": "Component",
+                  "device": "Router",
+                  "last": "System Allocated",
+                  "last_1": "System Capacity",
+                  "last_2": "System Maximum",
+                  "last_3": "System Remaining",
+                  "last_4": "System Usage",
+                  "last_allocated_power": "",
+                  "last_power_capacity_maximum": "",
+                  "last_power_capacity_usage": "",
+                  "last_power_dc_output": "",
+                  "last_power_system_allocated": "System Allocated",
+                  "last_power_system_capacity": "System Capacity",
+                  "last_power_system_maximum": "System Maximum",
+                  "last_power_system_remaining": "System Remaing",
+                  "last_power_system_usage": "System Usage",
+                  "last_power_usage": "",
+                  "last_power_zone_0_allocated": "Zone 0 Allocated",
+                  "last_power_zone_0_capacity": "Zone 0 Capacity",
+                  "last_power_zone_0_maximum": "Zone 0 Maximum",
+                  "last_power_zone_0_remaining": "Zone 0 Remaining",
+                  "last_power_zone_0_usage": "Zone 0 Usage"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 9,
+                "gradientMode": "opacity",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 24,
+            "x": 0,
+            "y": 18
+          },
+          "id": 3,
+          "options": {
+            "legend": {
+              "calcs": [
+                "min",
+                "max",
+                "lastNotNull",
+                "mean"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "sortBy": "Min",
+              "sortDesc": false
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "alias": "$tag_device - $tag_MODEL",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "jtsuid"
+              },
+              "groupBy": [],
+              "measurement": "POWER",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "SELECT \"power_system_usage\" FROM \"POWER\" WHERE \"device\"=~ /^$device$/  group by device, MODEL",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "power_system_usage"
+                    ],
+                    "type": "field"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "device::tag",
+                  "operator": "=~",
+                  "value": "/^$device$/"
+                }
+              ]
+            }
+          ],
+          "title": "System Usage",
+          "type": "timeseries"
+        }
+      ],
+      "title": "CHASSIS VIEW",
+      "type": "row"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 5,
+      "panels": [],
+      "title": "HW COMPONENT",
+      "type": "row"
+    },
     {
       "datasource": {
         "type": "influxdb",
@@ -33,7 +519,7 @@
             "mode": "thresholds"
           },
           "custom": {
-            "align": "auto",
+            "align": "center",
             "cellOptions": {
               "type": "auto"
             },
@@ -52,7 +538,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "watt"
         },
         "overrides": [
           {
@@ -70,10 +557,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 11,
+        "w": 7,
         "x": 0,
-        "y": 0
+        "y": 2
       },
       "id": 6,
       "options": {
@@ -100,7 +587,7 @@
           "measurement": "POWER",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT last(*) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^F.*/ and $timeFilter group by component_name, device fill(0)",
+          "query": "SELECT last(power_usage), last(power_maximum) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^^FPC+\\d$/ and $timeFilter group by component_name, device fill(0)",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "table",
@@ -127,7 +614,7 @@
           ]
         }
       ],
-      "title": "Panel Title",
+      "title": "FPC",
       "transformations": [
         {
           "id": "organize",
@@ -143,373 +630,10 @@
               "last_1": 4
             },
             "renameByName": {
-              "component_name": "HW Component",
+              "component_name": "FPC Slot",
               "device": "Router",
-              "last": ""
-            }
-          }
-        }
-      ],
-      "type": "table"
-    },
-    {
-      "collapsed": true,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 8
-      },
-      "id": 5,
-      "panels": [],
-      "title": "HW COMPONENT",
-      "type": "row"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 9
-      },
-      "id": 4,
-      "panels": [],
-      "title": "CHASSIS VIEW",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "jtsuid"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "center",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "decimals": 3,
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "index": 0,
-                  "text": "N/A"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "watt"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 10
-      },
-      "id": 1,
-      "options": {
-        "cellHeight": "lg",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "VERSION"
-          }
-        ]
-      },
-      "pluginVersion": "10.1.4",
-      "targets": [
-        {
-          "alias": "Field tag__component_name",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "jtsuid"
-          },
-          "groupBy": [],
-          "measurement": "POWER",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "select last(power_system_capacity) from POWER  where device=~/$device/ and component_name=~/(?i)chassis.*/  AND $timeFilter  group by device, VERSION, MODEL, component_name fill(0)",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "table",
-          "select": [
-            [
-              {
-                "params": [
-                  "*"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "device::tag",
-              "operator": "=",
-              "value": "rtme-mx-22.englab.juniper.net"
-            }
-          ]
-        }
-      ],
-      "title": "Chassis Info",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "component_name": true,
-              "last": true,
-              "last_allocated_power": true,
-              "last_power_capacity_maximum": true,
-              "last_power_capacity_usage": true,
-              "last_power_dc_output": true,
-              "last_power_input1_usage": true,
-              "last_power_input2_usage": true,
-              "last_power_maximum": true,
-              "last_power_system_allocated": false,
-              "last_power_usage": true,
-              "last_power_zone_no": true,
-              "last_temperature_ambient": true,
-              "last_temperature_exhaust_a": true,
-              "last_temperature_exhaust_b": true
-            },
-            "indexByName": {
-              "MODEL": 2,
-              "Time": 0,
-              "VERSION": 3,
-              "component_name": 4,
-              "device": 1,
-              "last": 5,
-              "last_1": 6,
-              "last_2": 7,
-              "last_3": 8,
-              "last_4": 9
-            },
-            "renameByName": {
-              "component_name": "Component",
-              "device": "Router",
-              "last": "System Allocated",
-              "last_1": "System Capacity",
-              "last_2": "System Maximum",
-              "last_3": "System Remaining",
-              "last_4": "System Usage",
-              "last_allocated_power": "",
-              "last_power_capacity_maximum": "",
-              "last_power_capacity_usage": "",
-              "last_power_dc_output": "",
-              "last_power_system_allocated": "System Allocated",
-              "last_power_system_capacity": "System Capacity",
-              "last_power_system_maximum": "System Maximum",
-              "last_power_system_remaining": "System Remaing",
-              "last_power_system_usage": "System Usage",
-              "last_power_usage": "",
-              "last_power_zone_0_allocated": "Zone 0 Allocated",
-              "last_power_zone_0_capacity": "Zone 0 Capacity",
-              "last_power_zone_0_maximum": "Zone 0 Maximum",
-              "last_power_zone_0_remaining": "Zone 0 Remaining",
-              "last_power_zone_0_usage": "Zone 0 Usage"
-            }
-          }
-        }
-      ],
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "jtsuid"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "center",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "index": 0,
-                  "text": "N/A"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "watt"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 18
-      },
-      "id": 2,
-      "options": {
-        "cellHeight": "lg",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "VERSION"
-          }
-        ]
-      },
-      "pluginVersion": "10.1.4",
-      "targets": [
-        {
-          "alias": "Field tag__component_name",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "jtsuid"
-          },
-          "groupBy": [],
-          "measurement": "POWER",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "select last(power_system_allocated), last(power_system_capacity),  last(power_system_maximum), last(power_system_remaining), last(power_system_usage) from POWER  where device=~/$device/ and \n component_name=~/(?i)chassis.*/  AND $timeFilter group by device, component_name fill(0)",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "table",
-          "select": [
-            [
-              {
-                "params": [
-                  "*"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "device::tag",
-              "operator": "=",
-              "value": "rtme-mx-22.englab.juniper.net"
-            }
-          ]
-        }
-      ],
-      "title": "Chassis Power Details",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "component_name": true,
-              "last_allocated_power": true,
-              "last_power_capacity_maximum": true,
-              "last_power_capacity_usage": true,
-              "last_power_dc_output": true,
-              "last_power_input1_usage": true,
-              "last_power_input2_usage": true,
-              "last_power_maximum": true,
-              "last_power_system_allocated": false,
-              "last_power_usage": true,
-              "last_power_zone_no": true,
-              "last_temperature_ambient": true,
-              "last_temperature_exhaust_a": true,
-              "last_temperature_exhaust_b": true
-            },
-            "indexByName": {
-              "MODEL": 2,
-              "Time": 0,
-              "VERSION": 3,
-              "component_name": 4,
-              "device": 1,
-              "last": 5,
-              "last_1": 6,
-              "last_2": 7,
-              "last_3": 8,
-              "last_4": 9
-            },
-            "renameByName": {
-              "component_name": "Component",
-              "device": "Router",
-              "last": "System Allocated",
-              "last_1": "System Capacity",
-              "last_2": "System Maximum",
-              "last_3": "System Remaining",
-              "last_4": "System Usage",
-              "last_allocated_power": "",
-              "last_power_capacity_maximum": "",
-              "last_power_capacity_usage": "",
-              "last_power_dc_output": "",
-              "last_power_system_allocated": "System Allocated",
-              "last_power_system_capacity": "System Capacity",
-              "last_power_system_maximum": "System Maximum",
-              "last_power_system_remaining": "System Remaing",
-              "last_power_system_usage": "System Usage",
-              "last_power_usage": "",
-              "last_power_zone_0_allocated": "Zone 0 Allocated",
-              "last_power_zone_0_capacity": "Zone 0 Capacity",
-              "last_power_zone_0_maximum": "Zone 0 Maximum",
-              "last_power_zone_0_remaining": "Zone 0 Remaining",
-              "last_power_zone_0_usage": "Zone 0 Usage"
+              "last": "Current Power Usage",
+              "last_1": "Maximum Power "
             }
           }
         }
@@ -533,8 +657,8 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 9,
-            "gradientMode": "opacity",
+            "fillOpacity": 6,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -571,39 +695,38 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "watt"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 11,
-        "w": 24,
-        "x": 0,
-        "y": 26
+        "w": 17,
+        "x": 7,
+        "y": 2
       },
-      "id": 3,
+      "id": 7,
       "options": {
         "legend": {
           "calcs": [
-            "min",
-            "max",
             "lastNotNull",
-            "mean"
+            "min",
+            "max"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true,
-          "sortBy": "Min",
-          "sortDesc": false
+          "showLegend": true
         },
         "tooltip": {
           "mode": "single",
           "sort": "none"
         }
       },
+      "pluginVersion": "10.1.4",
       "targets": [
         {
-          "alias": "$tag_device - $tag_MODEL",
+          "alias": "$device - $tag_component_name",
           "datasource": {
             "type": "influxdb",
             "uid": "jtsuid"
@@ -612,7 +735,7 @@
           "measurement": "POWER",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT \"power_system_usage\" FROM \"POWER\" WHERE \"device\"=~ /^$device$/  group by device, MODEL",
+          "query": "SELECT power_usage FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^^FPC+\\d$/ and $timeFilter group by component_name, device fill(0)",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -620,9 +743,13 @@
             [
               {
                 "params": [
-                  "power_system_usage"
+                  "*"
                 ],
                 "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
               }
             ]
           ],
@@ -635,11 +762,878 @@
           ]
         }
       ],
-      "title": "System Usage",
+      "title": "FPC",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "POWER.power_usage {component_name: FPC0, device: rtme-ptx10k16-01.englab.juniper.net}": false,
+              "Time": false
+            },
+            "indexByName": {
+              "Time": 0,
+              "component_name": 2,
+              "device": 1,
+              "last": 3,
+              "last_1": 4
+            },
+            "renameByName": {
+              "component_name": "FPC Slot",
+              "device": "Router",
+              "last": "Current Power Usage",
+              "last_1": "Maximum Power "
+            }
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "jtsuid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "device"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 241
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 7,
+        "x": 0,
+        "y": 13
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "groupBy": [],
+          "measurement": "POWER",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT last(used_power) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)Fan.*/ and $timeFilter group by component_name, device fill(0)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table",
+          "select": [
+            [
+              {
+                "params": [
+                  "*"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "device::tag",
+              "operator": "=~",
+              "value": "/^$device$/"
+            }
+          ]
+        }
+      ],
+      "title": "FAN Tray",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Time": 0,
+              "component_name": 2,
+              "device": 1,
+              "last": 3,
+              "last_1": 4
+            },
+            "renameByName": {
+              "component_name": "Fan Name",
+              "device": "Router",
+              "last": "Current Power Usage",
+              "last_1": "Maximum Power "
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "jtsuid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 6,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 17,
+        "x": 7,
+        "y": 13
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.1.4",
+      "targets": [
+        {
+          "alias": "$device - $tag_component_name",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "groupBy": [],
+          "measurement": "POWER",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)Fan.*/ and $timeFilter group by component_name, device fill(0)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "*"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "device::tag",
+              "operator": "=~",
+              "value": "/^$device$/"
+            }
+          ]
+        }
+      ],
+      "title": "FAN Tray",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "POWER.power_usage {component_name: FPC0, device: rtme-ptx10k16-01.englab.juniper.net}": false,
+              "Time": false
+            },
+            "indexByName": {
+              "Time": 0,
+              "component_name": 2,
+              "device": 1,
+              "last": 3,
+              "last_1": 4
+            },
+            "renameByName": {
+              "component_name": "FPC Slot",
+              "device": "Router",
+              "last": "Current Power Usage",
+              "last_1": "Maximum Power "
+            }
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "jtsuid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "device"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 241
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 7,
+        "x": 0,
+        "y": 24
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "groupBy": [],
+          "measurement": "POWER",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT last(used_power) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)PSM|PDM.*/ and $timeFilter group by component_name, device fill(0)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table",
+          "select": [
+            [
+              {
+                "params": [
+                  "*"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "device::tag",
+              "operator": "=~",
+              "value": "/^$device$/"
+            }
+          ]
+        }
+      ],
+      "title": "CB & Fabric",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Time": 0,
+              "component_name": 2,
+              "device": 1,
+              "last": 3,
+              "last_1": 4
+            },
+            "renameByName": {
+              "component_name": "Fan Name",
+              "device": "Router",
+              "last": "Current Power Usage",
+              "last_1": "Maximum Power "
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "jtsuid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 6,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 17,
+        "x": 7,
+        "y": 24
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.1.4",
+      "targets": [
+        {
+          "alias": "$device - $tag_component_name",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "groupBy": [],
+          "measurement": "POWER",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)CB|SIB|SFB|SCB.*/ and $timeFilter group by component_name, device fill(0)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "*"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "device::tag",
+              "operator": "=~",
+              "value": "/^$device$/"
+            }
+          ]
+        }
+      ],
+      "title": "CB & Fabric",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "POWER.power_usage {component_name: FPC0, device: rtme-ptx10k16-01.englab.juniper.net}": false,
+              "Time": false
+            },
+            "indexByName": {
+              "Time": 0,
+              "component_name": 2,
+              "device": 1,
+              "last": 3,
+              "last_1": 4
+            },
+            "renameByName": {
+              "component_name": "FPC Slot",
+              "device": "Router",
+              "last": "Current Power Usage",
+              "last_1": "Maximum Power "
+            }
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "jtsuid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "device"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 241
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 7,
+        "x": 0,
+        "y": 35
+      },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "groupBy": [],
+          "measurement": "POWER",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT last(used_power) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)PSM|PDM|PEM.*/ and $timeFilter group by component_name, device fill(0)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table",
+          "select": [
+            [
+              {
+                "params": [
+                  "*"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "device::tag",
+              "operator": "=~",
+              "value": "/^$device$/"
+            }
+          ]
+        }
+      ],
+      "title": "PEM",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Time": 0,
+              "component_name": 2,
+              "device": 1,
+              "last": 3,
+              "last_1": 4
+            },
+            "renameByName": {
+              "component_name": "Fan Name",
+              "device": "Router",
+              "last": "Current Power Usage",
+              "last_1": "Maximum Power "
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "jtsuid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 6,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 17,
+        "x": 7,
+        "y": 35
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.1.4",
+      "targets": [
+        {
+          "alias": "$device - $tag_component_name",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "groupBy": [],
+          "measurement": "POWER",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)PSM|PDM|PEM.*/ and $timeFilter group by component_name, device fill(0)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "*"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "device::tag",
+              "operator": "=~",
+              "value": "/^$device$/"
+            }
+          ]
+        }
+      ],
+      "title": "PEM",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "POWER.power_usage {component_name: FPC0, device: rtme-ptx10k16-01.englab.juniper.net}": false,
+              "Time": false
+            },
+            "indexByName": {
+              "Time": 0,
+              "component_name": 2,
+              "device": 1,
+              "last": 3,
+              "last_1": 4
+            },
+            "renameByName": {
+              "component_name": "FPC Slot",
+              "device": "Router",
+              "last": "Current Power Usage",
+              "last_1": "Maximum Power "
+            }
+          }
+        }
+      ],
       "type": "timeseries"
     }
   ],
-  "refresh": "",
+  "refresh": false,
   "schemaVersion": 38,
   "style": "dark",
   "tags": [],
@@ -649,12 +1643,10 @@
         "current": {
           "selected": true,
           "text": [
-            "rtme-ptx10k16-01.englab.juniper.net",
-            "rtme-ptx10.englab.juniper.net"
+            "rtme-ptx10k16-01.englab.juniper.net"
           ],
           "value": [
-            "rtme-ptx10k16-01.englab.juniper.net",
-            "rtme-ptx10.englab.juniper.net"
+            "rtme-ptx10k16-01.englab.juniper.net"
           ]
         },
         "datasource": {
@@ -683,8 +1675,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "power",
-  "uid": "e3fb47e2-3044-41f1-bed3-52c3f6beac57",
-  "version": 5,
+  "title": "POWER MONITORING PROFILE - JTSO",
+  "uid": "powerdashboard",
+  "version": 1,
   "weekStart": ""
 }
