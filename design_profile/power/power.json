@@ -22,112 +22,12 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "jtsuid"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "id": 15,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "pluginVersion": "10.1.4",
-      "targets": [
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "jtsuid"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "$__interval"
-              ],
-              "type": "time"
-            },
-            {
-              "params": [
-                "null"
-              ],
-              "type": "fill"
-            }
-          ],
-          "measurement": "POWER",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "query": "SELECT last(\"fan_speed\") FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND $timeFilter GROUP BY component_name fill(0)",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "value"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "last"
-              }
-            ]
-          ],
-          "tags": [
-            {
-              "key": "device::tag",
-              "operator": "=~",
-              "value": "/^$device$/"
-            }
-          ]
-        }
-      ],
-      "title": "Panel Title",
-      "type": "gauge"
-    },
-    {
       "collapsed": true,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 0
       },
       "id": 4,
       "panels": [
@@ -148,8 +48,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -230,8 +129,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -399,8 +297,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -582,8 +479,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -667,7 +563,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 1
       },
       "id": 5,
       "panels": [
@@ -723,7 +619,7 @@
             "h": 11,
             "w": 7,
             "x": 0,
-            "y": 18
+            "y": 2
           },
           "id": 6,
           "options": {
@@ -867,7 +763,7 @@
             "h": 11,
             "w": 17,
             "x": 7,
-            "y": 18
+            "y": 2
           },
           "id": 7,
           "options": {
@@ -1004,7 +900,7 @@
             "h": 11,
             "w": 7,
             "x": 0,
-            "y": 29
+            "y": 13
           },
           "id": 8,
           "options": {
@@ -1148,7 +1044,7 @@
             "h": 11,
             "w": 17,
             "x": 7,
-            "y": 29
+            "y": 13
           },
           "id": 9,
           "options": {
@@ -1243,6 +1139,249 @@
               "color": {
                 "mode": "thresholds"
               },
+              "mappings": [],
+              "max": 11000,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 6000
+                  },
+                  {
+                    "color": "red",
+                    "value": 9000
+                  }
+                ]
+              },
+              "unit": "rotrpm"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 17,
+            "w": 12,
+            "x": 0,
+            "y": 24
+          },
+          "id": 15,
+          "options": {
+            "displayMode": "gradient",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showUnfilled": true,
+            "valueMode": "color"
+          },
+          "pluginVersion": "10.1.4",
+          "targets": [
+            {
+              "alias": "$tag_component_name",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "jtsuid"
+              },
+              "groupBy": [
+                {
+                  "params": [
+                    "$__interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "POWER",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "SELECT last(\"fan_speed\") FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND $timeFilter GROUP BY component_name fill(0)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "last"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "device::tag",
+                  "operator": "=~",
+                  "value": "/^$device$/"
+                }
+              ]
+            }
+          ],
+          "title": "FAN Speed",
+          "type": "bargauge"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "rotrpm"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 17,
+            "w": 12,
+            "x": 12,
+            "y": 24
+          },
+          "id": 16,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.1.4",
+          "targets": [
+            {
+              "alias": "$tag_component_name",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "jtsuid"
+              },
+              "groupBy": [
+                {
+                  "params": [
+                    "$__interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "POWER",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "SELECT (\"fan_speed\") FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND $timeFilter GROUP BY component_name fill(0)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "last"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "device::tag",
+                  "operator": "=~",
+                  "value": "/^$device$/"
+                }
+              ]
+            }
+          ],
+          "title": "FAN Speed",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
               "custom": {
                 "align": "center",
                 "cellOptions": {
@@ -1285,7 +1424,7 @@
             "h": 11,
             "w": 7,
             "x": 0,
-            "y": 40
+            "y": 41
           },
           "id": 12,
           "options": {
@@ -1429,7 +1568,7 @@
             "h": 11,
             "w": 17,
             "x": 7,
-            "y": 40
+            "y": 41
           },
           "id": 11,
           "options": {
@@ -1566,7 +1705,7 @@
             "h": 11,
             "w": 7,
             "x": 0,
-            "y": 51
+            "y": 52
           },
           "id": 10,
           "options": {
@@ -1710,7 +1849,7 @@
             "h": 11,
             "w": 17,
             "x": 7,
-            "y": 51
+            "y": 52
           },
           "id": 13,
           "options": {
@@ -1796,7 +1935,9 @@
           "type": "timeseries"
         }
       ],
-      "title": "HW COMPONENT",
+      "repeat": "device",
+      "repeatDirection": "h",
+      "title": "HW COMPONENT - $device",
       "type": "row"
     }
   ],
@@ -1839,7 +1980,7 @@
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {},
