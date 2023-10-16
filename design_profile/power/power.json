@@ -48,7 +48,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -61,10 +62,10 @@
             "overrides": []
           },
           "gridPos": {
-            "h": 7,
-            "w": 24,
+            "h": 10,
+            "w": 5,
             "x": 0,
-            "y": 9
+            "y": 1
           },
           "id": 14,
           "options": {
@@ -129,7 +130,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -142,10 +144,10 @@
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 24,
-            "x": 0,
-            "y": 16
+            "h": 10,
+            "w": 6,
+            "x": 5,
+            "y": 1
           },
           "id": 1,
           "options": {
@@ -297,7 +299,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -310,10 +313,10 @@
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 24,
-            "x": 0,
-            "y": 24
+            "h": 10,
+            "w": 13,
+            "x": 11,
+            "y": 1
           },
           "id": 2,
           "options": {
@@ -479,7 +482,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -494,7 +498,7 @@
             "h": 11,
             "w": 24,
             "x": 0,
-            "y": 32
+            "y": 11
           },
           "id": 3,
           "options": {
@@ -550,11 +554,273 @@
               ]
             }
           ],
-          "title": "System Usage",
+          "title": "System Usage - $device",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 6,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "watt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 17,
+            "w": 24,
+            "x": 0,
+            "y": 22
+          },
+          "id": 7,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "min",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.1.4",
+          "targets": [
+            {
+              "alias": "$tag_component_name",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "jtsuid"
+              },
+              "groupBy": [],
+              "measurement": "POWER",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^^FPC+\\d$/ and $timeFilter group by component_name, device fill(0)",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "*"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "last"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "device::tag",
+                  "operator": "=~",
+                  "value": "/^$device$/"
+                }
+              ]
+            },
+            {
+              "alias": "$tag_component_name",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "jtsuid"
+              },
+              "groupBy": [],
+              "hide": false,
+              "measurement": "POWER",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "SELECT output_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)PSM|PDM|PEM.*/ and $timeFilter group by component_name, device fill(0)",
+              "rawQuery": true,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "*"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "last"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "device::tag",
+                  "operator": "=~",
+                  "value": "/^$device$/"
+                }
+              ]
+            },
+            {
+              "alias": "$tag_component_name",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "jtsuid"
+              },
+              "groupBy": [],
+              "hide": false,
+              "measurement": "POWER",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)Fan.*/ and $timeFilter group by component_name, device fill(0)",
+              "rawQuery": true,
+              "refId": "C",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "*"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "last"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "device::tag",
+                  "operator": "=~",
+                  "value": "/^$device$/"
+                }
+              ]
+            },
+            {
+              "alias": "$tag_component_name",
+              "datasource": {
+                "type": "influxdb",
+                "uid": "jtsuid"
+              },
+              "groupBy": [],
+              "hide": false,
+              "measurement": "POWER",
+              "orderByTime": "ASC",
+              "policy": "default",
+              "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)CB|SIB|SFB|SCB|RE.*/ and $timeFilter group by component_name, device fill(0)",
+              "rawQuery": true,
+              "refId": "D",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "*"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "last"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "device::tag",
+                  "operator": "=~",
+                  "value": "/^$device$/"
+                }
+              ]
+            }
+          ],
+          "title": "All components - $device",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "POWER.power_usage {component_name: FPC0, device: rtme-ptx10k16-01.englab.juniper.net}": false,
+                  "Time": false
+                },
+                "indexByName": {
+                  "Time": 0,
+                  "component_name": 2,
+                  "device": 1,
+                  "last": 3,
+                  "last_1": 4
+                },
+                "renameByName": {
+                  "component_name": "FPC Slot",
+                  "device": "Router",
+                  "last": "Current Power Usage",
+                  "last_1": "Maximum Power "
+                }
+              }
+            }
+          ],
           "type": "timeseries"
         }
       ],
-      "title": "CHASSIS VIEW",
+      "repeat": "device",
+      "repeatDirection": "h",
+      "title": "CHASSIS VIEW - $device",
       "type": "row"
     },
     {
@@ -646,7 +912,7 @@
               "measurement": "POWER",
               "orderByTime": "ASC",
               "policy": "default",
-              "query": "SELECT last(power_usage), last(power_maximum) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^^FPC+\\d$/ and $timeFilter group by component_name, device fill(0)",
+              "query": "SELECT last(used_power), last(power_maximum) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^^FPC+\\d$/ and $timeFilter group by component_name, device fill(0)",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "table",
@@ -673,7 +939,7 @@
               ]
             }
           ],
-          "title": "FPC",
+          "title": "FPC - $device",
           "transformations": [
             {
               "id": "organize",
@@ -765,7 +1031,7 @@
             "x": 7,
             "y": 2
           },
-          "id": 7,
+          "id": 17,
           "options": {
             "legend": {
               "calcs": [
@@ -785,7 +1051,7 @@
           "pluginVersion": "10.1.4",
           "targets": [
             {
-              "alias": "$device - $tag_component_name",
+              "alias": "$tag_component_name",
               "datasource": {
                 "type": "influxdb",
                 "uid": "jtsuid"
@@ -794,7 +1060,7 @@
               "measurement": "POWER",
               "orderByTime": "ASC",
               "policy": "default",
-              "query": "SELECT power_usage FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^^FPC+\\d$/ and $timeFilter group by component_name, device fill(0)",
+              "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^^FPC+\\d$/ and $timeFilter group by component_name, device fill(0)",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
@@ -821,7 +1087,7 @@
               ]
             }
           ],
-          "title": "FPC",
+          "title": "FPC - $device",
           "transformations": [
             {
               "id": "organize",
@@ -954,7 +1220,7 @@
               ]
             }
           ],
-          "title": "FAN Tray",
+          "title": "FAN Tray - $device",
           "transformations": [
             {
               "id": "organize",
@@ -1066,7 +1332,7 @@
           "pluginVersion": "10.1.4",
           "targets": [
             {
-              "alias": "$device - $tag_component_name",
+              "alias": "$tag_component_name",
               "datasource": {
                 "type": "influxdb",
                 "uid": "jtsuid"
@@ -1102,7 +1368,7 @@
               ]
             }
           ],
-          "title": "FAN Tray",
+          "title": "FAN Tray - $device",
           "transformations": [
             {
               "id": "organize",
@@ -1150,12 +1416,16 @@
                     "value": null
                   },
                   {
-                    "color": "orange",
+                    "color": "yellow",
                     "value": 6000
                   },
                   {
-                    "color": "red",
+                    "color": "orange",
                     "value": 9000
+                  },
+                  {
+                    "color": "semi-dark-red",
+                    "value": 15000
                   }
                 ]
               },
@@ -1237,7 +1507,7 @@
               ]
             }
           ],
-          "title": "FAN Speed",
+          "title": "FAN Speed - $device",
           "type": "bargauge"
         },
         {
@@ -1369,7 +1639,7 @@
               ]
             }
           ],
-          "title": "FAN Speed",
+          "title": "FAN Speed - $device",
           "type": "timeseries"
         },
         {
@@ -1451,7 +1721,7 @@
               "measurement": "POWER",
               "orderByTime": "ASC",
               "policy": "default",
-              "query": "SELECT last(used_power) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)CB|SIB|SFB|RE|SCB.*/ and $timeFilter group by component_name, device fill(0)",
+              "query": "SELECT last(used_power) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)CB|SIB|SFB|RE|SCB|SF.*/ and $timeFilter group by component_name, device fill(0)",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "table",
@@ -1478,7 +1748,7 @@
               ]
             }
           ],
-          "title": "CB & Fabric",
+          "title": "CB & Fabric - $device",
           "transformations": [
             {
               "id": "organize",
@@ -1590,7 +1860,7 @@
           "pluginVersion": "10.1.4",
           "targets": [
             {
-              "alias": "$device - $tag_component_name",
+              "alias": "$tag_component_name",
               "datasource": {
                 "type": "influxdb",
                 "uid": "jtsuid"
@@ -1626,7 +1896,7 @@
               ]
             }
           ],
-          "title": "CB & Fabric",
+          "title": "CB & Fabric - $device",
           "transformations": [
             {
               "id": "organize",
@@ -1732,7 +2002,7 @@
               "measurement": "POWER",
               "orderByTime": "ASC",
               "policy": "default",
-              "query": "SELECT last(used_power) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)PSM|PDM|PEM.*/ and $timeFilter group by component_name, device fill(0)",
+              "query": "SELECT last(output_power) FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)PSM|PDM|PEM.*/ and $timeFilter group by component_name, device fill(0)",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "table",
@@ -1759,7 +2029,7 @@
               ]
             }
           ],
-          "title": "PEM",
+          "title": "PEM - $device",
           "transformations": [
             {
               "id": "organize",
@@ -1871,7 +2141,7 @@
           "pluginVersion": "10.1.4",
           "targets": [
             {
-              "alias": "$device - $tag_component_name",
+              "alias": "$tag_component_name",
               "datasource": {
                 "type": "influxdb",
                 "uid": "jtsuid"
@@ -1880,7 +2150,7 @@
               "measurement": "POWER",
               "orderByTime": "ASC",
               "policy": "default",
-              "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)PSM|PDM|PEM.*/ and $timeFilter group by component_name, device fill(0)",
+              "query": "SELECT output_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)PSM|PDM|PEM.*/ and $timeFilter group by component_name, device fill(0)",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
@@ -1907,7 +2177,7 @@
               ]
             }
           ],
-          "title": "PEM",
+          "title": "PEM - $device",
           "transformations": [
             {
               "id": "organize",
@@ -1951,12 +2221,10 @@
         "current": {
           "selected": true,
           "text": [
-            "rtme-ptx10k16-01.englab.juniper.net",
-            "rtme-ptx10.englab.juniper.net"
+            "rtme-ptx10k16-01.englab.juniper.net"
           ],
           "value": [
-            "rtme-ptx10k16-01.englab.juniper.net",
-            "rtme-ptx10.englab.juniper.net"
+            "rtme-ptx10k16-01.englab.juniper.net"
           ]
         },
         "datasource": {
