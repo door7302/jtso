@@ -6,7 +6,7 @@ require (
 	github.com/docker/docker v24.0.6+incompatible
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/mattn/go-sqlite3 v1.14.17
-	github.com/openshift-telco/go-netconf-client v1.0.5
+	github.com/openshift-telco/go-netconf-client v1.0.6-0.20231016204147-70322b0d4d05
 	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/viper v1.15.0
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
