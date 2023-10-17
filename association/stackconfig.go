@@ -47,7 +47,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			_, ok := cfgHierarchy[v.Family]
 			if !ok {
 				cfgHierarchy[v.Family] = make(map[string][]*sqlite.RtrEntry)
-				logger.Log.Errorf("NEW for %s", v.Family)
 			}
 			pfound := false
 			var asso []string
@@ -59,7 +58,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			}
 			if pfound {
 				for _, p := range asso {
-					logger.Log.Errorf("DEBUGGGGGGG profile: %s", p)
 					cfgHierarchy[v.Family][p] = append(cfgHierarchy[v.Family][p], v)
 				}
 			}
