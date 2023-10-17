@@ -1,0 +1,2074 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 1,
+    "id": 10,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "gridPos": {
+          "h": 2,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 38,
+        "options": {
+          "code": {
+            "language": "plaintext",
+            "showLineNumbers": false,
+            "showMiniMap": false
+          },
+          "content": "<h2><center>Global KPI - ${rtr}</center><h2>",
+          "mode": "html"
+        },
+        "pluginVersion": "9.4.7",
+        "transparent": true,
+        "type": "text"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "left",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "filterable": true,
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 10
+                }
+              ]
+            },
+            "unit": "none"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "count"
+              },
+              "properties": [
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "#EAB839",
+                        "value": 10
+                      },
+                      {
+                        "color": "red",
+                        "value": 20
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "custom.cellOptions",
+                  "value": {
+                    "mode": "gradient",
+                    "type": "color-background"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Last Update"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 226
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 15,
+          "x": 0,
+          "y": 2
+        },
+        "id": 15,
+        "options": {
+          "footer": {
+            "countRows": false,
+            "fields": [
+              "count"
+            ],
+            "reducer": [
+              "sum"
+            ],
+            "show": true
+          },
+          "showHeader": true,
+          "sortBy": []
+        },
+        "pluginVersion": "9.4.7",
+        "targets": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [
+              {
+                "params": [
+                  "ALARM_TYPE"
+                ],
+                "type": "tag"
+              },
+              {
+                "params": [
+                  "if_name"
+                ],
+                "type": "tag"
+              }
+            ],
+            "measurement": "ALARMING",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT count(\"exception\") FROM \"ALARMING\" WHERE (\"device\" =~ /^$rtr$/) AND ALARM_TYPE=~/RED.*|TAIL.*/ and $timeFilter GROUP BY \"ALARM_TYPE\", \"if_name\", queue_name, queue_id\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table",
+            "select": [
+              [
+                {
+                  "params": [
+                    "exception"
+                  ],
+                  "type": "field"
+                },
+                {
+                  "params": [],
+                  "type": "count"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              }
+            ]
+          }
+        ],
+        "title": "RealTime CoS Drops (TimeFrame) ",
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {},
+              "indexByName": {},
+              "renameByName": {
+                "ALARM_TYPE": "Type of Alarm",
+                "Time": "Last Update",
+                "count": "Cumulative Alarms",
+                "if_name": "PORT",
+                "queue_id": "Queue",
+                "queue_name": "FC"
+              }
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              }
+            },
+            "mappings": []
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 9,
+          "x": 15,
+          "y": 2
+        },
+        "id": 28,
+        "options": {
+          "displayLabels": [
+            "percent",
+            "name"
+          ],
+          "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "showLegend": true,
+            "values": [
+              "percent"
+            ]
+          },
+          "pieType": "pie",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "alias": "$tag_queue_name",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [
+              {
+                "params": [
+                  "queue_name"
+                ],
+                "type": "tag"
+              }
+            ],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "select sum(cos_fw) from (SELECT \"cos_forwarded_octets_rate\"*8 as cos_fw FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/)  and $timeFilter GROUP BY if_name,  \"queue_name\") group by queue_name",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "cos_forwarded_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": []
+          }
+        ],
+        "title": "PER QUEUE GLOBAL BALANCING",
+        "type": "piechart"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 14
+        },
+        "id": 19,
+        "panels": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "description": "",
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "custom": {
+                  "align": "left",
+                  "cellOptions": {
+                    "type": "auto"
+                  },
+                  "filterable": true,
+                  "inspect": false
+                },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": 10
+                    }
+                  ]
+                },
+                "unit": "pps"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "Queue"
+                  },
+                  "properties": [
+                    {
+                      "id": "unit",
+                      "value": "none"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 10,
+              "w": 24,
+              "x": 0,
+              "y": 15
+            },
+            "id": 17,
+            "options": {
+              "footer": {
+                "countRows": false,
+                "fields": [
+                  "count"
+                ],
+                "reducer": [
+                  "sum"
+                ],
+                "show": false
+              },
+              "showHeader": true
+            },
+            "pluginVersion": "9.4.7",
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "jtsuid"
+                },
+                "groupBy": [
+                  {
+                    "params": [
+                      "ALARM_TYPE"
+                    ],
+                    "type": "tag"
+                  },
+                  {
+                    "params": [
+                      "if_name"
+                    ],
+                    "type": "tag"
+                  }
+                ],
+                "measurement": "ALARMING",
+                "orderByTime": "ASC",
+                "policy": "default",
+                "query": "SELECT \"exception\" FROM \"ALARMING\" WHERE (\"device\" =~ /^$rtr$/) AND $timeFilter and ALARM_TYPE=~/RED.*|TAIL.*/ GROUP BY \"ALARM_TYPE\", \"if_name\", queue_id, queue_name",
+                "rawQuery": true,
+                "refId": "A",
+                "resultFormat": "table",
+                "select": [
+                  [
+                    {
+                      "params": [
+                        "exception"
+                      ],
+                      "type": "field"
+                    }
+                  ]
+                ],
+                "tags": [
+                  {
+                    "key": "device",
+                    "operator": "=~",
+                    "value": "/^$rtr$/"
+                  }
+                ]
+              }
+            ],
+            "title": "RealTime Monitored CoS Drops Details (TimeFrame) ",
+            "transformations": [
+              {
+                "id": "organize",
+                "options": {
+                  "excludeByName": {},
+                  "indexByName": {},
+                  "renameByName": {
+                    "ALARM_TYPE": "Type of Alarm",
+                    "Time": "Timestamp",
+                    "count": "Cumulative Alarms",
+                    "exception": "Drop pps",
+                    "if_name": "PORT",
+                    "queue_id": "Queue",
+                    "queue_name": "FC"
+                  }
+                }
+              }
+            ],
+            "type": "table"
+          },
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "gridPos": {
+              "h": 2,
+              "w": 24,
+              "x": 0,
+              "y": 25
+            },
+            "id": 39,
+            "options": {
+              "code": {
+                "language": "plaintext",
+                "showLineNumbers": false,
+                "showMiniMap": false
+              },
+              "content": "<h2><center>Per Interface details</center><h2>",
+              "mode": "html"
+            },
+            "pluginVersion": "9.4.7",
+            "transparent": true,
+            "type": "text"
+          }
+        ],
+        "title": "Drop Details - Timestamp",
+        "type": "row"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 15
+        },
+        "id": 13,
+        "panels": [],
+        "repeat": "ifname",
+        "repeatDirection": "h",
+        "title": "Queue information - $ifname",
+        "type": "row"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "decimals": 0,
+            "mappings": [],
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 50
+                },
+                {
+                  "color": "orange",
+                  "value": 70
+                },
+                {
+                  "color": "dark-red",
+                  "value": 95
+                }
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 7,
+          "x": 0,
+          "y": 16
+        },
+        "id": 9,
+        "options": {
+          "displayMode": "lcd",
+          "minVizHeight": 10,
+          "minVizWidth": 0,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showUnfilled": true
+        },
+        "pluginVersion": "9.4.7",
+        "targets": [
+          {
+            "alias": "$tag_queue_name ($tag_queue_id)",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT last(\"cos_buffer_cur\")/last(\"cos_buffer_size\")*100 FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND queue_name=~/.+/ and $timeFilter group by queue_name, queue_id",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "cos_buffer_usage"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          }
+        ],
+        "title": "Current Buffer utilization per queue - $ifname",
+        "type": "bargauge"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "decimals": 0,
+            "mappings": [],
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "yellow",
+                  "value": 50
+                },
+                {
+                  "color": "orange",
+                  "value": 70
+                },
+                {
+                  "color": "dark-red",
+                  "value": 95
+                }
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 7,
+          "x": 7,
+          "y": 16
+        },
+        "id": 50,
+        "options": {
+          "displayMode": "lcd",
+          "minVizHeight": 10,
+          "minVizWidth": 0,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showUnfilled": true
+        },
+        "pluginVersion": "9.4.7",
+        "targets": [
+          {
+            "alias": "$tag_queue_name ($tag_queue_id)",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT last(\"cos_buffer_peak\")/last(\"cos_buffer_size\")*100 FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND queue_name=~/.+/ and $timeFilter group by queue_name, queue_id",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "cos_buffer_usage"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          }
+        ],
+        "title": "Peak Buffer utilization per queue - $ifname",
+        "type": "bargauge"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              }
+            },
+            "mappings": []
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 10,
+          "x": 14,
+          "y": 16
+        },
+        "id": 11,
+        "options": {
+          "displayLabels": [
+            "percent",
+            "name"
+          ],
+          "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "showLegend": true,
+            "values": [
+              "percent"
+            ]
+          },
+          "pieType": "pie",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "alias": "$tag_queue_name",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [
+              {
+                "params": [
+                  "queue_name"
+                ],
+                "type": "tag"
+              }
+            ],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT \"cos_forwarded_octets_rate\"*8 FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/)  and $timeFilter GROUP BY \"queue_name\"",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "cos_forwarded_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": []
+          }
+        ],
+        "title": "Per Queue Traffic balancing - $ifname",
+        "type": "piechart"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 8,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "bps"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 8,
+          "x": 0,
+          "y": 26
+        },
+        "id": 48,
+        "options": {
+          "legend": {
+            "calcs": [
+              "lastNotNull",
+              "mean",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Last *",
+            "sortDesc": true
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "alias": "Input Bps - $tag_queue_name",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [
+              {
+                "params": [
+                  "queue_name"
+                ],
+                "type": "tag"
+              }
+            ],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT mean(\"cos_queued_octets_rate\")*8 FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND  queue_name!=\"\" and $timeFilter GROUP BY \"queue_name\", time($sample_interval)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "cos_forwarded_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          }
+        ],
+        "title": "Queued Traffic Bps per Queue - $ifname",
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 8,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "bps"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 8,
+          "x": 8,
+          "y": 26
+        },
+        "id": 4,
+        "options": {
+          "legend": {
+            "calcs": [
+              "lastNotNull",
+              "mean",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Last *",
+            "sortDesc": true
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "alias": "Input Bps - $tag_queue_name",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [
+              {
+                "params": [
+                  "queue_name"
+                ],
+                "type": "tag"
+              }
+            ],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT mean(\"cos_forwarded_octets_rate\")*8 FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND  queue_name!=\"\" and $timeFilter GROUP BY \"queue_name\", time($sample_interval)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "cos_forwarded_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          }
+        ],
+        "title": "Forwarded Traffic Bps per Queue - $ifname",
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 8,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "bps"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 8,
+          "x": 16,
+          "y": 26
+        },
+        "id": 2,
+        "options": {
+          "legend": {
+            "calcs": [
+              "lastNotNull",
+              "mean",
+              "min",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "alias": "Input Bps",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT mean(\"in_octets_rate\")*8  FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND $timeFilter group by time($sample_interval)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "in_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ],
+              [
+                {
+                  "params": [
+                    "out_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          },
+          {
+            "alias": "Output Bps",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [],
+            "hide": false,
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT mean(\"out_octets_rate\")*8 FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND $timeFilter group by time($sample_interval)",
+            "rawQuery": true,
+            "refId": "B",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "in_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ],
+              [
+                {
+                  "params": [
+                    "out_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          }
+        ],
+        "title": "Port statistics Bps - $ifname",
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 8,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "pps"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 8,
+          "x": 0,
+          "y": 38
+        },
+        "id": 49,
+        "options": {
+          "legend": {
+            "calcs": [
+              "lastNotNull",
+              "mean",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Last *",
+            "sortDesc": false
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "alias": "Input pps - $tag_queue_name",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [
+              {
+                "params": [
+                  "queue_name"
+                ],
+                "type": "tag"
+              }
+            ],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT mean(\"cos_queued_packets_rate\")*8 FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND  queue_name!=\"\" and $timeFilter GROUP BY \"queue_name\", time($sample_interval)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "cos_forwarded_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          }
+        ],
+        "title": "Queued Traffic Pps per Queue - $ifname",
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 8,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "pps"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 8,
+          "x": 8,
+          "y": 38
+        },
+        "id": 5,
+        "options": {
+          "legend": {
+            "calcs": [
+              "lastNotNull",
+              "mean",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Last *",
+            "sortDesc": false
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "alias": "Input pps - $tag_queue_name",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [
+              {
+                "params": [
+                  "queue_name"
+                ],
+                "type": "tag"
+              }
+            ],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT mean(\"cos_forwarded_packets_rate\")*8 FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND  queue_name!=\"\" and $timeFilter GROUP BY \"queue_name\", time($sample_interval)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "cos_forwarded_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          }
+        ],
+        "title": "Forwarded Traffic Pps per Queue - $ifname",
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 8,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "pps"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 8,
+          "x": 16,
+          "y": 38
+        },
+        "id": 3,
+        "options": {
+          "legend": {
+            "calcs": [
+              "lastNotNull",
+              "mean",
+              "min",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "alias": "Input pps",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT mean(\"in_pkts_rate\")*8  FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND $timeFilter group by time($sample_interval)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "in_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ],
+              [
+                {
+                  "params": [
+                    "out_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          },
+          {
+            "alias": "Output pps",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [],
+            "hide": false,
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT mean(\"out_pkts_rate\")*8 FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND $timeFilter group by time($sample_interval)",
+            "rawQuery": true,
+            "refId": "B",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "in_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ],
+              [
+                {
+                  "params": [
+                    "out_octets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          }
+        ],
+        "title": "Port statistics Pps Traffic - $ifname",
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "influxdb",
+          "uid": "jtsuid"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 5,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "min": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "pps"
+          },
+          "overrides": [
+            {
+              "__systemRef": "hideSeriesFrom",
+              "matcher": {
+                "id": "byNames",
+                "options": {
+                  "mode": "exclude",
+                  "names": [
+                    "Tail Drop pps - BEST_EFFORT"
+                  ],
+                  "prefix": "All except:",
+                  "readOnly": true
+                }
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 24,
+          "x": 0,
+          "y": 50
+        },
+        "id": 7,
+        "options": {
+          "legend": {
+            "calcs": [
+              "lastNotNull",
+              "mean",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "right",
+            "showLegend": true,
+            "sortBy": "Last *",
+            "sortDesc": true,
+            "width": 0
+          },
+          "tooltip": {
+            "mode": "multi",
+            "sort": "desc"
+          }
+        },
+        "targets": [
+          {
+            "alias": "RED Drop pps - $tag_queue_name",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [
+              {
+                "params": [
+                  "queue_name"
+                ],
+                "type": "tag"
+              }
+            ],
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT mean(\"cos_red_dropped_packets_rate\") FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND  queue_name!=\"\" and  $timeFilter GROUP BY \"queue_name\",  time($sample_interval)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "cos_red_dropped_packets_rate"
+                  ],
+                  "type": "field"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          },
+          {
+            "alias": "Tail Drop pps - $tag_queue_name",
+            "datasource": {
+              "type": "influxdb",
+              "uid": "jtsuid"
+            },
+            "groupBy": [
+              {
+                "params": [
+                  "$interval"
+                ],
+                "type": "time"
+              },
+              {
+                "params": [
+                  "queue_name"
+                ],
+                "type": "tag"
+              }
+            ],
+            "hide": false,
+            "measurement": "COS",
+            "orderByTime": "ASC",
+            "policy": "default",
+            "query": "SELECT mean(\"cos_tail_dropped_packets_rate\") FROM \"COS\" WHERE (\"device\" =~ /^$rtr$/ AND \"if_name\" =~ /^$ifname$/) AND $timeFilter GROUP BY time($sample_interval), \"queue_name\"",
+            "rawQuery": true,
+            "refId": "B",
+            "resultFormat": "time_series",
+            "select": [
+              [
+                {
+                  "params": [
+                    "cos_tail_dropped_packets_rate"
+                  ],
+                  "type": "field"
+                },
+                {
+                  "params": [],
+                  "type": "mean"
+                }
+              ]
+            ],
+            "tags": [
+              {
+                "key": "device",
+                "operator": "=~",
+                "value": "/^$rtr$/"
+              },
+              {
+                "condition": "AND",
+                "key": "if_name",
+                "operator": "=~",
+                "value": "/^$ifname$/"
+              }
+            ]
+          }
+        ],
+        "title": "Drop per queue - $ifname",
+        "type": "timeseries"
+      }
+    ],
+    "refresh": "30s",
+    "revision": 1,
+    "schemaVersion": 38,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "selected": false,
+            "text": "rtme-mx-22.englab.juniper.net",
+            "value": "rtme-mx-22.englab.juniper.net"
+          },
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "definition": "show tag values FROM COS with key=\"device\"",
+          "hide": 0,
+          "includeAll": false,
+          "label": "Router",
+          "multi": false,
+          "name": "rtr",
+          "options": [],
+          "query": "show tag values FROM COS with key=\"device\"",
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "current": {
+            "selected": true,
+            "text": [
+              "et-1/1/2"
+            ],
+            "value": [
+              "et-1/1/2"
+            ]
+          },
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "definition": "show tag values FROM COS with key=\"if_name\" where device=~/$rtr/",
+          "hide": 0,
+          "includeAll": true,
+          "label": "Interface",
+          "multi": true,
+          "name": "ifname",
+          "options": [],
+          "query": "show tag values FROM COS with key=\"if_name\" where device=~/$rtr/",
+          "refresh": 1,
+          "regex": "et.*|xe.*|ge-.*",
+          "skipUrlSync": false,
+          "sort": 1,
+          "type": "query"
+        },
+        {
+          "auto": true,
+          "auto_count": 30,
+          "auto_min": "31s",
+          "current": {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          },
+          "hide": 0,
+          "label": "Interval",
+          "name": "sample_interval",
+          "options": [
+            {
+              "selected": false,
+              "text": "auto",
+              "value": "$__auto_interval_sample_interval"
+            },
+            {
+              "selected": false,
+              "text": "31s",
+              "value": "31s"
+            },
+            {
+              "selected": false,
+              "text": "1m",
+              "value": "1m"
+            },
+            {
+              "selected": false,
+              "text": "2m",
+              "value": "2m"
+            },
+            {
+              "selected": true,
+              "text": "5m",
+              "value": "5m"
+            }
+          ],
+          "query": "31s,1m,2m,5m",
+          "queryValue": "",
+          "refresh": 2,
+          "skipUrlSync": false,
+          "type": "interval"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-30m",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "TRAFFIC & COS MONITORING PROFILE - JTSO",
+    "uid": "trafficdashboard",
+    "version": 1,
+    "weekStart": ""
+  }
