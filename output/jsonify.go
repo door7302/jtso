@@ -88,12 +88,12 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 			// check if PHY port has a description
 			// ADD physical description if present
 			for _, phy2 := range rd.IfDesc.Physicals {
-				phy_name := strings.Trim(phy2.Name, "\n")
-				phy_desc := strings.Trim(phy2.Desc, "\n")
+				phy2_name := strings.Trim(phy2.Name, "\n")
+				phy2_desc := strings.Trim(phy2.Desc, "\n")
 
-				if phy2 == phy && phy_desc != "" {
-					m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy_name + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy_desc, " ", "", -1), "-", "_", -1))
-					m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(phy_desc, " ", "", -1), "-", "_", -1))
+				if phy2_name == phy_name && phy2_desc != "" {
+					m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy2_name + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
+					m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
 				}
 			}
 		}
