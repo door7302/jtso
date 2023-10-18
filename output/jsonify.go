@@ -67,7 +67,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		m.Meta[rd.Family][rd.RtrName] = map[string]map[string]string{}
 	}
 
-	for _, phy := range rd.IfDesc.Physicals {
+	for _, phy := range rd.IfList.Physicals {
 		phy_name := strings.Trim(phy.Name, "\n")
 		// Keep only WAN ports
 		if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
