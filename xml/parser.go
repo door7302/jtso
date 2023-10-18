@@ -8,7 +8,8 @@ import (
 type RawData struct {
 	RtrName    string
 	Family     string
-	IfInfo     *Ifdesc
+	IfDesc     *Ifdesc
+	IfList     *Iflist
 	HwInfo     *Hw
 	LacpInfo   *Lacp
 	LacpDigest *LacpDigest
@@ -38,6 +39,23 @@ type Log struct {
 	XMLName xml.Name `xml:"logical-interface"`
 	Name    string   `xml:"name"`
 	Desc    string   `xml:"description"`
+}
+
+// Structs for unmarshalling interfaces descriptions
+type Iflist struct {
+	XMLName   xml.Name  `xml:"interface-information"`
+	Physicals []PhyList `xml:"physical-interface"`
+}
+
+type PhyList struct {
+	XMLName  xml.Name  `xml:"physical-interface"`
+	Name     string    `xml:"name"`
+	Logicals []LogList `xml:"logical-interface"`
+}
+
+type LogList struct {
+	XMLName xml.Name `xml:"logical-interface"`
+	Name    string   `xml:"name"`
 }
 
 // structs for umarshalling chassis hw
@@ -120,6 +138,17 @@ func ParseVersion(s string) (*Version, error) {
 func ParseIfdesc(s string) (*Ifdesc, error) {
 	logger.HandlePanic()
 	var i Ifdesc
+	// convert in byte array
+	b := []byte(s)
+	// unmarshall xml string
+	err := xml.Unmarshal(b, &i)
+	return &i, err
+}
+
+// Parsing function for interfaces terse
+func ParseIflist(s string) (*Iflist, error) {
+	logger.HandlePanic()
+	var i Iflist
 	// convert in byte array
 	b := []byte(s)
 	// unmarshall xml string

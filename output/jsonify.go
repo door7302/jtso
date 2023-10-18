@@ -67,29 +67,40 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		m.Meta[rd.Family][rd.RtrName] = map[string]map[string]string{}
 	}
 
-	// ADD physical / logical interface description
-	for _, phy := range rd.IfInfo.Physicals {
+	for _, phy := range rd.IfDesc.Physicals {
 		phy_name := strings.Trim(phy.Name, "\n")
-		phy_desc := strings.Trim(phy.Desc, "\n")
-		_, ok := m.Meta[rd.Family][rd.RtrName][phy_name]
-		if !ok {
-			m.Meta[rd.Family][rd.RtrName][phy_name] = make(map[string]string)
-		}
+		// Keep only WAN ports
+		if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
+			_, ok := m.Meta[rd.Family][rd.RtrName][phy_name]
+			if !ok {
+				m.Meta[rd.Family][rd.RtrName][phy_name] = make(map[string]string)
+			}
+			//Default description TAG
+			m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = "Unknown"
+			m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy_name + " - " + "Unknown"
 
-		m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(phy_desc, " ", "", -1), "-", "_", -1))
-		if phy_desc != "" {
-			m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy_name + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy_desc, " ", "", -1), "-", "_", -1))
-		} else {
-			m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy_name
-		}
+			// Add also the parent LAG name if physical interface is a child link.
+			val, ok := rd.LacpDigest.LacpMap[phy_name]
+			if ok {
+				m.Meta[rd.Family][rd.RtrName][phy_name]["LAG"] = val
+			}
 
-		// Add also the parent LAG name if physical interface is a child link.
-		val, ok := rd.LacpDigest.LacpMap[phy_name]
-		if ok {
-			m.Meta[rd.Family][rd.RtrName][phy_name]["LAG"] = val
+			// check if PHY port has a description
+			// ADD physical description if present
+			for _, phy2 := range rd.IfDesc.Physicals {
+				phy_name := strings.Trim(phy2.Name, "\n")
+				phy_desc := strings.Trim(phy2.Desc, "\n")
+
+				if phy2 == phy && phy_desc != "" {
+					m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy_name + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy_desc, " ", "", -1), "-", "_", -1))
+					m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(phy_desc, " ", "", -1), "-", "_", -1))
+				}
+			}
 		}
 	}
-	for _, lgl := range rd.IfInfo.Logicals {
+
+	// ADD logical description
+	for _, lgl := range rd.IfDesc.Logicals {
 		lgl_name := strings.Trim(lgl.Name, "\n")
 		lgl_desc := strings.Trim(lgl.Desc, "\n")
 		_, ok := m.Meta[rd.Family][rd.RtrName][lgl_name]

@@ -83,7 +83,8 @@ func (r *RouterTask) Work() error {
 
 	var rawData *xml.RawData
 	rawData = new(xml.RawData)
-	rawData.IfInfo = new(xml.Ifdesc)
+	rawData.IfDesc = new(xml.Ifdesc)
+	rawData.IfList = new(xml.Iflist)
 	rawData.HwInfo = new(xml.Hw)
 	rawData.LacpInfo = new(xml.Lacp)
 	rawData.LacpDigest = new(xml.LacpDigest)
@@ -116,9 +117,26 @@ func (r *RouterTask) Work() error {
 
 	} else {
 		// Unmarshall the reply
-		rawData.IfInfo, err = xml.ParseIfdesc(reply.Data)
+		rawData.IfDesc, err = xml.ParseIfdesc(reply.Data)
 		if err != nil {
 			logger.Log.Warnf("[%s] Unable to parse interface description: %v", r.Name, err)
+		} else {
+			hasIf = true
+		}
+
+	}
+
+	d = "<get-interface-information><terse/></get-interface-information>"
+	rpc = message.NewRPC(d)
+	reply, err = session.SyncRPC(rpc, int32(r.Timeout))
+	if err != nil || reply == nil || strings.Contains(reply.Data, "<rpc-error>") {
+		logger.Log.Warnf("[%s] No interfaces terse information: %v", r.Name, err)
+
+	} else {
+		// Unmarshall the reply
+		rawData.IfList, err = xml.ParseIflist(reply.Data)
+		if err != nil {
+			logger.Log.Warnf("[%s] Unable to parse interface terse: %v", r.Name, err)
 		} else {
 			hasIf = true
 		}
@@ -165,12 +183,12 @@ func (r *RouterTask) Work() error {
 			logger.Log.Debug("----- Interface Descriptions -----")
 			logger.Log.Debug("")
 			logger.Log.Debug(" Physicals Intf:")
-			for _, v := range rawData.IfInfo.Physicals {
+			for _, v := range rawData.IfDesc.Physicals {
 				logger.Log.Debugf(" ├─ %s : %s", strings.Trim(v.Name, "\n"), strings.Trim(v.Desc, "\n"))
 			}
 			logger.Log.Debug("")
 			logger.Log.Debug(" Logicals Intf:")
-			for _, v := range rawData.IfInfo.Logicals {
+			for _, v := range rawData.IfDesc.Logicals {
 				logger.Log.Debugf(" ├─ %s : %s", strings.Trim(v.Name, "\n"), strings.Trim(v.Desc, "\n"))
 			}
 			logger.Log.Debug("--------------------------------------------------------------------")
