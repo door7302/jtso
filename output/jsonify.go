@@ -75,7 +75,14 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		if !ok {
 			m.Meta[rd.Family][rd.RtrName][phy_name] = make(map[string]string)
 		}
+
 		m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(phy_desc, " ", "", -1), "-", "_", -1))
+		if phy_desc != "" {
+			m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy_name + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy_desc, " ", "", -1), "-", "_", -1))
+		} else {
+			m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy_name
+		}
+
 		// Add also the parent LAG name if physical interface is a child link.
 		val, ok := rd.LacpDigest.LacpMap[phy_name]
 		if ok {
