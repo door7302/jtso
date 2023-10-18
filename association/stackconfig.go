@@ -63,7 +63,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			}
 		}
 	}
-	logger.Log.Errorf("DEBUGGGGGGG %v", cfgHierarchy)
 
 	// now recreate the telegraf config per family
 	for _, f := range familes {
