@@ -657,7 +657,7 @@
           "measurement": "POWER",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^^FPC+\\d$/ and $timeFilter group by component_name, device fill(0)",
+          "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^^FPC+\\d$/ and used_power!= 0 and $timeFilter group by component_name, device fill(0)",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -731,7 +731,7 @@
           "measurement": "POWER",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)Fan.*/ and $timeFilter group by component_name, device fill(0)",
+          "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)Fan.*/ and used_power!= 0 and $timeFilter group by component_name, device fill(0)",
           "rawQuery": true,
           "refId": "C",
           "resultFormat": "time_series",
@@ -768,7 +768,7 @@
           "measurement": "POWER",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)CB|SIB|SFB|RE|SCB|SF|Routin.*/ and $timeFilter group by component_name, device fill(0)",
+          "query": "SELECT used_power FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND component_name =~/^(?i)CB|SIB|SFB|RE|SCB|SF|Routin.*/ and used_power!= 0 and $timeFilter group by component_name, device fill(0)",
           "rawQuery": true,
           "refId": "D",
           "resultFormat": "time_series",
@@ -795,7 +795,156 @@
           ]
         }
       ],
-      "title": "All components - $device",
+      "title": "All components power comsuption - $device",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "POWER.power_usage {component_name: FPC0, device: rtme-ptx10k16-01.englab.juniper.net}": false,
+              "Time": false
+            },
+            "indexByName": {
+              "Time": 0,
+              "component_name": 2,
+              "device": 1,
+              "last": 3,
+              "last_1": 4
+            },
+            "renameByName": {
+              "component_name": "FPC Slot",
+              "device": "Router",
+              "last": "Current Power Usage",
+              "last_1": "Maximum Power "
+            }
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "jtsuid"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 6,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 17,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.1.4",
+      "targets": [
+        {
+          "alias": "$tag_component_name",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "jtsuid"
+          },
+          "groupBy": [],
+          "measurement": "POWER",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT temperature FROM \"POWER\" WHERE (\"device\"=~ /^$device$/) AND temperature!= 0 and $timeFilter group by component_name, device fill(0)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "*"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "device::tag",
+              "operator": "=~",
+              "value": "/^$device$/"
+            }
+          ]
+        }
+      ],
+      "title": "All components temperature - $device",
       "transformations": [
         {
           "id": "organize",
@@ -828,7 +977,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 56
       },
       "id": 5,
       "panels": [],
@@ -836,6 +985,30 @@
       "repeatDirection": "h",
       "title": "HW COMPONENT - $device",
       "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 57
+      },
+      "id": 18,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<h3><center>FPC/MPC</center></h3>\n",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.1.4",
+      "type": "text"
     },
     {
       "datasource": {
@@ -889,7 +1062,7 @@
         "h": 11,
         "w": 7,
         "x": 0,
-        "y": 40
+        "y": 59
       },
       "id": 6,
       "options": {
@@ -1033,7 +1206,7 @@
         "h": 11,
         "w": 17,
         "x": 7,
-        "y": 40
+        "y": 59
       },
       "id": 17,
       "options": {
@@ -1120,6 +1293,30 @@
     },
     {
       "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 70
+      },
+      "id": 19,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<h3><center>FAN</center></h3>\n",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.1.4",
+      "type": "text"
+    },
+    {
+      "datasource": {
         "type": "influxdb",
         "uid": "jtsuid"
       },
@@ -1170,7 +1367,7 @@
         "h": 11,
         "w": 7,
         "x": 0,
-        "y": 51
+        "y": 72
       },
       "id": 8,
       "options": {
@@ -1314,7 +1511,7 @@
         "h": 11,
         "w": 17,
         "x": 7,
-        "y": 51
+        "y": 72
       },
       "id": 9,
       "options": {
@@ -1441,7 +1638,7 @@
         "h": 17,
         "w": 12,
         "x": 0,
-        "y": 62
+        "y": 83
       },
       "id": 15,
       "options": {
@@ -1574,7 +1771,7 @@
         "h": 17,
         "w": 12,
         "x": 12,
-        "y": 62
+        "y": 83
       },
       "id": 16,
       "options": {
@@ -1648,6 +1845,30 @@
     },
     {
       "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 100
+      },
+      "id": 20,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<h3><center>CB/RE/Fabric</center></h3>\n",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.1.4",
+      "type": "text"
+    },
+    {
+      "datasource": {
         "type": "influxdb",
         "uid": "jtsuid"
       },
@@ -1698,7 +1919,7 @@
         "h": 11,
         "w": 7,
         "x": 0,
-        "y": 79
+        "y": 102
       },
       "id": 12,
       "options": {
@@ -1842,7 +2063,7 @@
         "h": 11,
         "w": 17,
         "x": 7,
-        "y": 79
+        "y": 102
       },
       "id": 11,
       "options": {
@@ -1929,6 +2150,30 @@
     },
     {
       "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 113
+      },
+      "id": 21,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<h3><center>PSM/PEM</center></h3>\n",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.1.4",
+      "type": "text"
+    },
+    {
+      "datasource": {
         "type": "influxdb",
         "uid": "jtsuid"
       },
@@ -1979,7 +2224,7 @@
         "h": 11,
         "w": 7,
         "x": 0,
-        "y": 90
+        "y": 115
       },
       "id": 10,
       "options": {
@@ -2123,7 +2368,7 @@
         "h": 11,
         "w": 17,
         "x": 7,
-        "y": 90
+        "y": 115
       },
       "id": 13,
       "options": {
@@ -2217,9 +2462,9 @@
     "list": [
       {
         "current": {
-          "selected": false,
-          "text": "rtme-loan-mx304-01.englab.juniper.net",
-          "value": "rtme-loan-mx304-01.englab.juniper.net"
+          "selected": true,
+          "text": "rtme-ptx10k16-01.englab.juniper.net",
+          "value": "rtme-ptx10k16-01.englab.juniper.net"
         },
         "datasource": {
           "type": "influxdb",
