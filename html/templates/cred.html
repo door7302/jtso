@@ -35,6 +35,7 @@
             <form style="margin-top: 10px;"><label class="form-label">Netconf Password:</label><input id="Password" class="form-control" type="password" value="{{.Netpwd}}"></form>
             <form><label class="form-label" style="margin-top: 10px;">Gnmi Username:</label><input id="Username2" class="form-control" type="text" value="{{.Gnmiuser}}"></form>
             <form style="margin-top: 10px;"><label class="form-label">Gnmi Password:</label><input id="Password2" class="form-control" type="password" value="{{.Gnmipwd}}"></form>
+            </br>
             <h4 class="card-title">Certificats Management for gNMI (Telegraf client side config)</h4>
             <div style="margin-top: 10px;" class="form-check">
                 {{if eq .Usetls "yes"}}
@@ -53,7 +54,7 @@
                 <input class="form-check-input" type="checkbox" id="Skipverify">
                 {{ end }}
                 <label class="form-check-label" for="flexCheckDefault">
-                    Use TLS but skip chain & host verification?
+                    Use TLS but skip chain & host verification (skip-verify)?
                 </label>
               </div>
               <div style="margin-top: 10px;" class="form-check">
@@ -63,7 +64,7 @@
                 <input class="form-check-input" type="checkbox" id="Clienttls">
                 {{ end }}
                 <label class="form-check-label" for="flexCheckDefault">
-                    Enable client-side TLS certificate & key to authenticate to the collector?
+                    Enable client-side TLS certificate & key to authenticate to the collector (requiere Telegraf cert - see README)?
                 </label>
               </div>
               </select></form><input onclick="saveCred();" class="btn btn-primary" type="submit" value="Update" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
