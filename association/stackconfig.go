@@ -110,8 +110,16 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				filenames = ActiveProfiles[p].Definition.TelCfg.AcxCfg
 			}
 			tls := false
+			skip := false
+			clienttls := false
 			if sqlite.ActiveCred.UseTls == "yes" {
 				tls = true
+			}
+			if sqlite.ActiveCred.SkipVerify == "yes" {
+				skip = true
+			}
+			if sqlite.ActiveCred.ClientTls == "yes" {
+				clienttls = true
 			}
 
 			// Create the map - per version > routers
@@ -165,7 +173,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					continue
 				}
 				defer renderFile.Close()
-				err = temp.Execute(renderFile, map[string]interface{}{"rtrs": rendRtrs, "username": sqlite.ActiveCred.GnmiUser, "password": sqlite.ActiveCred.GnmiPwd, "tls": tls, "skip": cfg.Gnmi.SkipVerify})
+				err = temp.Execute(renderFile, map[string]interface{}{"rtrs": rendRtrs, "username": sqlite.ActiveCred.GnmiUser, "password": sqlite.ActiveCred.GnmiPwd, "tls": tls, "skip": skip, "tls_client": clienttls})
 				if err != nil {
 					logger.Log.Errorf("Unable to write into render telegraf file - err: %v", err)
 					continue

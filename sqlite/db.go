@@ -32,6 +32,8 @@ type Cred struct {
 	GnmiUser    string
 	GnmiPwd     string
 	UseTls      string
+	SkipVerify  string
+	ClientTls   string
 }
 
 var db *sql.DB
@@ -75,7 +77,9 @@ func Init(f string) error {
 		netpwd TEXT,
 		gnmiuser TEXT,
 		gnmipwd TEXT,
-		usetls TEXT
+		usetls TEXT,
+		skipverify TEXT default "yes" NOT NULL,
+		clienttls TEXT
 		);`
 
 	if _, err := db.Exec(createRtr); err != nil {
@@ -181,9 +185,9 @@ func updateRouterProfile(n string, p int) error {
 	return err
 }
 
-func UpdateCredentials(nu string, np string, gu string, gp string, t string) error {
+func UpdateCredentials(nu string, np string, gu string, gp string, t string, s string, c string) error {
 	dbMu.Lock()
-	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?   WHERE id=0;", nu, np, gu, gp, t); err != nil {
+	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?, skipverify=?, clienttls=?  WHERE id=0;", nu, np, gu, gp, t, s, c); err != nil {
 		logger.Log.Errorf("Error while updating credential - err: %v", err)
 		dbMu.Unlock()
 		return err
@@ -235,7 +239,7 @@ func LoadAll() error {
 		AssoList = append(AssoList, &i)
 	}
 
-	ActiveCred = Cred{Id: 0, NetconfUser: "lab", NetconfPwd: "lab123", GnmiUser: "lab", GnmiPwd: "lab123", UseTls: "no"}
+	ActiveCred = Cred{Id: 0, NetconfUser: "lab", NetconfPwd: "lab123", GnmiUser: "lab", GnmiPwd: "lab123", UseTls: "no", SkipVerify: "yes", ClientTls: "no"}
 	rows, err = db.Query("SELECT * FROM credentials;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting credentials - err: %v", err)
@@ -246,13 +250,13 @@ func LoadAll() error {
 	i := rows.Next()
 	if !i {
 		// nothing in the DB regarding credential - add default one
-		if _, err := db.Exec("INSERT INTO credentials VALUES(?,?,?,?,?,?);", 0, ActiveCred.NetconfUser, ActiveCred.NetconfPwd, ActiveCred.GnmiUser, ActiveCred.GnmiPwd, ActiveCred.UseTls); err != nil {
+		if _, err := db.Exec("INSERT INTO credentials VALUES(?,?,?,?,?,?,?,?);", 0, ActiveCred.NetconfUser, ActiveCred.NetconfPwd, ActiveCred.GnmiUser, ActiveCred.GnmiPwd, ActiveCred.UseTls, ActiveCred.SkipVerify, ActiveCred.ClientTls); err != nil {
 			logger.Log.Errorf("Error while adding default credential - err: %v", err)
 			dbMu.Unlock()
 			return err
 		}
 	} else {
-		err = rows.Scan(&ActiveCred.Id, &ActiveCred.NetconfUser, &ActiveCred.NetconfPwd, &ActiveCred.GnmiUser, &ActiveCred.GnmiPwd, &ActiveCred.UseTls)
+		err = rows.Scan(&ActiveCred.Id, &ActiveCred.NetconfUser, &ActiveCred.NetconfPwd, &ActiveCred.GnmiUser, &ActiveCred.GnmiPwd, &ActiveCred.UseTls, &ActiveCred.SkipVerify, &ActiveCred.ClientTls)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing credential rows - err: %v", err)
 			dbMu.Unlock()

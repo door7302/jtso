@@ -27,8 +27,7 @@ type NetconfConfig struct {
 }
 
 type GnmiConfig struct {
-	Port       int
-	SkipVerify bool
+	Port int
 }
 
 type EnricherConfig struct {
@@ -76,7 +75,6 @@ func NewConfigContainer(f string) *ConfigContainer {
 
 	// Set default value for gnmi
 	viper.SetDefault("protocols.gnmi.port", 9339)
-	viper.SetDefault("protocols.gnmi.skip_verify", true)
 
 	return &ConfigContainer{
 		Grafana: &GrafanaConfig{
@@ -98,8 +96,7 @@ func NewConfigContainer(f string) *ConfigContainer {
 			RpcTimeout: viper.GetInt("protocols.netconf.rpc_timeout"),
 		},
 		Gnmi: &GnmiConfig{
-			Port:       viper.GetInt("protocols.gnmi.port"),
-			SkipVerify: viper.GetBool("protocols.gnmi.skip_verify"),
+			Port: viper.GetInt("protocols.gnmi.port"),
 		},
 	}
 }

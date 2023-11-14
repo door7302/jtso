@@ -63,5 +63,7 @@ type (
 		GnmiUser    string `json:"gnmiuser"`
 		GnmiPwd     string `json:"gnmipwd"`
 		UseTls      string `json:"usetls"`
+		SkipVerify  string `json:"skipverify"`
+		ClientTls   string `json:"clienttls"`
 	}
 )

@@ -185,7 +185,7 @@ func routeRouters(c echo.Context) error {
 
 func routeCred(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	return c.Render(http.StatusOK, "cred.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser, "Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd, "Usetls": sqlite.ActiveCred.UseTls, "GrafanaPort": grafanaPort})
+	return c.Render(http.StatusOK, "cred.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser, "Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd, "Usetls": sqlite.ActiveCred.UseTls, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTls, "GrafanaPort": grafanaPort})
 }
 
 func routeProfiles(c echo.Context) error {
@@ -383,7 +383,7 @@ func routeUptCred(c echo.Context) error {
 		logger.Log.Errorf("Unable to parse Post request for updating credentials: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update credentials"})
 	}
-	err = sqlite.UpdateCredentials(r.NetconfUser, r.NetconfPwd, r.GnmiUser, r.GnmiPwd, r.UseTls)
+	err = sqlite.UpdateCredentials(r.NetconfUser, r.NetconfPwd, r.GnmiUser, r.GnmiPwd, r.UseTls, r.SkipVerify, r.ClientTls)
 	if err != nil {
 		logger.Log.Errorf("Unable to update credentials: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update credentials"})
