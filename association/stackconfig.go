@@ -44,13 +44,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	cfgHierarchy = make(map[string]map[string][]*sqlite.RtrEntry)
 	for _, v := range sqlite.RtrList {
 		if v.Profile == 1 {
-			fam := v.Family
-			if fam == "vmx" {
-				fam = "mx"
-			}
-			_, ok := cfgHierarchy[fam]
+			_, ok := cfgHierarchy[v.Family]
 			if !ok {
-				cfgHierarchy[fam] = make(map[string][]*sqlite.RtrEntry)
+				cfgHierarchy[v.Family] = make(map[string][]*sqlite.RtrEntry)
 			}
 			pfound := false
 			var asso []string
@@ -62,7 +58,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			}
 			if pfound {
 				for _, p := range asso {
-					cfgHierarchy[fam][p] = append(cfgHierarchy[fam][p], v)
+					cfgHierarchy[v.Family][p] = append(cfgHierarchy[v.Family][p], v)
 				}
 			}
 		}

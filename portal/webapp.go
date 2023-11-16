@@ -156,10 +156,6 @@ func routeIndex(c echo.Context) error {
 			if r.Profile == 1 {
 				numMX++
 			}
-		case "vmx":
-			if r.Profile == 1 {
-				numMX++
-			}
 		case "ptx":
 			if r.Profile == 1 {
 				numPTX++
