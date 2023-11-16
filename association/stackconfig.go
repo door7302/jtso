@@ -62,7 +62,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			}
 			if pfound {
 				for _, p := range asso {
-					cfgHierarchy[v.Family][p] = append(cfgHierarchy[v.Family][p], v)
+					cfgHierarchy[fam][p] = append(cfgHierarchy[fam][p], v)
 				}
 			}
 		}
