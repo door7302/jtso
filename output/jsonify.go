@@ -156,7 +156,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 									prfx := "et-"
 									key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 									key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
-									if family == "mx" {
+									if family == "mx" || family == "vmx" {
 										if strings.Contains(sssm.Desc, "1G") {
 											prfx = "ge-"
 										} else if strings.Contains(sssm.Desc, "1G") {
@@ -188,7 +188,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 							prfx := "et-"
 							key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 							key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
-							if family == "mx" {
+							if family == "mx" || family == "vmx" {
 								if strings.Contains(ssm.Desc, "1G") {
 									prfx = "ge-"
 								} else if strings.Contains(ssm.Desc, "1G") {
