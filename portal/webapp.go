@@ -101,7 +101,7 @@ func (w *WebApp) Run() {
 
 func routeIndex(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	teleMx, telePtx, teleAcx, influx, grafana, kapacitor, jtso := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
+	teleVmx, teleMx, telePtx, teleAcx, influx, grafana, kapacitor, jtso := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
 	// check containers state
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -117,6 +117,10 @@ func routeIndex(c echo.Context) error {
 	}
 	for _, container := range containers {
 		switch container.Names[0] {
+		case "/telegraf_vmx":
+			if container.State == "running" {
+				teleVmx = "ccffcc"
+			}
 		case "/telegraf_mx":
 			if container.State == "running" {
 				teleMx = "ccffcc"
@@ -149,9 +153,13 @@ func routeIndex(c echo.Context) error {
 	}
 
 	// Retrive number of active routers per Telegraf
-	numMX, numPTX, numACX := 0, 0, 0
+	numVMX, numMX, numPTX, numACX := 0, 0, 0, 0
 	for _, r := range sqlite.RtrList {
 		switch r.Family {
+		case "vmx":
+			if r.Profile == 1 {
+				numVMX++
+			}
 		case "mx":
 			if r.Profile == 1 {
 				numMX++
@@ -167,7 +175,7 @@ func routeIndex(c echo.Context) error {
 		}
 	}
 
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "GrafanaPort": grafanaPort})
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleVmx": teleVmx, "TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumVMX": numVMX, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "GrafanaPort": grafanaPort})
 }
 
 func routeRouters(c echo.Context) error {
@@ -320,6 +328,49 @@ func routeAddProfile(c echo.Context) error {
 		logger.Log.Errorf("Router %s is already assigned to a profile", r.Shortname)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Router is already assigned to a profile."})
 	}
+	// Check if a profile can be attached to a router
+	// find out the family of the router
+	fam := "all"
+	for _, i := range sqlite.RtrList {
+		if i.Shortname == r.Shortname {
+			fam = i.Family
+			break
+		}
+	}
+	// Now check for each profile there is a given Telegraf config
+	valid := true
+	errString := ""
+	for _, i := range r.Profiles {
+		allTele := association.ActiveProfiles[i].Definition.TelCfg
+		switch fam {
+		case "vmx":
+			if len(allTele.VmxCfg) == 0 {
+				valid = false
+				errString += "There is no Telegraf config for profile " + i + " for the VMX platform.</br>"
+			}
+		case "mx":
+			if len(allTele.MxCfg) == 0 {
+				valid = false
+				errString += "There is no Telegraf config for profile " + i + " for the MX platform.</br>"
+			}
+		case "ptx":
+			if len(allTele.PtxCfg) == 0 {
+				valid = false
+				errString += "There is no Telegraf config for profile " + i + " for the PTX platform.</br>"
+			}
+		case "acx":
+			if len(allTele.AcxCfg) == 0 {
+				valid = false
+				errString += "There is no Telegraf config for profile " + i + " for the ACX platform.</br>"
+			}
+		}
+	}
+
+	if !valid {
+		logger.Log.Errorf("Router %s is not compatible with one or more profiles", r.Shortname)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Incompatibility issue:</br></br>" + errString + "</br>Check Doc menu for details..."})
+	}
+
 	err = sqlite.AddAsso(r.Shortname, r.Profiles)
 	if err != nil {
 		logger.Log.Errorf("Unable to adding router profile in DB: %v", err)
@@ -329,14 +380,6 @@ func routeAddProfile(c echo.Context) error {
 	logger.Log.Info("Force the metadata update")
 
 	go worker.Collect(collectCfg.cfg)
-	// find out the family of the router
-	fam := "all"
-	for _, i := range sqlite.RtrList {
-		if i.Shortname == r.Shortname {
-			fam = i.Family
-			break
-		}
-	}
 	// update the stack for the right family
 	go association.ConfigueStack(collectCfg.cfg, fam)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile updated"})
@@ -412,6 +455,13 @@ func routeUptDoc(c echo.Context) error {
 	}
 
 	tele := ""
+	for _, v := range p.Definition.TelCfg.VmxCfg {
+		if v.Version == "all" {
+			tele += "For VMX version " + v.Version + ": " + v.Config + "</br>"
+		} else {
+			tele += "For VMX version <=" + v.Version + ": " + v.Config + "</br>"
+		}
+	}
 	for _, v := range p.Definition.TelCfg.MxCfg {
 		if v.Version == "all" {
 			tele += "For MX version " + v.Version + ": " + v.Config + "</br>"
