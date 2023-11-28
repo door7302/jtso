@@ -15,6 +15,7 @@ import (
 	"github.com/docker/docker/client"
 )
 
+const PATH_VMX string = "/var/shared/telegraf/vmx/telegraf.d/"
 const PATH_MX string = "/var/shared/telegraf/mx/telegraf.d/"
 const PATH_PTX string = "/var/shared//telegraf/ptx/telegraf.d/"
 const PATH_ACX string = "/var/shared//telegraf/acx/telegraf.d/"
@@ -30,10 +31,11 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// create the slice for which families we have to reconfigure the stack
 	if family == "all" {
-		familes = make([]string, 3)
-		familes[0] = "mx"
-		familes[1] = "ptx"
-		familes[2] = "acx"
+		familes = make([]string, 4)
+		familes[0] = "vmx"
+		familes[1] = "mx"
+		familes[2] = "ptx"
+		familes[3] = "acx"
 	} else {
 		familes = make([]string, 1)
 		familes[0] = family
@@ -69,6 +71,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		var directory string
 		// remove all file of telegraf directory
 		switch f {
+		case "vmx":
+			readDirectory, _ = os.Open(PATH_VMX)
+			directory = PATH_VMX
 		case "mx":
 			readDirectory, _ = os.Open(PATH_MX)
 			directory = PATH_MX
@@ -102,6 +107,8 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 			// extract definition of the profile
 			switch f {
+			case "vmx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.VmxCfg
 			case "mx":
 				filenames = ActiveProfiles[p].Definition.TelCfg.MxCfg
 			case "ptx":

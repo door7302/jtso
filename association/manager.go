@@ -19,6 +19,7 @@ type Config struct {
 }
 
 type Telegraf struct {
+	VmxCfg []Config `json:"vmx"`
 	MxCfg  []Config `json:"mx"`
 	PtxCfg []Config `json:"ptx"`
 	AcxCfg []Config `json:"acx"`
