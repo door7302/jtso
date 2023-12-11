@@ -9,7 +9,7 @@ WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 
-RUN go build -o ./jtso -ldflags "${LDFLAGS}" ./main.go 
+RUN CGO_CFLAGS="-D_LARGEFILE64_SOURCE" go build -o ./jtso -ldflags "${LDFLAGS}" ./main.go 
 
 FROM alpine:latest
 
