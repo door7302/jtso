@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"jtso/logger"
+	"os"
 	"strings"
 	"sync"
 
@@ -46,7 +47,17 @@ func Init(f string) error {
 	var err error
 	err = nil
 	dbMu = new(sync.Mutex)
-
+	// check if db filename exist - if not create empty file
+	if _, err := os.Stat(f); os.IsNotExist(err) {
+		file, err := os.Create(f)
+		if err != nil {
+			logger.Log.Errorf("Error while creating DB file %s - err: %v", f, err)
+			return err
+		}
+		defer file.Close()
+		logger.Log.Infof("Initializing DB file %s - err: %v", f, err)
+	}
+	// open filename
 	db, err = sql.Open("sqlite3", f)
 	if err != nil {
 		logger.Log.Infof("Error while opening DB %s - err: %v", f, err)
