@@ -6,6 +6,7 @@ import (
 	"io"
 	"jtso/association"
 	"jtso/config"
+	"jtso/influx"
 	"jtso/logger"
 	"jtso/netconf"
 	"jtso/sqlite"
@@ -74,6 +75,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/delprofile", routeDelProfile)
 	wapp.POST("/updatecred", routeUptCred)
 	wapp.POST("/updatedoc", routeUptDoc)
+	wapp.POST("/influxmgt", routeInfluxMgt)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -299,10 +301,25 @@ func routeDelRouter(c echo.Context) error {
 		logger.Log.Errorf("Router can't be removed - there is an association: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "You can't remove a router associated to a Profile"})
 	}
+	// before removing retrieve long name of the router
+	ln := ""
+	for _, v := range sqlite.RtrList {
+		if v.Shortname == r.Shortname {
+			ln = v.Hostname
+			break
+		}
+	}
 	err = sqlite.DelRouter(r.Shortname)
 	if err != nil {
 		logger.Log.Errorf("Unable to delete router from DB: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete router from DB"})
+	}
+	if ln != "" {
+		err = influx.DropRouter(ln)
+		if err != nil {
+			logger.Log.Errorf("Unable to delete router from InfluxDB: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete router from InfluxDB"})
+		}
 	}
 	logger.Log.Infof("Router %s has been successfully removed", r.Shortname)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router deleted"})
@@ -524,4 +541,29 @@ func routeUptDoc(c echo.Context) error {
 
 	logger.Log.Infof("Documentation have been successfully updated")
 	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: tele, Graf: graf, Kapa: kapa})
+}
+
+func routeInfluxMgt(c echo.Context) error {
+	var err error
+
+	r := new(InfluxMgt)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for managing influxDB: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the data"})
+	}
+
+	switch r.Action {
+	case "emptydb":
+		err = influx.EmptyDB()
+		if err != nil {
+			logger.Log.Errorf("Unable to empty the database: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to empty the database"})
+		}
+		logger.Log.Infof("InfluxDB has been successfully empty")
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "InfluxDB has been successfully empty"})
+	default:
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown InfluxDB action"})
+	}
 }

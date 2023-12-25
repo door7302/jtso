@@ -66,4 +66,9 @@ type (
 		SkipVerify  string `json:"skipverify"`
 		ClientTls   string `json:"clienttls"`
 	}
+
+	InfluxMgt struct {
+		Action string `json:"action"`
+		Data   string `json:"data"`
+	}
 )
