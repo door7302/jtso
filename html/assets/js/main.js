@@ -1,4 +1,4 @@
-function addAsso() {
+function emptydb() {
     alertify.confirm("Are you sure you want to empty the DB? All data will be lost.", function (e) { 
         if (e) {
           $(function() {
