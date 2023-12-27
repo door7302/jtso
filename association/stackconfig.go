@@ -256,6 +256,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				fileKapa := "/var/active_profiles/" + p + "/" + d
 				found := false
 				for i, _ := range kapacitor.ActiveTick {
+					logger.Log.Errorf("TOTO: %s - %s", i, fileKapa)
 					if i == fileKapa {
 						found = true
 						break
@@ -272,6 +273,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	for i, _ := range kapacitor.ActiveTick {
 		found := false
 		for _, v := range kapaStart {
+			logger.Log.Errorf("DEBUG: %s - %s", i, v)
 			if i == v {
 				found = true
 				break
