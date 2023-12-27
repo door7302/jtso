@@ -247,17 +247,27 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	}
 
 	// Create the list of Active Kapacitor script
-	var kapaStart, kapaStop []string
+	var kapaStart, kapaStop, kapaAll []string
 	kapaStart = make([]string, 0)
 	kapaStop = make([]string, 0)
-	logger.Log.Errorf("Len de Active tick: %d", len(kapacitor.ActiveTick))
+	kapaAll = make([]string, 0)
 	for _, v := range cfgHierarchy {
 		for p, _ := range v {
 			for _, d := range ActiveProfiles[p].Definition.KapaCfg {
 				fileKapa := "/var/active_profiles/" + p + "/" + d
+				to_add := true
+				for _, a := range kapaAll {
+					if a == fileKapa {
+						to_add = false
+						break
+					}
+				}
+				if to_add {
+					// kapaAll is to compare with ActiveTick later to delete unwanted tick scripts
+					kapaAll = append(kapaAll, fileKapa)
+				}
 				found := false
 				for i, _ := range kapacitor.ActiveTick {
-					logger.Log.Errorf("TOTO: %s - %s", i, fileKapa)
 					if i == fileKapa {
 						found = true
 						break
@@ -265,7 +275,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				}
 				// if kapa script not already active
 				if !found {
-					logger.Log.Errorf("ADD to start: %s", fileKapa)
 					kapaStart = append(kapaStart, fileKapa)
 				}
 			}
@@ -274,15 +283,13 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// check now those that need to be deleted
 	for i, _ := range kapacitor.ActiveTick {
 		found := false
-		for _, v := range kapaStart {
-			logger.Log.Errorf("DEBUG: %s - %s", i, v)
+		for _, v := range kapaAll {
 			if i == v {
 				found = true
 				break
 			}
 		}
 		if !found {
-			logger.Log.Errorf("Add to stop: %s", i)
 			kapaStop = append(kapaStop, i)
 		}
 	}
