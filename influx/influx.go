@@ -17,7 +17,7 @@ func EmptyDB() error {
 		Addr: influxDBURL,
 	})
 	if err != nil {
-		logger.Log.Errorf("Enable to establish influxdb connexion: %v", err)
+		logger.Log.Errorf("Unable to establish influxdb connexion: %v", err)
 		return err
 
 	}
