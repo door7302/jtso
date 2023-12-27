@@ -52,6 +52,9 @@ func main() {
 	// Create a shared Context with cancel function
 	_, close := context.WithCancel(context.Background())
 
+	// wait a second to let docker DNS service to start
+	time.Sleep(1 * time.Second)
+
 	// Init the sqliteDB
 	//err = sqlite.Init("./jtso.db")
 	err = sqlite.Init("/etc/jtso/jtso.db")
