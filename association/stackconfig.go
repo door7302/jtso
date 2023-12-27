@@ -191,48 +191,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	}
 
-	// Create the list of Active Kapacitor script
-	var kapaStart, kapaStop []string
-	kapaStart = make([]string, 0)
-	kapaStop = make([]string, 0)
-	for _, v := range cfgHierarchy {
-		for p, _ := range v {
-			for _, d := range ActiveProfiles[p].Definition.KapaCfg {
-				fileKapa := "/var/active_profiles/" + p + "/" + d
-				found := false
-				for i, _ := range kapacitor.ActiveTick {
-					if i == fileKapa {
-						found = true
-						break
-					}
-				}
-				// if kapa script not already active
-				if !found {
-					kapaStart = append(kapaStart, fileKapa)
-				}
-			}
-		}
-	}
-	// check now those that need to be deleted
-	for i, _ := range kapacitor.ActiveTick {
-		found := false
-		for _, v := range kapaStart {
-			if i == v {
-				found = true
-				break
-			}
-		}
-		if !found {
-			kapaStop = append(kapaStop, i)
-		}
-	}
-
-	// remove non active Kapascript
-	kapacitor.DeleteTick(kapaStop)
-
-	// Enable active scripts
-	kapacitor.StartTick(kapaStart)
-
 	// create the list of active profile dashboard name and copy the new version of each dashboard
 	var excludeDash []string
 	excludeDash = make([]string, 0)
@@ -287,6 +245,47 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			}
 		}
 	}
+
+	// Create the list of Active Kapacitor script
+	var kapaStart, kapaStop []string
+	kapaStart = make([]string, 0)
+	kapaStop = make([]string, 0)
+	for _, v := range cfgHierarchy {
+		for p, _ := range v {
+			for _, d := range ActiveProfiles[p].Definition.KapaCfg {
+				fileKapa := "/var/active_profiles/" + p + "/" + d
+				found := false
+				for i, _ := range kapacitor.ActiveTick {
+					if i == fileKapa {
+						found = true
+						break
+					}
+				}
+				// if kapa script not already active
+				if !found {
+					kapaStart = append(kapaStart, fileKapa)
+				}
+			}
+		}
+	}
+	// check now those that need to be deleted
+	for i, _ := range kapacitor.ActiveTick {
+		found := false
+		for _, v := range kapaStart {
+			if i == v {
+				found = true
+				break
+			}
+		}
+		if !found {
+			kapaStop = append(kapaStop, i)
+		}
+	}
+	// remove non active Kapascript
+	kapacitor.DeleteTick(kapaStop)
+	// Enable active scripts
+	kapacitor.StartTick(kapaStart)
+
 	// restart Containers :
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
