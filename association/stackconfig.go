@@ -250,6 +250,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	var kapaStart, kapaStop []string
 	kapaStart = make([]string, 0)
 	kapaStop = make([]string, 0)
+	logger.Log.Errorf("Len de Active tick: %d", len(kapacitor.ActiveTick))
 	for _, v := range cfgHierarchy {
 		for p, _ := range v {
 			for _, d := range ActiveProfiles[p].Definition.KapaCfg {
@@ -264,6 +265,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				}
 				// if kapa script not already active
 				if !found {
+					logger.Log.Errorf("ADD to start: %s", fileKapa)
 					kapaStart = append(kapaStart, fileKapa)
 				}
 			}
@@ -280,6 +282,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			}
 		}
 		if !found {
+			logger.Log.Errorf("Add to stop: %s", i)
 			kapaStop = append(kapaStop, i)
 		}
 	}
