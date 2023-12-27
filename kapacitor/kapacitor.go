@@ -18,6 +18,32 @@ func init() {
 	ActiveTick = make(map[string]client.Task)
 }
 
+func CleanKapa() error {
+	// Create a new Kapacitor client
+	cli, err := client.New(client.Config{
+		URL: kapacitorURL,
+	})
+	if err != nil {
+		logger.Log.Errorf("Unable to establish kapacitor connexion: %v", err)
+		return err
+	}
+
+	all_tasks, err := cli.ListTasks(&client.ListTasksOptions{})
+	if err != nil {
+		logger.Log.Errorf("Unable to List all current kapacitor tasks: %v", err)
+		return err
+	}
+	for _, i := range all_tasks {
+		err = cli.DeleteTask(i.Link)
+		if err != nil {
+			logger.Log.Errorf("Unable to delete the taskname for script %s: %v", i.ID, err)
+			continue
+		}
+		logger.Log.Infof("Taskname for script %s has been successfully removed", i.ID)
+	}
+	return nil
+}
+
 func StartTick(t []string) error {
 	i := len(ActiveTick)
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"jtso/association"
 	"jtso/config"
+	"jtso/kapacitor"
 	"jtso/logger"
 	_ "jtso/output"
 	"jtso/portal"
@@ -54,6 +55,10 @@ func main() {
 
 	// wait 5 seconds to let docker DNS service to start
 	time.Sleep(5 * time.Second)
+
+	// Clean all kapacitor tasks
+	logger.Log.Info("Start cleaning all active Kapacitor tasks")
+	kapacitor.CleanKapa()
 
 	// Init the sqliteDB
 	//err = sqlite.Init("./jtso.db")
