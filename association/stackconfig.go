@@ -27,19 +27,19 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	logger.Log.Infof("Time to reconfigure JTS components for family %s", family)
 
 	var temp *template.Template
-	var familes []string
+	var families []string
 	var readDirectory *os.File
 
 	// create the slice for which families we have to reconfigure the stack
 	if family == "all" {
-		familes = make([]string, 4)
-		familes[0] = "vmx"
-		familes[1] = "mx"
-		familes[2] = "ptx"
-		familes[3] = "acx"
+		families = make([]string, 4)
+		families[0] = "vmx"
+		families[1] = "mx"
+		families[2] = "ptx"
+		families[3] = "acx"
 	} else {
-		familes = make([]string, 1)
-		familes[0] = family
+		families = make([]string, 1)
+		families[0] = family
 	}
 
 	// first create per type > per profile structure
@@ -68,7 +68,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	}
 
 	// now recreate the telegraf config per family
-	for _, f := range familes {
+	for _, f := range families {
 		var directory string
 		// remove all file of telegraf directory
 		switch f {
@@ -317,7 +317,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	logger.Log.Info("Grafana container has been restarted")
 
 	// Restart telegraf instance(s)
-	for _, f := range familes {
+	for _, f := range families {
 		cntr := 0
 		for _, rtrs := range cfgHierarchy[f] {
 			cntr += len(rtrs)
