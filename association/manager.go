@@ -49,7 +49,7 @@ func init() {
 }
 
 func PeriodicCheck() {
-	logger.Log.Info("Start periodic update of the profile db - scanning is starting")
+	logger.Log.Debug("Start periodic update of the profile db - scanning is starting")
 
 	// reset current flag for Active profile
 	ProfileLock.Lock()
@@ -229,5 +229,5 @@ func PeriodicCheck() {
 		}
 	}
 	ProfileLock.Unlock()
-	logger.Log.Info("End of the periodic update of the profiles db")
+	logger.Log.Debug("End of the periodic update of the profiles db")
 }
