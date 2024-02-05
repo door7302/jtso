@@ -19,17 +19,17 @@ function addRouter() {
                 $("#ListRtrs").append(row);
                 document.getElementById("Hostname").value="";
                 document.getElementById("Shortname").value="";
-                alertify.success("Router "+s+" has been successfulfy added");
                 waitingDialog.hide();
+                alertify.success("Router "+s+" has been successfulfy added");
               }
               else {
-                alertify.alert("JSTO...", json.msg);
                 waitingDialog.hide();
+                alertify.alert("JSTO...", json.msg);
               }             
             },    
             error : function(xhr, ajaxOptions, thrownError) {        
-                alertify.alert("JSTO...", "Unexpected error");
                 waitingDialog.hide();
+                alertify.alert("JSTO...", "Unexpected error");
             }
         });
     });
@@ -37,27 +37,34 @@ function addRouter() {
 
 function remove(name, td) { 
   var dataToSend = {"shortname": name};
-
-  // send data
-  $(function() {
-    $.ajax({
-        type: 'POST',
-        url: "/delrouter",
-        data: JSON.stringify(dataToSend),
-        contentType: "application/json",
-        dataType: "json",
-        success : function(json) {
-          if (json.status == "OK") {
-            $(td).closest("tr").remove();
-            alertify.success("Router "+name+" has been successfulfy removed")
-          }
-          else {
-            alertify.alert("JSTO...", json.msg);
-          }             
-        },    
-        error : function(xhr, ajaxOptions, thrownError) {        
-            alertify.alert("JSTO...", "Unexpected error");
-        }
+  alertify.confirm("Are you sure you want to remove the router? All data will be lost.", function (e) { 
+    if (e) {
+      // send data
+      waitingDialog.show();
+      $(function() {
+        $.ajax({
+            type: 'POST',
+            url: "/delrouter",
+            data: JSON.stringify(dataToSend),
+            contentType: "application/json",
+            dataType: "json",
+            success : function(json) {
+              if (json.status == "OK") {
+                $(td).closest("tr").remove();
+                waitingDialog.hide();
+                alertify.success("Router "+name+" has been successfulfy removed")
+              }
+              else {
+                waitingDialog.hide();
+                alertify.alert("JSTO...", json.msg);
+              }             
+            },    
+            error : function(xhr, ajaxOptions, thrownError) {        
+                waitingDialog.hide();
+                alertify.alert("JSTO...", "Unexpected error");
+            }
+        });
     });
-});
+    }
+  }).setHeader('JSTO...'); 
 }
