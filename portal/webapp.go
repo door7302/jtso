@@ -248,7 +248,7 @@ func routeDoc(c echo.Context) error {
 	}
 	association.ProfileLock.Unlock()
 
-	return c.Render(http.StatusOK, "browse.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort})
+	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort})
 }
 
 func routeBrowse(c echo.Context) error {
@@ -262,7 +262,7 @@ func routeBrowse(c echo.Context) error {
 		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
 	}
 
-	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
+	return c.Render(http.StatusOK, "browse.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
 }
 
 func routeAddRouter(c echo.Context) error {
