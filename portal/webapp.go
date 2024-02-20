@@ -67,6 +67,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/profiles.html", routeProfiles)
 	wapp.GET("/cred.html", routeCred)
 	wapp.GET("/doc.html", routeDoc)
+	wapp.GET("/browser.html", routeBrowse)
 
 	// configure POST routers
 	wapp.POST("/addrouter", routeAddRouter)
@@ -247,7 +248,21 @@ func routeDoc(c echo.Context) error {
 	}
 	association.ProfileLock.Unlock()
 
-	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort})
+	return c.Render(http.StatusOK, "browse.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort})
+}
+
+func routeBrowse(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
+
+	// Get all routers from db
+	var lr []RouterDetails
+	lr = make([]RouterDetails, 0)
+
+	for _, r := range sqlite.RtrList {
+		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
+	}
+
+	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
 }
 
 func routeAddRouter(c echo.Context) error {
