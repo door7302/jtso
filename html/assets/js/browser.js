@@ -35,6 +35,7 @@ function Browse() {
                   console.error("EventSource failed:", event);
                   eventSource.close();
               };
+              alert("pif");
               }
               else {
                // waitingDialog.hide();
