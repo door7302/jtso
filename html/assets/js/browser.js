@@ -1,3 +1,5 @@
+let eventSource;
+
 function Browse() {
     var p = document.getElementById("pathName").value.trim();
     var m = document.getElementById("merge").checked;
@@ -20,7 +22,7 @@ function Browse() {
               if (json.status == "OK") {
                // waitingDialog.hide();
                 alertify.success("Xpath search endeed");
-                const eventSource = new EventSource("/stream");
+                eventSource = new EventSource("/stream");
                 alert("pouet");
                 eventSource.onmessage = function(event) {
                 const data = JSON.parse(event.data);
