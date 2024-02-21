@@ -430,6 +430,7 @@ func routeSearchPath(c echo.Context) error {
 		logger.Log.Errorf("Streaming already running for path %s", parser.StreamObj.Path)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Another instance is currently requesting XPATH search. Retry later..."})
 	}
+	parser.StreamObj.Stream = true
 	r := new(SearchPath)
 	err = c.Bind(r)
 
