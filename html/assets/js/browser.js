@@ -1,4 +1,4 @@
-function saveCred() {
+function Browse() {
     var p = document.getElementById("pathName").value.trim();
     var m = document.getElementById("merge").checked;
     var r = document.getElementById("router").value.trim();
