@@ -25,12 +25,7 @@ browseButton.addEventListener("click", function () {
 
           eventSource.onmessage = function(event) {
               const data = JSON.parse(event.data);
-              console.log(data);
-
-              // Update the DOM with the received data
-              const messageElement = document.getElementById("message");
-              messageElement.innerHTML = `Message: ${data.msg}`;
-              
+              alert(data.msg)
           };
 
           eventSource.onerror = function(event) {
