@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"jtso/logger"
 	"jtso/sqlite"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/openconfig/gnmic/pkg/api"
 	"github.com/openconfig/gnmic/pkg/formatters"
@@ -140,9 +143,17 @@ func parseXpath(xpath string, value string, merge bool) error {
 	return nil
 }
 
-func LaunchSearch(h string, port int, p string, m bool) (string, *TreeNode) {
+func LaunchSearch(h string, port int, p string, m bool, c echo.Context) (string, *TreeNode) {
 
 	logger.Log.Infof("Start subscription for router %s and xpath %s", h, p)
+	data := map[string]interface{}{
+		"msg":    "Start subscription for router",
+		"status": "OK",
+	}
+	err := c.JSON(http.StatusOK, data)
+	if err == nil {
+		c.Response().Flush()
+	}
 
 	// Init global variable
 	root = NewTree("", map[string]interface{}{})

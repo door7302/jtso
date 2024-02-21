@@ -422,6 +422,9 @@ func routeAddProfile(c echo.Context) error {
 
 func routeSearchPath(c echo.Context) error {
 	var err error
+	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+	c.Response().Header().Set("Cache-Control", "no-cache")
+	c.Response().Header().Set("Connection", "keep-alive")
 
 	r := new(SearchPath)
 
@@ -437,10 +440,13 @@ func routeSearchPath(c echo.Context) error {
 			break
 		}
 	}
-	_, result := parser.LaunchSearch(h, collectCfg.cfg.Gnmi.Port, r.Xpath, r.Merge)
+	c.Response().Flush()
+	c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "TODO"})
+
+	_, result := parser.LaunchSearch(h, collectCfg.cfg.Gnmi.Port, r.Xpath, r.Merge, c)
 	logger.Log.Info(" %v", result)
 
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "TODO"})
+	return nil
 }
 
 func routeDelProfile(c echo.Context) error {

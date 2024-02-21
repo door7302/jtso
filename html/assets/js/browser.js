@@ -5,8 +5,10 @@ function Browse() {
  
 
     var dataToSend = {"shortname": r, "xpath": p, "merge": m};
-    waitingDialog.show();
+   // waitingDialog.show();
     // send data
+    
+
     $(function() {
         $.ajax({
             type: 'POST',
@@ -16,18 +18,29 @@ function Browse() {
             dataType: "json",
             success : function(json) {
               if (json.status == "OK") {
-                waitingDialog.hide();
+               // waitingDialog.hide();
                 alertify.success("Xpath search endeed");
+                
+
               }
               else {
-                waitingDialog.hide();
+               // waitingDialog.hide();
                 alertify.alert("JSTO...", json.msg);
               }             
             },    
             error : function(xhr, ajaxOptions, thrownError) {  
-                waitingDialog.hide();      
+                //waitingDialog.hide();      
                 alertify.alert("JSTO...", "Unexpected error");
             }
         });
     });
 }
+
+const eventSource = new EventSource("/stream");
+
+eventSource.onmessage = function(event) {
+const data = JSON.parse(event.data);
+// Update the DOM with the received data
+const messageElement = document.getElementById("message");
+messageElement.innerHTML = `Message: ${data.msg}`;
+};
