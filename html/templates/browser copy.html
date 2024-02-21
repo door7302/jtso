@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>jts-portal</title>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
+    <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
+    <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/bootstrap-multiselect.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-light navbar-expand-md py-3">
+        <div class="container"><img src="img/logo.png" width="129" height="67"><a class="navbar-brand d-flex align-items-center" href="#"><span>Juniper Telemetry Stack</span></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navcol-2">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="cred.html">Credentials</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="routers.html">Routers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
+                    <li class="nav-item"><a class="nav-link" href="doc.html" >Doc</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="browser.html" style="border-color: rgba(0, 0, 0, 0.65);">Browser</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/?orgId=1" onclick="javascript:event.target.port={{.GrafanaPort}}">Grafana</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Router Management</h4>
+            <form style="margin-top: 10px;">
+                <label class="form-label">Select a Router:</label>&nbsp;
+                <select id="router" class="selectpicker" data-width="auto">
+                </select>
+                </br>
+                </br>
+                <label class="form-label">Fill a path:</label>&nbsp;<input id="pathName" class="form-control" type="text">
+                <div style="margin-top: 10px;" class="form-check">
+                    <input class="form-check-input" type="checkbox" id="merge" checked>
+                    <label class="form-check-label" for="flexCheckDefault">
+                        Merge data for cleaner view (recommended)?
+                    </label>
+                  </div>
+            </form>
+                <input onclick="Browse();" class="btn btn-primary" type="submit" value="Analyze path" name="browse" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Results</h4>
+            <div id="container>"></div>
+   
+        </div>
+    </div>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="js/alertify.min.js"></script>
+    <script src="js/bootstrap-multiselect.js"></script>
+    <script src="js/bootstrap-waitingfor.min.js"></script>
+    <script src="js/routers.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script type="text/javascript" language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+
+
+</body>
+
+
+</html>
+
+function Search() {
+    waitingDialog.show();
+    $(function() {
+      var input = document.getElementById("rtr_name");
+      $.ajax({
+          type: 'POST',
+          url: "http://193.252.147.55:8080/api/jsontag",
+          data: JSON.stringify({name: input.value}),
+          contentType: "application/json",
+          dataType: "json",
+          success : function(json) {
+            
+            $('#rtr').jstree(true).settings.core.data = json;
+            $('#rtr').jstree(true).refresh();
+            waitingDialog.hide();
+              
+          },    
+          error : function(xhr, ajaxOptions, thrownError) {
+              alert("Router not found");
+          }
+      });
+  });    
+  }
+    </script>
+  
+  </body>
+  
+  </html>

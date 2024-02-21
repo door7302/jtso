@@ -9,6 +9,7 @@ import (
 	"jtso/influx"
 	"jtso/logger"
 	"jtso/netconf"
+	"jtso/parser"
 	"jtso/sqlite"
 	"jtso/worker"
 	"net/http"
@@ -77,6 +78,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/updatecred", routeUptCred)
 	wapp.POST("/updatedoc", routeUptDoc)
 	wapp.POST("/influxmgt", routeInfluxMgt)
+	wapp.POST("/searchxpath", routeSearchPath)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -416,6 +418,29 @@ func routeAddProfile(c echo.Context) error {
 	go association.ConfigueStack(collectCfg.cfg, fam)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile updated"})
 
+}
+
+func routeSearchPath(c echo.Context) error {
+	var err error
+
+	r := new(SearchPath)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for searching XPATH: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse Post request for searching XPATH"})
+	}
+	h := ""
+	for _, i := range sqlite.RtrList {
+		if i.Shortname == r.Shortname {
+			h = i.Hostname
+			break
+		}
+	}
+	_, result := parser.LaunchSearch(h, r.Xpath, r.Merge)
+	logger.Log.Info(" %v", result)
+
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "TODO"})
 }
 
 func routeDelProfile(c echo.Context) error {
