@@ -476,6 +476,8 @@ func routeStream(c echo.Context) error {
 		select {
 		case <-parser.StreamObj.StopStreaming:
 			parser.StreamObj.Stream = false
+			parser.StreamObj.Context.Response().Flush()
+			parser.StreamObj.Context = nil
 			logger.Log.Infof("Streaming has been stopped properly...")
 			return nil
 		}

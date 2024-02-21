@@ -250,6 +250,7 @@ func LaunchSearch() {
 			StreamObj.Result = root
 			StreamObj.Status = "END_OK"
 			close(StreamObj.StopStreaming)
+			return
 		}
 	}
 
