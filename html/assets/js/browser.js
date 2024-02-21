@@ -1,52 +1,42 @@
 let eventSource;
+const browseButton = document.getElementById("browse");
 
-function Browse() {
-    var p = document.getElementById("pathName").value.trim();
-    var m = document.getElementById("merge").checked;
-    var r = document.getElementById("router").value.trim();
- 
+browseButton.addEventListener("click", function () {
+  
+  var p = document.getElementById("pathName").value.trim();
+  var m = document.getElementById("merge").checked;
+  var r = document.getElementById("router").value.trim();
 
-    var dataToSend = {"shortname": r, "xpath": p, "merge": m};
-   // waitingDialog.show();
-    // send data
-    
+  var dataToSend = {"shortname": r, "xpath": p, "merge": m};
+  fetch("/searchxpath", {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json",
+      },
+      body: JSON.stringify(dataToSend),
+  })
+      .then(response => response.json())
+      .then(data => {
 
-    $(function() {
-        $.ajax({
-            type: 'POST',
-            url: "/searchxpath",
-            data: JSON.stringify(dataToSend),
-            contentType: "application/json",
-            dataType: "json",
-            success : function(json) {
-              if (json.status == "OK") {
-               // waitingDialog.hide();
-                alertify.success("Xpath search endeed");
-                eventSource = new EventSource("/stream");
-                alert("pouet");
-                eventSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                alert(JSON.stringify(event));
-                // Update the DOM with the received data
-                const messageElement = document.getElementById("message");
-                messageElement.innerHTML = `Message: ${data.msg}`;
-                };
-                eventSource.onerror = function(event) {
-                  console.error("EventSource failed:", event);
-                  eventSource.close();
-              };
-              alert("pif");
-              }
-              else {
-               // waitingDialog.hide();
-                alertify.alert("JSTO...", json.msg);
-              }             
-            },    
-            error : function(xhr, ajaxOptions, thrownError) {  
-                //waitingDialog.hide();      
-                alertify.alert("JSTO...", "Unexpected error");
-            }
-        });
-    });
-}
+          browseButton.disabled = true;
 
+          // Start the EventSource for streaming
+          eventSource = new EventSource("/stream");
+
+          eventSource.onmessage = function(event) {
+              const data = JSON.parse(event.data);
+              console.log(data);
+
+              // Update the DOM with the received data
+              const messageElement = document.getElementById("message");
+              messageElement.innerHTML = `Message: ${data.msg}`;
+              
+          };
+
+          eventSource.onerror = function(event) {
+              console.error("EventSource failed:", event);
+              eventSource.close();
+          };
+      })
+      .catch(error => console.error("Error starting streaming:", error));
+});
