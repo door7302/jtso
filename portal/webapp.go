@@ -16,7 +16,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/labstack/echo-contrib/cors"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -56,7 +55,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp := echo.New()
 	//configure app
 	wapp.Use(middleware.Static("html/assets"))
-	wapp.Use(cors.Default())
+	wapp.Use(middleware.CORS())
 
 	//Templating config
 	wapp.Renderer = &TemplateRegistry{
