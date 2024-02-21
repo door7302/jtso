@@ -236,6 +236,7 @@ func LaunchSearch() {
 	}()
 
 	subRspChan, subErrChan := tg.ReadSubscriptions()
+	streamData("DDKDkdkdk", "Ok")
 	for {
 		select {
 		case rsp := <-subRspChan:
