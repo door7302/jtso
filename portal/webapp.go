@@ -456,18 +456,21 @@ func routeSearchPath(c echo.Context) error {
 }
 
 func routeStream(c echo.Context) error {
+	// Set the response header for Server-Sent Events
+	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+	c.Response().Header().Set("Cache-Control", "no-cache")
+	c.Response().Header().Set("Connection", "keep-alive")
+
+	// Flush the response buffer
+	c.Response().Flush()
+
 	if parser.StreamObj.Stream == 0 {
 		logger.Log.Errorf("Bad request - direct access of /stream is not allowed")
-		return c.JSON(http.StatusBadRequest, Reply{Status: "NOK", Msg: "Another instance is currently requesting XPATH search. Retry later..."})
+		c.JSON(http.StatusBadRequest, Reply{Status: "NOK", Msg: "Bad request - direct access of /stream is not allowed"})
+		c.Response().Flush()
+		return nil
 	} else if parser.StreamObj.Stream == 1 {
 		parser.StreamObj.Stream = 2
-		// Set the response header for Server-Sent Events
-		c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
-		c.Response().Header().Set("Cache-Control", "no-cache")
-		c.Response().Header().Set("Connection", "keep-alive")
-
-		// Flush the response buffer
-		c.Response().Flush()
 
 		data := map[string]interface{}{
 			"msg":    "djqsdgqshdgsqhdgsqhgdqs",
