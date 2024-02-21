@@ -467,6 +467,13 @@ func routeStream(c echo.Context) error {
 	// Flush the response buffer
 	c.Response().Flush()
 
+	data := map[string]interface{}{
+		"msg":    "djqsdgqshdgsqhdgsqhgdqs",
+		"status": "OK",
+	}
+	c.JSON(http.StatusOK, data)
+	c.Response().Flush()
+
 	// Pass the context to parser
 	parser.StreamObj.Context = c
 	// launch parser
