@@ -140,7 +140,7 @@ func parseXpath(xpath string, value string, merge bool) error {
 	return nil
 }
 
-func LaunchSearch(h string, p string, m bool) (string, *TreeNode) {
+func LaunchSearch(h string, port int, p string, m bool) (string, *TreeNode) {
 
 	logger.Log.Infof("Start subscription for router %s and xpath %s", h, p)
 
@@ -151,7 +151,7 @@ func LaunchSearch(h string, p string, m bool) (string, *TreeNode) {
 	// create a target
 	tg, err := api.NewTarget(
 		api.Name("jtso"),
-		api.Address(h),
+		api.Address(h+":"+fmt.Sprint(port)),
 		api.Username(sqlite.ActiveCred.GnmiUser),
 		api.Password(sqlite.ActiveCred.GnmiPwd),
 		api.SkipVerify(true),

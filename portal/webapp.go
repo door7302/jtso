@@ -437,7 +437,7 @@ func routeSearchPath(c echo.Context) error {
 			break
 		}
 	}
-	_, result := parser.LaunchSearch(h, r.Xpath, r.Merge)
+	_, result := parser.LaunchSearch(h, collectCfg.cfg.Gnmi.Port, r.Xpath, r.Merge)
 	logger.Log.Info(" %v", result)
 
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "TODO"})
