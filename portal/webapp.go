@@ -2,6 +2,7 @@ package portal
 
 import (
 	"context"
+	"fmt"
 	"html/template"
 	"io"
 	"jtso/association"
@@ -463,6 +464,7 @@ func routeStream(c echo.Context) error {
 
 	// Flush the response buffer
 	c.Response().Flush()
+	writer, _ := c.Response().Writer.(http.Flusher)
 
 	if parser.StreamObj.Stream == 0 {
 		logger.Log.Errorf("Bad request - direct access of /stream is not allowed")
@@ -476,8 +478,12 @@ func routeStream(c echo.Context) error {
 			"msg":    "djqsdgqshdgsqhdgsqhgdqs",
 			"status": "OK",
 		}
-		c.JSON(http.StatusOK, data)
-		c.Response().Flush()
+
+		jsonData := fmt.Sprintf("data: %s\n\n", parser.ToJSON(data))
+
+		// Write and flush the JSON data
+		fmt.Fprint(c.Response().Writer, jsonData)
+		writer.Flush()
 
 		// Pass the context to parser
 		parser.StreamObj.Context = c

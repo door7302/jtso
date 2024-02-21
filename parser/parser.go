@@ -2,6 +2,7 @@ package parser
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"jtso/logger"
 	"jtso/sqlite"
@@ -32,6 +33,16 @@ type Streamer struct {
 	Result        *TreeNode
 	Context       echo.Context
 	StopStreaming chan struct{}
+}
+
+func ToJSON(data map[string]interface{}) string {
+	// Convert the data map to JSON
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error encoding JSON:", err)
+		return ""
+	}
+	return string(jsonData)
 }
 
 func init() {
