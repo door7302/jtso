@@ -28,6 +28,10 @@ function Browse() {
                 const messageElement = document.getElementById("message");
                 messageElement.innerHTML = `Message: ${data.msg}`;
                 };
+                eventSource.onerror = function(event) {
+                  console.error("EventSource failed:", event);
+                  eventSource.close();
+              };
               }
               else {
                // waitingDialog.hide();
