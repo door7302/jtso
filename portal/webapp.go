@@ -427,11 +427,11 @@ func routeSearchPath(c echo.Context) error {
 	var err error
 
 	// check if other instance is already running
-	if parser.StreamObj.Stream {
+	if parser.StreamObj.Stream != 0 {
 		logger.Log.Errorf("Streaming already running for path %s", parser.StreamObj.Path)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Another instance is currently requesting XPATH search. Retry later..."})
 	}
-	parser.StreamObj.Stream = true
+	parser.StreamObj.Stream = 1
 	r := new(SearchPath)
 	err = c.Bind(r)
 
@@ -456,40 +456,44 @@ func routeSearchPath(c echo.Context) error {
 }
 
 func routeStream(c echo.Context) error {
-	if !parser.StreamObj.Stream {
+	if parser.StreamObj.Stream == 0 {
 		logger.Log.Errorf("Bad request - direct access of /stream is not allowed")
 		return c.JSON(http.StatusBadRequest, Reply{Status: "NOK", Msg: "Another instance is currently requesting XPATH search. Retry later..."})
-	}
-	// Set the response header for Server-Sent Events
-	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
-	c.Response().Header().Set("Cache-Control", "no-cache")
-	c.Response().Header().Set("Connection", "keep-alive")
+	} else if parser.StreamObj.Stream == 1 {
+		parser.StreamObj.Stream = 2
+		// Set the response header for Server-Sent Events
+		c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+		c.Response().Header().Set("Cache-Control", "no-cache")
+		c.Response().Header().Set("Connection", "keep-alive")
 
-	// Flush the response buffer
-	c.Response().Flush()
+		// Flush the response buffer
+		c.Response().Flush()
 
-	data := map[string]interface{}{
-		"msg":    "djqsdgqshdgsqhdgsqhgdqs",
-		"status": "OK",
-	}
-	c.JSON(http.StatusOK, data)
-	c.Response().Flush()
+		data := map[string]interface{}{
+			"msg":    "djqsdgqshdgsqhdgsqhgdqs",
+			"status": "OK",
+		}
+		c.JSON(http.StatusOK, data)
+		c.Response().Flush()
 
-	// Pass the context to parser
-	parser.StreamObj.Context = c
-	// launch parser
-	go parser.LaunchSearch()
-	// loop until the end
-	for {
-		select {
-		case <-parser.StreamObj.StopStreaming:
-			parser.StreamObj.Stream = false
-			parser.StreamObj.Context.Response().Flush()
-			parser.StreamObj.Context = nil
-			logger.Log.Infof("Streaming has been stopped properly...")
-			return nil
+		// Pass the context to parser
+		parser.StreamObj.Context = c
+		// launch parser
+		go parser.LaunchSearch()
+		// loop until the end
+		for {
+			select {
+			case <-parser.StreamObj.StopStreaming:
+				parser.StreamObj.Stream = 0
+				parser.StreamObj.Context.Response().Flush()
+				parser.StreamObj.Context = nil
+				logger.Log.Infof("Streaming has been stopped properly...")
+				return nil
+			}
 		}
 	}
+	return nil
+
 }
 
 func routeDelProfile(c echo.Context) error {

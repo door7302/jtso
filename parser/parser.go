@@ -23,7 +23,7 @@ var re1, re2 *regexp.Regexp
 var StreamObj *Streamer
 
 type Streamer struct {
-	Stream        bool
+	Stream        int
 	Path          string
 	Router        string
 	Port          int
