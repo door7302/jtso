@@ -244,9 +244,9 @@ func LaunchSearch() {
 				parseXpath(k, fmt.Sprint(v), StreamObj.Merger)
 			}
 
-		case tgErr := <-subErrChan:
+		case <-subErrChan:
 			//traverseTree(root)
-			logger.Log.Infof("End of the subscription after timeout: %v", tgErr)
+			logger.Log.Infof("End of the subscription after the 60 secs analyzis")
 			StreamObj.Result = root
 			StreamObj.Status = "END_OK"
 			close(StreamObj.StopStreaming)
