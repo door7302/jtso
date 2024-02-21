@@ -52,6 +52,7 @@ func streamData(m string, s string) {
 	if err != nil {
 		logger.Log.Errorf("Error during streamin data: %v", err)
 	}
+	StreamObj.Context.Response().Flush()
 }
 
 func advancedSplit(path string) []string {
