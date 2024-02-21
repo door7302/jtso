@@ -20,8 +20,14 @@ function Browse() {
               if (json.status == "OK") {
                // waitingDialog.hide();
                 alertify.success("Xpath search endeed");
-                
+                const eventSource = new EventSource("/stream");
 
+                eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                // Update the DOM with the received data
+                const messageElement = document.getElementById("message");
+                messageElement.innerHTML = `Message: ${data.msg}`;
+                };
               }
               else {
                // waitingDialog.hide();
@@ -36,11 +42,3 @@ function Browse() {
     });
 }
 
-const eventSource = new EventSource("/stream");
-
-eventSource.onmessage = function(event) {
-const data = JSON.parse(event.data);
-// Update the DOM with the received data
-const messageElement = document.getElementById("message");
-messageElement.innerHTML = `Message: ${data.msg}`;
-};

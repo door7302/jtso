@@ -9,6 +9,7 @@ import (
 	"jtso/kapacitor"
 	"jtso/logger"
 	_ "jtso/output"
+	_ "jtso/parser"
 	"jtso/portal"
 	"jtso/sqlite"
 	"jtso/worker"

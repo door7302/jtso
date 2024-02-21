@@ -69,6 +69,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/cred.html", routeCred)
 	wapp.GET("/doc.html", routeDoc)
 	wapp.GET("/browser.html", routeBrowse)
+	wapp.GET("/stream", routeStream)
 
 	// configure POST routers
 	wapp.POST("/addrouter", routeAddRouter)
@@ -88,6 +89,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 		listen: ":" + strconv.Itoa(cfg.Portal.Port),
 		app:    wapp,
 	}
+
 }
 
 func (w *WebApp) Run() {
@@ -422,13 +424,15 @@ func routeAddProfile(c echo.Context) error {
 
 func routeSearchPath(c echo.Context) error {
 	var err error
-	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
-	c.Response().Header().Set("Cache-Control", "no-cache")
-	c.Response().Header().Set("Connection", "keep-alive")
 
+	// check if other instance is already running
+	if parser.StreamObj.Stream {
+		logger.Log.Errorf("Streaming already running for path %s", parser.StreamObj.Path)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Another instance is currently requesting XPATH search. Retry later..."})
+	}
 	r := new(SearchPath)
-
 	err = c.Bind(r)
+
 	if err != nil {
 		logger.Log.Errorf("Unable to parse Post request for searching XPATH: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse Post request for searching XPATH"})
@@ -440,13 +444,41 @@ func routeSearchPath(c echo.Context) error {
 			break
 		}
 	}
+	parser.StreamObj.Router = h
+	parser.StreamObj.Port = collectCfg.cfg.Gnmi.Port
+	parser.StreamObj.Path = r.Xpath
+	parser.StreamObj.Merger = r.Merge
+	parser.StreamObj.StopStreaming = make(chan struct{})
+
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Streaming well started."})
+}
+
+func routeStream(c echo.Context) error {
+	if !parser.StreamObj.Stream {
+		logger.Log.Errorf("Bad request - direct access of /stream is not allowed")
+		return c.JSON(http.StatusBadRequest, Reply{Status: "NOK", Msg: "Another instance is currently requesting XPATH search. Retry later..."})
+	}
+	// Set the response header for Server-Sent Events
+	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+	c.Response().Header().Set("Cache-Control", "no-cache")
+	c.Response().Header().Set("Connection", "keep-alive")
+
+	// Flush the response buffer
 	c.Response().Flush()
-	c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "TODO"})
 
-	_, result := parser.LaunchSearch(h, collectCfg.cfg.Gnmi.Port, r.Xpath, r.Merge, c)
-	logger.Log.Info(" %v", result)
-
-	return nil
+	// Pass the context to parser
+	parser.StreamObj.Context = c
+	// launch parser
+	go parser.LaunchSearch()
+	// loop until the end
+	for {
+		select {
+		case <-parser.StreamObj.StopStreaming:
+			parser.StreamObj.Stream = false
+			logger.Log.Infof("Streaming has been stopped properly...")
+			return nil
+		}
+	}
 }
 
 func routeDelProfile(c echo.Context) error {

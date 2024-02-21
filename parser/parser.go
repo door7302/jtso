@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-
 	"github.com/openconfig/gnmic/pkg/api"
 	"github.com/openconfig/gnmic/pkg/formatters"
 )
@@ -21,9 +20,38 @@ var root *TreeNode
 var global []string
 var re1, re2 *regexp.Regexp
 
+var StreamObj *Streamer
+
+type Streamer struct {
+	Stream        bool
+	Path          string
+	Router        string
+	Port          int
+	Merger        bool
+	Status        string
+	Result        *TreeNode
+	Context       echo.Context
+	StopStreaming chan struct{}
+}
+
 func init() {
+	// init re
 	re1 = regexp.MustCompile("(\\d+)")
 	re2 = regexp.MustCompile("(.*)\\[(.*)=(.*)\\]")
+
+	// init streamer
+	StreamObj = new(Streamer)
+}
+
+func streamData(m string, s string) {
+	data := map[string]interface{}{
+		"msg":    m,
+		"status": s,
+	}
+	err := StreamObj.Context.JSON(http.StatusOK, data)
+	if err != nil {
+		logger.Log.Errorf("Error during streamin data: %v", err)
+	}
 }
 
 func advancedSplit(path string) []string {
@@ -143,17 +171,10 @@ func parseXpath(xpath string, value string, merge bool) error {
 	return nil
 }
 
-func LaunchSearch(h string, port int, p string, m bool, c echo.Context) (string, *TreeNode) {
+func LaunchSearch() {
 
-	logger.Log.Infof("Start subscription for router %s and xpath %s", h, p)
-	data := map[string]interface{}{
-		"msg":    "Start subscription for router",
-		"status": "OK",
-	}
-	err := c.JSON(http.StatusOK, data)
-	if err == nil {
-		c.Response().Flush()
-	}
+	logger.Log.Infof("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path)
+	streamData(fmt.Sprintf("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
 
 	// Init global variable
 	root = NewTree("", map[string]interface{}{})
@@ -162,7 +183,7 @@ func LaunchSearch(h string, port int, p string, m bool, c echo.Context) (string,
 	// create a target
 	tg, err := api.NewTarget(
 		api.Name("jtso"),
-		api.Address(h+":"+fmt.Sprint(port)),
+		api.Address(StreamObj.Router+":"+fmt.Sprint(StreamObj.Port)),
 		api.Username(sqlite.ActiveCred.GnmiUser),
 		api.Password(sqlite.ActiveCred.GnmiPwd),
 		api.SkipVerify(true),
@@ -170,28 +191,36 @@ func LaunchSearch(h string, port int, p string, m bool, c echo.Context) (string,
 	)
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI target: %v", err)
-		return "TARGET_KO", nil
+		StreamObj.Status = "TARGET_KO"
+		close(StreamObj.StopStreaming)
+		return
 	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	err = tg.CreateGNMIClient(ctx)
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI client: %v", err)
-		return "CLIENT_KO", nil
+		StreamObj.Status = "CLIENT_KO"
+		close(StreamObj.StopStreaming)
+		return
 	}
+
 	defer tg.Close()
 	// create a gNMI subscribeRequest
 	subReq, err := api.NewSubscribeRequest(
 		api.Encoding("proto"),
 		api.SubscriptionListMode("stream"),
 		api.Subscription(
-			api.Path(p),
+			api.Path(StreamObj.Path),
 			api.SubscriptionMode("sample"),
 			api.SampleInterval(30*time.Second),
 		))
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI subscription: %v", err)
-		return "SUB_KO", nil
+		StreamObj.Status = "SUB_KO"
+		close(StreamObj.StopStreaming)
+		return
 	}
 
 	go tg.Subscribe(ctx, subReq, "sub1")
@@ -202,22 +231,24 @@ func LaunchSearch(h string, port int, p string, m bool, c echo.Context) (string,
 			return
 		case <-time.After(60 * time.Second):
 			tg.StopSubscription("sub1")
-
 		}
 	}()
+
 	subRspChan, subErrChan := tg.ReadSubscriptions()
 	for {
 		select {
 		case rsp := <-subRspChan:
 			r, _ := formatters.ResponsesFlat(rsp.Response)
 			for k, v := range r {
-				parseXpath(k, fmt.Sprint(v), m)
+				parseXpath(k, fmt.Sprint(v), StreamObj.Merger)
 			}
 
 		case tgErr := <-subErrChan:
 			//traverseTree(root)
 			logger.Log.Infof("End of the subscription after timeout: %v", tgErr)
-			return "OK", root
+			StreamObj.Result = root
+			StreamObj.Status = "END_OK"
+			close(StreamObj.StopStreaming)
 		}
 	}
 
