@@ -31,17 +31,20 @@ browseButton.addEventListener("click", function () {
               if (data.status == "END") {
                 alertify.alert("JSTO...", "Streaming terminé");
                 eventSource.close();
+                browseButton.disabled = false;
               }
           };
 
           eventSource.onerror = function(event) {
               alertify.alert("JSTO...", "Unexpected error: " + event);
+              browseButton.disabled = false;
               $('#logs').modal('hide');
               eventSource.close();
           };
       })
       .catch(error => {
         alertify.alert("JSTO...", "Unexpected error: " + error);
+        browseButton.disabled = false;
         $('#logs').modal('hide');
       });
 });
