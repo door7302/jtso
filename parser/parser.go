@@ -55,15 +55,15 @@ func init() {
 }
 
 func streamData(m string, s string) {
+	writer, _ := StreamObj.Context.Response().Writer.(http.Flusher)
+
 	data := map[string]interface{}{
 		"msg":    m,
 		"status": s,
 	}
-	err := StreamObj.Context.JSON(http.StatusOK, data)
-	if err != nil {
-		logger.Log.Errorf("Error during streamin data: %v", err)
-	}
-	StreamObj.Context.Response().Flush()
+	jsonData := fmt.Sprintf("data: %s\n\n", ToJSON(data))
+	fmt.Fprint(StreamObj.Context.Response().Writer, jsonData)
+	writer.Flush()
 }
 
 func advancedSplit(path string) []string {
@@ -96,12 +96,12 @@ func advancedSplit(path string) []string {
 func printTree(node map[string]interface{}, indent int, o map[string]interface{}) {
 	for k, v := range node {
 		if reflect.TypeOf(v).Kind() == reflect.Map {
-			fmt.Printf("%s+ %s\n", strings.Repeat("  ", indent), k)
+			//fmt.Printf("%s+ %s\n", strings.Repeat("  ", indent), k)
 			o[k] = map[string]interface{}{}
 			printTree(v.(map[string]interface{}), indent+1, o[k].(map[string]interface{}))
 		} else {
 			o[k] = v
-			fmt.Printf("%s+ %s: %s\n", strings.Repeat("  ", indent), k, fmt.Sprint(v))
+			//fmt.Printf("%s+ %s: %s\n", strings.Repeat("  ", indent), k, fmt.Sprint(v))
 		}
 	}
 
@@ -135,7 +135,7 @@ func parseXpath(xpath string, value string, merge bool) error {
 	if merge {
 		xpath = re1.ReplaceAllString(xpath, "x")
 	}
-	fmt.Println(xpath)
+	streamData(fmt.Sprintf("XPATH Extracted: %s", xpath), "COLLECT")
 	lpath := advancedSplit(xpath)
 
 	parent = root
@@ -186,7 +186,7 @@ func parseXpath(xpath string, value string, merge bool) error {
 func LaunchSearch() {
 
 	logger.Log.Infof("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path)
-	streamData(fmt.Sprintf("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
+	streamData(fmt.Sprintf("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "START")
 
 	// Init global variable
 	root = NewTree("", map[string]interface{}{})
@@ -203,20 +203,24 @@ func LaunchSearch() {
 	)
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI target: %v", err)
+		streamData(fmt.Sprintf("Unable to create gNMI target: %v", err), "TARGET_KO")
 		StreamObj.Status = "TARGET_KO"
 		close(StreamObj.StopStreaming)
 		return
 	}
+	streamData("Create gNMI Target", "TARGET_OK")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	err = tg.CreateGNMIClient(ctx)
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI client: %v", err)
+		streamData(fmt.Sprintf("Unable to create gNMI client: %v", err), "CLIENT_KO")
 		StreamObj.Status = "CLIENT_KO"
 		close(StreamObj.StopStreaming)
 		return
 	}
+	streamData("Create gNMI Client", "CLIENT_OK")
 
 	defer tg.Close()
 	// create a gNMI subscribeRequest
@@ -230,10 +234,12 @@ func LaunchSearch() {
 		))
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI subscription: %v", err)
+		streamData(fmt.Sprintf("Unable to create gNMI subscription: %v", err), "SUB_KO")
 		StreamObj.Status = "SUB_KO"
 		close(StreamObj.StopStreaming)
 		return
 	}
+	streamData("Create gNMI Subscription", "SUB_OK")
 
 	go tg.Subscribe(ctx, subReq, "sub1")
 
@@ -247,7 +253,7 @@ func LaunchSearch() {
 	}()
 
 	subRspChan, subErrChan := tg.ReadSubscriptions()
-	streamData("DDKDkdkdk", "Ok")
+	streamData("Start collection data", "COLLECT_OK")
 	for {
 		select {
 		case rsp := <-subRspChan:
@@ -258,9 +264,10 @@ func LaunchSearch() {
 
 		case <-subErrChan:
 			//traverseTree(root)
-			logger.Log.Infof("End of the subscription after the 60 secs analyzis")
+			logger.Log.Infof("End of the subscription after the 60 secs analysis")
+			streamData("End of the subscription after the 60 secs analysis", "END")
 			StreamObj.Result = root
-			StreamObj.Status = "END_OK"
+			StreamObj.Status = "END"
 			close(StreamObj.StopStreaming)
 			return
 		}

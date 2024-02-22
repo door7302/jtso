@@ -1,5 +1,6 @@
 let eventSource;
 const browseButton = document.getElementById("browse");
+const modal = document.getElementById("modalcore")
 
 browseButton.addEventListener("click", function () {
   
@@ -25,7 +26,7 @@ browseButton.addEventListener("click", function () {
 
           eventSource.onmessage = function(event) {
               const data = JSON.parse(event.data);
-              alert(data.msg)
+              modal.innerHTML += data.msg + '<br>';
           };
 
           eventSource.onerror = function(event) {

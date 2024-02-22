@@ -2,7 +2,6 @@ package portal
 
 import (
 	"context"
-	"fmt"
 	"html/template"
 	"io"
 	"jtso/association"
@@ -432,7 +431,9 @@ func routeSearchPath(c echo.Context) error {
 		logger.Log.Errorf("Streaming already running for path %s", parser.StreamObj.Path)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Another instance is currently requesting XPATH search. Retry later..."})
 	}
+	// change the streamer state to pending stream API request
 	parser.StreamObj.Stream = 1
+
 	r := new(SearchPath)
 	err = c.Bind(r)
 
@@ -464,7 +465,6 @@ func routeStream(c echo.Context) error {
 
 	// Flush the response buffer
 	c.Response().Flush()
-	writer, _ := c.Response().Writer.(http.Flusher)
 
 	if parser.StreamObj.Stream == 0 {
 		logger.Log.Errorf("Bad request - direct access of /stream is not allowed")
@@ -472,19 +472,8 @@ func routeStream(c echo.Context) error {
 		c.Response().Flush()
 		return nil
 	} else if parser.StreamObj.Stream == 1 {
+		// change the state of the stream to streaming
 		parser.StreamObj.Stream = 2
-
-		data := map[string]interface{}{
-			"msg":    "djqsdgqshdgsqhdgsqhgdqs",
-			"status": "OK",
-		}
-
-		jsonData := fmt.Sprintf("data: %s\n\n", parser.ToJSON(data))
-
-		// Write and flush the JSON data
-		fmt.Fprint(c.Response().Writer, jsonData)
-		writer.Flush()
-
 		// Pass the context to parser
 		parser.StreamObj.Context = c
 		// launch parser
