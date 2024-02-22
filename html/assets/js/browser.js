@@ -54,7 +54,7 @@ browseButton.addEventListener("click", function () {
                 alertify.alert("JSTO...", "Streaming terminé");
                 eventSource.close();
                 browseButton.disabled = false;
-                $('#result').jstree(true).settings.core.data = data.payload;
+                $('#result').jstree(true).settings.core.data = JSON.parse(data.payload);
                 $('#result').jstree(true).refresh();
                 $('#logs').modal('hide');
               }
