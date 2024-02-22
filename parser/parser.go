@@ -253,7 +253,7 @@ func LaunchSearch() {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(60 * time.Second):
+		case <-time.After(40 * time.Second):
 			tg.StopSubscription("sub1")
 		}
 	}()
@@ -272,7 +272,7 @@ func LaunchSearch() {
 		case <-subErrChan:
 			//traverseTree(root)
 			StreamObj.ForceFlush = true
-			logger.Log.Infof("End of the subscription after the 60 secs analysis")
+			logger.Log.Infof("End of the subscription after the 40 secs analysis")
 			StreamData("End of the subscription. Close gNMI session", "OK")
 			time.Sleep(1 * time.Second)
 			StreamObj.Result = root
