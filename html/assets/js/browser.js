@@ -18,12 +18,13 @@ browseButton.addEventListener("click", function () {
   })
       .then(response => response.json())
       .then(data => {
-          alertify.success("XPATH search started...");
           browseButton.disabled = true;
-          $('#logs').modal('show');
+
+          
           // Start the EventSource for streaming
           eventSource = new EventSource("/stream");
-
+          modal.innerHTML = '';
+          $('#logs').modal('show');
           eventSource.onmessage = function(event) {
               const data = JSON.parse(event.data);
               modal.innerHTML += data.msg + '<br>';
