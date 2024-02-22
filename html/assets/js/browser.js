@@ -29,7 +29,7 @@ browseButton.addEventListener("click", function () {
               modal.innerHTML += data.msg + '<br>';
               modal.scrollTop = modal.scrollHeight;
               if (data.status == "END") {
-                alertify.alert("JSTO...", "Streaming terminé";
+                alertify.alert("JSTO...", "Streaming terminé");
                 eventSource.close();
               }
           };
