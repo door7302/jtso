@@ -27,6 +27,7 @@ browseButton.addEventListener("click", function () {
           eventSource.onmessage = function(event) {
               const data = JSON.parse(event.data);
               modal.innerHTML += data.msg + '<br>';
+              modal.scrollTop = modal.scrollHeight;
           };
 
           eventSource.onerror = function(event) {
