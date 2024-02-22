@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -478,6 +479,7 @@ func routeStream(c echo.Context) error {
 		// Pass the context to parser
 		parser.StreamObj.Flusher, _ = c.Response().Writer.(http.Flusher)
 		parser.StreamObj.Writer = c.Response().Writer
+		parser.StreamObj.Ticker = time.Now()
 		// launch parser
 		go parser.LaunchSearch()
 		// loop until the end
@@ -487,6 +489,7 @@ func routeStream(c echo.Context) error {
 				parser.StreamObj.Stream = 0
 				parser.StreamObj.Flusher.Flush()
 				logger.Log.Infof("Streaming has been stopped properly...")
+				time.Sleep(500 * time.Millisecond)
 				return nil
 			}
 		}

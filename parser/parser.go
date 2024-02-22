@@ -28,7 +28,7 @@ type Streamer struct {
 	Router        string
 	Port          int
 	Merger        bool
-	Status        string
+	Ticker        time.Time
 	Result        *TreeNode
 	Flusher       http.Flusher
 	Writer        http.ResponseWriter
@@ -55,16 +55,25 @@ func ToJSON(data map[string]interface{}) string {
 }
 
 func streamData(m string, s string) {
+
 	data := map[string]interface{}{
 		"msg":    m,
 		"status": s,
 	}
 	jsonData := fmt.Sprintf("data: %s\n\n", ToJSON(data))
 	fmt.Fprint(StreamObj.Writer, jsonData)
-	StreamObj.Flusher.Flush()
+
+	// Compute the time between 2 flushs - min must be 1 sec
+	elapsedTime := time.Since(StreamObj.Ticker)
+	if elapsedTime.Seconds() >= 1.0 {
+		StreamObj.Flusher.Flush()
+	}
+	StreamObj.Ticker = time.Now()
+
 }
 
 func advancedSplit(path string) []string {
+
 	if strings.Contains(path, "=") && strings.Contains(path, "[") {
 		var newPath string
 		escape := false
@@ -202,7 +211,6 @@ func LaunchSearch() {
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI target: %v", err)
 		streamData(fmt.Sprintf("Unable to create gNMI target: %v", err), "ERROR")
-		StreamObj.Status = "TARGET_KO"
 		close(StreamObj.StopStreaming)
 		return
 	}
@@ -214,7 +222,6 @@ func LaunchSearch() {
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI client: %v", err)
 		streamData(fmt.Sprintf("Unable to create gNMI client: %v", err), "ERROR")
-		StreamObj.Status = "CLIENT_KO"
 		close(StreamObj.StopStreaming)
 		return
 	}
@@ -233,7 +240,6 @@ func LaunchSearch() {
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI subscription: %v", err)
 		streamData(fmt.Sprintf("Unable to create gNMI subscription: %v", err), "ERROR")
-		StreamObj.Status = "SUB_KO"
 		close(StreamObj.StopStreaming)
 		return
 	}
@@ -266,7 +272,6 @@ func LaunchSearch() {
 			streamData("End of the subscription after the 60 secs analysis", "END")
 			time.Sleep(1 * time.Second)
 			StreamObj.Result = root
-			StreamObj.Status = "END"
 			close(StreamObj.StopStreaming)
 			return
 		}
