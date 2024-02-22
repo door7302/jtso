@@ -1,6 +1,7 @@
 let eventSource;
 const browseButton = document.getElementById("browse");
 const modal = document.getElementById("modalcore")
+modal.style.scrollBehavior = 'smooth';
 
 browseButton.addEventListener("click", function () {
   
@@ -28,7 +29,7 @@ browseButton.addEventListener("click", function () {
           eventSource.onmessage = function(event) {
               const data = JSON.parse(event.data);
               modal.innerHTML += data.msg + '<br>';
-              //modal.scrollTop = modal.scrollHeight;
+              modal.scrollTop = modal.scrollHeight;
               if (data.status == "END") {
                 alertify.alert("JSTO...", "Streaming terminé");
                 eventSource.close();
