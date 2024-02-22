@@ -18,9 +18,9 @@ browseButton.addEventListener("click", function () {
   })
       .then(response => response.json())
       .then(data => {
-
+          alertify.success("XPATH search started...");
           browseButton.disabled = true;
-
+          $('#logs').modal('show');
           // Start the EventSource for streaming
           eventSource = new EventSource("/stream");
 
@@ -30,9 +30,13 @@ browseButton.addEventListener("click", function () {
           };
 
           eventSource.onerror = function(event) {
-              console.error("EventSource failed:", event);
+              alertify.alert("JSTO...", "Unexpected error: " + event);
+              $('#logs').modal('hide');
               eventSource.close();
           };
       })
-      .catch(error => console.error("Error starting streaming:", error));
+      .catch(error => {
+        alertify.alert("JSTO...", "Unexpected error: " + error);
+        $('#logs').modal('hide');
+      });
 });
