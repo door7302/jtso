@@ -33,6 +33,7 @@ browseButton.addEventListener("click", function () {
                 alertify.alert("JSTO...", "Streaming terminé");
                 eventSource.close();
                 browseButton.disabled = false;
+                $('#logs').modal('hide');
               }
           };
 

@@ -487,8 +487,8 @@ func routeStream(c echo.Context) error {
 		for {
 			select {
 			case <-parser.StreamObj.StopStreaming:
+				parser.StreamData("End of the collection.", "END")
 				parser.StreamObj.Stream = 0
-				parser.StreamObj.Flusher.Flush()
 				logger.Log.Infof("Streaming has been stopped properly...")
 				time.Sleep(500 * time.Millisecond)
 				return nil
