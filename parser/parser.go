@@ -29,6 +29,7 @@ type Streamer struct {
 	Port          int
 	Merger        bool
 	Ticker        time.Time
+	ForceFlush    bool
 	Result        *TreeNode
 	Flusher       http.Flusher
 	Writer        http.ResponseWriter
@@ -65,7 +66,7 @@ func streamData(m string, s string) {
 
 	// Compute the time between 2 flushs - min must be 1 sec
 	elapsedTime := time.Since(StreamObj.Ticker)
-	if elapsedTime.Seconds() >= 1.0 {
+	if elapsedTime.Seconds() >= 1.0 || StreamObj.ForceFlush {
 		StreamObj.Flusher.Flush()
 	}
 	StreamObj.Ticker = time.Now()
@@ -258,6 +259,7 @@ func LaunchSearch() {
 
 	subRspChan, subErrChan := tg.ReadSubscriptions()
 	streamData("Start collection data", "OK")
+	StreamObj.ForceFlush = false
 	for {
 		select {
 		case rsp := <-subRspChan:
@@ -268,6 +270,7 @@ func LaunchSearch() {
 
 		case <-subErrChan:
 			//traverseTree(root)
+			StreamObj.ForceFlush = true
 			logger.Log.Infof("End of the subscription after the 60 secs analysis")
 			streamData("End of the subscription after the 60 secs analysis", "END")
 			time.Sleep(1 * time.Second)

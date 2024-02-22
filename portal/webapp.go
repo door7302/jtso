@@ -480,6 +480,7 @@ func routeStream(c echo.Context) error {
 		parser.StreamObj.Flusher, _ = c.Response().Writer.(http.Flusher)
 		parser.StreamObj.Writer = c.Response().Writer
 		parser.StreamObj.Ticker = time.Now()
+		parser.StreamObj.ForceFlush = true
 		// launch parser
 		go parser.LaunchSearch()
 		// loop until the end
