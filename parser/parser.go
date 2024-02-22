@@ -2,6 +2,8 @@ package parser
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"jtso/logger"
@@ -21,6 +23,13 @@ var global []string
 var re1, re2 *regexp.Regexp
 
 var StreamObj *Streamer
+
+type TreeJs struct {
+	Id     string `json:"id"`
+	Parent string `json:"parent"`
+	Text   string `json:"text"`
+	Icon   string `json:"icon"`
+}
 
 type Streamer struct {
 	Stream        int
@@ -45,6 +54,12 @@ func init() {
 	StreamObj = new(Streamer)
 }
 
+func computeMD5Id(input string) string {
+	hash := md5.New()
+	hash.Write([]byte(input))
+	return hex.EncodeToString(hash.Sum(nil))
+}
+
 func ToJSON(data map[string]interface{}) string {
 	// Convert the data map to JSON
 	jsonData, err := json.Marshal(data)
@@ -55,12 +70,18 @@ func ToJSON(data map[string]interface{}) string {
 	return string(jsonData)
 }
 
-func StreamData(m string, s string) {
+func StreamData(m string, s string, payload ...string) {
+	var pl string
+	if len(payload) == 0 {
+		pl = ""
+	} else {
+		pl = payload[0]
+	}
 
 	data := map[string]interface{}{
 		"msg":     m,
 		"status":  s,
-		"payload": "",
+		"payload": pl,
 	}
 	jsonData := fmt.Sprintf("data: %s\n\n", ToJSON(data))
 	fmt.Fprint(StreamObj.Writer, jsonData)
@@ -102,33 +123,71 @@ func advancedSplit(path string) []string {
 	return strings.Split(path, "/")
 }
 
-func printTree(node map[string]interface{}, indent int, o map[string]interface{}) {
+func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}, oldKey string, j *[]TreeJs) {
+	var entry TreeJs
+
 	for k, v := range node {
 		if reflect.TypeOf(v).Kind() == reflect.Map {
+			entry = TreeJs{
+				Id:     computeMD5Id(k),
+				Parent: oldKey,
+				Text:   k,
+				Icon:   "fas fa-search-plus",
+			}
+			*j = append(*j, entry)
+			oldKey = computeMD5Id(k)
+
 			//fmt.Printf("%s+ %s\n", strings.Repeat("  ", indent), k)
 			o[k] = map[string]interface{}{}
-			printTree(v.(map[string]interface{}), indent+1, o[k].(map[string]interface{}))
+			PrintTree(v.(map[string]interface{}), indent+1, o[k].(map[string]interface{}))
 		} else {
 			o[k] = v
 			//fmt.Printf("%s+ %s: %s\n", strings.Repeat("  ", indent), k, fmt.Sprint(v))
+			entry = TreeJs{
+				Id:     computeMD5Id(fmt.Sprint(v)),
+				Parent: oldKey,
+				Text:   fmt.Sprint(v),
+				Icon:   "fas fa-search-plus",
+			}
+			*j = append(*j, entry)
 		}
 	}
 
 }
 
-func traverseTree(node *TreeNode) {
+func TraverseTree(node *TreeNode, oldKey string, j *[]TreeJs) {
 	global = append(global, node.Data.(string))
+	var entry TreeJs
+	if oldKey == "" {
+		entry = TreeJs{
+			Id:     computeMD5Id(node.Data.(string)),
+			Parent: "#",
+			Text:   node.Data.(string),
+			Icon:   "fas fa-search-plus",
+		}
+	} else {
+		entry = TreeJs{
+			Id:     computeMD5Id(node.Data.(string)),
+			Parent: oldKey,
+			Text:   node.Data.(string),
+			Icon:   "fas fa-search-plus",
+		}
+	}
+	*j = append(*j, entry)
+
+	oldKey = computeMD5Id(node.Data.(string))
+
 	if len(node.Children) != 0 {
 		for _, child := range node.Children {
-			traverseTree(child)
+			TraverseTree(child, oldKey, j)
 		}
 		global = global[:len(global)-1]
 	} else {
 		path := strings.Join(global, "/")
-		fmt.Printf("%s\n", path)
+		//fmt.Printf("%s\n", path)
 		output := make(map[string]interface{})
 		output[path] = make(map[string]interface{})
-		printTree(node.Value, 1, output[path].(map[string]interface{}))
+		PrintTree(node.Value, 1, output[path].(map[string]interface{}), oldKey, j)
 		global = global[:len(global)-1]
 	}
 }

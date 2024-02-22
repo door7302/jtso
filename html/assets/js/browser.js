@@ -1,7 +1,27 @@
 let eventSource;
 const browseButton = document.getElementById("browse");
+const resultDiv = document.getElementById("result");
 const modal = document.getElementById("modalcore")
 modal.style.scrollBehavior = 'smooth';
+
+$(function() {
+  var to = false;
+  $('#searching').keyup(function () {
+    if(to) { clearTimeout(to); }
+    to = setTimeout(function () {
+      var v = $('#searching').val();
+      $('#result').jstree(true).search(v);
+    }, 250);
+  });
+
+  $("#result").jstree({
+                "core" : {
+                  "data" : []
+                },
+                "plugins" : [ "state","dnd","contextmenu","wholerow","search"]
+            });
+});
+
 
 browseButton.addEventListener("click", function () {
   
@@ -34,6 +54,8 @@ browseButton.addEventListener("click", function () {
                 alertify.alert("JSTO...", "Streaming terminé");
                 eventSource.close();
                 browseButton.disabled = false;
+                $('#result').jstree(true).settings.core.data = data.payload;
+                $('#result').jstree(true).refresh();
                 $('#logs').modal('hide');
               }
           };

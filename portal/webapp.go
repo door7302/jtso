@@ -2,6 +2,7 @@ package portal
 
 import (
 	"context"
+	"encoding/json"
 	"html/template"
 	"io"
 	"jtso/association"
@@ -487,9 +488,22 @@ func routeStream(c echo.Context) error {
 		for {
 			select {
 			case <-parser.StreamObj.StopStreaming:
-				parser.StreamData("End of the collection.", "END")
+				logger.Log.Info("Generate payload based on the Tree")
+				var jsTree []parser.TreeJs
+				jsTree = make([]parser.TreeJs, 0)
+				parser.TraverseTree(parser.StreamObj.Result, "", &jsTree)
+				jsonData, err := json.Marshal(jsTree)
+				if err != nil {
+					logger.Log.Errorf("Unable to marshall the result: %v", err)
+					parser.StreamData("End of the collection.", "ERROR")
+				} else {
+					logger.Log.Info("Marshall the result: success")
+					// Convert the JSON data to a string
+					jsonString := string(jsonData)
+					parser.StreamData("End of the collection.", "END", jsonString)
+				}
 				parser.StreamObj.Stream = 0
-				logger.Log.Infof("Streaming has been stopped properly...")
+				logger.Log.Info("Streaming has been stopped properly...")
 				time.Sleep(500 * time.Millisecond)
 				return nil
 			}
