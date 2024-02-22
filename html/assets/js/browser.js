@@ -28,8 +28,8 @@ browseButton.addEventListener("click", function () {
           $('#logs').modal('show');
           eventSource.onmessage = function(event) {
               const data = JSON.parse(event.data);
-              modal.innerHTML += data.msg + '<br>';
-              modal.scrollTop = modal.scrollHeight;
+              appendContent(data.msg);
+              scrollToBottom()
               if (data.status == "END") {
                 alertify.alert("JSTO...", "Streaming terminé");
                 eventSource.close();
@@ -51,3 +51,15 @@ browseButton.addEventListener("click", function () {
         $('#logs').modal('hide');
       });
 });
+
+  // Function to append new content
+  function appendContent(text) {
+    var newElement = document.createElement('div');
+    newElement.innerHTML = text;
+    modal.appendChild(newElement);
+  }
+
+  // Function to scroll to the bottom with smooth scrolling
+  function scrollToBottom() {
+    modal.scrollTop = modalContent.scrollHeight;
+  }
