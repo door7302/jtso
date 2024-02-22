@@ -35,6 +35,15 @@ type Streamer struct {
 	StopStreaming chan struct{}
 }
 
+func init() {
+	// init re
+	re1 = regexp.MustCompile("(\\d+)")
+	re2 = regexp.MustCompile("(.*)\\[(.*)=(.*)\\]")
+
+	// init streamer
+	StreamObj = new(Streamer)
+}
+
 func ToJSON(data map[string]interface{}) string {
 	// Convert the data map to JSON
 	jsonData, err := json.Marshal(data)
@@ -43,15 +52,6 @@ func ToJSON(data map[string]interface{}) string {
 		return ""
 	}
 	return string(jsonData)
-}
-
-func init() {
-	// init re
-	re1 = regexp.MustCompile("(\\d+)")
-	re2 = regexp.MustCompile("(.*)\\[(.*)=(.*)\\]")
-
-	// init streamer
-	StreamObj = new(Streamer)
 }
 
 func streamData(m string, s string) {
@@ -135,7 +135,7 @@ func parseXpath(xpath string, value string, merge bool) error {
 	if merge {
 		xpath = re1.ReplaceAllString(xpath, "x")
 	}
-	streamData(fmt.Sprintf("XPATH Extracted: %s", xpath), "COLLECT")
+	streamData(fmt.Sprintf("XPATH Extracted: %s", xpath), "OK")
 	lpath := advancedSplit(xpath)
 
 	parent = root
@@ -186,7 +186,7 @@ func parseXpath(xpath string, value string, merge bool) error {
 func LaunchSearch() {
 
 	logger.Log.Infof("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path)
-	streamData(fmt.Sprintf("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "START")
+	streamData(fmt.Sprintf("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
 
 	// Init global variable
 	root = NewTree("", map[string]interface{}{})
@@ -203,24 +203,24 @@ func LaunchSearch() {
 	)
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI target: %v", err)
-		streamData(fmt.Sprintf("Unable to create gNMI target: %v", err), "TARGET_KO")
+		streamData(fmt.Sprintf("Unable to create gNMI target: %v", err), "ERROR")
 		StreamObj.Status = "TARGET_KO"
 		close(StreamObj.StopStreaming)
 		return
 	}
-	streamData("Create gNMI Target", "TARGET_OK")
+	streamData("Create gNMI Target", "OK")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	err = tg.CreateGNMIClient(ctx)
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI client: %v", err)
-		streamData(fmt.Sprintf("Unable to create gNMI client: %v", err), "CLIENT_KO")
+		streamData(fmt.Sprintf("Unable to create gNMI client: %v", err), "ERROR")
 		StreamObj.Status = "CLIENT_KO"
 		close(StreamObj.StopStreaming)
 		return
 	}
-	streamData("Create gNMI Client", "CLIENT_OK")
+	streamData("Create gNMI Client", "OK")
 
 	defer tg.Close()
 	// create a gNMI subscribeRequest
@@ -234,12 +234,12 @@ func LaunchSearch() {
 		))
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI subscription: %v", err)
-		streamData(fmt.Sprintf("Unable to create gNMI subscription: %v", err), "SUB_KO")
+		streamData(fmt.Sprintf("Unable to create gNMI subscription: %v", err), "ERROR")
 		StreamObj.Status = "SUB_KO"
 		close(StreamObj.StopStreaming)
 		return
 	}
-	streamData("Create gNMI Subscription", "SUB_OK")
+	streamData("Create gNMI Subscription", "OK")
 
 	go tg.Subscribe(ctx, subReq, "sub1")
 
@@ -253,7 +253,7 @@ func LaunchSearch() {
 	}()
 
 	subRspChan, subErrChan := tg.ReadSubscriptions()
-	streamData("Start collection data", "COLLECT_OK")
+	streamData("Start collection data", "OK")
 	for {
 		select {
 		case rsp := <-subRspChan:
