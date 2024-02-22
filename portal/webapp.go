@@ -472,10 +472,12 @@ func routeStream(c echo.Context) error {
 		c.Response().Flush()
 		return nil
 	} else if parser.StreamObj.Stream == 1 {
+
 		// change the state of the stream to streaming
 		parser.StreamObj.Stream = 2
 		// Pass the context to parser
-		parser.StreamObj.Context = c
+		parser.StreamObj.Flusher, _ = c.Response().Writer.(http.Flusher)
+		parser.StreamObj.Writer = c.Response().Writer
 		// launch parser
 		go parser.LaunchSearch()
 		// loop until the end
@@ -483,8 +485,7 @@ func routeStream(c echo.Context) error {
 			select {
 			case <-parser.StreamObj.StopStreaming:
 				parser.StreamObj.Stream = 0
-				parser.StreamObj.Context.Response().Flush()
-				parser.StreamObj.Context = nil
+				parser.StreamObj.Flusher.Flush()
 				logger.Log.Infof("Streaming has been stopped properly...")
 				return nil
 			}

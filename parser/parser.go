@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/openconfig/gnmic/pkg/api"
 	"github.com/openconfig/gnmic/pkg/formatters"
 )
@@ -31,7 +30,8 @@ type Streamer struct {
 	Merger        bool
 	Status        string
 	Result        *TreeNode
-	Context       echo.Context
+	Flusher       http.Flusher
+	Writer        http.ResponseWriter
 	StopStreaming chan struct{}
 }
 
@@ -55,15 +55,13 @@ func ToJSON(data map[string]interface{}) string {
 }
 
 func streamData(m string, s string) {
-	writer, _ := StreamObj.Context.Response().Writer.(http.Flusher)
-
 	data := map[string]interface{}{
 		"msg":    m,
 		"status": s,
 	}
 	jsonData := fmt.Sprintf("data: %s\n\n", ToJSON(data))
-	fmt.Fprint(StreamObj.Context.Response().Writer, jsonData)
-	writer.Flush()
+	fmt.Fprint(StreamObj.Writer, jsonData)
+	StreamObj.Flusher.Flush()
 }
 
 func advancedSplit(path string) []string {
@@ -266,6 +264,7 @@ func LaunchSearch() {
 			//traverseTree(root)
 			logger.Log.Infof("End of the subscription after the 60 secs analysis")
 			streamData("End of the subscription after the 60 secs analysis", "END")
+			time.Sleep(1 * time.Second)
 			StreamObj.Result = root
 			StreamObj.Status = "END"
 			close(StreamObj.StopStreaming)
