@@ -61,5 +61,5 @@ browseButton.addEventListener("click", function () {
 
   // Function to scroll to the bottom with smooth scrolling
   function scrollToBottom() {
-    modal.scrollTop = modalContent.scrollHeight;
+    modal.scrollTop = modal.scrollHeight;
   }
