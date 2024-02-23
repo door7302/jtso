@@ -152,25 +152,23 @@ func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}
 
 }
 
-func TraverseTree(node *TreeNode, oldKey string, j *[]TreeJs) {
+func TraverseTree(node *TreeNode, parentKey string, j *[]TreeJs) {
 	global = append(global, node.Data.(string))
 	var entry TreeJs
 	newkey := genUUID()
-	if oldKey != "" {
+	if parentKey != "" {
 		entry = TreeJs{
 			Id:     newkey,
-			Parent: oldKey,
+			Parent: parentKey,
 			Text:   node.Data.(string),
 			Icon:   "fas fa-search-plus",
 		}
 		*j = append(*j, entry)
 	}
 
-	oldKey = newkey
-
 	if len(node.Children) != 0 {
 		for _, child := range node.Children {
-			TraverseTree(child, oldKey, j)
+			TraverseTree(child, newkey, j)
 		}
 		global = global[:len(global)-1]
 	} else {
@@ -178,7 +176,7 @@ func TraverseTree(node *TreeNode, oldKey string, j *[]TreeJs) {
 		//fmt.Printf("%s\n", path)
 		output := make(map[string]interface{})
 		output[path] = make(map[string]interface{})
-		PrintTree(node.Value, 1, output[path].(map[string]interface{}), oldKey, j)
+		PrintTree(node.Value, 1, output[path].(map[string]interface{}), newkey, j)
 		global = global[:len(global)-1]
 	}
 }
