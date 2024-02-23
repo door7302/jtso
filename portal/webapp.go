@@ -491,7 +491,7 @@ func routeStream(c echo.Context) error {
 				logger.Log.Info("Generate payload based on the Tree")
 				var jsTree []parser.TreeJs
 				jsTree = make([]parser.TreeJs, 0)
-				parser.TraverseTree(parser.StreamObj.Result, "", &jsTree)
+				parser.TraverseTree(parser.StreamObj.Result, "#", &jsTree)
 				jsonData, err := json.Marshal(jsTree)
 				if err != nil {
 					logger.Log.Errorf("Unable to marshall the result: %v", err)

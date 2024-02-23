@@ -156,15 +156,14 @@ func TraverseTree(node *TreeNode, parentKey string, j *[]TreeJs) {
 	global = append(global, node.Data.(string))
 	var entry TreeJs
 	newkey := genUUID()
-	if parentKey != "" {
-		entry = TreeJs{
-			Id:     newkey,
-			Parent: parentKey,
-			Text:   node.Data.(string),
-			Icon:   "fas fa-search-plus",
-		}
-		*j = append(*j, entry)
+
+	entry = TreeJs{
+		Id:     newkey,
+		Parent: parentKey,
+		Text:   node.Data.(string),
+		Icon:   "fas fa-search-plus",
 	}
+	*j = append(*j, entry)
 
 	if len(node.Children) != 0 {
 		for _, child := range node.Children {
