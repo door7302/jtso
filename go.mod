@@ -4,6 +4,7 @@ go 1.21.1
 
 require (
 	github.com/docker/docker v24.0.7+incompatible
+	github.com/google/uuid v1.5.0
 	github.com/influxdata/influxdb1-client v0.0.0-20220302092344-a9ab5670611c
 	github.com/influxdata/kapacitor v1.7.1
 	github.com/labstack/echo/v4 v4.10.2

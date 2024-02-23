@@ -2,8 +2,6 @@ package parser
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"jtso/logger"
@@ -14,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/openconfig/gnmic/pkg/api"
 	"github.com/openconfig/gnmic/pkg/formatters"
 )
@@ -45,6 +44,10 @@ type Streamer struct {
 	StopStreaming chan struct{}
 }
 
+func genUUID() string {
+	return uuid.New().String()
+}
+
 func init() {
 	// init re
 	re1 = regexp.MustCompile("(\\d+)")
@@ -52,12 +55,6 @@ func init() {
 
 	// init streamer
 	StreamObj = new(Streamer)
-}
-
-func computeMD5Id(input string) string {
-	hash := md5.New()
-	hash.Write([]byte(input))
-	return hex.EncodeToString(hash.Sum(nil))
 }
 
 func ToJSON(data map[string]interface{}) string {
@@ -128,14 +125,15 @@ func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}
 
 	for k, v := range node {
 		if reflect.TypeOf(v).Kind() == reflect.Map {
+			newkey := genUUID()
 			entry = TreeJs{
-				Id:     computeMD5Id(k),
+				Id:     newkey,
 				Parent: oldKey,
 				Text:   k,
 				Icon:   "fas fa-search-plus",
 			}
 			*j = append(*j, entry)
-			oldKey = computeMD5Id(k)
+			oldKey = newkey
 
 			//fmt.Printf("%s+ %s\n", strings.Repeat("  ", indent), k)
 			o[k] = map[string]interface{}{}
@@ -144,7 +142,7 @@ func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}
 			o[k] = v
 			//fmt.Printf("%s+ %s: %s\n", strings.Repeat("  ", indent), k, fmt.Sprint(v))
 			entry = TreeJs{
-				Id:     computeMD5Id(fmt.Sprint(v)),
+				Id:     genUUID(),
 				Parent: oldKey,
 				Text:   fmt.Sprint(v),
 				Icon:   "fas fa-search-plus",
@@ -158,16 +156,17 @@ func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}
 func TraverseTree(node *TreeNode, oldKey string, j *[]TreeJs) {
 	global = append(global, node.Data.(string))
 	var entry TreeJs
+	newkey := genUUID()
 	if oldKey == "" {
 		entry = TreeJs{
-			Id:     computeMD5Id(node.Data.(string)),
+			Id:     newkey,
 			Parent: "#",
 			Text:   node.Data.(string),
 			Icon:   "fas fa-search-plus",
 		}
 	} else {
 		entry = TreeJs{
-			Id:     computeMD5Id(node.Data.(string)),
+			Id:     newkey,
 			Parent: oldKey,
 			Text:   node.Data.(string),
 			Icon:   "fas fa-search-plus",
@@ -175,7 +174,7 @@ func TraverseTree(node *TreeNode, oldKey string, j *[]TreeJs) {
 	}
 	*j = append(*j, entry)
 
-	oldKey = computeMD5Id(node.Data.(string))
+	oldKey = newkey
 
 	if len(node.Children) != 0 {
 		for _, child := range node.Children {
