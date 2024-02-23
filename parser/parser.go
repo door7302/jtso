@@ -312,6 +312,7 @@ func LaunchSearch() {
 		case <-ctx.Done():
 			return
 		case <-time.After(40 * time.Second):
+			logger.Log.Infof("End of the subscription timer")
 			tg.StopSubscription("sub1")
 		}
 	}()
