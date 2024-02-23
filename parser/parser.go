@@ -136,7 +136,7 @@ func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}
 
 			//fmt.Printf("%s+ %s\n", strings.Repeat("  ", indent), k)
 			o[k] = map[string]interface{}{}
-			PrintTree(v.(map[string]interface{}), indent+1, o[k].(map[string]interface{}), parentKey, j)
+			PrintTree(v.(map[string]interface{}), indent+1, o[k].(map[string]interface{}), newkey, j)
 		} else {
 			o[k] = v
 			//fmt.Printf("%s+ %s: %s\n", strings.Repeat("  ", indent), k, fmt.Sprint(v))
