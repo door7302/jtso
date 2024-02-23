@@ -120,7 +120,7 @@ func advancedSplit(path string) []string {
 	return strings.Split(path, "/")
 }
 
-func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}, oldKey string, j *[]TreeJs) {
+func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}, parentKey string, j *[]TreeJs) {
 	var entry TreeJs
 
 	for k, v := range node {
@@ -128,24 +128,23 @@ func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}
 			newkey := genUUID()
 			entry = TreeJs{
 				Id:     newkey,
-				Parent: oldKey,
+				Parent: parentKey,
 				Text:   k,
 				Icon:   "fas fa-search-plus",
 			}
 			*j = append(*j, entry)
-			oldKey = newkey
 
 			//fmt.Printf("%s+ %s\n", strings.Repeat("  ", indent), k)
 			o[k] = map[string]interface{}{}
-			PrintTree(v.(map[string]interface{}), indent+1, o[k].(map[string]interface{}), oldKey, j)
+			PrintTree(v.(map[string]interface{}), indent+1, o[k].(map[string]interface{}), parentKey, j)
 		} else {
 			o[k] = v
 			//fmt.Printf("%s+ %s: %s\n", strings.Repeat("  ", indent), k, fmt.Sprint(v))
 			entry = TreeJs{
 				Id:     genUUID(),
-				Parent: oldKey,
-				Text:   fmt.Sprint(v),
-				Icon:   "fas fa-search-plus",
+				Parent: parentKey,
+				Text:   fmt.Sprintf("%s = %s", k, fmt.Sprint(v)),
+				Icon:   "fas fa-sign-out-alt",
 			}
 			*j = append(*j, entry)
 		}
@@ -157,22 +156,15 @@ func TraverseTree(node *TreeNode, oldKey string, j *[]TreeJs) {
 	global = append(global, node.Data.(string))
 	var entry TreeJs
 	newkey := genUUID()
-	if oldKey == "" {
-		entry = TreeJs{
-			Id:     newkey,
-			Parent: "#",
-			Text:   node.Data.(string),
-			Icon:   "fas fa-search-plus",
-		}
-	} else {
+	if oldKey != "" {
 		entry = TreeJs{
 			Id:     newkey,
 			Parent: oldKey,
 			Text:   node.Data.(string),
 			Icon:   "fas fa-search-plus",
 		}
+		*j = append(*j, entry)
 	}
-	*j = append(*j, entry)
 
 	oldKey = newkey
 
