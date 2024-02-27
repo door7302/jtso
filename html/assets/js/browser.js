@@ -33,10 +33,12 @@ $(function() {
 
 expandButton.addEventListener("click", function () {
   $('#result').jstree("open_call", -1);
+  $('#result').jstree(true).refresh();
 });
 
 collapseButton.addEventListener("click", function () {
   $('#result').jstree("close_call", -1);
+  $('#result').jstree(true).refresh();
 });
 
 browseButton.addEventListener("click", function () {
