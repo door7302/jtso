@@ -32,11 +32,11 @@ $(function() {
 });
 
 expandButton.addEventListener("click", function () {
-  $('#result').jstree("open_call");
+  $('#result').jstree("open_call", -1);
 });
 
 collapseButton.addEventListener("click", function () {
-  $('#result').jstree("close_call");
+  $('#result').jstree("close_call", -1);
 });
 
 browseButton.addEventListener("click", function () {
