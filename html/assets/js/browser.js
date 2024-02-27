@@ -1,5 +1,8 @@
 let eventSource;
 const browseButton = document.getElementById("browse");
+const collapseButton = document.getElementById("collapse");
+const expandButton = document.getElementById("expand");
+
 const resultDiv = document.getElementById("result");
 const modal = document.getElementById("modalcore")
 modal.style.scrollBehavior = 'smooth';
@@ -23,6 +26,13 @@ $(function() {
             });
 });
 
+expandButton.addEventListener("click", function () {
+  $('#result').jstree("open_call");
+});
+
+collapseButton.addEventListener("click", function () {
+  $('#result').jstree("close_call");
+});
 
 browseButton.addEventListener("click", function () {
   
