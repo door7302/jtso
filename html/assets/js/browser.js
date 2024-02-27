@@ -22,6 +22,11 @@ $(function() {
                   "expand_selected_onload": true,
                   "data" : []
                 },
+                "themes": {
+                  "theme": "default",
+                  "dots": true,
+                  "icons": true
+              },
                 "plugins" : [ "state","sort","search"]
             });
 });
