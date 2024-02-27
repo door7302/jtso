@@ -16,9 +16,10 @@ $(function() {
 
   $("#result").jstree({
                 "core" : {
+                  "expand_selected_onload": true,
                   "data" : []
                 },
-                "plugins" : [ "state","dnd","contextmenu","wholerow","search"]
+                "plugins" : [ "state","sort","search"]
             });
 });
 
