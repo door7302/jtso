@@ -31,15 +31,14 @@ $(function() {
             });
 });
 
-expandButton.addEventListener("click", function () {
+function expand () {
   $('#result').jstree("open_call", -1);
   $('#result').jstree(true).refresh();
-});
+}
 
-collapseButton.addEventListener("click", function () {
+function collapse() { 
   $('#result').jstree("close_call", -1);
-  $('#result').jstree(true).refresh();
-});
+}
 
 browseButton.addEventListener("click", function () {
   
