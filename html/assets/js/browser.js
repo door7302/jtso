@@ -1,13 +1,11 @@
 let eventSource;
 const browseButton = document.getElementById("browse");
-const collapseButton = document.getElementById("collapse");
-const expandButton = document.getElementById("expand");
-
 const resultDiv = document.getElementById("result");
 const modal = document.getElementById("modalcore")
 modal.style.scrollBehavior = 'smooth';
 
-$(function() {
+$(document).ready(function () {
+
   var to = false;
   $('#searching').keyup(function () {
     if(to) { clearTimeout(to); }
@@ -15,6 +13,17 @@ $(function() {
       var v = $('#searching').val();
       $('#result').jstree(true).search(v);
     }, 250);
+  });
+
+
+    // Collapse button click event
+    $('#collapse').on('click', function () {
+      $('#rtr').jstree('close_all');
+  });
+
+  // Expand button click event
+  $('#expand').on('click', function () {
+      $('#rtr').jstree('open_all');
   });
 
   $("#result").jstree({
@@ -31,14 +40,6 @@ $(function() {
             });
 });
 
-function expand () {
-  $('#result').jstree("open_call", -1);
-  $('#result').jstree(true).refresh();
-}
-
-function collapse() { 
-  $('#result').jstree("close_call", -1);
-}
 
 browseButton.addEventListener("click", function () {
   
