@@ -11,10 +11,9 @@ $(document).ready(function () {
     if(to) { clearTimeout(to); }
     to = setTimeout(function () {
       var v = $('#searching').val();
-      $('#result').jstree(true).search(v);
+      $('#result').jstree('search', v);;
     }, 250);
   });
-
 
     // Collapse button click event
     $('#collapse').on('click', function () {
