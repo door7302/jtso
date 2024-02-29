@@ -8,7 +8,7 @@ $(document).ready(function () {
 
   $('#searching').on('input', function () {
     var searchString = $(this).val();
-    
+    alert(searchString);
     $('#result').jstree(true).search(searchString);
   });
 
