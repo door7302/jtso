@@ -8,7 +8,7 @@ $(document).ready(function () {
 
   $('#searching').on('input', function () {
     var searchString = $(this).val();
-    $('#jstree').jstree('search', searchString);
+    $('#result').jstree('search', searchString);
   });
 
   // Collapse button click event
