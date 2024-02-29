@@ -68,12 +68,13 @@ browseButton.addEventListener("click", function () {
               appendContent(data.msg);
               scrollToBottom()
               if (data.status == "END") {
-                alertify.alert("JSTO...", "Streaming terminé");
+                
                 eventSource.close();
                 browseButton.disabled = false;
                 $('#result').jstree(true).settings.core.data = JSON.parse(data.payload);
                 $('#result').jstree(true).refresh();
                 $('#logs').modal('hide');
+                alertify.success('Here the results!')
               }
           };
 
