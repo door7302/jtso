@@ -18,11 +18,13 @@ $(document).ready(function () {
 
     // Collapse button click event
     $('#collapse').on('click', function () {
+      alert("collapse");
       $('#rtr').jstree('close_all');
   });
 
   // Expand button click event
   $('#expand').on('click', function () {
+      alert("expand");
       $('#rtr').jstree('open_all');
   });
 
