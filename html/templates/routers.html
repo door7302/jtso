@@ -14,27 +14,35 @@
 
 <body>
     <nav class="navbar navbar-light navbar-expand-md py-3">
-        <div class="container"><img src="img/logo.png" width="129" height="67"><a class="navbar-brand d-flex align-items-center" href="#"><span>Juniper Telemetry Stack</span></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+        <div class="container"><img src="img/logo.png" width="129" height="67"><a
+                class="navbar-brand d-flex align-items-center" href="#"><span>Juniper Telemetry Stack</span></a><button
+                data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2"><span
+                    class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse" id="navcol-2">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="cred.html">Credentials</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="routers.html" style="border-color: rgba(0, 0, 0, 0.65);">Routers</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="routers.html"
+                            style="border-color: rgba(0, 0, 0, 0.65);">Routers</a></li>
                     <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
-                    <li class="nav-item"><a class="nav-link" href="doc.html" >Doc</a></li>
-                    <li class="nav-item"><a class="nav-link" href="browser.html" >Browser</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/?orgId=1" onclick="javascript:event.target.port={{.GrafanaPort}}">Grafana</a></li>
+                    <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
+                    <li class="nav-item"><a class="nav-link" href="browser.html">Browser</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/?orgId=1"
+                            onclick="javascript:event.target.port={{.GrafanaPort}}">Grafana</a></li>
                 </ul>
             </div>
         </div>
     </nav>
-    
+
     <div class="card">
         <div class="card-body">
             <h4 class="card-title">Router Management</h4>
-            <form><label class="form-label">Short Name:</label><input id="Shortname" class="form-control" type="text"></form>
-            <form><label class="form-label" style="margin-top: 10px;">Hostname or IP:</label><input id="Hostname" class="form-control" type="text"></form>   
-            <input onclick="addRouter();" class="btn btn-primary" type="submit" value="Add Router" name="addB" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+            <form><label class="form-label">Short Name:</label><input id="Shortname" class="form-control" type="text">
+            </form>
+            <form><label class="form-label" style="margin-top: 10px;">Hostname or IP:</label><input id="Hostname"
+                    class="form-control" type="text"></form>
+            <input onclick="addRouter();" class="btn btn-primary" type="submit" value="Add Router" name="addB"
+                style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
         </div>
     </div>
     <div class="card">
@@ -60,7 +68,10 @@
                             <td>{{.Family}}</td>
                             <td>{{.Model}}</td>
                             <td>{{.Version}}</td>
-                            <td  class="d-xxl-flex justify-content-xxl-center"><button onclick="remove('{{.Shortname}}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td>
+                            <td class="d-xxl-flex justify-content-xxl-center"><button
+                                    onclick="remove('{{.Shortname}}', this)" class="btn btn-danger"
+                                    style="margin-left: 5px;" type="submit"><i class="fa fa-trash"
+                                    style="font-size: 15px;"></i></button></td>
                         </tr>
                         {{end}}
                     </tbody>
