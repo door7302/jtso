@@ -18,21 +18,24 @@ $(document).ready(function () {
 
     // Collapse button click event
     $('#collapse').on('click', function () {
-      alert("collapse");
-      $('#rtr').jstree('close_all');
+      $('#result').jstree('close_all');
   });
 
   // Expand button click event
   $('#expand').on('click', function () {
-      alert("expand");
-      $('#rtr').jstree('open_all');
+      $('#result').jstree('open_all');
   });
 
   $("#result").jstree({
                 "core" : {
-                 
                   "data" : []
-                }
+                },
+                "themes": {
+                  "theme": "default",
+                  "dots": true,
+                  "icons": true
+              },
+                "plugins" : [ "state","sort","search"]
             });
 });
 
