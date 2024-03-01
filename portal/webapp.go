@@ -3,6 +3,7 @@ package portal
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"jtso/association"
@@ -488,22 +489,34 @@ func routeStream(c echo.Context) error {
 		for {
 			select {
 			case <-parser.StreamObj.StopStreaming:
-				logger.Log.Info("Generate payload based on the Tree")
 				var jsTree []parser.TreeJs
-				jsTree = make([]parser.TreeJs, 0)
-				parser.TraverseTree(parser.StreamObj.Result, "#", &jsTree)
-				jsonData, err := json.Marshal(jsTree)
-				if err != nil {
-					logger.Log.Errorf("Unable to marshall the result: %v", err)
-					parser.StreamData("End of the collection.", "ERROR")
+				// depending on the error report:
+				errString := parser.StreamObj.Error.Error()
+
+				// Normal end
+				if strings.Contains(errString, "context canceled") {
+
+					parser.StreamData("End of the subscription. Close gNMI session", "OK")
+					logger.Log.Info("Generate payload based on the Tree")
+					jsTree = make([]parser.TreeJs, 0)
+					parser.TraverseTree(parser.StreamObj.Result, "#", &jsTree)
+					jsonData, err := json.Marshal(jsTree)
+					if err != nil {
+						logger.Log.Errorf("Unable to marshall the result: %v", err)
+						parser.StreamData(fmt.Sprintf("Unable to marshall the result: %s", err.Error()), "ERROR")
+					} else {
+						logger.Log.Info("Marshall the result: success")
+						// Convert the JSON data to a string
+						jsonString := string(jsonData)
+						parser.StreamData("End of the collection.", "END", jsonString)
+					}
 				} else {
-					logger.Log.Info("Marshall the result: success")
-					// Convert the JSON data to a string
-					jsonString := string(jsonData)
-					parser.StreamData("End of the collection.", "END", jsonString)
+					logger.Log.Errorf("Unexpected gnmi error: %v", errString)
+					parser.StreamData(fmt.Sprintf("Unexpected gnmi error: %s", errString), "ERROR")
 				}
+
 				parser.StreamObj.Stream = 0
-				logger.Log.Info("Streaming has been stopped properly...")
+				logger.Log.Info("Streaming has been now stopped properly...")
 				time.Sleep(500 * time.Millisecond)
 				return nil
 			}

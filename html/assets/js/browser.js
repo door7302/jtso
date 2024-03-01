@@ -75,6 +75,15 @@ browseButton.addEventListener("click", function () {
           $('#logs').modal('hide');
           alertify.success('Here the results!')
         }
+        if (data.status == "ERROR") {
+
+          eventSource.close();
+          browseButton.disabled = false;
+          $('#result').jstree(true).settings.core.data = JSON.parse([]);
+          $('#result').jstree(true).refresh();
+          $('#logs').modal('hide');
+          alertify.alert("JSTO...", data.msg);
+        }
       };
 
       eventSource.onerror = function (event) {

@@ -41,6 +41,7 @@ type Streamer struct {
 	Result        *TreeNode
 	Flusher       http.Flusher
 	Writer        http.ResponseWriter
+	Error         error
 	StopStreaming chan struct{}
 }
 
@@ -261,6 +262,7 @@ func LaunchSearch() {
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI target: %v", err)
 		StreamData(fmt.Sprintf("Unable to create gNMI target: %v", err), "ERROR")
+		StreamObj.Error = err
 		close(StreamObj.StopStreaming)
 		return
 	}
@@ -272,6 +274,7 @@ func LaunchSearch() {
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI client: %v", err)
 		StreamData(fmt.Sprintf("Unable to create gNMI client: %v", err), "ERROR")
+		StreamObj.Error = err
 		close(StreamObj.StopStreaming)
 		return
 	}
@@ -290,6 +293,7 @@ func LaunchSearch() {
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI subscription: %v", err)
 		StreamData(fmt.Sprintf("Unable to create gNMI subscription: %v", err), "ERROR")
+		StreamObj.Error = err
 		close(StreamObj.StopStreaming)
 		return
 	}
@@ -321,8 +325,8 @@ func LaunchSearch() {
 		case gnmiErr := <-subErrChan:
 			//traverseTree(root)
 			StreamObj.ForceFlush = true
-			logger.Log.Infof("End of the subscription after the 40 secs analysis: %s", gnmiErr.Err.Error())
-			StreamData("End of the subscription. Close gNMI session", "OK")
+			logger.Log.Infof("End of the subscription after the 40 secs analysis - status of the end: %v", gnmiErr.Err.Error())
+			StreamObj.Error = gnmiErr.Err
 			time.Sleep(1 * time.Second)
 			StreamObj.Result = root
 			close(StreamObj.StopStreaming)
