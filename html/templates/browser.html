@@ -59,18 +59,29 @@
     <div class="card">
         <div class="card-body">
             <h4 class="card-title">Telemetry sensor Analyzer</h4>
-            <form style="margin-top: 10px;">
-                <label class="form-label">Select a Router:</label>&nbsp;
-                <select id="router" class="selectpicker" data-width="auto">
-                    {{range .Rtrs}}
-                    <option value="{{.Shortname}}">{{.Shortname}}</option>
-                    {{end}}
-                </select>
+            <form>
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <label class="form-label">Select a Router:</label>
+                    </div>
+                    <div class="col-auto">
+                        <select id="router" class="selectpicker" data-width="auto">
+                            {{range .Rtrs}}
+                            <option value="{{.Shortname}}">{{.Shortname}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                </div>
                 </br>
-                </br>
-                <label class="form-label">Enter the Sensor's Xpath:</label>&nbsp;<input id="pathName"
-                    class="form-control" type="text">
-                <div style="margin-top: 10px;" class="form-check">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <label class="form-label">Enter the Sensor's Xpath:</label>
+                    </div>
+                    <div class="col-auto">
+                        <input id="pathName" class="form-control" type="text">
+                    </div>
+                </div>
+                <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="merge" checked>
                     <label class="form-check-label" for="flexCheckDefault">
                         Merge data for cleaner view (recommended)?
