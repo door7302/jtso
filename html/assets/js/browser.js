@@ -80,7 +80,7 @@ browseButton.addEventListener("click", function () {
 
           eventSource.close();
           browseButton.disabled = false;
-          $('#result').jstree(true).settings.core.data = JSON.parse([]);
+          $('#result').jstree(true).settings.core.data = [];
           $('#result').jstree(true).refresh();
           $('#logs').modal('hide');
           alertify.alert("JSTO...", data.msg);
@@ -89,7 +89,7 @@ browseButton.addEventListener("click", function () {
       };
       eventSource.onerror = function (event) {
         browseButton.disabled = false;
-        $('#result').jstree(true).settings.core.data = JSON.parse([]);
+        $('#result').jstree(true).settings.core.data = [];
         $('#result').jstree(true).refresh();
         $('#logs').modal('hide');
         eventSource.close();
