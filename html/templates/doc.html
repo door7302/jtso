@@ -36,14 +36,20 @@
     <div class="card">
         <div class="card-body">
             <h4 class="card-title">Profile documentation</h4>
-            <form style="margin-top: 10px;">
-                <label class="form-label">Select profile:</label>&nbsp;
-                <select id="profiles" class="selectpicker" data-width="auto" onchange="updateDoc()">
-                    <option value="default">Select a profile</option>
-                    {{range .Profiles}}
-                    <option value="{{.}}">{{.}} profile</option>
-                    {{end}}
-                </select>
+            <form>
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <label class="form-label">Select profile:</label>
+                    </div>
+                    <div class="col-auto">
+                        <select id="profiles" class="selectpicker" data-width="auto" onchange="updateDoc()">
+                            <option value="default">Select a profile</option>
+                            {{range .Profiles}}
+                            <option value="{{.}}">{{.}} profile</option>
+                            {{end}}
+                        </select>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
