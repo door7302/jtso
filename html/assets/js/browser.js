@@ -64,10 +64,13 @@ browseButton.addEventListener("click", function () {
       $('#logs').modal('show');
       eventSource.onmessage = function (event) {
         const data = JSON.parse(event.data);
-        appendContent(data.msg);
-        scrollToBottom()
+        if (data.status == "OK") {
+          appendContent(data.msg);
+          scrollToBottom()
+        }
         if (data.status == "END") {
-
+          appendContent(data.msg);
+          scrollToBottom()
           eventSource.close();
           browseButton.disabled = false;
           $('#result').jstree(true).settings.core.data = JSON.parse(data.payload);
@@ -84,6 +87,7 @@ browseButton.addEventListener("click", function () {
           $('#logs').modal('hide');
           alertify.alert("JSTO...", data.msg);
         }
+
       };
 
       eventSource.onerror = function (event) {
