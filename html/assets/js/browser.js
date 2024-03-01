@@ -56,8 +56,6 @@ browseButton.addEventListener("click", function () {
     .then(response => response.json())
     .then(data => {
       browseButton.disabled = true;
-
-
       // Start the EventSource for streaming
       eventSource = new EventSource("/stream");
       modal.innerHTML = '';
@@ -89,18 +87,22 @@ browseButton.addEventListener("click", function () {
         }
 
       };
-
       eventSource.onerror = function (event) {
-        alertify.alert("JSTO...", "Unexpected error: " + event);
         browseButton.disabled = false;
+        $('#result').jstree(true).settings.core.data = JSON.parse([]);
+        $('#result').jstree(true).refresh();
         $('#logs').modal('hide');
         eventSource.close();
+        alertify.alert("JSTO...", "Unexpected error: " + JSON.stringify(event));
       };
     })
     .catch(error => {
-      alertify.alert("JSTO...", "Unexpected error: " + error);
       browseButton.disabled = false;
+      $('#result').jstree(true).settings.core.data = JSON.parse([]);
+      $('#result').jstree(true).refresh();
       $('#logs').modal('hide');
+      eventSource.close();
+      alertify.alert("JSTO...", "Unexpected error: " + JSON.stringify(error));
     });
 });
 
