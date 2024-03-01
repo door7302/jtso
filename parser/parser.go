@@ -321,7 +321,7 @@ func LaunchSearch() {
 		case gnmiErr := <-subErrChan:
 			//traverseTree(root)
 			StreamObj.ForceFlush = true
-			logger.Log.Infof("End of the subscription after the 40 secs analysis: %v", gnmiErr)
+			logger.Log.Infof("End of the subscription after the 40 secs analysis: %s", gnmiErr.Err.Error())
 			StreamData("End of the subscription. Close gNMI session", "OK")
 			time.Sleep(1 * time.Second)
 			StreamObj.Result = root
