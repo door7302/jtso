@@ -84,23 +84,24 @@
     <div class="card">
         <div class="card-body">
             <h4 class="card-title">Results</h4>
-            <div class="container mt-4">
             <form>
-                <div class="form-row align-items-center">
+                <div class="row align-items-center">
                     <div class="col-auto">
-                        <input class="form-control" type="text" id="searching" name="searching" placeholder="Search in Tree" />
+                        <label for="inputField" class="visually-hidden">Input</label>
+                        <input type="text" class="form-control mb-2" id="searching" name="searching"
+                            placeholder="Search in Tree">
                     </div>
                     <div class="col-auto">
-                        <input class="btn btn-secondary" type="submit" value="Collapse all" name="collapse" id="collapse">
+                        <button type="button" class="btn btn-secondary mb-2" name="collapse" id="collapse">Collapse
+                            All</button>
                     </div>
                     <div class="col-auto">
-                        <input class="btn btn-secondary" type="submit" value="Expand all" name="expand" id="expand">
+                        <button type="button" class="btn btn-secondary mb-2" name="expand" id="expand">Expand
+                            All</button>
                     </div>
                 </div>
             </form>
-        </div>
-        </br>
-
+            </br>
             <div id="result">
             </div>
         </div>
