@@ -15,12 +15,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/openconfig/gnmic/pkg/api"
 	"github.com/openconfig/gnmic/pkg/formatters"
+	"github.com/openconfig/gnmic/pkg/target"
 )
+
+const PATH_CERT string = "/var/shared/telegraf/cert/"
 
 var root *TreeNode
 var global []string
 var re1, re2 *regexp.Regexp
-
 var StreamObj *Streamer
 
 type TreeJs struct {
@@ -249,16 +251,62 @@ func LaunchSearch() {
 	// Init global variable
 	root = NewTree("", map[string]interface{}{})
 	global = make([]string, 0)
+	var tg *target.Target
+	var err error
 
-	// create a target
-	tg, err := api.NewTarget(
-		api.Name("jtso"),
-		api.Address(StreamObj.Router+":"+fmt.Sprint(StreamObj.Port)),
-		api.Username(sqlite.ActiveCred.GnmiUser),
-		api.Password(sqlite.ActiveCred.GnmiPwd),
-		api.SkipVerify(true),
-		api.Insecure(true),
-	)
+	// Retrieve cred info
+	tls := false
+	skip := false
+	clienttls := false
+	if sqlite.ActiveCred.UseTls == "yes" {
+		tls = true
+	}
+	if sqlite.ActiveCred.SkipVerify == "yes" {
+		skip = true
+	}
+	if sqlite.ActiveCred.ClientTls == "yes" {
+		clienttls = true
+	}
+	if tls {
+		if clienttls {
+			// create a target
+			tg, err = api.NewTarget(
+				api.Name("jtso"),
+				api.Address(StreamObj.Router+":"+fmt.Sprint(StreamObj.Port)),
+				api.Username(sqlite.ActiveCred.GnmiUser),
+				api.Password(sqlite.ActiveCred.GnmiPwd),
+				api.SkipVerify(skip),
+				api.Insecure(tls),
+				api.TLSCA(PATH_CERT+"RootCA.crt"),
+				api.TLSCert(PATH_CERT+"client.crt"),
+				api.TLSKey(PATH_CERT+"client.key"),
+			)
+
+		} else {
+			// create a target
+			tg, err = api.NewTarget(
+				api.Name("jtso"),
+				api.Address(StreamObj.Router+":"+fmt.Sprint(StreamObj.Port)),
+				api.Username(sqlite.ActiveCred.GnmiUser),
+				api.Password(sqlite.ActiveCred.GnmiPwd),
+				api.SkipVerify(skip),
+				api.Insecure(tls),
+				api.TLSCA(PATH_CERT+"RootCA.crt"),
+			)
+
+		}
+	} else {
+		// create a target
+		tg, err = api.NewTarget(
+			api.Name("jtso"),
+			api.Address(StreamObj.Router+":"+fmt.Sprint(StreamObj.Port)),
+			api.Username(sqlite.ActiveCred.GnmiUser),
+			api.Password(sqlite.ActiveCred.GnmiPwd),
+			api.SkipVerify(skip),
+			api.Insecure(tls),
+		)
+	}
+
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI target: %v", err)
 		StreamData(fmt.Sprintf("Unable to create gNMI target: %v", err), "ERROR")
