@@ -278,7 +278,7 @@ func LaunchSearch() {
 				api.Username(sqlite.ActiveCred.GnmiUser),
 				api.Password(sqlite.ActiveCred.GnmiPwd),
 				api.SkipVerify(skip),
-				api.Insecure(tls),
+				api.Insecure(false),
 				api.TLSCA(PATH_CERT+"RootCA.crt"),
 				api.TLSCert(PATH_CERT+"client.crt"),
 				api.TLSKey(PATH_CERT+"client.key"),
@@ -293,7 +293,7 @@ func LaunchSearch() {
 				api.Username(sqlite.ActiveCred.GnmiUser),
 				api.Password(sqlite.ActiveCred.GnmiPwd),
 				api.SkipVerify(skip),
-				api.Insecure(tls),
+				api.Insecure(false),
 				api.TLSCA(PATH_CERT+"RootCA.crt"),
 			)
 
@@ -307,7 +307,7 @@ func LaunchSearch() {
 			api.Username(sqlite.ActiveCred.GnmiUser),
 			api.Password(sqlite.ActiveCred.GnmiPwd),
 			api.SkipVerify(skip),
-			api.Insecure(tls),
+			api.Insecure(true),
 		)
 	}
 
