@@ -11,6 +11,12 @@ type (
 		Shortname string `json:"shortname"`
 	}
 
+	SearchPath struct {
+		Shortname string `json:"shortname"`
+		Xpath     string `json:"xpath"`
+		Merge     bool   `json:"merge"`
+	}
+
 	RouterDetails struct {
 		Hostname  string `json:"hostname"`
 		Shortname string `json:"shortname"`

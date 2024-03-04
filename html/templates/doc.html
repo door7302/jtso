@@ -9,35 +9,48 @@
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
     <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/bootstrap-multiselect.css">
 </head>
 
 <body>
     <nav class="navbar navbar-light navbar-expand-md py-3">
-        <div class="container"><img src="img/logo.png" width="129" height="67"><a class="navbar-brand d-flex align-items-center" href="#"><span>Juniper Telemetry Stack</span></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+        <div class="container"><img src="img/logo.png" width="129" height="67"><a
+                class="navbar-brand d-flex align-items-center" href="#"><span>Juniper Telemetry Stack</span></a><button
+                data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2"><span
+                    class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse" id="navcol-2">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="cred.html">Credentials</a></li>
                     <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
                     <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="doc.html"  style="border-color: rgba(0, 0, 0, 0.65);" >Doc</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/?orgId=1" onclick="javascript:event.target.port={{.GrafanaPort}}">Grafana</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="doc.html"
+                            style="border-color: rgba(0, 0, 0, 0.65);">Doc</a></li>
+                    <li class="nav-item"><a class="nav-link" href="browser.html">Browser</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/?orgId=1"
+                            onclick="javascript:event.target.port={{.GrafanaPort}}">Grafana</a></li>
                 </ul>
             </div>
         </div>
     </nav>
-    
+
     <div class="card">
         <div class="card-body">
             <h4 class="card-title">Profile documentation</h4>
-            <form style="margin-top: 10px;">
-                <label class="form-label">Select profile:</label>&nbsp;
-                <select id="profiles" class="selectpicker" data-width="auto" onchange="updateDoc()">
-                    <option value="default">Select a profile</option>
-                    {{range .Profiles}}
-                    <option value="{{.}}">{{.}} profile</option>
-                    {{end}}
-                </select>
+            <form>
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <label class="form-label">Select profile:</label>
+                    </div>
+                    <div class="col-auto">
+                        <select id="profiles" class="selectpicker" data-width="auto" onchange="updateDoc()">
+                            <option value="default">Select a profile</option>
+                            {{range .Profiles}}
+                            <option value="{{.}}">{{.}} profile</option>
+                            {{end}}
+                        </select>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -46,25 +59,26 @@
             <h4 class="card-title">Profile details</h4>
             <div class="row g-0">
                 <div class="col-md-8">
-                  <img id="profileImg" src="img/default.png" class="img-fluid rounded-start" alt="pic not found">
+                    <img id="profileImg" src="img/default.png" class="img-fluid rounded-start" alt="pic not found">
                 </div>
                 <div class="col-md-4">
-                  <div class="card-body">
-                    <h5 class="card-title">Description</h5>
-                    <p id="profileDesc" class="card-text">N/A</p>
-                    <h5 class="card-title">Telegraf Configuration(s)</h5>
-                    <p id="profileTele" class="card-text">N/A</p>
-                    <h5 class="card-title">Grafana Dashboard(s)</h5>
-                    <p id="profileGraf" class="card-text">N/A</p>
-                    <h5 class="card-title">Kapacitor Script(s)</h5>
-                    <p id="profileKapa" class="card-text">N/A</p>
-                  </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Description</h5>
+                        <p id="profileDesc" class="card-text">N/A</p>
+                        <h5 class="card-title">Telegraf Configuration(s)</h5>
+                        <p id="profileTele" class="card-text">N/A</p>
+                        <h5 class="card-title">Grafana Dashboard(s)</h5>
+                        <p id="profileGraf" class="card-text">N/A</p>
+                        <h5 class="card-title">Kapacitor Script(s)</h5>
+                        <p id="profileKapa" class="card-text">N/A</p>
+                    </div>
                 </div>
-              </div>
+            </div>
         </div>
     </div>
-    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/jquery-3.6.4.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="js/bootstrap-multiselect.js"></script>
     <script src="js/alertify.min.js"></script>
     <script src="js/bootstrap-waitingfor.min.js"></script>
     <script src="js/doc.js"></script>

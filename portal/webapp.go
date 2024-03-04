@@ -2,6 +2,8 @@ package portal
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"jtso/association"
@@ -9,11 +11,13 @@ import (
 	"jtso/influx"
 	"jtso/logger"
 	"jtso/netconf"
+	"jtso/parser"
 	"jtso/sqlite"
 	"jtso/worker"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -54,6 +58,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp := echo.New()
 	//configure app
 	wapp.Use(middleware.Static("html/assets"))
+	wapp.Use(middleware.CORS())
 
 	//Templating config
 	wapp.Renderer = &TemplateRegistry{
@@ -67,6 +72,8 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/profiles.html", routeProfiles)
 	wapp.GET("/cred.html", routeCred)
 	wapp.GET("/doc.html", routeDoc)
+	wapp.GET("/browser.html", routeBrowse)
+	wapp.GET("/stream", routeStream)
 
 	// configure POST routers
 	wapp.POST("/addrouter", routeAddRouter)
@@ -76,6 +83,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/updatecred", routeUptCred)
 	wapp.POST("/updatedoc", routeUptDoc)
 	wapp.POST("/influxmgt", routeInfluxMgt)
+	wapp.POST("/searchxpath", routeSearchPath)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -85,6 +93,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 		listen: ":" + strconv.Itoa(cfg.Portal.Port),
 		app:    wapp,
 	}
+
 }
 
 func (w *WebApp) Run() {
@@ -250,6 +259,20 @@ func routeDoc(c echo.Context) error {
 	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort})
 }
 
+func routeBrowse(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
+
+	// Get all routers from db
+	var lr []RouterDetails
+	lr = make([]RouterDetails, 0)
+
+	for _, r := range sqlite.RtrList {
+		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
+	}
+
+	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
+}
+
 func routeAddRouter(c echo.Context) error {
 	var err error
 
@@ -400,6 +423,106 @@ func routeAddProfile(c echo.Context) error {
 	// update the stack for the right family
 	go association.ConfigueStack(collectCfg.cfg, fam)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile updated"})
+
+}
+
+func routeSearchPath(c echo.Context) error {
+	var err error
+
+	// check if other instance is already running
+	if parser.StreamObj.Stream != 0 {
+		logger.Log.Errorf("Streaming already running for path %s", parser.StreamObj.Path)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Another instance is currently requesting XPATH search. Retry later..."})
+	}
+	// change the streamer state to pending stream API request
+	parser.StreamObj.Stream = 1
+
+	r := new(SearchPath)
+	err = c.Bind(r)
+
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for searching XPATH: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse Post request for searching XPATH"})
+	}
+	h := ""
+	for _, i := range sqlite.RtrList {
+		if i.Shortname == r.Shortname {
+			h = i.Hostname
+			break
+		}
+	}
+	parser.StreamObj.Router = h
+	parser.StreamObj.Port = collectCfg.cfg.Gnmi.Port
+	parser.StreamObj.Path = r.Xpath
+	parser.StreamObj.Merger = r.Merge
+	parser.StreamObj.StopStreaming = make(chan struct{})
+
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Streaming well started."})
+}
+
+func routeStream(c echo.Context) error {
+	// Set the response header for Server-Sent Events
+	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+	c.Response().Header().Set("Cache-Control", "no-cache")
+	c.Response().Header().Set("Connection", "keep-alive")
+
+	// Flush the response buffer
+	c.Response().Flush()
+
+	if parser.StreamObj.Stream == 0 {
+		logger.Log.Errorf("Bad request - direct access of /stream is not allowed")
+		c.JSON(http.StatusBadRequest, Reply{Status: "NOK", Msg: "Bad request - direct access of /stream is not allowed"})
+		c.Response().Flush()
+		return nil
+	} else if parser.StreamObj.Stream == 1 {
+
+		// change the state of the stream to streaming
+		parser.StreamObj.Stream = 2
+		// Pass the context to parser
+		parser.StreamObj.Flusher, _ = c.Response().Writer.(http.Flusher)
+		parser.StreamObj.Writer = c.Response().Writer
+		parser.StreamObj.Ticker = time.Now()
+		parser.StreamObj.ForceFlush = true
+		// launch parser
+		go parser.LaunchSearch()
+		// loop until the end
+		for {
+			select {
+			case <-parser.StreamObj.StopStreaming:
+				var jsTree []parser.TreeJs
+				// depending on the error report:
+				errString := parser.StreamObj.Error.Error()
+
+				// Normal end
+				if strings.Contains(errString, "context canceled") {
+
+					parser.StreamData("End of the subscription. Close gNMI session", "OK")
+					logger.Log.Info("Generate payload based on the Tree")
+					jsTree = make([]parser.TreeJs, 0)
+					parser.TraverseTree(parser.StreamObj.Result, "#", &jsTree)
+					jsonData, err := json.Marshal(jsTree)
+					if err != nil {
+						logger.Log.Errorf("Unable to marshall the result: %v", err)
+						parser.StreamData(fmt.Sprintf("Unable to marshall the result: %s", err.Error()), "ERROR")
+					} else {
+						logger.Log.Info("Marshall the result: success")
+						// Convert the JSON data to a string
+						jsonString := string(jsonData)
+						parser.StreamData("End of the collection.", "END", jsonString)
+					}
+				} else {
+					logger.Log.Errorf("Unexpected gnmi error: %v", errString)
+					parser.StreamData(fmt.Sprintf("Unexpected gnmi error: %s", errString), "ERROR")
+				}
+
+				parser.StreamObj.Stream = 0
+				logger.Log.Info("Streaming has been now stopped properly...")
+				time.Sleep(500 * time.Millisecond)
+				return nil
+			}
+		}
+	}
+	return nil
 
 }
 
