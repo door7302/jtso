@@ -11,7 +11,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/openconfig/gnmic v0.36.0
 	github.com/openconfig/gnmic/pkg/api v0.1.3
-	github.com/openconfig/gnmic/pkg/target v0.1.4
 	github.com/openshift-telco/go-netconf-client v1.0.6-0.20231016204147-70322b0d4d05
 	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/viper v1.15.0
@@ -59,8 +58,6 @@ require (
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/openconfig/gnmi v0.10.0 // indirect
-	github.com/openconfig/gnmic/pkg/types v0.1.2 // indirect
-	github.com/openconfig/gnmic/pkg/utils v0.1.1 // indirect
 	github.com/openconfig/grpctunnel v0.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect

@@ -14,8 +14,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/openconfig/gnmic/pkg/api"
+	"github.com/openconfig/gnmic/pkg/api/target"
 	"github.com/openconfig/gnmic/pkg/formatters"
-	"github.com/openconfig/gnmic/pkg/target"
 )
 
 const PATH_CERT string = "/var/shared/telegraf/cert/"
@@ -267,6 +267,7 @@ func LaunchSearch() {
 	if sqlite.ActiveCred.ClientTls == "yes" {
 		clienttls = true
 	}
+
 	if tls {
 		if clienttls {
 			// create a target

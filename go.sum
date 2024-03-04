@@ -536,12 +536,6 @@ github.com/openconfig/gnmic v0.36.0 h1:05Fua6m45Umv60SmpmFyL5B83uPi7EkqJSHChTfnK
 github.com/openconfig/gnmic v0.36.0/go.mod h1:Fo4PHxZZiOJpSgqRXKgWr8tJShIJ6jv2oJhvHC4OUHQ=
 github.com/openconfig/gnmic/pkg/api v0.1.3 h1:Q3k2zLEStSkTMCRytVcLUnh43C2n9Be8/PK03xanHn8=
 github.com/openconfig/gnmic/pkg/api v0.1.3/go.mod h1:/93C3QKfo1aErUFVEN0lVNSFdHC+0HWtiuNqEKQpCIk=
-github.com/openconfig/gnmic/pkg/target v0.1.4 h1:zO7gOke9RVnkockM2lZv5MqgNdfysUSqxyp91OnEjOQ=
-github.com/openconfig/gnmic/pkg/target v0.1.4/go.mod h1:hNmkYvuYFaUtbFWVm0PuvctJ70ku+fotxZxmkr5oeWM=
-github.com/openconfig/gnmic/pkg/types v0.1.2 h1:FRjERZrbcuqhwRKHZ7ux4UXr4fc1DlgXvH37Iysu4Co=
-github.com/openconfig/gnmic/pkg/types v0.1.2/go.mod h1:Gwc9suBy/s17bP8BaCrp3dE5E+RkcHqVIkFqdXopog4=
-github.com/openconfig/gnmic/pkg/utils v0.1.1 h1:LgfI/c/O8VpuZg1RS9G6XEeRhAQSlOalE52/8tsdf00=
-github.com/openconfig/gnmic/pkg/utils v0.1.1/go.mod h1:DQm/e8cdRwdmUORjODWteDU0HG0CWNYBAhLWqnPQegE=
 github.com/openconfig/grpctunnel v0.1.0 h1:EN99qtlExZczgQgp5ANnHRC/Rs62cAG+Tz2BQ5m/maM=
 github.com/openconfig/grpctunnel v0.1.0/go.mod h1:G04Pdu0pml98tdvXrvLaU+EBo3PxYfI9MYqpvdaEHLo=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
