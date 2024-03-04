@@ -270,6 +270,7 @@ func LaunchSearch() {
 
 	if tls {
 		if clienttls {
+			StreamData("Try to create Target - option 3", "OK")
 			// create a target
 			tg, err = api.NewTarget(
 				api.Name("jtso"),
@@ -284,6 +285,7 @@ func LaunchSearch() {
 			)
 
 		} else {
+			StreamData("Try to create Target - option 2", "OK")
 			// create a target
 			tg, err = api.NewTarget(
 				api.Name("jtso"),
@@ -297,6 +299,7 @@ func LaunchSearch() {
 
 		}
 	} else {
+		StreamData("Try to create Target - option 1", "OK")
 		// create a target
 		tg, err = api.NewTarget(
 			api.Name("jtso"),
