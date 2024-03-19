@@ -95,7 +95,7 @@ func StreamData(m string, s string, payload ...string) {
 
 }
 
-func advancedSplit(path string) []string {
+func advancedSplit(path string, merge bool) []string {
 
 	if strings.Contains(path, "=") && strings.Contains(path, "[") {
 		var newPath string
@@ -118,7 +118,15 @@ func advancedSplit(path string) []string {
 				newPath += string(w)
 			}
 		}
-		return strings.Split(newPath, "£££")
+		lp := strings.Split(newPath, "£££")
+		if merge {
+			for i, v := range lp {
+				if strings.Contains(v, "=") {
+					lp[i] = re1.ReplaceAllString(v, "x")
+				}
+			}
+		}
+		return lp
 	}
 	return strings.Split(path, "/")
 }
@@ -192,11 +200,8 @@ func parseXpath(xpath string, value string, merge bool) error {
 
 	key = make([]string, 0)
 
-	if merge {
-		xpath = re1.ReplaceAllString(xpath, "x")
-	}
-	StreamData(fmt.Sprintf("XPATH Extracted: %s", xpath), "OK")
-	lpath := advancedSplit(xpath)
+	lpath := advancedSplit(xpath, merge)
+	StreamData(fmt.Sprintf("XPATH Extracted: %s", strings.Join(lpath, "/")), "OK")
 
 	parent = root
 	for i, v := range lpath {
