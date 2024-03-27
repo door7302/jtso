@@ -348,6 +348,27 @@ func routeDelRouter(c echo.Context) error {
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router deleted"})
 }
 
+func checkRouterSupport(filenames []association.Config, routerVersion string) bool {
+	confToApply := ""
+	defaultConfig := ""
+
+	for _, c := range filenames {
+		// Save all config if present as a fallback solution if specific version not found
+		if c.Version == "all" {
+			defaultConfig = c.Config
+		} else {
+			result := association.CheckVersion(c.Version, routerVersion)
+			if result && confToApply == "" {
+				return true
+			}
+		}
+	}
+	if defaultConfig != "" {
+		return true
+	}
+	return false
+}
+
 func routeAddProfile(c echo.Context) error {
 	var err error
 	var f bool
@@ -370,39 +391,39 @@ func routeAddProfile(c echo.Context) error {
 	}
 	// Check if a profile can be attached to a router
 	// find out the family of the router
-	fam := "all"
+	fam := ""
+	version := ""
 	for _, i := range sqlite.RtrList {
 		if i.Shortname == r.Shortname {
 			fam = i.Family
+			version = i.Version
 			break
 		}
 	}
 	// Now check for each profile there is a given Telegraf config
-	valid := true
+	valid := false
 	errString := ""
 	for _, i := range r.Profiles {
 		allTele := association.ActiveProfiles[i].Definition.TelCfg
 		switch fam {
 		case "vmx":
-			if len(allTele.VmxCfg) == 0 {
-				valid = false
+			if len(allTele.VmxCfg) == 0 || !checkRouterSupport(allTele.VmxCfg, version) {
 				errString += "There is no Telegraf config for profile " + i + " for the VMX platform.</br>"
 			}
 		case "mx":
-			if len(allTele.MxCfg) == 0 {
-				valid = false
+			if len(allTele.MxCfg) == 0 || !checkRouterSupport(allTele.MxCfg, version) {
 				errString += "There is no Telegraf config for profile " + i + " for the MX platform.</br>"
 			}
 		case "ptx":
-			if len(allTele.PtxCfg) == 0 {
-				valid = false
+			if len(allTele.PtxCfg) == 0 || !checkRouterSupport(allTele.PtxCfg, version) {
 				errString += "There is no Telegraf config for profile " + i + " for the PTX platform.</br>"
 			}
 		case "acx":
-			if len(allTele.AcxCfg) == 0 {
-				valid = false
+			if len(allTele.AcxCfg) == 0 || !checkRouterSupport(allTele.AcxCfg, version) {
 				errString += "There is no Telegraf config for profile " + i + " for the ACX platform.</br>"
 			}
+		default:
+			errString += "There is no Telegraf config for profile " + i + " for the unknown platform.</br>"
 		}
 	}
 
