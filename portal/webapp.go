@@ -407,20 +407,44 @@ func routeAddProfile(c echo.Context) error {
 		allTele := association.ActiveProfiles[i].Definition.TelCfg
 		switch fam {
 		case "vmx":
-			if len(allTele.VmxCfg) == 0 || !checkRouterSupport(allTele.VmxCfg, version) {
+			if len(allTele.VmxCfg) == 0 {
 				errString += "There is no Telegraf config for profile " + i + " for the VMX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VmxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VMX version.</br>"
+				}
 			}
 		case "mx":
-			if len(allTele.MxCfg) == 0 || !checkRouterSupport(allTele.MxCfg, version) {
+			if len(allTele.MxCfg) == 0 {
 				errString += "There is no Telegraf config for profile " + i + " for the MX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.MxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this MX version.</br>"
+				}
 			}
 		case "ptx":
-			if len(allTele.PtxCfg) == 0 || !checkRouterSupport(allTele.PtxCfg, version) {
+			if len(allTele.PtxCfg) == 0 {
 				errString += "There is no Telegraf config for profile " + i + " for the PTX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.PtxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this PTX version.</br>"
+				}
 			}
 		case "acx":
-			if len(allTele.AcxCfg) == 0 || !checkRouterSupport(allTele.AcxCfg, version) {
+			if len(allTele.AcxCfg) == 0 {
 				errString += "There is no Telegraf config for profile " + i + " for the ACX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.AcxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this ACX version.</br>"
+				}
 			}
 		default:
 			errString += "There is no Telegraf config for profile " + i + " for the unknown platform.</br>"
