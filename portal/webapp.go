@@ -199,30 +199,32 @@ func routeIndex(c echo.Context) error {
 	file_jts, err := os.Open(PATH_JTS_VERS)
 	if err != nil {
 		logger.Log.Errorf("Unable to open %s file: %v", PATH_JTS_VERS, err)
-	}
-	defer file_jts.Close()
-	scanner := bufio.NewScanner(file_jts)
-	if scanner.Scan() {
-		jtsVersion = scanner.Text()
-	}
-	// Check for any errors during scanning
-	if err := scanner.Err(); err != nil {
-		logger.Log.Errorf("Unable to parse %s file: %v", PATH_JTS_VERS, err)
+	} else {
+		defer file_jts.Close()
+		scanner := bufio.NewScanner(file_jts)
+		if scanner.Scan() {
+			jtsVersion = scanner.Text()
+		}
+		// Check for any errors during scanning
+		if err := scanner.Err(); err != nil {
+			logger.Log.Errorf("Unable to parse %s file: %v", PATH_JTS_VERS, err)
+		}
 	}
 
 	// Open the Telegraf version's file
 	file_tele, err := os.Open(PATH_TELE_VERS)
 	if err != nil {
 		logger.Log.Errorf("Unable to open %s file: %v", PATH_TELE_VERS, err)
-	}
-	defer file_tele.Close()
-	scanner = bufio.NewScanner(file_tele)
-	if scanner.Scan() {
-		teleVersion = scanner.Text()
-	}
-	// Check for any errors during scanning
-	if err := scanner.Err(); err != nil {
-		logger.Log.Errorf("Unable to parse %s file: %v", PATH_TELE_VERS, err)
+	} else {
+		defer file_tele.Close()
+		scanner := bufio.NewScanner(file_tele)
+		if scanner.Scan() {
+			teleVersion = scanner.Text()
+		}
+		// Check for any errors during scanning
+		if err := scanner.Err(); err != nil {
+			logger.Log.Errorf("Unable to parse %s file: %v", PATH_TELE_VERS, err)
+		}
 	}
 
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleVmx": teleVmx, "TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx,
