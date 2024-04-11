@@ -23,6 +23,7 @@ type Telegraf struct {
 	MxCfg  []Config `json:"mx"`
 	PtxCfg []Config `json:"ptx"`
 	AcxCfg []Config `json:"acx"`
+	QfxCfg []Config `json:"qfx"`
 }
 
 type DefProfile struct {
