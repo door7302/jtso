@@ -30,7 +30,7 @@ import (
 
 const PATH_CERT string = "/var/cert/"
 const PATH_JTS_VERS string = "/etc/jtso/openjts.version"
-const PATH_TELE_VERS string = "/etc/jtso/openjts.version"
+const PATH_TELE_VERS string = "/var/metadata/telegraf.version"
 
 type WebApp struct {
 	listen string
