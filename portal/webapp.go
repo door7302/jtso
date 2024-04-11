@@ -112,7 +112,7 @@ func (w *WebApp) Run() {
 
 func routeIndex(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	teleVmx, teleMx, telePtx, teleAcx, influx, grafana, kapacitor, jtso := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
+	teleVmx, teleMx, telePtx, teleAcx, teleQfx, influx, grafana, kapacitor, jtso := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
 	// check containers state
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -144,6 +144,10 @@ func routeIndex(c echo.Context) error {
 			if container.State == "running" {
 				teleAcx = "ccffcc"
 			}
+		case "/telegraf_qfx":
+			if container.State == "running" {
+				teleQfx = "ccffcc"
+			}
 		case "/grafana":
 			if container.State == "running" {
 				grafana = "ccffcc"
@@ -164,7 +168,7 @@ func routeIndex(c echo.Context) error {
 	}
 
 	// Retrive number of active routers per Telegraf
-	numVMX, numMX, numPTX, numACX := 0, 0, 0, 0
+	numVMX, numMX, numPTX, numACX, numQFX := 0, 0, 0, 0, 0
 	for _, r := range sqlite.RtrList {
 		switch r.Family {
 		case "vmx":
@@ -183,10 +187,14 @@ func routeIndex(c echo.Context) error {
 			if r.Profile == 1 {
 				numACX++
 			}
+		case "qfx":
+			if r.Profile == 1 {
+				numQFX++
+			}
 		}
 	}
 
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleVmx": teleVmx, "TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumVMX": numVMX, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "GrafanaPort": grafanaPort})
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleVmx": teleVmx, "TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "TeleQfx": teleQfx, "Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumVMX": numVMX, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumQFX": numQFX, "GrafanaPort": grafanaPort})
 }
 
 func routeRouters(c echo.Context) error {
@@ -402,6 +410,11 @@ func routeAddProfile(c echo.Context) error {
 			if len(allTele.AcxCfg) == 0 {
 				valid = false
 				errString += "There is no Telegraf config for profile " + i + " for the ACX platform.</br>"
+			}
+		case "qfx":
+			if len(allTele.QfxCfg) == 0 {
+				valid = false
+				errString += "There is no Telegraf config for profile " + i + " for the QFX platform.</br>"
 			}
 		}
 	}
@@ -630,7 +643,13 @@ func routeUptDoc(c echo.Context) error {
 				tele += "For ACX version <=" + v.Version + ": " + v.Config + "</br>"
 			}
 		}
-
+	}
+	for _, v := range p.Definition.TelCfg.QfxCfg {
+		if v.Version == "all" {
+			tele += "For QFX version " + v.Version + ": " + v.Config + "</br>"
+		} else {
+			tele += "For QFX version <=" + v.Version + ": " + v.Config + "</br>"
+		}
 	}
 	if tele == "" {
 		tele = "No Telegraf configuration attached to this profile"

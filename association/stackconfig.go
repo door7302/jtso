@@ -20,6 +20,7 @@ const PATH_VMX string = "/var/shared/telegraf/vmx/telegraf.d/"
 const PATH_MX string = "/var/shared/telegraf/mx/telegraf.d/"
 const PATH_PTX string = "/var/shared//telegraf/ptx/telegraf.d/"
 const PATH_ACX string = "/var/shared//telegraf/acx/telegraf.d/"
+const PATH_QFX string = "/var/shared//telegraf/qfx/telegraf.d/"
 const PATH_GRAFANA string = "/var/shared/grafana/dashboards/"
 
 func ConfigueStack(cfg *config.ConfigContainer, family string) error {
@@ -32,11 +33,12 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// create the slice for which families we have to reconfigure the stack
 	if family == "all" {
-		families = make([]string, 4)
+		families = make([]string, 5)
 		families[0] = "vmx"
 		families[1] = "mx"
 		families[2] = "ptx"
 		families[3] = "acx"
+		families[4] = "qfx"
 	} else {
 		families = make([]string, 1)
 		families[0] = family
@@ -84,6 +86,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		case "acx":
 			readDirectory, _ = os.Open(PATH_ACX)
 			directory = PATH_ACX
+		case "qfx":
+			readDirectory, _ = os.Open(PATH_QFX)
+			directory = PATH_QFX
 		}
 		allFiles, _ := readDirectory.Readdir(0)
 
@@ -116,6 +121,8 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				filenames = ActiveProfiles[p].Definition.TelCfg.PtxCfg
 			case "acx":
 				filenames = ActiveProfiles[p].Definition.TelCfg.AcxCfg
+			case "qfx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.QfxCfg
 			}
 			tls := false
 			skip := false
