@@ -193,7 +193,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 						defaultConfig = c.Config
 					} else {
 						result := CheckVersion(c.Version, r.Version)
-						if result && confToApply == "" {
+						if result && (confToApply == "") {
 							confToApply = c.Config
 						}
 					}
