@@ -37,6 +37,7 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 			searchVersion = searchVersion[2:]
 		}
 		// Find out if routerVersion can be reduced
+		logger.Log.Infof("Check router version %s against entry %s - operator is %s", routerVersion, searchVersion, operator)
 		r, _ := regexp.Compile(searchVersion + "*")
 		result := r.FindString(routerVersion)
 		if result != "" {
@@ -46,29 +47,24 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 		switch operator {
 		case "==":
 			if strings.Compare(routerVersion, searchVersion) == 0 {
-				logger.Log.Infof("Config apply is: %s", searchVersion)
 				return true
 			}
 
 		case ">>":
 			if strings.Compare(routerVersion, searchVersion) > 0 {
-				logger.Log.Infof("Config apply is: %s", searchVersion)
 				return true
 			}
 		case "<<":
 			if strings.Compare(routerVersion, searchVersion) < 0 {
-				logger.Log.Infof("Config apply is: %s", searchVersion)
 				return true
 
 			}
 		case ">=":
 			if strings.Compare(routerVersion, searchVersion) >= 0 {
-				logger.Log.Infof("Config apply is: %s", searchVersion)
 				return true
 			}
 		case "<=":
 			if strings.Compare(routerVersion, searchVersion) <= 0 {
-				logger.Log.Infof("Config apply is: %s", searchVersion)
 				return true
 			}
 		default:
@@ -199,7 +195,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 						result := CheckVersion(c.Version, r.Version)
 						if result && confToApply == "" {
 							confToApply = c.Config
-							break
 						}
 					}
 				}
