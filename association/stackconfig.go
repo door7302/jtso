@@ -29,6 +29,7 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 
 	logger.Log.Errorf("Check version : %s vs %s", searchVersion, routerVersion)
 	if len(searchVersion) > 2 {
+		logger.Log.Error("here we go")
 		// Search operator
 		if unicode.IsDigit(rune(searchVersion[0])) && unicode.IsDigit(rune(searchVersion[1])) {
 			operator = "=="
@@ -37,6 +38,8 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 			operator = searchVersion[0:2]
 			searchVersion = searchVersion[2:]
 		}
+		logger.Log.Errorf("operator %s", operator)
+
 		// Find out if routerVersion can be reduced
 		r, _ := regexp.Compile(searchVersion + "*")
 		result := r.FindString(routerVersion)

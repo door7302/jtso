@@ -402,7 +402,8 @@ func checkRouterSupport(filenames []association.Config, routerVersion string) bo
 			defaultConfig = c.Config
 		} else {
 			result := association.CheckVersion(c.Version, routerVersion)
-			if result && confToApply == "" {
+			logger.Log.Errorf("result %v", result)
+			if result && (confToApply == "") {
 				return true
 			}
 		}
