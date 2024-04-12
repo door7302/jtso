@@ -46,23 +46,29 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 		switch operator {
 		case "==":
 			if strings.Compare(routerVersion, searchVersion) == 0 {
+				logger.Log.Infof("Config apply is: %s", searchVersion)
 				return true
 			}
 
 		case ">>":
 			if strings.Compare(routerVersion, searchVersion) > 0 {
+				logger.Log.Infof("Config apply is: %s", searchVersion)
 				return true
 			}
 		case "<<":
 			if strings.Compare(routerVersion, searchVersion) < 0 {
+				logger.Log.Infof("Config apply is: %s", searchVersion)
 				return true
+
 			}
 		case ">=":
 			if strings.Compare(routerVersion, searchVersion) >= 0 {
+				logger.Log.Infof("Config apply is: %s", searchVersion)
 				return true
 			}
 		case "<=":
 			if strings.Compare(routerVersion, searchVersion) <= 0 {
+				logger.Log.Infof("Config apply is: %s", searchVersion)
 				return true
 			}
 		default:
