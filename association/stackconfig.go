@@ -198,11 +198,11 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 				if confToApply != "" {
 					perVersion[confToApply] = append(perVersion[confToApply], r)
-					logger.Log.Infof("Router with version %s will use configuration %s", r.Version, confToApply)
+					logger.Log.Infof("Router %s version %s will use configuration %s", r.Shortname, r.Version, confToApply)
 				} else {
 					if defaultConfig != "" {
 						perVersion[defaultConfig] = append(perVersion[defaultConfig], r)
-						logger.Log.Infof("Router with version %s will use configuration %s", r.Version, defaultConfig)
+						logger.Log.Infof("Router %s  version %s will use configuration %s", r.Shortname, r.Version, defaultConfig)
 					}
 				}
 			}
