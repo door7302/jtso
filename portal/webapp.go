@@ -394,8 +394,9 @@ func routeDelRouter(c echo.Context) error {
 func checkRouterSupport(filenames []association.Config, routerVersion string) bool {
 	confToApply := ""
 	defaultConfig := ""
-
+	logger.Log.Errorf("Filename %v", filenames)
 	for _, c := range filenames {
+		logger.Log.Errorf("Loop %v", c)
 		// Save all config if present as a fallback solution if specific version not found
 		if c.Version == "all" {
 			defaultConfig = c.Config
