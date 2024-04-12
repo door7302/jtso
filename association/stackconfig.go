@@ -192,6 +192,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					if c.Version == "all" {
 						defaultConfig = c.Config
 					} else {
+						logger.Log.Errorf("debug: %v", c)
 						result := CheckVersion(c.Version, r.Version)
 						if result && (confToApply == "") {
 							confToApply = c.Config
