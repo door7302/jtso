@@ -8,9 +8,11 @@ import (
 	"jtso/logger"
 	"jtso/sqlite"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
+	"unicode"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -21,6 +23,54 @@ const PATH_MX string = "/var/shared/telegraf/mx/telegraf.d/"
 const PATH_PTX string = "/var/shared//telegraf/ptx/telegraf.d/"
 const PATH_ACX string = "/var/shared//telegraf/acx/telegraf.d/"
 const PATH_GRAFANA string = "/var/shared/grafana/dashboards/"
+
+func CheckVersion(searchVersion string, routerVersion string) bool {
+	var operator string
+
+	if len(searchVersion) > 2 {
+		// Search operator
+		if unicode.IsDigit(rune(searchVersion[0])) && unicode.IsDigit(rune(searchVersion[1])) {
+			operator = "=="
+		} else {
+			operator = searchVersion[0:2]
+			searchVersion = searchVersion[2:]
+		}
+		// Find out if routerVersion can be reduced
+		r, _ := regexp.Compile(searchVersion + "*")
+		result := r.FindString(routerVersion)
+		if result != "" {
+			routerVersion = result
+		}
+		switch operator {
+		case "==":
+			if strings.Compare(routerVersion, searchVersion) == 0 {
+				return true
+			}
+
+		case ">>":
+			if strings.Compare(routerVersion, searchVersion) > 0 {
+				return true
+			}
+		case "<<":
+			if strings.Compare(routerVersion, searchVersion) < 0 {
+				return true
+
+			}
+		case ">=":
+			if strings.Compare(routerVersion, searchVersion) >= 0 {
+				return true
+			}
+		case "<=":
+			if strings.Compare(routerVersion, searchVersion) <= 0 {
+				return true
+			}
+		default:
+			return false
+		}
+	}
+	return false
+
+}
 
 func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
@@ -103,8 +153,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		for p, rtrs := range cfgHierarchy[f] {
 
 			var filenames []Config
-			var perVersion map[string][]*sqlite.RtrEntry
-			perVersion = make(map[string][]*sqlite.RtrEntry)
+			perVersion := make(map[string][]*sqlite.RtrEntry)
 
 			// extract definition of the profile
 			switch f {
@@ -132,28 +181,30 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 			// Create the map - per version > routers
 			for _, r := range rtrs {
-				keep_version := "all"
-				save_conf := ""
+				confToApply := ""
+				defaultConfig := ""
+
 				for _, c := range filenames {
-					if c.Version != "all" {
-						comp := strings.Compare(r.Version, c.Version)
-						if comp == -1 {
-							if keep_version != "all" {
-								comp := strings.Compare(c.Version, keep_version)
-								if comp == -1 {
-									keep_version = c.Version
-									save_conf = c.Config
-								}
-							} else {
-								keep_version = c.Version
-								save_conf = c.Config
-							}
-						}
+					// Save all config if present as a fallback solution if specific version not found
+					if c.Version == "all" {
+						defaultConfig = c.Config
 					} else {
-						save_conf = c.Config
+						result := CheckVersion(c.Version, r.Version)
+						if result && (confToApply == "") {
+							confToApply = c.Config
+						}
 					}
 				}
-				perVersion[save_conf] = append(perVersion[save_conf], r)
+
+				if confToApply != "" {
+					perVersion[confToApply] = append(perVersion[confToApply], r)
+					logger.Log.Infof("Router %s version %s will use configuration %s", r.Shortname, r.Version, confToApply)
+				} else {
+					if defaultConfig != "" {
+						perVersion[defaultConfig] = append(perVersion[defaultConfig], r)
+						logger.Log.Infof("Router %s  version %s will use configuration %s", r.Shortname, r.Version, defaultConfig)
+					}
+				}
 			}
 
 			for filename, v := range perVersion {

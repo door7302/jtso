@@ -1,6 +1,7 @@
 package portal
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"jtso/sqlite"
 	"jtso/worker"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -27,6 +29,8 @@ import (
 )
 
 const PATH_CERT string = "/var/cert/"
+const PATH_JTS_VERS string = "/etc/jtso/openjts.version"
+const PATH_TELE_VERS string = "/var/metadata/telegraf.version"
 
 type WebApp struct {
 	listen string
@@ -186,7 +190,46 @@ func routeIndex(c echo.Context) error {
 		}
 	}
 
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleVmx": teleVmx, "TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumVMX": numVMX, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "GrafanaPort": grafanaPort})
+	// Retrieve module's version
+	jtsoVersion := config.JTSO_VERSION
+	jtsVersion := "N/A"
+	teleVersion := "N/A"
+
+	// Open the OpenJTS version's file
+	file_jts, err := os.Open(PATH_JTS_VERS)
+	if err != nil {
+		logger.Log.Errorf("Unable to open %s file: %v", PATH_JTS_VERS, err)
+	} else {
+		defer file_jts.Close()
+		scanner := bufio.NewScanner(file_jts)
+		if scanner.Scan() {
+			jtsVersion = scanner.Text()
+		}
+		// Check for any errors during scanning
+		if err := scanner.Err(); err != nil {
+			logger.Log.Errorf("Unable to parse %s file: %v", PATH_JTS_VERS, err)
+		}
+	}
+
+	// Open the Telegraf version's file
+	file_tele, err := os.Open(PATH_TELE_VERS)
+	if err != nil {
+		logger.Log.Errorf("Unable to open %s file: %v", PATH_TELE_VERS, err)
+	} else {
+		defer file_tele.Close()
+		scanner := bufio.NewScanner(file_tele)
+		if scanner.Scan() {
+			teleVersion = scanner.Text()
+		}
+		// Check for any errors during scanning
+		if err := scanner.Err(); err != nil {
+			logger.Log.Errorf("Unable to parse %s file: %v", PATH_TELE_VERS, err)
+		}
+	}
+
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleVmx": teleVmx, "TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx,
+		"Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumVMX": numVMX, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX,
+		"GrafanaPort": grafanaPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
 }
 
 func routeRouters(c echo.Context) error {
@@ -348,6 +391,26 @@ func routeDelRouter(c echo.Context) error {
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router deleted"})
 }
 
+func checkRouterSupport(filenames []association.Config, routerVersion string) bool {
+	confToApply := ""
+	defaultConfig := ""
+	for _, c := range filenames {
+		// Save all config if present as a fallback solution if specific version not found
+		if c.Version == "all" {
+			defaultConfig = c.Config
+		} else {
+			result := association.CheckVersion(c.Version, routerVersion)
+			if result && (confToApply == "") {
+				return true
+			}
+		}
+	}
+	if defaultConfig != "" {
+		return true
+	}
+	return false
+}
+
 func routeAddProfile(c echo.Context) error {
 	var err error
 	var f bool
@@ -370,39 +433,63 @@ func routeAddProfile(c echo.Context) error {
 	}
 	// Check if a profile can be attached to a router
 	// find out the family of the router
-	fam := "all"
+	fam := ""
+	version := ""
 	for _, i := range sqlite.RtrList {
 		if i.Shortname == r.Shortname {
 			fam = i.Family
+			version = i.Version
 			break
 		}
 	}
 	// Now check for each profile there is a given Telegraf config
-	valid := true
+	valid := false
 	errString := ""
 	for _, i := range r.Profiles {
 		allTele := association.ActiveProfiles[i].Definition.TelCfg
 		switch fam {
 		case "vmx":
 			if len(allTele.VmxCfg) == 0 {
-				valid = false
 				errString += "There is no Telegraf config for profile " + i + " for the VMX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VmxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VMX version.</br>"
+				}
 			}
 		case "mx":
 			if len(allTele.MxCfg) == 0 {
-				valid = false
 				errString += "There is no Telegraf config for profile " + i + " for the MX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.MxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this MX version.</br>"
+				}
 			}
 		case "ptx":
 			if len(allTele.PtxCfg) == 0 {
-				valid = false
 				errString += "There is no Telegraf config for profile " + i + " for the PTX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.PtxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this PTX version.</br>"
+				}
 			}
 		case "acx":
 			if len(allTele.AcxCfg) == 0 {
-				valid = false
 				errString += "There is no Telegraf config for profile " + i + " for the ACX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.AcxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this ACX version.</br>"
+				}
 			}
+		default:
+			errString += "There is no Telegraf config for profile " + i + " for the unknown platform.</br>"
 		}
 	}
 
