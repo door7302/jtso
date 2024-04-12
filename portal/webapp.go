@@ -464,7 +464,6 @@ func routeAddProfile(c echo.Context) error {
 			} else {
 				if checkRouterSupport(allTele.MxCfg, version) {
 					valid = true
-					logger.Log.Errorf("Router valid %s", r.Shortname)
 				} else {
 					errString += "There is no Telegraf config for profile " + i + " for this MX version.</br>"
 				}

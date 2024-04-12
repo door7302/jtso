@@ -41,8 +41,6 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 		if result != "" {
 			routerVersion = result
 		}
-		logger.Log.Infof("Check router version %s against entry %s - operator is %s", routerVersion, searchVersion, operator)
-
 		switch operator {
 		case "==":
 			if strings.Compare(routerVersion, searchVersion) == 0 {
