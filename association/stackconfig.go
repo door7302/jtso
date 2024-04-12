@@ -27,6 +27,7 @@ const PATH_GRAFANA string = "/var/shared/grafana/dashboards/"
 func CheckVersion(searchVersion string, routerVersion string) bool {
 	var operator string
 
+	logger.Log.Errorf("Check version : %s vs %s", searchVersion, routerVersion)
 	if len(searchVersion) > 2 {
 		// Search operator
 		if unicode.IsDigit(rune(searchVersion[0])) && unicode.IsDigit(rune(searchVersion[1])) {
