@@ -51,14 +51,17 @@
         <div class="card-body">
             <h4 class="card-title">Current routers</h4>
             <div class="table-responsive">
-                <table id="ListRtrs" class="table">
+                <table id="ListRtrs" data-search="true"
+                    data-filter-control="true" 
+                    data-show-export="true"
+                    class="table">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Hostname</th>
-                            <th>Family</th>
-                            <th>Model</th>
-                            <th>Version</th>
+                            <th data-filter-control="input" data-sortable="true">>Name</th>
+                            <th data-filter-control="input" data-sortable="true">Hostname</th>
+                            <th data-filter-control="input" data-sortable="true">Family</th>
+                            <th data-filter-control="input" data-sortable="true">Model</th>
+                            <th data-filter-control="input" data-sortable="true">Version</th>
                             <th width="5%">Delete</th>
                         </tr>
                     </thead>

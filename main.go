@@ -55,7 +55,7 @@ func main() {
 	_, close := context.WithCancel(context.Background())
 
 	// wait 5 seconds to let docker DNS service to start
-	time.Sleep(5 * time.Second)
+	time.Sleep(6 * time.Second)
 
 	// Clean all kapacitor tasks
 	logger.Log.Info("Start cleaning all active Kapacitor tasks")
@@ -91,10 +91,10 @@ func main() {
 		}
 	}()
 
-	// create a ticker to refresh the Enrichment struct
+	// create a ticker to refresh the profiles 
 	ticker2 := time.NewTicker(1 * time.Minute)
 
-	// Create the Thread that periodically refreshes the Enrichment struct
+	// Create the Thread that periodically refreshes the Profiles
 	go func() {
 		for {
 			select {
