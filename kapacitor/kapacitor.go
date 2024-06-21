@@ -83,6 +83,7 @@ func StartTick(t []string) error {
 			return err
 		}
 		logger.Log.Infof("Tick Script %s has been successfully installed and enabled", v)
+		i++
 	}
 	return nil
 }
