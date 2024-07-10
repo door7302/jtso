@@ -683,41 +683,20 @@ func routeUptDoc(c echo.Context) error {
 
 	tele := ""
 	for _, v := range p.Definition.TelCfg.VmxCfg {
-		if v.Version == "all" {
-			tele += "For VMX version " + v.Version + ": " + v.Config + "</br>"
-		} else {
-			tele += "For VMX version <=" + v.Version + ": " + v.Config + "</br>"
-		}
+		tele += "For VMX version " + v.Version + ": " + v.Config + "</br>"
 	}
 	for _, v := range p.Definition.TelCfg.MxCfg {
-		if v.Version == "all" {
-			tele += "For MX version " + v.Version + ": " + v.Config + "</br>"
-		} else {
-			tele += "For MX version <=" + v.Version + ": " + v.Config + "</br>"
-		}
+		tele += "For MX version " + v.Version + ": " + v.Config + "</br>"
 	}
 	for _, v := range p.Definition.TelCfg.PtxCfg {
-		if v.Version == "all" {
-			tele += "For PTX version " + v.Version + ": " + v.Config + "</br>"
-		} else {
-			tele += "For PTX version <=" + v.Version + ": " + v.Config + "</br>"
-		}
+		tele += "For PTX version " + v.Version + ": " + v.Config + "</br>"
 	}
 	for i, v := range p.Definition.TelCfg.AcxCfg {
 		if i == len(p.Definition.TelCfg.AcxCfg)-1 {
-			if v.Version == "all" {
-				tele += "For ACX version " + v.Version + ": " + v.Config
-			} else {
-				tele += "For ACX version <=" + v.Version + ": " + v.Config + "</br>"
-			}
+			tele += "For ACX version " + v.Version + ": " + v.Config
 		} else {
-			if v.Version == "all" {
-				tele += "For ACX version " + v.Version + ": " + v.Config + "</br>"
-			} else {
-				tele += "For ACX version <=" + v.Version + ": " + v.Config + "</br>"
-			}
+			tele += "For ACX version " + v.Version + ": " + v.Config + "</br>"
 		}
-
 	}
 	if tele == "" {
 		tele = "No Telegraf configuration attached to this profile"
