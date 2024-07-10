@@ -210,8 +210,10 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			for filename, v := range perVersion {
 
 				rendRtrs := make([]string, 0)
+				rendRtrsNet := make([]string, 0)
 				for _, r := range v {
 					rendRtrs = append(rendRtrs, r.Hostname+":"+strconv.Itoa(cfg.Gnmi.Port))
+					rendRtrsNet = append(rendRtrs, r.Hostname)
 
 				}
 				// render profile
@@ -232,7 +234,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					continue
 				}
 				defer renderFile.Close()
-				err = temp.Execute(renderFile, map[string]interface{}{"rtrs": rendRtrs, "username": sqlite.ActiveCred.GnmiUser, "password": sqlite.ActiveCred.GnmiPwd, "tls": tls, "skip": skip, "tls_client": clienttls})
+				err = temp.Execute(renderFile, map[string]interface{}{"rtrs": rendRtrs, "username": sqlite.ActiveCred.GnmiUser, "password": sqlite.ActiveCred.GnmiPwd, "tls": tls, "skip": skip, "tls_client": clienttls, "usernetconf": sqlite.ActiveCred.NetconfUser, "pwdnetconf": sqlite.ActiveCred.NetconfPwd, "rtrs_netconf": rendRtrsNet})
 				if err != nil {
 					logger.Log.Errorf("Unable to write into render telegraf file - err: %v", err)
 					continue
