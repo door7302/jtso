@@ -213,7 +213,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				rendRtrsNet := make([]string, 0)
 				for _, r := range v {
 					rendRtrs = append(rendRtrs, r.Hostname+":"+strconv.Itoa(cfg.Gnmi.Port))
-					rendRtrsNet = append(rendRtrs, r.Hostname)
+					rendRtrsNet = append(rendRtrsNet, r.Hostname)
 
 				}
 				// render profile
