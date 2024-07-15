@@ -2,13 +2,13 @@ package portal
 
 import (
 	"bufio"
-	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
 	"jtso/association"
 	"jtso/config"
+	"jtso/container"
 	"jtso/influx"
 	"jtso/logger"
 	"jtso/netconf"
@@ -23,14 +23,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 )
 
 const PATH_CERT string = "/var/cert/"
 const PATH_JTS_VERS string = "/etc/jtso/openjts.version"
-const PATH_TELE_VERS string = "/var/metadata/telegraf.version"
 
 type WebApp struct {
 	listen string
@@ -119,17 +115,8 @@ func routeIndex(c echo.Context) error {
 	teleVmx, teleMx, telePtx, teleAcx, influx, grafana, kapacitor, jtso := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
 	// check containers state
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		logger.Log.Errorf("Unable to open Docker session: %v", err)
+	containers := container.ListContainers()
 
-	}
-	defer cli.Close()
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
-	if err != nil {
-		logger.Log.Errorf("Unable to list container state: %v", err)
-
-	}
 	for _, container := range containers {
 		switch container.Names[0] {
 		case "/telegraf_vmx":
@@ -193,7 +180,6 @@ func routeIndex(c echo.Context) error {
 	// Retrieve module's version
 	jtsoVersion := config.JTSO_VERSION
 	jtsVersion := "N/A"
-	teleVersion := "N/A"
 
 	// Open the OpenJTS version's file
 	file_jts, err := os.Open(PATH_JTS_VERS)
@@ -211,21 +197,8 @@ func routeIndex(c echo.Context) error {
 		}
 	}
 
-	// Open the Telegraf version's file
-	file_tele, err := os.Open(PATH_TELE_VERS)
-	if err != nil {
-		logger.Log.Errorf("Unable to open %s file: %v", PATH_TELE_VERS, err)
-	} else {
-		defer file_tele.Close()
-		scanner := bufio.NewScanner(file_tele)
-		if scanner.Scan() {
-			teleVersion = scanner.Text()
-		}
-		// Check for any errors during scanning
-		if err := scanner.Err(); err != nil {
-			logger.Log.Errorf("Unable to parse %s file: %v", PATH_TELE_VERS, err)
-		}
-	}
+	// get the Telegraf version -
+	teleVersion := container.GetVersionLabel([]string{"telegraf_vmx", "telegraf_mx", "telegraf_ptx", "telegraf_acx"})
 
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleVmx": teleVmx, "TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx,
 		"Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumVMX": numVMX, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX,

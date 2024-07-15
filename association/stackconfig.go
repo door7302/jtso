@@ -1,9 +1,9 @@
 package association
 
 import (
-	"context"
 	"io"
 	"jtso/config"
+	"jtso/container"
 	"jtso/kapacitor"
 	"jtso/logger"
 	"jtso/sqlite"
@@ -13,9 +13,6 @@ import (
 	"strings"
 	"text/template"
 	"unicode"
-
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
 )
 
 const PATH_VMX string = "/var/shared/telegraf/vmx/telegraf.d/"
@@ -359,23 +356,8 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// Enable active scripts
 	kapacitor.StartTick(kapaStart)
 
-	// restart Containers :
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		logger.Log.Errorf("Unable to open Docker session: %v", err)
-		return err
-	}
-	defer cli.Close()
-
-	timeout := 10
-
 	// Restart grafana
-	err = cli.ContainerRestart(context.Background(), "grafana", container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
-	if err != nil {
-		logger.Log.Errorf("Unable to restart Grafana container: %v", err)
-		return err
-	}
-	logger.Log.Info("Grafana container has been restarted")
+	container.RestartContainer("grafana")
 
 	// Restart telegraf instance(s)
 	for _, f := range families {
@@ -386,19 +368,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 		// if cntr == 0 prefer shutdown the telegraf container
 		if cntr == 0 {
-			err = cli.ContainerStop(context.Background(), "telegraf_"+f, container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
-			if err != nil {
-				logger.Log.Errorf("Unable to stop telegraf_"+f+" container: %v", err)
-				continue
-			}
-			logger.Log.Info("telegraf_" + f + " container has been stopped - no more router attached")
+			container.StopContainer("telegraf_" + f)
 		} else {
-			err = cli.ContainerRestart(context.Background(), "telegraf_"+f, container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
-			if err != nil {
-				logger.Log.Errorf("Unable to restart telegraf_"+f+" container: %v", err)
-				continue
-			}
-			logger.Log.Info("telegraf_" + f + " container has been restarted")
+			container.RestartContainer("telegraf_" + f)
 		}
 	}
 
