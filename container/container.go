@@ -69,7 +69,7 @@ func StopContainer(name string) {
 
 }
 
-func GetVersionLabel(names string) string {
+func GetVersionLabel(name string) string {
 	version := "N/A"
 	// Open Docker API
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
