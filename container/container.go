@@ -70,7 +70,7 @@ func StopContainer(name string) {
 }
 
 func GetVersionLabel(name string) string {
-	version := "N/A"
+
 	// Open Docker API
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -89,7 +89,7 @@ func GetVersionLabel(name string) string {
 	}
 
 	// Extract the version label from imageInspect.Config.Labels
-	vers, ok := imageInspect.Config.Labels["version"]
+	version, ok := imageInspect.Config.Labels["version"]
 	if !ok {
 		logger.Log.Errorf("Unable to retrieve Docker %s version", name)
 		return "N/A"
