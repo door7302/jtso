@@ -198,7 +198,7 @@ func routeIndex(c echo.Context) error {
 	}
 
 	// get the Telegraf version -
-	teleVersion := container.GetVersionLabel([]string{"telegraf_vmx", "telegraf_mx", "telegraf_ptx", "telegraf_acx"})
+	teleVersion := container.GetVersionLabel("telegraf")
 
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleVmx": teleVmx, "TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx,
 		"Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumVMX": numVMX, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX,
