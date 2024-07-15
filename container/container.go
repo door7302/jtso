@@ -82,9 +82,9 @@ func GetVersionLabel(names []string) string {
 	version := ""
 	for _, name := range names {
 		// Get the image details using the Docker API
-		imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), "compose-"+name)
+		imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), name)
 		if err != nil {
-			logger.Log.Errorf("Unable to retrieve Docker %s inspect data: %v", "compose-"+name, err)
+			logger.Log.Errorf("Unable to retrieve Docker %s inspect data: %v", name, err)
 			version += name + "(N/A) "
 			continue
 		}
