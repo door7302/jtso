@@ -69,8 +69,8 @@ func StopContainer(name string) {
 
 }
 
-func GetVersionLabel(names []string) string {
-
+func GetVersionLabel(names string) string {
+	version := "N/A"
 	// Open Docker API
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -79,26 +79,24 @@ func GetVersionLabel(names []string) string {
 	}
 	defer cli.Close()
 
-	version := ""
-	for _, name := range names {
-		// Get the image details using the Docker API
-		imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), name)
-		if err != nil {
-			logger.Log.Errorf("Unable to retrieve Docker %s inspect data: %v", name, err)
-			version += name + "(N/A) "
-			continue
-		}
-
-		// Extract the version label from imageInspect.Config.Labels
-		vers, ok := imageInspect.Config.Labels["version"]
-		if !ok {
-			logger.Log.Errorf("Unable to retrieve Docker %s version", name)
-			version += name + "(N/A) "
-			continue
-		}
-		version += name + "(" + vers + ") "
-		logger.Log.Infof("%s container version is %s", name, version)
+	
+	// Get the image details using the Docker API
+	imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), name)
+	if err != nil {
+		logger.Log.Errorf("Unable to retrieve Docker %s inspect data: %v", name, err)
+		return "N/A"
+		
 	}
+
+	// Extract the version label from imageInspect.Config.Labels
+	vers, ok := imageInspect.Config.Labels["version"]
+	if !ok {
+		logger.Log.Errorf("Unable to retrieve Docker %s version", name)
+		return "N/A"
+		
+	}
+
+	logger.Log.Infof("%s container version is %s", name, version)	
 	return version
 
 }
