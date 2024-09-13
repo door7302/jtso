@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const JTSO_VERSION string = "1.0.4"
+const JTSO_VERSION string = "1.0.5"
 
 type PortalConfig struct {
 	Https     bool
