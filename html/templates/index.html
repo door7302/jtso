@@ -9,84 +9,9 @@
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
     <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/mainpage.css">
 </head>
-<style>
-    body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-    padding: 20px;
-    }
 
-    .card {
-    background-color: red;
-    color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    width: 300px;
-    text-align: center;
-    position: relative;
-    }
-
-    .card h3 {
-    margin: 0 0 10px;
-    }
-
-    .kpi-box {
-    position: absolute;
-    width: 40px;
-    height: 25px;
-    font-size: 12px;
-    line-height: 25px;
-    text-align: center;
-    color: black;
-    border-radius: 5px;
-    }
-
-    .kpi-blue {
-    background-color: lightblue;
-    bottom: 10px;
-    left: 10px;
-    }
-
-    .kpi-grey {
-    background-color: grey;
-    bottom: 10px;
-    right: 10px;
-    }
-
-    .telegraf-sub-boxes {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 15px;
-    }
-
-    .telegraf-sub-box {
-    background-color: red;
-    padding: 10px;
-    border-radius: 5px;
-    position: relative;
-    }
-
-    .button-container {
-    margin-top: 20px;
-    }
-
-    .button {
-    background-color: blue;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    }
-</style>
 <body>
     <nav class="navbar navbar-light navbar-expand-md py-3">
         <div class="container">
@@ -130,62 +55,69 @@
     </nav>
     
 
+    <img class="jtso-logo" src="img/stack.png" alt="Juniper Networks Logo">
 
-    <!-- JTSO Card -->
-    <div class="card">
-        <h3>JTSO</h3>
-        <p>Enricher/Manager</p>
+  <div class="main-card">
+
+    <div class="card jtso">
+      <h3>JTSO</h3>
+      <p>Enricher/Manager</p>
+      <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
-    <!-- Telegraf Card -->
-    <div class="card">
-        <h3>Telegraf</h3>
-        <div class="telegraf-sub-boxes">
+    <div class="card telegraf">
+      <h3>Telegraf Containers</h3>
+      <img class="docker-logo" src="img/docker.png" alt="Docker">
+      <div class="telegraf-sub-boxes">
         <div class="telegraf-sub-box">
-            MX
-            <div class="kpi-box kpi-blue">0</div>
-            <div class="kpi-box kpi-grey">D</div>
-        </div>
-        <div class="telegraf-sub-box">
-            PTX
-            <div class="kpi-box kpi-blue">1</div>
-            <div class="kpi-box kpi-grey">D</div>
+          MX Instance
+          <div class="kpi-box kpi-blue">0</div>
+          <div class="kpi-box kpi-grey">D</div>
         </div>
         <div class="telegraf-sub-box">
-            ACX
-            <div class="kpi-box kpi-blue">0</div>
-            <div class="kpi-box kpi-grey">D</div>
+          PTX Instance
+          <div class="kpi-box kpi-blue">1</div>
+          <div class="kpi-box kpi-grey">D</div>
         </div>
         <div class="telegraf-sub-box">
-            VMX
-            <div class="kpi-box kpi-blue">0</div>
-            <div class="kpi-box kpi-grey">D</div>
+          ACX Instance
+          <div class="kpi-box kpi-blue">0</div>
+          <div class="kpi-box kpi-grey">D</div>
         </div>
+        <div class="telegraf-sub-box">
+          VMX Instance
+          <div class="kpi-box kpi-blue">0</div>
+          <div class="kpi-box kpi-grey">D</div>
         </div>
+      </div>
     </div>
 
-    <!-- InfluxDB Card -->
-    <div class="card">
-        <h3>Influx DB</h3>
-        <p>Empty DB</p>
-        <div class="button-container">
+    <div class="card influx">
+      <h3>Influx DB</h3>
+      <div class="button-container">
         <button class="button">Clear DB</button>
-        </div>
+      </div>
+      <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
-    <!-- Kapacitor Card -->
-    <div class="card">
-        <h3>Kapacitor</h3>
+    <div class="card kapacitor">
+      <h3>Kapacitor</h3>
+      <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
-    <!-- Grafana Card -->
-    <div class="card">
-        <h3>Grafana</h3>
+    <div class="card chronograf">
+      <h3>Chronograf</h3>
+      <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
-    </body>
-    </html>
+    <div class="card grafana">
+      <h3>Grafana</h3>
+      <img class="docker-logo" src="img/docker.png" alt="Docker">
+    </div>
 
+    <br>
+    <i><p style="font-size: 0.8rem; text-align: center;">OpenJTS Version: {{.JTS_VERS}} - JTSO Version: {{.JTSO_VERS}} - JTS Telegraf Version: {{.JTS_TELE_VERS}}</p></i>
+  </div>
 
     <script src="js/alertify.min.js"></script>
     <script src="js/jquery-3.6.4.min.js"></script>

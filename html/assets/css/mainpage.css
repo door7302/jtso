@@ -1,0 +1,151 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+    /* JTSO main logo */
+    .jtso-logo {
+    width: 150px;
+    height: auto;
+    margin-bottom: 20px;
+    }
+
+  /* Main container card */
+  .main-card {
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    width: 80%;
+    display: grid;
+    grid-template-areas:
+      "jtso jtso jtso"
+      "telegraf influx influx"
+      "telegraf influx influx"
+      "telegraf kapacitor chronograf"
+      "telegraf grafana grafana";
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 20px;
+  }
+
+  /* Individual cards inside the main card */
+  .card {
+    position: relative;
+    color: black;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    text-align: center;
+    background: linear-gradient(to bottom, white, var(--box-color));
+  }
+
+  .card h3 {
+    margin: 0 0 10px;
+  }
+
+  .card .docker-logo {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+  }
+
+  /* Specific placement for each card */
+  .jtso {
+    --box-color: #f8cfcc; /* Soft red */
+    grid-area: jtso;
+  }
+
+  .telegraf {
+    --box-color: #85c1e9; /* Blue for Telegraf */
+    grid-area: telegraf;
+  }
+
+  .influx {
+    --box-color: #f8cfcc; /* Soft red */
+    grid-area: influx;
+  }
+
+  .kapacitor {
+    --box-color: #f8cfcc; /* Soft red */
+    grid-area: kapacitor;
+  }
+
+  .chronograf {
+    --box-color: #f8cfcc; /* Soft red */
+    grid-area: chronograf;
+  }
+
+  .grafana {
+    --box-color: #f8cfcc; /* Soft red */
+    grid-area: grafana;
+  }
+
+  /* Telegraf Sub-Boxes */
+  .telegraf-sub-boxes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .telegraf-sub-box {
+    background: linear-gradient(to bottom, white, #f8cfcc); /* Soft red gradient */
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    position: relative;
+  }
+
+  /* KPI Mini Boxes */
+  .kpi-box {
+    position: absolute;
+    width: 40px;
+    height: 25px;
+    font-size: 12px;
+    line-height: 25px;
+    text-align: center;
+    color: black;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .kpi-blue {
+    background-color: lightblue;
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .kpi-grey {
+    background-color: grey;
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .kpi-red {
+    background-color: grey;
+    bottom: 10px;
+    right: 10px;
+  }
+
+  /* Button */
+  .button-container {
+    margin-top: 20px;
+  }
+
+  .button {
+    background-color: black;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
