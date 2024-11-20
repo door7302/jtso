@@ -1,5 +1,9 @@
 /* Common */ 
 
+  body {
+    visibility: hidden;
+  }
+
   /* JTSO main logo */
   .jtso-logo {
     height: auto;
@@ -212,75 +216,71 @@
 }
 
  /* Dark Mode Styles */
-
+/* General Dark Mode Styles */
 body.dark-mode {
   background-color: #121212;
   color: #ffffff;
 }
 
-body.dark-mode .navbar{
+/* Navbar */
+body.dark-mode .navbar {
   background-color: #121212 !important;
 }
 
-body.dark-mode .navbar .nav-link{
+body.dark-mode .navbar .nav-link {
   color: #ffffff !important;
-}
-
-body.dark-mode .main-card,
-body.dark-mode .other-card  {
-  background-color: #282828;
-
 }
 
 body.dark-mode .navbar-brand span {
-  color: white !important; /* White text in dark mode */
+  color: white !important;
 }
 
-body.dark-mode h1 {
+/* Card Styles */
+body.dark-mode .main-card,
+body.dark-mode .other-card {
+  background-color: #282828;
+}
+
+body.dark-mode h1,
+body.dark-mode h4.card-title,
+body.dark-mode label {
   color: #ffffff !important;
 }
 
-body.dark-mode h4.card-title,
-body.dark-mode label.form-label {
-  color: #ffffff !important;  /* Set text color to white */
-}
-
+/* Form Inputs */
 body.dark-mode input.form-control {
-  color: #ffffff !important;  /* Set text color to white */
-  background-color: #575757 !important; /* Optional: Set input background to a darker color */
-  border-color: #555555 !important; 
+  color: #ffffff !important;
+  background-color: #575757 !important;
+  border-color: #555555 !important;
 }
 
-/* Dark Mode Styles for Table */
-body.dark-mode .other-card  {
-  background-color: #333333 !important; /* Set the background for the responsive wrapper */
-  color: #ffffff !important; /* Set the text color */
-}
-
+/* Table Styles */
 body.dark-mode .other-card .table {
-  background-color: transparent !important; /* Transparent background for table itself */
-  color: #ffffff !important; /* Ensure table text is white */
+  background-color: transparent !important;
+  color: #ffffff !important;
 }
 
 body.dark-mode .other-card .table thead {
-  background-color: #3f3f3f !important; /* Dark background for table header */
-}
-
-body.dark-mode .other-card .table th {
-  border-color: #555555 !important;
-  color: #ffffff !important; /* Set header text to white */
   background-color: #3f3f3f !important;
 }
 
+body.dark-mode .other-card .table th,
 body.dark-mode .other-card .table td {
   border-color: #555555 !important;
-  color: #ffffff !important; /* Light gray for table data */
+  color: #ffffff !important;
+}
+
+body.dark-mode .other-card .table td {
   background-color: #575757 !important;
 }
 
-/* Ensure button styles adapt */
+body.dark-mode .other-card .table th {
+  background-color: #3f3f3f !important;
+}
+
+/* Button Styles */
 body.dark-mode .other-card .btn-danger {
-  background-color: #cc4444 !important; /* Darker red for dark mode */
+  background-color: #cc4444 !important;
   border-color: #cc4444 !important;
 }
 
@@ -288,14 +288,16 @@ body.dark-mode .other-card .btn-danger:hover {
   background-color: #ff6666 !important;
 }
 
-
-/* Dark mode for <p> elements */
+/* Paragraph Styles */
 body.dark-mode .card-text {
-  color: #ffffff; /* White text color */
-  background-color: #333333; /* Dark background for the paragraphs */
+  color: #ffffff;
+  background-color: #333333;
 }
 
-/* Optional: Adjust the background of <p> elements only when hovered in dark mode */
 body.dark-mode .card-text:hover {
   background-color: #444444; /* Slightly lighter background when hovered */
+}
+
+body.dark-mode, body.light-mode {
+  visibility: visible;
 }
