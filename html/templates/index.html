@@ -9,90 +9,92 @@
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
     <link rel="stylesheet" href="css/alertify.min.css">
-    <link rel="stylesheet" href="css/mainpage.css">
+    <link rel="stylesheet" href="css/jtsostyle.css">
 </head>
 
 <body>
-    <nav class="navbar navbar-light navbar-expand-md py-3">
-        <div class="container">
-            <img src="img/logo.png" width="129" height="67">
-            <a class="navbar-brand d-flex align-items-center" href="#"><span>Juniper Telemetry Stack</span></a>
-            <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2">
-                <span class="visually-hidden">Toggle navigation</span>
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navcol-2">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link active" href="index.html" style="border-color: rgba(0, 0, 0, 0.65);">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
-                    <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/?orgId=1" onclick="javascript:event.target.port={{.GrafanaPort}}">Grafana</a></li>
-                    
-                    <!-- Tools Dropdown -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Tools
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="toolsDropdown">
-                            <li><a class="dropdown-item" href="browser.html">Browser</a></li>
-                        </ul>
-                    </li>
-    
-                    <!-- Admin Dropdown -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Admin
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                            <li><a class="dropdown-item" href="cred.html">Credentials</a></li>
-                            <li><a class="dropdown-item" href="profile-params.html">Profile parameters</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
+  <nav class="navbar navbar-light navbar-expand-md py-3">
+    <div class="container">
+        <img src="img/logo.png" width="300" height="50">
+        <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2">
+            <span class="visually-hidden">Toggle navigation</span>
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navcol-2">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
+                <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
+                <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
+                <li class="nav-item"><a class="nav-link" href="/?orgId=1">Grafana</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="browser.html">Browser</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">Admin</a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="cred.html">Credentials</a></li>
+                        <li><a class="dropdown-item" href="profile-params.html">Profile parameters</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="form-check form-switch ms-3">
+              <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+              <label class="form-check-label" for="darkModeSwitch">Dark Mode</label>
+          </div>
         </div>
-    </nav>
+    </div>
+</nav>
+
     
 
-    <img class="jtso-logo" src="img/stack.png" alt="Juniper Networks Logo">
+<div class="container mt-5">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-chart-line fa-lg text-success  me-2"></i>
+            <h1 class="h3">OpenJTS's Stack State</h1>
+        </div>
+</div>
+<br>
+<div class="main-div">
+  <div class="card main-card">
 
-  <div class="main-card">
-
-    <div class="card jtso">
+    <div class="card jtso" style="--box-color: #{{.Jtso}};">
       <h3>JTSO</h3>
       <p>Enricher/Manager</p>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
-    <div class="card telegraf">
+    <div class="card telegraf" >
       <h3>Telegraf Containers</h3>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
       <div class="telegraf-sub-boxes">
-        <div class="telegraf-sub-box">
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleMx}};">
           MX Instance
-          <div class="kpi-box kpi-blue">0</div>
+          <div class="kpi-box kpi-blue">{{.NumMX}}</div>
           <div class="kpi-box kpi-grey">D</div>
         </div>
-        <div class="telegraf-sub-box">
+        <div class="telegraf-sub-box" style="--box-color: #{{.TelePtx}};">
           PTX Instance
-          <div class="kpi-box kpi-blue">1</div>
+          <div class="kpi-box kpi-blue">{{.NumPTX}}</div>
           <div class="kpi-box kpi-grey">D</div>
         </div>
-        <div class="telegraf-sub-box">
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleAcx}};">
           ACX Instance
-          <div class="kpi-box kpi-blue">0</div>
+          <div class="kpi-box kpi-blue">{{.NumACX}}</div>
           <div class="kpi-box kpi-grey">D</div>
         </div>
-        <div class="telegraf-sub-box">
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleVmx}};">
           VMX Instance
-          <div class="kpi-box kpi-blue">0</div>
+          <div class="kpi-box kpi-blue">{{.NumVMX}}</div>
           <div class="kpi-box kpi-grey">D</div>
         </div>
       </div>
     </div>
 
-    <div class="card influx">
+    <div class="card influx" style="--box-color: #{{.Influx}};">
       <h3>Influx DB</h3>
       <div class="button-container">
         <button class="button">Clear DB</button>
@@ -100,29 +102,36 @@
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
-    <div class="card kapacitor">
+    <div class="card kapacitor" style="--box-color: #{{.Kapacitor}};">
       <h3>Kapacitor</h3>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
-    <div class="card chronograf">
+    <div class="card chronograf" style="--box-color: #{{.}};">
       <h3>Chronograf</h3>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
-    <div class="card grafana">
+    <div class="card grafana" style="--box-color: #{{.Grafana}};">
       <h3>Grafana</h3>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
-    <br>
-    <i><p style="font-size: 0.8rem; text-align: center;">OpenJTS Version: {{.JTS_VERS}} - JTSO Version: {{.JTSO_VERS}} - JTS Telegraf Version: {{.JTS_TELE_VERS}}</p></i>
+
+   
+  </div>
   </div>
 
-    <script src="js/alertify.min.js"></script>
+  <!-- Footer -->
+<footer class="text-center py-3">
+  <i><p style="font-size: 0.8rem; text-align: center;">OpenJTS Version: {{.JTS_VERS}} - JTSO Version: {{.JTSO_VERS}} - JTS Telegraf Version: {{.JTS_TELE_VERS}}</p></i>
+</footer>
+   
+  
+  <script src="js/alertify.min.js"></script>
     <script src="js/jquery-3.6.4.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/dark.js"></script>
 </body>
-
 </html>

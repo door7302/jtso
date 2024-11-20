@@ -10,80 +10,100 @@
     <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
     <link rel="stylesheet" href="css/alertify.min.css">
     <link rel="stylesheet" href="css/bootstrap-multiselect.css">
+    <link rel="stylesheet" href="css/jtsostyle.css">
 </head>
 
 <body>
-    <nav class="navbar navbar-light navbar-expand-md py-3">
-        <div class="container"><img src="img/logo.png" width="129" height="67"><a
-                class="navbar-brand d-flex align-items-center" href="#"><span>Juniper Telemetry Stack</span></a><button
-                data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2"><span
-                    class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
-            <div class="collapse navbar-collapse" id="navcol-2">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="cred.html"
-                            style="border-color: rgba(0, 0, 0, 0.65);">Credentials</a></li>
-                    <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
-                    <li class="nav-item"><a class="nav-link " href="profiles.html">Profiles</a></li>
-                    <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
-                    <li class="nav-item"><a class="nav-link" href="browser.html">Browser</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/?orgId=1"
-                            onclick="javascript:event.target.port={{.GrafanaPort}}">Grafana</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <body>
+        <nav class="navbar navbar-light navbar-expand-md py-3">
+          <div class="container">
+              <img src="img/logo.png" width="300" height="50">
+              <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2">
+                  <span class="visually-hidden">Toggle navigation</span>
+                  <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="collapse navbar-collapse" id="navcol-2">
+                  <ul class="navbar-nav ms-auto">
+                      <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                      <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
+                      <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
+                      <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
+                      <li class="nav-item"><a class="nav-link" href="/?orgId=1">Grafana</a></li>
+                      <li class="nav-item dropdown">
+                          <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
+                          <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="browser.html">Browser</a></li>
+                          </ul>
+                      </li>
+                      <li class="nav-item dropdown">
+                          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">Admin</a>
+                          <ul class="dropdown-menu dropdown-menu-end">
+                              <li><a class="dropdown-item" href="cred.html">Credentials</a></li>
+                              <li><a class="dropdown-item" href="profile-params.html">Profile parameters</a></li>
+                          </ul>
+                      </li>
+                  </ul>
+                  <div class="form-check form-switch ms-3">
+                    <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                    <label class="form-check-label" for="darkModeSwitch">Dark Mode</label>
+                </div>
+              </div>
+          </div>
+      </nav>
 
-    <div class="card">
-        <div class="card-body">
-            <h4 class="card-title">Credentials Management</h4>
-            <form><label class="form-label" style="margin-top: 10px;">Netconf Username:</label><input id="Username"
-                    class="form-control" type="text" value="{{.Netuser}}"></form>
-            <form style="margin-top: 10px;"><label class="form-label">Netconf Password:</label><input id="Password"
-                    class="form-control" type="password" value="{{.Netpwd}}"></form>
-            <form><label class="form-label" style="margin-top: 10px;">Gnmi Username:</label><input id="Username2"
-                    class="form-control" type="text" value="{{.Gnmiuser}}"></form>
-            <form style="margin-top: 10px;"><label class="form-label">Gnmi Password:</label><input id="Password2"
-                    class="form-control" type="password" value="{{.Gnmipwd}}"></form>
-            </br>
-            <h4 class="card-title">Certificats Management for gNMI (Telegraf client side config)</h4>
-            <div style="margin-top: 10px;" class="form-check">
-                {{if eq .Usetls "yes"}}
-                <input class="form-check-input" type="checkbox" id="Usetls" checked>
-                {{ else }}
-                <input class="form-check-input" type="checkbox" id="Usetls">
-                {{ end }}
-                <label class="form-check-label" for="flexCheckDefault">
-                    Enable TLS to authenticate the remote device?
-                </label>
+    <div class="other-div">
+        <div class="card other-card">
+            <div class="card-body">
+                <h4 class="card-title">Credentials Management</h4>
+                <form><label class="form-label" style="margin-top: 10px;">Netconf Username:</label><input id="Username"
+                        class="form-control" type="text" value="{{.Netuser}}"></form>
+                <form style="margin-top: 10px;"><label class="form-label">Netconf Password:</label><input id="Password"
+                        class="form-control" type="password" value="{{.Netpwd}}"></form>
+                <form><label class="form-label" style="margin-top: 10px;">Gnmi Username:</label><input id="Username2"
+                        class="form-control" type="text" value="{{.Gnmiuser}}"></form>
+                <form style="margin-top: 10px;"><label class="form-label">Gnmi Password:</label><input id="Password2"
+                        class="form-control" type="password" value="{{.Gnmipwd}}"></form>
+                </br>
+                <h4 class="card-title">Certificats Management for gNMI (Telegraf client side config)</h4>
+                <div style="margin-top: 10px;" class="form-check">
+                    {{if eq .Usetls "yes"}}
+                    <input class="form-check-input" type="checkbox" id="Usetls" checked>
+                    {{ else }}
+                    <input class="form-check-input" type="checkbox" id="Usetls">
+                    {{ end }}
+                    <label class="form-check-label" for="flexCheckDefault">
+                        Enable TLS to authenticate the remote device?
+                    </label>
+                </div>
+                <div style="margin-top: 10px;" class="form-check">
+                    {{if eq .Skipverify "yes"}}
+                    <input class="form-check-input" type="checkbox" id="Skipverify" checked>
+                    {{ else }}
+                    <input class="form-check-input" type="checkbox" id="Skipverify">
+                    {{ end }}
+                    <label class="form-check-label" for="flexCheckDefault">
+                        Use TLS but skip chain & host verification (skip-verify)?
+                    </label>
+                </div>
+                <div style="margin-top: 10px;" class="form-check">
+                    {{if eq .Clienttls "yes"}}
+                    <input class="form-check-input" type="checkbox" id="Clienttls" checked>
+                    {{ else }}
+                    <input class="form-check-input" type="checkbox" id="Clienttls">
+                    {{ end }}
+                    <label class="form-check-label" for="flexCheckDefault">
+                        Enable client-side TLS certificate & key to authenticate to the collector (requiere Telegraf cert -
+                        see README)?
+                    </label>
+                </div>
+                </select>
+                </form>
+                <br/>
+                <div class="d-flex justify-content-center align-items-center">
+                    <input onclick="saveCred();" class="btn btn-success" type="submit" value="Update" name="addB">
+                </div>
             </div>
-            <div style="margin-top: 10px;" class="form-check">
-                {{if eq .Skipverify "yes"}}
-                <input class="form-check-input" type="checkbox" id="Skipverify" checked>
-                {{ else }}
-                <input class="form-check-input" type="checkbox" id="Skipverify">
-                {{ end }}
-                <label class="form-check-label" for="flexCheckDefault">
-                    Use TLS but skip chain & host verification (skip-verify)?
-                </label>
-            </div>
-            <div style="margin-top: 10px;" class="form-check">
-                {{if eq .Clienttls "yes"}}
-                <input class="form-check-input" type="checkbox" id="Clienttls" checked>
-                {{ else }}
-                <input class="form-check-input" type="checkbox" id="Clienttls">
-                {{ end }}
-                <label class="form-check-label" for="flexCheckDefault">
-                    Enable client-side TLS certificate & key to authenticate to the collector (requiere Telegraf cert -
-                    see README)?
-                </label>
-            </div>
-            </select>
-        </form>
-        <div class="d-flex justify-content-center align-items-center">
-        <input onclick="saveCred();" class="btn btn-primary" type="submit" value="Update" name="addB">
         </div>
-    </div>
     </div>
 
     <script src="js/jquery-3.6.4.min.js"></script>
@@ -91,7 +111,7 @@
     <script src="js/alertify.min.js"></script>
     <script src="js/bootstrap-multiselect.js"></script>
     <script src="js/cred.js"></script>
-
+    <script src="js/dark.js"></script>
 </body>
 
 </html>
