@@ -1,6 +1,5 @@
 let eventSource;
 const browseButton = document.getElementById("browse");
-const resultDiv = document.getElementById("result");
 const modal = document.getElementById("modalcore")
 modal.style.scrollBehavior = 'smooth';
 

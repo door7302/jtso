@@ -236,6 +236,18 @@
   margin-top: 10px; 
 }
 
+
+/* BROWSER page */ 
+
+#result {
+  text-align: left; /* Align text to the left */
+  display: block; /* Ensure the div behaves as a block-level element */
+
+}
+
+
+
+
  /* Dark Mode Styles */
 /* General Dark Mode Styles */
 body.dark-mode {
@@ -331,11 +343,11 @@ body.dark-mode .other-card .btn-danger:hover {
 /* Paragraph Styles */
 body.dark-mode .card-text {
   color: #ffffff;
-  background-color: #333333;
+  background-color: #282828;
 }
 
 body.dark-mode .card-text:hover {
-  background-color: #444444; /* Slightly lighter background when hovered */
+  background-color: #282828; /* Slightly lighter background when hovered */
 }
 
 body.dark-mode, body.light-mode {
@@ -391,4 +403,44 @@ body.dark-mode .ajs-close {
 /* Optional: Adjust Transition Backgrounds */
 body.dark-mode .ajs-overlay {
   background-color: rgba(18, 18, 18, 0.85) !important; /* Dark semi-transparent overlay */
+}
+
+
+/* Dark Mode Styles for Modal */
+body.dark-mode .modal-content {
+  background-color: #3f3f3f !important; /* Dark background for modal */
+  color: #ffffff !important; /* White text for modal */
+}
+
+body.dark-mode .modal-header {
+  background-color: #282828 !important; /* Dark header background */
+  color: #ffffff !important; /* White text for header */
+}
+
+body.dark-mode .modal-header .modal-title {
+  color: #ffffff !important; /* Ensures title text stays white */
+}
+
+body.dark-mode .modal-body {
+  background-color: #3f3f3f !important; /* Dark background for the modal body */
+  color: #ffffff !important; /* White text for the modal body */
+}
+
+body.dark-mode .modal-body pre {
+  color: #ffffff !important; /* White text in preformatted blocks */
+  background-color: #3f3f3f !important; /* Dark background for preformatted text */
+}
+
+body.dark-mode .modal .close {
+  color: #ffffff !important; /* White close button */
+  opacity: 1 !important; /* Ensure close button is visible */
+}
+
+/* Adjust modal backdrop in dark mode */
+body.dark-mode .modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.7) !important; /* Darker backdrop */
+}
+
+body.dark-mode .jstree {
+  color: #ffffff !important; 
 }
