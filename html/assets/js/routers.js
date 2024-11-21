@@ -1,3 +1,20 @@
+$(document).ready(function () {
+  $('#ListRtrs').DataTable({
+      paging: false, // Enable pagination
+      searching: true, // Enable filtering
+      ordering: true, // Enable column sorting
+      info: false, // Show table info (e.g., "Showing 1 to 10 of 50 entries")
+      responsive: true, // Make the table responsive
+      language: {
+          search: "Filter:", // Customize the search box label
+          lengthMenu: "Show _MENU_ entries",
+      },
+      columnDefs: [
+          { orderable: false, targets: 5 } // Disable sorting on the "Delete" column
+      ]
+  });
+});
+
 function addRouter() {
   var h = document.getElementById("Hostname").value.trim();
   var s = document.getElementById("Shortname").value.trim();
@@ -70,4 +87,8 @@ function remove(name, td) {
       });
     }
   }).setHeader('JSTO...');
+}
+
+function importCSV() {
+  alertify.alert("JSTO...", "Feature not supported yet.");
 }

@@ -120,6 +120,7 @@
     color: black;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, transform 0.1s ease; /* Smooth hover/click effects */
   }
 
   .kpi-blue {
@@ -132,7 +133,18 @@
     background-color: grey;
     bottom: 10px;
     right: 10px;
+    cursor: pointer;
   }
+
+  .kpi-grey:hover {
+    background-color: darkgrey; /* Slightly darker on hover */
+    transform: scale(1.05); /* Slight zoom effect on hover */
+  }
+  
+    /* Optional: Add active/click effect */
+  .kpi-grey:active {
+    transform: scale(0.95); /* Slight shrink on click */
+  } 
 
   .kpi-red {
     background-color: grey;
@@ -158,6 +170,9 @@
 
 /* Routers pages */ 
 
+  #ListRtrs td, #ListRtrs th {
+    text-align: left !important; /* Ensures that all cells are left-aligned */
+  }
 
   .other-div {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -193,6 +208,12 @@
   }
 
 /* Profile page */ 
+
+#ListProfiles td, #ListProfiles th {
+  text-align: left !important; /* Ensures that all cells are left-aligned */
+}
+
+
 .other-card select {
   text-align: left !important; /* Align the text inside the <select> */
   text-align-last: left !important; /* Ensure alignment for selected text */
@@ -229,6 +250,25 @@ body.dark-mode .navbar {
 
 body.dark-mode .navbar .nav-link {
   color: #ffffff !important;
+}
+
+
+body.dark-mode .navbar .dropdown-menu {
+  background-color: #282828 !important; /* Dark background for dropdown */
+  border-color: #121212 !important; /* Border color for dropdown */
+}
+
+body.dark-mode .navbar .dropdown-item {
+  color: #ffffff !important; /* White text color for dropdown items */
+}
+
+body.dark-mode .navbar .dropdown-item:hover {
+  background-color: #282828 !important; /* Slightly lighter background when hovering */
+}
+
+body.dark-mode .navbar .dropdown-item:focus, 
+body.dark-mode .navbar .dropdown-item:active {
+  background-color: #282828 !important; /* Darker background when focused or active */
 }
 
 body.dark-mode .navbar-brand span {
@@ -300,4 +340,55 @@ body.dark-mode .card-text:hover {
 
 body.dark-mode, body.light-mode {
   visibility: visible;
+}
+
+
+
+
+
+
+
+/* Popup Body Styling */
+
+body.dark-mode .ajs-dialog {
+  background-color: #282828 !important; /* Darker popup body */
+  color: #ffffff !important; /* White text */
+  border: 1px solid #555555 !important; /* Subtle border for contrast */
+}
+
+/* Popup Header Styling */
+body.dark-mode .ajs-header {
+  background-color: #282828 !important; /* Dark header background */
+  color: #ffffff !important; /* White header text */
+}
+
+/* Popup Header Styling */
+body.dark-mode .ajs-footer {
+  background-color: #282828 !important; /* Dark header background */
+  color: #ffffff !important; /* White header text */
+}
+
+/* Footer Buttons */
+body.dark-mode .ajs-footer .ajs-buttons .ajs-ok,
+body.dark-mode .ajs-footer .ajs-buttons .ajs-cancel,
+body.dark-mode .ajs-footer .ajs-buttons .ajs-close {
+  background-color: #282828 !important; /* Match input background */
+  color: #ffffff !important; /* White text for buttons */
+  border: 1px solid #555555 !important; /* Border matching other elements */
+}
+
+body.dark-mode .ajs-footer .ajs-buttons .ajs-ok:hover,
+body.dark-mode .ajs-footer .ajs-buttons .ajs-cancel:hover,
+body.dark-mode .ajs-footer .ajs-buttons .ajs-close:hover {
+  background-color: #444444 !important; /* Slightly darker hover effect */
+}
+
+/* Close Button Styling */
+body.dark-mode .ajs-close {
+  color: #ffffff !important;
+}
+
+/* Optional: Adjust Transition Backgrounds */
+body.dark-mode .ajs-overlay {
+  background-color: rgba(18, 18, 18, 0.85) !important; /* Dark semi-transparent overlay */
 }

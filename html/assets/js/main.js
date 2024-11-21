@@ -26,3 +26,36 @@ function emptydb() {
     }
   }).setHeader('JSTO...');
 }
+
+function enableDebug(element) {
+  var dataToSend = {
+    "debug": false
+  };
+  const elementId = element.id;
+
+  if (element.style.backgroundColor == 'red') {
+    dataToSend = false;
+    alertify.confirm("Are you sure you want to disable Debug mode for the " + elementId + " Telegraf Instance.", function (e) {
+      if (e) {
+      
+        element.style.backgroundColor = 'grey';
+       
+      }
+    }).setHeader('JSTO...');
+  } else {
+    dataToSend = true;
+    alertify.confirm("Are you sure you want to enable Debug mode for the " + elementId + " Telegraf Instance?<br/><br/><b>Note:</b> The instance will be automatically reloaded. Enabling debug mode may produce a significant volume of logs.", function (e) {
+      if (e) {
+        
+          element.style.backgroundColor = 'red';
+
+      }
+    }).setHeader('JSTO...');
+  }
+  
+ 
+
+
+
+
+}

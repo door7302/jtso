@@ -1,4 +1,19 @@
-
+$(document).ready(function () {
+  $('#ListProfiles').DataTable({
+      paging: false, // Enable pagination
+      searching: true, // Enable filtering
+      ordering: true, // Enable column sorting
+      info: false, // Show table info (e.g., "Showing 1 to 10 of 50 entries")
+      responsive: true, // Make the table responsive
+      language: {
+          search: "Filter:", // Customize the search box label
+          lengthMenu: "Show _MENU_ entries",
+      },
+      columnDefs: [
+          { orderable: false, targets: 2} // Disable sorting on the "Delete" column
+      ]
+  });
+});
 
 function addAsso() {
   var r = document.getElementById("router").value.trim();
@@ -31,7 +46,7 @@ function addAsso() {
         success: function (json) {
           if (json.status == "OK") {
             var row = $("<tr><td>" + r + "</td><td>" + raw_selected + '</td><td class="d-xxl-flex justify-content-xxl-center"><button onclick="removeAsso("' + r + '", this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td></tr>')
-            $("#ListRtrs").append(row);
+            $("#ListProfiles").append(row);
             alertify.success("Profile(s) have been successfulfy added to router " + r)
             waitingDialog.hide();
           } else {
@@ -73,4 +88,8 @@ function removeAsso(name, td) {
       }
     });
   });
+}
+
+function importCSV() {
+  alertify.alert("JSTO...", "Feature not supported yet.");
 }
