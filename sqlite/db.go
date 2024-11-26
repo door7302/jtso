@@ -256,7 +256,7 @@ func UpdateDebug(instance string, debug int) error {
 
 	// update the debug value for the instance
 	if _, err := db.Exec("UPDATE administration SET "+debugInst+"=? WHERE id=0;", debug); err != nil {
-		logger.Log.Errorf("Error while updating credential - err: %v", err)
+		logger.Log.Errorf("Error while updating administration - err: %v", err)
 		dbMu.Unlock()
 		return err
 	}
@@ -343,7 +343,7 @@ func LoadAll() error {
 	i = rows.Next()
 	if !i {
 		// nothing in the DB regarding administration  - add default one
-		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); err != nil {
+		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); err != nil {
 			logger.Log.Errorf("Error while adding default administration - err: %v", err)
 			dbMu.Unlock()
 			return err
