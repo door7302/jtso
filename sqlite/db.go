@@ -37,11 +37,32 @@ type Cred struct {
 	ClientTls   string
 }
 
+type Admin struct {
+	Id int
+	// HW devices
+	MXDebug  int
+	PTXDebug int
+	ACXDebug int
+	EXDebug  int
+	QFXDebug int
+	SRXDebug int
+	// Native Container devices
+	CRPDDebug int
+	CPTXDebug int
+	// VM devices
+	VMXDebug     int
+	VSRXDebug    int
+	VJUNOSDebug  int
+	VSWITCHDebug int
+	VEVODebug    int
+}
+
 var db *sql.DB
 var dbMu *sync.Mutex
 var RtrList []*RtrEntry
 var AssoList []*AssoEntry
 var ActiveCred Cred
+var ActiveAdmin Admin
 
 func Init(f string) error {
 	var err error
@@ -93,6 +114,24 @@ func Init(f string) error {
 		clienttls TEXT
 		);`
 
+	const createAdmin string = `
+		CREATE TABLE IF NOT EXISTS administration (
+		id INTEGER NOT NULL PRIMARY KEY,
+		mxdebug INTEGER,
+		ptxdebug INTEGER,
+		acxdebug INTEGER,
+		exdebug INTEGER,
+		qfxdebug INTEGER,
+		srxdebug INTEGER,
+		crpddebug INTEGER,
+		cptxdebug INTEGER,
+		vmxdebug INTEGER,
+		vsrxdebug INTEGER,
+		vjunosdebug INTEGER,
+		vswitchdebug INTEGER,
+		vevodebug INTEGER
+		);`
+
 	if _, err := db.Exec(createRtr); err != nil {
 		logger.Log.Infof("Error while init DB %s Table routers - err: %v", f, err)
 		return err
@@ -103,6 +142,10 @@ func Init(f string) error {
 	}
 	if _, err := db.Exec(createCred); err != nil {
 		logger.Log.Infof("Error while init DB %s Table credentials - err: %v", f, err)
+		return err
+	}
+	if _, err := db.Exec(createAdmin); err != nil {
+		logger.Log.Infof("Error while init DB %s Table administration - err: %v", f, err)
 		return err
 	}
 	err = LoadAll()
@@ -145,7 +188,6 @@ func DelAsso(n string) error {
 	}
 	dbMu.Unlock()
 	err := updateRouterProfile(n, 0)
-	err = LoadAll()
 	return err
 }
 
@@ -168,7 +210,6 @@ func AddAsso(n string, a []string) error {
 	}
 	dbMu.Unlock()
 	err := updateRouterProfile(n, 1)
-	err = LoadAll()
 	return err
 }
 
@@ -199,6 +240,22 @@ func updateRouterProfile(n string, p int) error {
 func UpdateCredentials(nu string, np string, gu string, gp string, t string, s string, c string) error {
 	dbMu.Lock()
 	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?, skipverify=?, clienttls=?  WHERE id=0;", nu, np, gu, gp, t, s, c); err != nil {
+		logger.Log.Errorf("Error while updating credential - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	dbMu.Unlock()
+	err := LoadAll()
+	return err
+}
+
+func UpdateDebug(instance string, debug int) error {
+	dbMu.Lock()
+	// Save debug state
+	debugInst := strings.ToLower(instance) + "debug"
+
+	// update the debug value for the instance
+	if _, err := db.Exec("UPDATE administration SET "+debugInst+"=? WHERE id=0;", debug); err != nil {
 		logger.Log.Errorf("Error while updating credential - err: %v", err)
 		dbMu.Unlock()
 		return err
@@ -275,9 +332,33 @@ func LoadAll() error {
 		}
 	}
 
+	ActiveAdmin = Admin{}
+	rows, err = db.Query("SELECT * FROM administration;")
+	if err != nil {
+		logger.Log.Errorf("Error while selecting administration - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	defer rows.Close()
+	i = rows.Next()
+	if !i {
+		// nothing in the DB regarding administration  - add default one
+		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); err != nil {
+			logger.Log.Errorf("Error while adding default administration - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+	} else {
+		err = rows.Scan(&ActiveAdmin.Id, &ActiveAdmin.MXDebug, &ActiveAdmin.PTXDebug, &ActiveAdmin.ACXDebug, &ActiveAdmin.EXDebug, &ActiveAdmin.QFXDebug, &ActiveAdmin.SRXDebug, &ActiveAdmin.CRPDDebug, &ActiveAdmin.CPTXDebug, &ActiveAdmin.VMXDebug, &ActiveAdmin.VSRXDebug, &ActiveAdmin.VJUNOSDebug, &ActiveAdmin.VSWITCHDebug, &ActiveAdmin.VEVODebug)
+		if err != nil {
+			logger.Log.Errorf("Error while parsing administration rows - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+	}
+
 	dbMu.Unlock()
 	return nil
-
 }
 
 func CloseDb() error {

@@ -74,22 +74,22 @@
         <div class="telegraf-sub-box" style="--box-color: #{{.TeleMx}};">
           MX Instance
           <div class="kpi-box kpi-blue">{{.NumMX}}</div>
-          <div class="kpi-box kpi-grey" style="background-color: grey;" id="MX" onclick="enableDebug(this)">D</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.MXDebug}};" id="MX" onclick="enableDebug(this)">D</div>
         </div>
         <div class="telegraf-sub-box" style="--box-color: #{{.TelePtx}};">
           PTX Instance
           <div class="kpi-box kpi-blue">{{.NumPTX}}</div>
-          <div class="kpi-box kpi-grey" style="background-color: grey;" id="PTX" onclick="enableDebug(this)">D</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.PTXDebug}};" id="PTX" onclick="enableDebug(this)">D</div>
         </div>
         <div class="telegraf-sub-box" style="--box-color: #{{.TeleAcx}};">
           ACX Instance
           <div class="kpi-box kpi-blue">{{.NumACX}}</div>
-          <div class="kpi-box kpi-grey" style="background-color: grey;" id="ACX" onclick="enableDebug(this)">D</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.ACXDebug}};" id="ACX" onclick="enableDebug(this)">D</div>
         </div>
         <div class="telegraf-sub-box" style="--box-color: #{{.TeleVmx}};">
           VMX Instance
           <div class="kpi-box kpi-blue">{{.NumVMX}}</div>
-          <div class="kpi-box kpi-grey" style="background-color: grey;" id="VMX" onclick="enableDebug(this)">D</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.VMXDebug}};" id="VMX" onclick="enableDebug(this)">D</div>
         </div>
       </div>
     </div>

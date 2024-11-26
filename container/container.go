@@ -28,14 +28,14 @@ func ListContainers() []types.Container {
 	return containers
 }
 
-func RestartContainer(name string) {
+func RestartContainer(name string) error {
 	timeout := 30
 
 	// Open Docker API
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		logger.Log.Errorf("Unable to open Docker session: %v", err)
-		return
+		return err
 	}
 	defer cli.Close()
 
@@ -43,9 +43,10 @@ func RestartContainer(name string) {
 	err = cli.ContainerRestart(context.Background(), name, container.StopOptions{Signal: "SIGTERM", Timeout: &timeout})
 	if err != nil {
 		logger.Log.Errorf("Unable to restart %s container: %v", name, err)
-		return
+		return err
 	}
 	logger.Log.Infof("%s container has been restarted", name)
+	return nil
 
 }
 
@@ -79,13 +80,12 @@ func GetVersionLabel(name string) string {
 	}
 	defer cli.Close()
 
-	
 	// Get the image details using the Docker API
 	imageInspect, _, err := cli.ImageInspectWithRaw(context.Background(), name)
 	if err != nil {
 		logger.Log.Errorf("Unable to retrieve Docker %s inspect data: %v", name, err)
 		return "N/A"
-		
+
 	}
 
 	// Extract the version label from imageInspect.Config.Labels
@@ -93,10 +93,10 @@ func GetVersionLabel(name string) string {
 	if !ok {
 		logger.Log.Errorf("Unable to retrieve Docker %s version", name)
 		return "N/A"
-		
+
 	}
 
-	logger.Log.Infof("%s container version is %s", name, version)	
+	logger.Log.Infof("%s container version is %s", name, version)
 	return version
 
 }

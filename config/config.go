@@ -12,6 +12,8 @@ import (
 
 const JTSO_VERSION string = "1.0.5"
 
+var SUPPORTED_DEVICE = []string{"MX", "PTX", "ACX", "EX", "QFX", "SRX", "CRPD", "CPTX", "VMX", "VSRX", "VJUNOS", "VSWITCH", "VEVO"}
+
 type PortalConfig struct {
 	Https     bool
 	ServerCrt string

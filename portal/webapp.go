@@ -84,6 +84,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/updatedoc", routeUptDoc)
 	wapp.POST("/influxmgt", routeInfluxMgt)
 	wapp.POST("/searchxpath", routeSearchPath)
+	wapp.POST("/updatedebug", routeUpdateDebug)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -110,30 +111,139 @@ func (w *WebApp) Run() {
 	}
 }
 
+func routeUpdateDebug(c echo.Context) error {
+	d := new(UpdateDebug)
+
+	err := c.Bind(d)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for updating Debug: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the data"})
+	}
+
+	err = association.ManageDebug(d.Instance)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for updating Debug: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the data"})
+	}
+
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "debug mode has been changed"})
+}
+
 func routeIndex(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	teleVmx, teleMx, telePtx, teleAcx, influx, grafana, kapacitor, jtso := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
-	// check containers state
+	influx, grafana, kapacitor, jtso := "f8cecc", "f8cecc", "f8cecc", "f8cecc"
 
+	// Telegraf Containers
+	// Physical devices
+	teleMx, telePtx, teleAcx, teleEx, teleQfx, teleSrx := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
+	numMX, numPTX, numACX, numEX, numQFX, numSRX := 0, 0, 0, 0, 0, 0
+	MXDebug, PTXDebug, ACXDdebug, EXDebug, QFXDebug, SRXDebug := "grey", "grey", "grey", "grey", "grey", "grey"
+
+	// Native Container devices
+	teleCrpd, teleCptx := "f8cecc", "f8cecc"
+	numCRPD, numCPTX := 0, 0
+	CRPDDebug, CPTXDebug := "grey", "grey"
+
+	// Virtual VM devices
+	teleVmx, teleVsrx, teleVjunos, teleVswitch, teleVevo := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
+	numVMX, numVSRX, numVJUNOS, numVSWITCH, numVEVO := 0, 0, 0, 0, 0
+	VMXDebug, VSRXDebug, VJUNOSDebug, VSWITCHDebug, VEVODebug := "grey", "grey", "grey", "grey", "grey"
+
+	// check containers state
 	containers := container.ListContainers()
 
 	for _, container := range containers {
 		switch container.Names[0] {
-		case "/telegraf_vmx":
-			if container.State == "running" {
-				teleVmx = "ccffcc"
-			}
 		case "/telegraf_mx":
 			if container.State == "running" {
 				teleMx = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.MXDebug == 1 {
+				MXDebug = "red"
 			}
 		case "/telegraf_ptx":
 			if container.State == "running" {
 				telePtx = "ccffcc"
 			}
+			if sqlite.ActiveAdmin.PTXDebug == 1 {
+				PTXDebug = "red"
+			}
 		case "/telegraf_acx":
 			if container.State == "running" {
 				teleAcx = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.ACXDebug == 1 {
+				ACXDdebug = "red"
+			}
+		case "/telegraf_ex":
+			if container.State == "running" {
+				teleEx = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.EXDebug == 1 {
+				EXDebug = "red"
+			}
+		case "/telegraf_qfx":
+			if container.State == "running" {
+				teleQfx = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.QFXDebug == 1 {
+				QFXDebug = "red"
+			}
+		case "/telegraf_srx":
+			if container.State == "running" {
+				teleSrx = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.SRXDebug == 1 {
+				SRXDebug = "red"
+			}
+		case "/telegraf_crpd":
+			if container.State == "running" {
+				teleCrpd = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.CRPDDebug == 1 {
+				CRPDDebug = "red"
+			}
+		case "/telegraf_cptx":
+			if container.State == "running" {
+				teleCptx = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.CPTXDebug == 1 {
+				CPTXDebug = "red"
+			}
+		case "/telegraf_vmx":
+			if container.State == "running" {
+				teleVmx = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.VMXDebug == 1 {
+				VMXDebug = "red"
+			}
+		case "/telegraf_vsrx":
+			if container.State == "running" {
+				teleVsrx = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.VSRXDebug == 1 {
+				VSRXDebug = "red"
+			}
+		case "/telegraf_vjunos":
+			if container.State == "running" {
+				teleVjunos = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.VJUNOSDebug == 1 {
+				VJUNOSDebug = "red"
+			}
+		case "/telegraf_vswitch":
+			if container.State == "running" {
+				teleVswitch = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.VSWITCHDebug == 1 {
+				VSWITCHDebug = "red"
+			}
+		case "/telegraf_vevo":
+			if container.State == "running" {
+				teleVevo = "ccffcc"
+			}
+			if sqlite.ActiveAdmin.VEVODebug == 1 {
+				VEVODebug = "red"
 			}
 		case "/grafana":
 			if container.State == "running" {
@@ -155,13 +265,8 @@ func routeIndex(c echo.Context) error {
 	}
 
 	// Retrive number of active routers per Telegraf
-	numVMX, numMX, numPTX, numACX := 0, 0, 0, 0
 	for _, r := range sqlite.RtrList {
 		switch r.Family {
-		case "vmx":
-			if r.Profile == 1 {
-				numVMX++
-			}
 		case "mx":
 			if r.Profile == 1 {
 				numMX++
@@ -173,6 +278,46 @@ func routeIndex(c echo.Context) error {
 		case "acx":
 			if r.Profile == 1 {
 				numACX++
+			}
+		case "ex":
+			if r.Profile == 1 {
+				numEX++
+			}
+		case "qfx":
+			if r.Profile == 1 {
+				numQFX++
+			}
+		case "srx":
+			if r.Profile == 1 {
+				numSRX++
+			}
+		case "crpd":
+			if r.Profile == 1 {
+				numCRPD++
+			}
+		case "cptx":
+			if r.Profile == 1 {
+				numCPTX++
+			}
+		case "vmx":
+			if r.Profile == 1 {
+				numVMX++
+			}
+		case "vsrx":
+			if r.Profile == 1 {
+				numVSRX++
+			}
+		case "vjunos":
+			if r.Profile == 1 {
+				numVJUNOS++
+			}
+		case "vswitch":
+			if r.Profile == 1 {
+				numVSWITCH++
+			}
+		case "vevo":
+			if r.Profile == 1 {
+				numVEVO++
 			}
 		}
 	}
@@ -200,8 +345,12 @@ func routeIndex(c echo.Context) error {
 	// get the Telegraf version -
 	teleVersion := container.GetVersionLabel("jts_telegraf")
 
-	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleVmx": teleVmx, "TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx,
-		"Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumVMX": numVMX, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX,
+	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "TeleEx": teleEx, "TeleQfx": teleQfx, "TeleSrx": teleSrx,
+		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVswitch": teleVswitch, "TeleVevo": teleVevo,
+		"Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
+		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumVMX": numVMX, "NumVJUNOS": numVJUNOS, "NumVSWITCH": numVSWITCH, "NumVEVO": numVEVO,
+		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
+		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VSWITCHDebug": VSWITCHDebug, "VEVODebug": VEVODebug,
 		"GrafanaPort": grafanaPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
 }
 

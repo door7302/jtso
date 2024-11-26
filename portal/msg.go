@@ -77,4 +77,8 @@ type (
 		Action string `json:"action"`
 		Data   string `json:"data"`
 	}
+
+	UpdateDebug struct {
+		Instance string `json:"instance"`
+	}
 )

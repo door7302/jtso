@@ -1,6 +1,8 @@
 package association
 
 import (
+	"bufio"
+	"errors"
 	"io"
 	"jtso/config"
 	"jtso/container"
@@ -15,11 +17,136 @@ import (
 	"unicode"
 )
 
-const PATH_VMX string = "/var/shared/telegraf/vmx/telegraf.d/"
 const PATH_MX string = "/var/shared/telegraf/mx/telegraf.d/"
 const PATH_PTX string = "/var/shared//telegraf/ptx/telegraf.d/"
 const PATH_ACX string = "/var/shared//telegraf/acx/telegraf.d/"
+const PATH_EX string = "/var/shared//telegraf/ex/telegraf.d/"
+const PATH_QFX string = "/var/shared//telegraf/qfx/telegraf.d/"
+const PATH_SRX string = "/var/shared//telegraf/srx/telegraf.d/"
+
+const PATH_CRPD string = "/var/shared//telegraf/crpd/telegraf.d/"
+const PATH_CPTX string = "/var/shared//telegraf/cptx/telegraf.d/"
+
+const PATH_VMX string = "/var/shared//telegraf/vmx/telegraf.d/"
+const PATH_VSRX string = "/var/shared/telegraf/vsrx/telegraf.d/"
+const PATH_VJUNOS string = "/var/shared//telegraf/vjunos/telegraf.d/"
+const PATH_VSWITCH string = "/var/shared//telegraf/vswitch/telegraf.d/"
+const PATH_VEVO string = "/var/shared//telegraf/vevo/telegraf.d/"
+
+const TELEGRAF_ROOT_PATH string = "/var/shared/telegraf/"
+
 const PATH_GRAFANA string = "/var/shared/grafana/dashboards/"
+
+func changeTelegrafDebug(instance string, debug int) error {
+	// for enable debug we need to change telegraf.conf and set debug = false
+	filePath := TELEGRAF_ROOT_PATH + strings.ToLower(instance) + "/telegraf.conf"
+
+	// Read the file
+	file, err := os.Open(filePath)
+	if err != nil {
+		logger.Log.Errorf("Unable to open the file %s: %v", filePath, err)
+		return err
+	}
+	defer file.Close()
+
+	debugRegex := regexp.MustCompile(`^\s*debug\s*=\s*(true|false)\s*$`)
+	var updatedLines []string
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if debugRegex.MatchString(line) {
+			if debug == 1 {
+				line = "  debug = true"
+			} else {
+				line = "  debug = false"
+			}
+		}
+		updatedLines = append(updatedLines, line)
+	}
+
+	if err := scanner.Err(); err != nil {
+		logger.Log.Errorf("Error while reading the file %s: %v", filePath, err)
+		return err
+	}
+
+	// Write the updated content back to the file
+	err = os.WriteFile(filePath, []byte(strings.Join(updatedLines, "\n")), 0644)
+	if err != nil {
+		logger.Log.Errorf("Error while saving the file %s: %v", filePath, err)
+		return err
+	}
+
+	return nil
+}
+
+func ManageDebug(instance string) error {
+
+	// First retrieve the current debug state of the Instance
+	var currentState int
+
+	switch instance {
+	case "MX":
+		currentState = sqlite.ActiveAdmin.MXDebug
+	case "PTX":
+		currentState = sqlite.ActiveAdmin.PTXDebug
+	case "ACX":
+		currentState = sqlite.ActiveAdmin.ACXDebug
+	case "EX":
+		currentState = sqlite.ActiveAdmin.EXDebug
+	case "QFX":
+		currentState = sqlite.ActiveAdmin.QFXDebug
+	case "SRX":
+		currentState = sqlite.ActiveAdmin.SRXDebug
+	case "CRPD":
+		currentState = sqlite.ActiveAdmin.CRPDDebug
+	case "CPTX":
+		currentState = sqlite.ActiveAdmin.CPTXDebug
+	case "VMX":
+		currentState = sqlite.ActiveAdmin.VMXDebug
+	case "VSRX":
+		currentState = sqlite.ActiveAdmin.VSRXDebug
+	case "VJUNOS":
+		currentState = sqlite.ActiveAdmin.VJUNOSDebug
+	case "VSWITCH":
+		currentState = sqlite.ActiveAdmin.VSWITCHDebug
+	case "VEVO":
+		currentState = sqlite.ActiveAdmin.VEVODebug
+	default:
+		logger.Log.Errorf("Unsupported instance %s", instance)
+		return errors.New("ManageDebug error: unsupported instance")
+	}
+
+	// Now modify the telegraf main config file of the instance
+	if err := changeTelegrafDebug(instance, (currentState+1)%2); err != nil {
+		logger.Log.Errorf("Error while changing debug mode in the intance %s", instance)
+		return err
+	}
+
+	// Now restart container
+	if err := container.RestartContainer("telegraf_" + strings.ToLower(instance)); err != nil {
+		logger.Log.Errorf("Unable to restart containter telegraf_%s: %v", strings.ToLower(instance), err)
+		// revert back to previous state
+		changeTelegrafDebug(instance, currentState)
+		return err
+	}
+
+	// Save new State in DB
+	if err := sqlite.UpdateDebug(instance, (currentState+1)%2); err != nil {
+		logger.Log.Errorf("Unable to change debug state in DB for telegraf_%s: %v", strings.ToLower(instance), err)
+		// revert back to previous state
+		changeTelegrafDebug(instance, currentState)
+		return err
+	}
+
+	if (currentState+1)%2 == 0 {
+		logger.Log.Infof("Debug mode has been successfully disabled for the telegraf instance %s", instance)
+	} else {
+		logger.Log.Infof("Debug mode has been successfully enabled for the telegraf instance %s", instance)
+	}
+
+	return nil
+}
 
 func CheckVersion(searchVersion string, routerVersion string) bool {
 	var operator string
