@@ -78,12 +78,20 @@ func Init(f string) error {
 		defer file.Close()
 		logger.Log.Infof("Initializing DB file %s - err: %v", f, err)
 	}
+
 	// open filename
 	db, err = sql.Open("sqlite3", f)
 	if err != nil {
 		logger.Log.Infof("Error while opening DB %s - err: %v", f, err)
 		return err
 	}
+
+	// Enable WAL
+	_, err = db.Exec("PRAGMA journal_mode = WAL;")
+	if err != nil {
+		logger.Log.Infof("Error while enabling WAL for DB %s - err: %v", f, err)
+	}
+
 	const createRtr string = `
 		CREATE TABLE IF NOT EXISTS routers (
 		id INTEGER NOT NULL PRIMARY KEY,
@@ -267,6 +275,7 @@ func UpdateDebug(instance string, debug int) error {
 
 func LoadAll() error {
 	dbMu.Lock()
+
 	RtrList = make([]*RtrEntry, 0)
 	rows, err := db.Query("SELECT * FROM routers;")
 	if err != nil {
