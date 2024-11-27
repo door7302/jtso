@@ -153,6 +153,47 @@ func routeIndex(c echo.Context) error {
 	numVMX, numVSRX, numVJUNOS, numVSWITCH, numVEVO := 0, 0, 0, 0, 0
 	VMXDebug, VSRXDebug, VJUNOSDebug, VSWITCHDebug, VEVODebug := "grey", "grey", "grey", "grey", "grey"
 
+	// Update Debug flag
+	if sqlite.ActiveAdmin.MXDebug == 1 {
+		MXDebug = "red"
+	}
+	if sqlite.ActiveAdmin.PTXDebug == 1 {
+		PTXDebug = "red"
+	}
+	if sqlite.ActiveAdmin.ACXDebug == 1 {
+		ACXDdebug = "red"
+	}
+	if sqlite.ActiveAdmin.EXDebug == 1 {
+		EXDebug = "red"
+	}
+	if sqlite.ActiveAdmin.QFXDebug == 1 {
+		QFXDebug = "red"
+	}
+	if sqlite.ActiveAdmin.SRXDebug == 1 {
+		SRXDebug = "red"
+	}
+	if sqlite.ActiveAdmin.CRPDDebug == 1 {
+		CRPDDebug = "red"
+	}
+	if sqlite.ActiveAdmin.CPTXDebug == 1 {
+		CPTXDebug = "red"
+	}
+	if sqlite.ActiveAdmin.VMXDebug == 1 {
+		VMXDebug = "red"
+	}
+	if sqlite.ActiveAdmin.VSRXDebug == 1 {
+		VSRXDebug = "red"
+	}
+	if sqlite.ActiveAdmin.VJUNOSDebug == 1 {
+		VJUNOSDebug = "red"
+	}
+	if sqlite.ActiveAdmin.VSWITCHDebug == 1 {
+		VSWITCHDebug = "red"
+	}
+	if sqlite.ActiveAdmin.VEVODebug == 1 {
+		VEVODebug = "red"
+	}
+
 	// check containers state
 	containers := container.ListContainers()
 
@@ -162,92 +203,53 @@ func routeIndex(c echo.Context) error {
 			if container.State == "running" {
 				teleMx = "ccffcc"
 			}
-			if sqlite.ActiveAdmin.MXDebug == 1 {
-				MXDebug = "red"
-			}
 		case "/telegraf_ptx":
 			if container.State == "running" {
 				telePtx = "ccffcc"
-			}
-			if sqlite.ActiveAdmin.PTXDebug == 1 {
-				PTXDebug = "red"
 			}
 		case "/telegraf_acx":
 			if container.State == "running" {
 				teleAcx = "ccffcc"
 			}
-			if sqlite.ActiveAdmin.ACXDebug == 1 {
-				ACXDdebug = "red"
-			}
 		case "/telegraf_ex":
 			if container.State == "running" {
 				teleEx = "ccffcc"
-			}
-			if sqlite.ActiveAdmin.EXDebug == 1 {
-				EXDebug = "red"
 			}
 		case "/telegraf_qfx":
 			if container.State == "running" {
 				teleQfx = "ccffcc"
 			}
-			if sqlite.ActiveAdmin.QFXDebug == 1 {
-				QFXDebug = "red"
-			}
 		case "/telegraf_srx":
 			if container.State == "running" {
 				teleSrx = "ccffcc"
-			}
-			if sqlite.ActiveAdmin.SRXDebug == 1 {
-				SRXDebug = "red"
 			}
 		case "/telegraf_crpd":
 			if container.State == "running" {
 				teleCrpd = "ccffcc"
 			}
-			if sqlite.ActiveAdmin.CRPDDebug == 1 {
-				CRPDDebug = "red"
-			}
 		case "/telegraf_cptx":
 			if container.State == "running" {
 				teleCptx = "ccffcc"
-			}
-			if sqlite.ActiveAdmin.CPTXDebug == 1 {
-				CPTXDebug = "red"
 			}
 		case "/telegraf_vmx":
 			if container.State == "running" {
 				teleVmx = "ccffcc"
 			}
-			if sqlite.ActiveAdmin.VMXDebug == 1 {
-				VMXDebug = "red"
-			}
 		case "/telegraf_vsrx":
 			if container.State == "running" {
 				teleVsrx = "ccffcc"
-			}
-			if sqlite.ActiveAdmin.VSRXDebug == 1 {
-				VSRXDebug = "red"
 			}
 		case "/telegraf_vjunos":
 			if container.State == "running" {
 				teleVjunos = "ccffcc"
 			}
-			if sqlite.ActiveAdmin.VJUNOSDebug == 1 {
-				VJUNOSDebug = "red"
-			}
 		case "/telegraf_vswitch":
 			if container.State == "running" {
 				teleVswitch = "ccffcc"
 			}
-			if sqlite.ActiveAdmin.VSWITCHDebug == 1 {
-				VSWITCHDebug = "red"
-			}
 		case "/telegraf_vevo":
 			if container.State == "running" {
 				teleVevo = "ccffcc"
-			}
-			if sqlite.ActiveAdmin.VEVODebug == 1 {
-				VEVODebug = "red"
 			}
 		case "/grafana":
 			if container.State == "running" {
@@ -352,8 +354,6 @@ func routeIndex(c echo.Context) error {
 
 	// get the Telegraf version -
 	teleVersion := container.GetVersionLabel("jts_telegraf")
-
-	logger.Log.Errorf("This is a debug: MXDebug vaule is %s", MXDebug)
 
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "TeleEx": teleEx, "TeleQfx": teleQfx, "TeleSrx": teleSrx,
 		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVswitch": teleVswitch, "TeleVevo": teleVevo,

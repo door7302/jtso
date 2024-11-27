@@ -96,7 +96,7 @@ func GetVersionLabel(name string) string {
 
 	}
 
-	logger.Log.Infof("%s container version is %s", name, version)
+	logger.Log.Debugf("%s container version is %s", name, version)
 	return version
 
 }
