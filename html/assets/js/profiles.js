@@ -10,7 +10,7 @@ $(document).ready(function () {
           lengthMenu: "Show _MENU_ entries",
       },
       columnDefs: [
-          { orderable: false, targets: 2} // Disable sorting on the "Delete" column
+          { orderable: false, targets: 2} // Disable sorting on the "Action" column
       ]
   });
 });
@@ -23,9 +23,10 @@ function addAsso() {
   for (var option of all_selected) {
     if (option.selected) {
       selected.push(option.value);
-      raw_selected = raw_selected + option.value + " "
+      raw_selected = raw_selected + option.value + " ; "
     }
   }
+  raw_selected = raw_selected.slice(0, -3);
 
   if (selected.length == 0) {
     alertify.alert("JSTO...", "Please select at least one Profile in the list.");
@@ -45,8 +46,19 @@ function addAsso() {
         dataType: "json",
         success: function (json) {
           if (json.status == "OK") {
-            var row = $("<tr><td>" + r + "</td><td>" + raw_selected + '</td><td class="d-xxl-flex justify-content-xxl-center"><button onclick="removeAsso("' + r + '", this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td></tr>')
-            $("#ListProfiles").append(row);
+            const tableBody = $("#ListProfiles tbody");
+            const newRow = `
+                <tr>
+                    <td>${r}</td>
+                    <td>${raw_selected}</td>
+                    <td class="d-xxl-flex justify-content-xxl-center">
+                        <!-- Delete Button -->
+                        <button class="btn btn-danger" onclick="removeAsso('${s}', this)">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
             alertify.success("Profile(s) have been successfulfy added to router " + r)
             waitingDialog.hide();
           } else {

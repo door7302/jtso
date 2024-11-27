@@ -39,7 +39,7 @@ const PATH_GRAFANA string = "/var/shared/grafana/dashboards/"
 
 func changeTelegrafDebug(instance string, debug int) error {
 	// for enable debug we need to change telegraf.conf and set debug = false
-	filePath := TELEGRAF_ROOT_PATH + strings.ToLower(instance) + "/telegraf.conf"
+	filePath := TELEGRAF_ROOT_PATH + instance + "/telegraf.conf"
 
 	// Read the file
 	file, err := os.Open(filePath)
@@ -84,6 +84,7 @@ func ManageDebug(instance string) error {
 
 	// First retrieve the current debug state of the Instance
 	var currentState int
+	instance = strings.ToLower(instance)
 
 	switch instance {
 	case "MX":
@@ -123,17 +124,31 @@ func ManageDebug(instance string) error {
 		return err
 	}
 
-	// Now restart container
-	if err := container.RestartContainer("telegraf_" + strings.ToLower(instance)); err != nil {
-		logger.Log.Errorf("Unable to restart containter telegraf_%s: %v", strings.ToLower(instance), err)
-		// revert back to previous state
-		changeTelegrafDebug(instance, currentState)
-		return err
+	// Check if there is at least one router attached to the given instance
+	atLeastOne := false
+	// Retrive number of active routers per Telegraf instance
+	for _, r := range sqlite.RtrList {
+		if r.Family == instance {
+			if r.Profile == 1 {
+				atLeastOne = true
+				break
+			}
+		}
+	}
+
+	if atLeastOne {
+		// Now restart container only if there are active routers.
+		if err := container.RestartContainer("telegraf_" + instance); err != nil {
+			logger.Log.Errorf("Unable to restart containter telegraf_%s: %v", instance, err)
+			// revert back to previous state
+			changeTelegrafDebug(instance, currentState)
+			return err
+		}
 	}
 
 	// Save new State in DB
-	if err := sqlite.UpdateDebug(instance, (currentState+1)%2); err != nil {
-		logger.Log.Errorf("Unable to change debug state in DB for telegraf_%s: %v", strings.ToLower(instance), err)
+	if err := sqlite.UpdateDebugMode(instance, (currentState+1)%2); err != nil {
+		logger.Log.Errorf("Unable to change debug state in DB for telegraf_%s: %v", instance, err)
 		// revert back to previous state
 		changeTelegrafDebug(instance, currentState)
 		return err

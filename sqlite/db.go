@@ -269,10 +269,10 @@ func UpdateCredentials(nu string, np string, gu string, gp string, t string, s s
 	return err
 }
 
-func UpdateDebug(instance string, debug int) error {
+func UpdateDebugMode(instance string, debug int) error {
 	dbMu.Lock()
 	// Save debug state
-	debugInst := strings.ToLower(instance) + "debug"
+	debugInst := instance + "debug"
 
 	// update the debug value for the instance
 	if _, err := db.Exec("UPDATE administration SET "+debugInst+"=? WHERE id=0;", debug); err != nil {
