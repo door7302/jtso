@@ -74,7 +74,7 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("modules.portal.https", false)
 	viper.SetDefault("modules.portal.server_crt", "")
 	viper.SetDefault("modules.portal.server_key", "")
-	viper.SetDefault("modules.portal.port", 8081)
+	viper.SetDefault("modules.portal.port", 8082)
 
 	// Ser default value for enricher
 	viper.SetDefault("modules.enricher.folder", "/var/metadata/")
@@ -89,10 +89,10 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("protocols.gnmi.port", 9339)
 
 	return &ConfigContainer{
-		Chronograf: &ChronografConfig{
+		Grafana: &GrafanaConfig{
 			Port: viper.GetInt("modules.grafana.port"),
 		},
-		Grafana: &GrafanaConfig{
+		Chronograf: &ChronografConfig{
 			Port: viper.GetInt("modules.chronograf.port"),
 		},
 		Portal: &PortalConfig{

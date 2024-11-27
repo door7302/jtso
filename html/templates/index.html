@@ -26,12 +26,13 @@
                 <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
                 <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
                 <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1'">Grafana</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1', '_blank')">Grafana</a></li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="browser.html">Browser</a></li>
                     </ul>
+
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">Admin</a>
@@ -155,7 +156,7 @@
     <div class="card chronograf" style="--box-color: #{{.Chronograf}};">
       <h3>Chronograf</h3>
       <div class="button-container">
-        <button class="button" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}}">Open</button>
+        <button class="button" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/?orgId=1', '_blank')">Open</button>
       </div>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
@@ -163,7 +164,7 @@
     <div class="card grafana" style="--box-color: #{{.Grafana}};">
       <h3>Grafana</h3>
       <div class="button-container">
-        <button class="button" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}}">Open</button>
+        <button class="button" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1', '_blank')">Open</button>
       </div>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
