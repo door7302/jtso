@@ -25,6 +25,10 @@ type GrafanaConfig struct {
 	Port int
 }
 
+type ChronografConfig struct {
+	Port int
+}
+
 type NetconfConfig struct {
 	Port       int
 	RpcTimeout int
@@ -40,11 +44,12 @@ type EnricherConfig struct {
 	Workers  int
 }
 type ConfigContainer struct {
-	Grafana  *GrafanaConfig
-	Enricher *EnricherConfig
-	Portal   *PortalConfig
-	Netconf  *NetconfConfig
-	Gnmi     *GnmiConfig
+	Chronograf *ChronografConfig
+	Grafana    *GrafanaConfig
+	Enricher   *EnricherConfig
+	Portal     *PortalConfig
+	Netconf    *NetconfConfig
+	Gnmi       *GnmiConfig
 }
 
 func NewConfigContainer(f string) *ConfigContainer {
@@ -59,8 +64,11 @@ func NewConfigContainer(f string) *ConfigContainer {
 
 	logger.Log.Info("Read configuration file")
 
-	// Ser default value for portal
+	// Ser default value for grafana
 	viper.SetDefault("modules.grafana.port", 8080)
+
+	// Ser default value for chronograf
+	viper.SetDefault("modules.chronograf.port", 8081)
 
 	// Ser default value for portal
 	viper.SetDefault("modules.portal.https", false)
@@ -81,8 +89,11 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("protocols.gnmi.port", 9339)
 
 	return &ConfigContainer{
-		Grafana: &GrafanaConfig{
+		Chronograf: &ChronografConfig{
 			Port: viper.GetInt("modules.grafana.port"),
+		},
+		Grafana: &GrafanaConfig{
+			Port: viper.GetInt("modules.chronograf.port"),
 		},
 		Portal: &PortalConfig{
 			Port:      viper.GetInt("modules.portal.port"),

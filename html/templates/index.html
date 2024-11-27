@@ -154,11 +154,17 @@
 
     <div class="card chronograf" style="--box-color: #{{.Chronograf}};">
       <h3>Chronograf</h3>
+      <div class="button-container">
+        <button class="button" onclick="javascript:event.target.port={{.ChronografPort}}">Open</button>
+      </div>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
     <div class="card grafana" style="--box-color: #{{.Grafana}};">
       <h3>Grafana</h3>
+      <div class="button-container">
+        <button class="button" onclick="javascript:event.target.port={{.GrafanaPort}}">Open</button>
+      </div>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 

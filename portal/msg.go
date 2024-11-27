@@ -6,7 +6,7 @@ type (
 		Profiles  string
 	}
 
-	NewRouter struct {
+	LongRouter struct {
 		Hostname  string `json:"hostname"`
 		Shortname string `json:"shortname"`
 	}
@@ -25,7 +25,7 @@ type (
 		Version   string `json:"version"`
 	}
 
-	DeletedRouter struct {
+	ShortRouter struct {
 		Shortname string `json:"shortname"`
 	}
 

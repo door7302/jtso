@@ -245,6 +245,18 @@ func updateRouterProfile(n string, p int) error {
 	return err
 }
 
+func UpdateRouter(s string, f string, m string, v string) error {
+	dbMu.Lock()
+	if _, err := db.Exec("UPDATE routers SET family=?, model=?, version=? WHERE short=?", f, m, v, s); err != nil {
+		logger.Log.Errorf("Error while updating router - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	dbMu.Unlock()
+	err := LoadAll()
+	return err
+}
+
 func UpdateCredentials(nu string, np string, gu string, gp string, t string, s string, c string) error {
 	dbMu.Lock()
 	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?, skipverify=?, clienttls=?  WHERE id=0;", nu, np, gu, gp, t, s, c); err != nil {

@@ -78,6 +78,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	// configure POST routers
 	wapp.POST("/addrouter", routeAddRouter)
 	wapp.POST("/delrouter", routeDelRouter)
+	wapp.POST("/resetrouter", routeResetRouter)
 	wapp.POST("/addprofile", routeAddProfile)
 	wapp.POST("/delprofile", routeDelProfile)
 	wapp.POST("/updatecred", routeUptCred)
@@ -131,6 +132,8 @@ func routeUpdateDebug(c echo.Context) error {
 
 func routeIndex(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
+
 	influx, grafana, kapacitor, jtso, chronograf := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
 
 	// Telegraf Containers
@@ -355,7 +358,7 @@ func routeIndex(c echo.Context) error {
 		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVSWITCH": numVSWITCH, "NumVEVO": numVEVO,
 		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
 		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VSWITCHDebug": VSWITCHDebug, "VEVODebug": VEVODebug,
-		"GrafanaPort": grafanaPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
+		"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
 }
 
 func routeRouters(c echo.Context) error {
@@ -442,10 +445,67 @@ func routeBrowse(c echo.Context) error {
 	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
 }
 
+func findFamily(m string) string {
+	var f string
+	firstChar := strings.ToLower(string(m[0]))
+	switch firstChar {
+	case "m":
+		f = strings.ToLower(string(m[0:2]))
+	case "p":
+		f = strings.ToLower(string(m[0:3]))
+	case "a":
+		f = strings.ToLower(string(m[0:3]))
+	case "e":
+		f = strings.ToLower(string(m[0:2]))
+	case "q":
+		f = strings.ToLower(string(m[0:3]))
+	case "s":
+		f = strings.ToLower(string(m[0:3]))
+	case "c":
+		f = strings.ToLower(string(m[0:4]))
+	case "v":
+		//twoChar := strings.ToLower(string(m[0:2]))
+		f = strings.ToLower(string(m[0:4]))
+	default:
+		f = ""
+
+	}
+	return f
+}
+
+func routeResetRouter(c echo.Context) error {
+	var err error
+
+	r := new(LongRouter)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for reseting a router: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to reset the router's entry - Please check if router is still reachable via Netconf"})
+	}
+
+	// here we need to issue a Netconf request to retrieve model and version
+	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port)
+	if err != nil {
+		logger.Log.Errorf("Unable to retrieve router facts: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve router facts"})
+	}
+	// derive family from model
+	f := findFamily(reply.Model)
+
+	err = sqlite.UpdateRouter(r.Shortname, f, reply.Model, reply.Ver)
+	if err != nil {
+		logger.Log.Errorf("Unable to update the router in DB: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update the router in DB"})
+	}
+	logger.Log.Infof("Router %s has been successfully updated - family %s - model %s - version %s", r.Hostname, f, reply.Model, reply.Ver)
+	return c.JSON(http.StatusOK, ReplyRouter{Status: "OK", Family: f, Model: reply.Model, Version: reply.Ver})
+}
+
 func routeAddRouter(c echo.Context) error {
 	var err error
 
-	r := new(NewRouter)
+	r := new(LongRouter)
 
 	err = c.Bind(r)
 	if err != nil {
@@ -459,28 +519,7 @@ func routeAddRouter(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve router facts"})
 	}
 	// derive family from model
-	var f string
-	firstChar := strings.ToLower(string(reply.Model[0]))
-	switch firstChar {
-	case "m":
-		f = strings.ToLower(string(reply.Model[0:2]))
-	case "p":
-		f = strings.ToLower(string(reply.Model[0:3]))
-	case "a":
-		f = strings.ToLower(string(reply.Model[0:3]))
-	case "e":
-		f = strings.ToLower(string(reply.Model[0:2]))
-	case "q":
-		f = strings.ToLower(string(reply.Model[0:3]))
-	case "s":
-		f = strings.ToLower(string(reply.Model[0:3]))
-	case "c":
-		f = strings.ToLower(string(reply.Model[0:4]))
-	case "v":
-		//twoChar := strings.ToLower(string(reply.Model[0:2]))
-		f = strings.ToLower(string(reply.Model[0:4]))
-
-	}
+	f := findFamily(reply.Model)
 
 	err = sqlite.AddRouter(r.Hostname, r.Shortname, f, reply.Model, reply.Ver)
 	if err != nil {
@@ -494,7 +533,7 @@ func routeAddRouter(c echo.Context) error {
 func routeDelRouter(c echo.Context) error {
 	var err error
 
-	r := new(DeletedRouter)
+	r := new(ShortRouter)
 
 	err = c.Bind(r)
 	if err != nil {
