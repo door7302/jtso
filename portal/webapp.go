@@ -353,6 +353,8 @@ func routeIndex(c echo.Context) error {
 	// get the Telegraf version -
 	teleVersion := container.GetVersionLabel("jts_telegraf")
 
+	logger.Log.Errorf("This is a debug: MXDebug vaule is %s", MXDebug)
+
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "TeleEx": teleEx, "TeleQfx": teleQfx, "TeleSrx": teleSrx,
 		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVswitch": teleVswitch, "TeleVevo": teleVevo,
 		"Grafana": grafana, "Kapacitor": kapacitor, "Chronograf": chronograf, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
