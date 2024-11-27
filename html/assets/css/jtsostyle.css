@@ -102,7 +102,7 @@
   }
 
   .telegraf-sub-box {
-    background: linear-gradient(to bottom, white, #f8cfcc); /* Soft red gradient */
+    --box-color: #f8cfcc;
     padding: 10px;
     border-radius: 5px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);

@@ -253,6 +253,10 @@ func routeIndex(c echo.Context) error {
 			if container.State == "running" {
 				kapacitor = "ccffcc"
 			}
+		case "/chronograf":
+			if container.State == "running" {
+				chronograf = "ccffcc"
+			}
 		case "/influxdb":
 			if container.State == "running" {
 				influx = "ccffcc"
@@ -348,7 +352,7 @@ func routeIndex(c echo.Context) error {
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "TeleEx": teleEx, "TeleQfx": teleQfx, "TeleSrx": teleSrx,
 		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVswitch": teleVswitch, "TeleVevo": teleVevo,
 		"Grafana": grafana, "Kapacitor": kapacitor, "Chronograf": chronograf, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
-		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumVMX": numVMX, "NumVJUNOS": numVJUNOS, "NumVSWITCH": numVSWITCH, "NumVEVO": numVEVO,
+		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVSWITCH": numVSWITCH, "NumVEVO": numVEVO,
 		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
 		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VSWITCHDebug": VSWITCHDebug, "VEVODebug": VEVODebug,
 		"GrafanaPort": grafanaPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
