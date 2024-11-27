@@ -59,6 +59,7 @@ function addAsso() {
                     </td>
                 </tr>
             `;
+            tableBody.append(newRow);
             alertify.success("Profile(s) have been successfulfy added to router " + r)
             waitingDialog.hide();
           } else {

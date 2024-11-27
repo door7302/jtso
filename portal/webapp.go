@@ -17,6 +17,7 @@ import (
 	"jtso/worker"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -371,6 +372,9 @@ func routeRouters(c echo.Context) error {
 	for _, r := range sqlite.RtrList {
 		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
 	}
+	// sort it
+	sort.Sort(ByShortname(lr))
+
 	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
 }
 
@@ -391,11 +395,16 @@ func routeProfiles(c echo.Context) error {
 	for _, r := range sqlite.RtrList {
 		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
 	}
+	// sort it
+	sort.Sort(ByShortname(lr))
+
 	association.ProfileLock.Lock()
 	for k, _ := range association.ActiveProfiles {
 		lp = append(lp, k)
 	}
 	association.ProfileLock.Unlock()
+	// sort it
+	sort.Strings(lp)
 
 	// Get All associations from db
 	var la []TabAsso
@@ -427,6 +436,7 @@ func routeDoc(c echo.Context) error {
 		lp = append(lp, k)
 	}
 	association.ProfileLock.Unlock()
+	sort.Strings(lp)
 
 	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort})
 }
@@ -441,6 +451,8 @@ func routeBrowse(c echo.Context) error {
 	for _, r := range sqlite.RtrList {
 		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
 	}
+	// sort it
+	sort.Sort(ByShortname(lr))
 
 	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
 }

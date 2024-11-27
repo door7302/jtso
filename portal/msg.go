@@ -25,6 +25,8 @@ type (
 		Version   string `json:"version"`
 	}
 
+	ByShortname []RouterDetails
+
 	ShortRouter struct {
 		Shortname string `json:"shortname"`
 	}
@@ -82,3 +84,7 @@ type (
 		Instance string `json:"instance"`
 	}
 )
+
+func (a ByShortname) Len() int           { return len(a) }
+func (a ByShortname) Less(i, j int) bool { return a[i].Shortname < a[j].Shortname }
+func (a ByShortname) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }

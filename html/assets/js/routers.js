@@ -37,24 +37,24 @@ function addRouter() {
         if (json.status == "OK") {
           const tableBody = $("#ListRtrs tbody");
           const newRow = `
-            <tr>
-                <td>${json.name}</td>
-                <td>${json.hostname}</td>
-                <td>${json.family}</td>
-                <td>${json.model}</td>
-                <td>${json.version}</td>
-                <td class="d-xxl-flex justify-content-xxl-center">
-                    <!-- Reset Button -->
-                    <button class="btn btn-success" onclick="reset('${h}', '${s}', this)" style="margin-right: 5px;">
-                        <i class="fa fa-refresh"></i>
-                    </button>
-                    <!-- Delete Button -->
-                    <button class="btn btn-danger" onclick="remove('${s}', this)">
-                        <i class="fa fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
+              <tr>
+                  <td>${json.name}</td>
+                  <td>${json.hostname}</td>
+                  <td>${json.family}</td>
+                  <td>${json.model}</td>
+                  <td>${json.version}</td>
+                  <td class="d-xxl-flex justify-content-xxl-center">
+                      <!-- Reset Button -->
+                      <button class="btn btn-success" onclick="reset('${h}', '${s}', this)" style="margin-right: 5px;">
+                          <i class="fa fa-refresh"></i>
+                      </button>
+                      <!-- Delete Button -->
+                      <button class="btn btn-danger" onclick="remove('${s}', this)">
+                          <i class="fa fa-trash"></i>
+                      </button>
+                  </td>
+              </tr>
+          `;
           tableBody.append(newRow);
           document.getElementById("Hostname").value = "";
           document.getElementById("Shortname").value = "";
