@@ -86,10 +86,55 @@
           <div class="kpi-box kpi-blue">{{.NumACX}}</div>
           <div class="kpi-box kpi-grey" style="background-color: {{.ACXDebug}};" id="ACX" onclick="enableDebug(this)">D</div>
         </div>
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleEx}};">
+          EX Instance
+          <div class="kpi-box kpi-blue">{{.NumEX}}</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.EXDebug}};" id="EX" onclick="enableDebug(this)">D</div>
+        </div>
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleQfx}};">
+          QFX Instance
+          <div class="kpi-box kpi-blue">{{.NumQFX}}</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.QFXDebug}};" id="QFX" onclick="enableDebug(this)">D</div>
+        </div>
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleSrx}};">
+          SRX Instance
+          <div class="kpi-box kpi-blue">{{.NumSRX}}</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.SRXDebug}};" id="SRX" onclick="enableDebug(this)">D</div>
+        </div>
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleCrpd}};">
+          CPRD Instance
+          <div class="kpi-box kpi-blue">{{.NumCRPD}}</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.CRPDDebug}};" id="CRPD" onclick="enableDebug(this)">D</div>
+        </div>
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleCptx}};">
+          CPTX Instance
+          <div class="kpi-box kpi-blue">{{.NumCPTX}}</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.CPTXDebug}};" id="CPTX" onclick="enableDebug(this)">D</div>
+        </div>
         <div class="telegraf-sub-box" style="--box-color: #{{.TeleVmx}};">
           VMX Instance
           <div class="kpi-box kpi-blue">{{.NumVMX}}</div>
           <div class="kpi-box kpi-grey" style="background-color: {{.VMXDebug}};" id="VMX" onclick="enableDebug(this)">D</div>
+        </div>
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleVsrx}};">
+          VSRX Instance
+          <div class="kpi-box kpi-blue">{{.NumVSRX}}</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.VSRXDebug}};" id="VSRX" onclick="enableDebug(this)">D</div>
+        </div>
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleVjunos}};">
+          VJunos Router Instance
+          <div class="kpi-box kpi-blue">{{.NumVJUNOS}}</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.VJUNOSDebug}};" id="VJUNOS" onclick="enableDebug(this)">D</div>
+        </div>
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleVSWITCH}};">
+          VJunos Switch Instance
+          <div class="kpi-box kpi-blue">{{.NumVSWITCH}}</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.VSWITCHDebug}};" id="VSWITCH" onclick="enableDebug(this)">D</div>
+        </div>
+        <div class="telegraf-sub-box" style="--box-color: #{{.TeleVevo}};">
+          VJunos Evolved Instance
+          <div class="kpi-box kpi-blue">{{.NumVEVO}}</div>
+          <div class="kpi-box kpi-grey" style="background-color: {{.VEVODebug}};" id="VEVO" onclick="enableDebug(this)">D</div>
         </div>
       </div>
     </div>
@@ -107,7 +152,7 @@
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
 
-    <div class="card chronograf" style="--box-color: #{{.}};">
+    <div class="card chronograf" style="--box-color: #{{.Chronograf}};">
       <h3>Chronograf</h3>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>

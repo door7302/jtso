@@ -131,7 +131,7 @@ func routeUpdateDebug(c echo.Context) error {
 
 func routeIndex(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	influx, grafana, kapacitor, jtso := "f8cecc", "f8cecc", "f8cecc", "f8cecc"
+	influx, grafana, kapacitor, jtso, chronograf := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
 
 	// Telegraf Containers
 	// Physical devices
@@ -347,7 +347,7 @@ func routeIndex(c echo.Context) error {
 
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "TeleEx": teleEx, "TeleQfx": teleQfx, "TeleSrx": teleSrx,
 		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVswitch": teleVswitch, "TeleVevo": teleVevo,
-		"Grafana": grafana, "Kapacitor": kapacitor, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
+		"Grafana": grafana, "Kapacitor": kapacitor, "Chronograf": chronograf, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
 		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumVMX": numVMX, "NumVJUNOS": numVJUNOS, "NumVSWITCH": numVSWITCH, "NumVEVO": numVEVO,
 		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
 		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VSWITCHDebug": VSWITCHDebug, "VEVODebug": VEVODebug,
@@ -456,11 +456,28 @@ func routeAddRouter(c echo.Context) error {
 	}
 	// derive family from model
 	var f string
-	if strings.ToLower(string(reply.Model[0])) == "m" {
+	firstChar := strings.ToLower(string(reply.Model[0]))
+	switch firstChar {
+	case "m":
 		f = strings.ToLower(string(reply.Model[0:2]))
-	} else {
+	case "p":
 		f = strings.ToLower(string(reply.Model[0:3]))
+	case "a":
+		f = strings.ToLower(string(reply.Model[0:3]))
+	case "e":
+		f = strings.ToLower(string(reply.Model[0:2]))
+	case "q":
+		f = strings.ToLower(string(reply.Model[0:3]))
+	case "s":
+		f = strings.ToLower(string(reply.Model[0:3]))
+	case "c":
+		f = strings.ToLower(string(reply.Model[0:4]))
+	case "v":
+		//twoChar := strings.ToLower(string(reply.Model[0:2]))
+		f = strings.ToLower(string(reply.Model[0:4]))
+
 	}
+
 	err = sqlite.AddRouter(r.Hostname, r.Shortname, f, reply.Model, reply.Ver)
 	if err != nil {
 		logger.Log.Errorf("Unable to add a new router in DB: %v", err)
@@ -570,16 +587,6 @@ func routeAddProfile(c echo.Context) error {
 	for _, i := range r.Profiles {
 		allTele := association.ActiveProfiles[i].Definition.TelCfg
 		switch fam {
-		case "vmx":
-			if len(allTele.VmxCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the VMX platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.VmxCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this VMX version.</br>"
-				}
-			}
 		case "mx":
 			if len(allTele.MxCfg) == 0 {
 				errString += "There is no Telegraf config for profile " + i + " for the MX platform.</br>"
@@ -608,6 +615,106 @@ func routeAddProfile(c echo.Context) error {
 					valid = true
 				} else {
 					errString += "There is no Telegraf config for profile " + i + " for this ACX version.</br>"
+				}
+			}
+		case "ex":
+			if len(allTele.ExCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the EX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.ExCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this EX version.</br>"
+				}
+			}
+		case "qfx":
+			if len(allTele.QfxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the QFX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.QfxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this QFX version.</br>"
+				}
+			}
+		case "srx":
+			if len(allTele.SrxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the SRX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.SrxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this SRX version.</br>"
+				}
+			}
+		case "crpd":
+			if len(allTele.CrpdCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the CRPD platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.CrpdCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this CRPD version.</br>"
+				}
+			}
+		case "cptx":
+			if len(allTele.CptxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the CPTX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.CptxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this CPTX version.</br>"
+				}
+			}
+		case "vmx":
+			if len(allTele.VmxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the VMX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VmxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VMX version.</br>"
+				}
+			}
+		case "vsrx":
+			if len(allTele.VsrxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the VSRX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VsrxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VSRX version.</br>"
+				}
+			}
+		case "vjunos":
+			if len(allTele.VjunosCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the VJunos Router platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VjunosCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VJunos Router version.</br>"
+				}
+			}
+		case "vswitch":
+			if len(allTele.VswitchCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the VJunos Switch platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VswitchCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VJunos Switch version.</br>"
+				}
+			}
+		case "vevo":
+			if len(allTele.VevoCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the VJunos Evolved platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VevoCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VJunos Evolved version.</br>"
 				}
 			}
 		default:
@@ -804,20 +911,48 @@ func routeUptDoc(c echo.Context) error {
 	}
 
 	tele := ""
-	for _, v := range p.Definition.TelCfg.VmxCfg {
-		tele += "For VMX version " + v.Version + ": " + v.Config + "</br>"
-	}
+
 	for _, v := range p.Definition.TelCfg.MxCfg {
 		tele += "For MX version " + v.Version + ": " + v.Config + "</br>"
 	}
 	for _, v := range p.Definition.TelCfg.PtxCfg {
 		tele += "For PTX version " + v.Version + ": " + v.Config + "</br>"
 	}
-	for i, v := range p.Definition.TelCfg.AcxCfg {
-		if i == len(p.Definition.TelCfg.AcxCfg)-1 {
-			tele += "For ACX version " + v.Version + ": " + v.Config
+	for _, v := range p.Definition.TelCfg.AcxCfg {
+		tele += "For ACX version " + v.Version + ": " + v.Config + "</br>"
+	}
+	for _, v := range p.Definition.TelCfg.ExCfg {
+		tele += "For EX version " + v.Version + ": " + v.Config + "</br>"
+	}
+	for _, v := range p.Definition.TelCfg.QfxCfg {
+		tele += "For QFX version " + v.Version + ": " + v.Config + "</br>"
+	}
+	for _, v := range p.Definition.TelCfg.SrxCfg {
+		tele += "For SRX version " + v.Version + ": " + v.Config + "</br>"
+	}
+	for _, v := range p.Definition.TelCfg.CrpdCfg {
+		tele += "For CRPD version " + v.Version + ": " + v.Config + "</br>"
+	}
+	for _, v := range p.Definition.TelCfg.CptxCfg {
+		tele += "For CPTX version " + v.Version + ": " + v.Config + "</br>"
+	}
+	for _, v := range p.Definition.TelCfg.VmxCfg {
+		tele += "For VMX version " + v.Version + ": " + v.Config + "</br>"
+	}
+	for _, v := range p.Definition.TelCfg.VsrxCfg {
+		tele += "For VSRX version " + v.Version + ": " + v.Config + "</br>"
+	}
+	for _, v := range p.Definition.TelCfg.VjunosCfg {
+		tele += "For VJunos Rtr. version " + v.Version + ": " + v.Config + "</br>"
+	}
+	for _, v := range p.Definition.TelCfg.VswitchCfg {
+		tele += "For VJunos Sw. version " + v.Version + ": " + v.Config + "</br>"
+	}
+	for i, v := range p.Definition.TelCfg.VevoCfg {
+		if i == len(p.Definition.TelCfg.VevoCfg)-1 {
+			tele += "For VJunos Evo. version " + v.Version + ": " + v.Config
 		} else {
-			tele += "For ACX version " + v.Version + ": " + v.Config + "</br>"
+			tele += "For VJunos Evo. version " + v.Version + ": " + v.Config + "</br>"
 		}
 	}
 	if tele == "" {

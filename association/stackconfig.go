@@ -206,11 +206,24 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// create the slice for which families we have to reconfigure the stack
 	if family == "all" {
-		families = make([]string, 4)
-		families[0] = "vmx"
-		families[1] = "mx"
-		families[2] = "ptx"
-		families[3] = "acx"
+		families = make([]string, 13)
+
+		families[0] = "mx"
+		families[1] = "ptx"
+		families[2] = "acx"
+		families[3] = "ex"
+		families[4] = "qfx"
+		families[5] = "srx"
+
+		families[6] = "crpd"
+		families[7] = "cptx"
+
+		families[8] = "vmx"
+		families[9] = "vsrx"
+		families[10] = "vjunos"
+		families[11] = "vswitch"
+		families[12] = "vevo"
+
 	} else {
 		families = make([]string, 1)
 		families[0] = family
@@ -246,9 +259,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		var directory string
 		// remove all file of telegraf directory
 		switch f {
-		case "vmx":
-			readDirectory, _ = os.Open(PATH_VMX)
-			directory = PATH_VMX
+
 		case "mx":
 			readDirectory, _ = os.Open(PATH_MX)
 			directory = PATH_MX
@@ -258,7 +269,38 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		case "acx":
 			readDirectory, _ = os.Open(PATH_ACX)
 			directory = PATH_ACX
+		case "ex":
+			readDirectory, _ = os.Open(PATH_EX)
+			directory = PATH_EX
+		case "qfx":
+			readDirectory, _ = os.Open(PATH_QFX)
+			directory = PATH_QFX
+		case "srx":
+			readDirectory, _ = os.Open(PATH_SRX)
+			directory = PATH_SRX
+		case "crpd":
+			readDirectory, _ = os.Open(PATH_CRPD)
+			directory = PATH_CRPD
+		case "cptx":
+			readDirectory, _ = os.Open(PATH_CPTX)
+			directory = PATH_CPTX
+		case "vmx":
+			readDirectory, _ = os.Open(PATH_VMX)
+			directory = PATH_VMX
+		case "vsrx":
+			readDirectory, _ = os.Open(PATH_VSRX)
+			directory = PATH_VSRX
+		case "vjunos":
+			readDirectory, _ = os.Open(PATH_VJUNOS)
+			directory = PATH_VJUNOS
+		case "vswitch":
+			readDirectory, _ = os.Open(PATH_VSWITCH)
+			directory = PATH_VSWITCH
+		case "vevo":
+			readDirectory, _ = os.Open(PATH_VEVO)
+			directory = PATH_VEVO
 		}
+
 		allFiles, _ := readDirectory.Readdir(0)
 
 		for f := range allFiles {
@@ -281,14 +323,33 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 			// extract definition of the profile
 			switch f {
-			case "vmx":
-				filenames = ActiveProfiles[p].Definition.TelCfg.VmxCfg
+
 			case "mx":
 				filenames = ActiveProfiles[p].Definition.TelCfg.MxCfg
 			case "ptx":
 				filenames = ActiveProfiles[p].Definition.TelCfg.PtxCfg
 			case "acx":
 				filenames = ActiveProfiles[p].Definition.TelCfg.AcxCfg
+			case "ex":
+				filenames = ActiveProfiles[p].Definition.TelCfg.ExCfg
+			case "qfx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.QfxCfg
+			case "srx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.SrxCfg
+			case "crpd":
+				filenames = ActiveProfiles[p].Definition.TelCfg.CrpdCfg
+			case "cptx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.CptxCfg
+			case "vmx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.VmxCfg
+			case "vsrx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.VsrxCfg
+			case "vjunos":
+				filenames = ActiveProfiles[p].Definition.TelCfg.VjunosCfg
+			case "vswitch":
+				filenames = ActiveProfiles[p].Definition.TelCfg.VsrxCfg
+			case "vevo":
+				filenames = ActiveProfiles[p].Definition.TelCfg.VevoCfg
 			}
 			tls := false
 			skip := false

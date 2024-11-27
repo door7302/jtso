@@ -19,10 +19,21 @@ type Config struct {
 }
 
 type Telegraf struct {
-	VmxCfg []Config `json:"vmx"`
 	MxCfg  []Config `json:"mx"`
 	PtxCfg []Config `json:"ptx"`
 	AcxCfg []Config `json:"acx"`
+	ExCfg  []Config `json:"ex"`
+	QfxCfg []Config `json:"qfx"`
+	SrxCfg []Config `json:"srx"`
+
+	CrpdCfg []Config `json:"crpd"`
+	CptxCfg []Config `json:"cptx"`
+
+	VmxCfg     []Config `json:"vmx"`
+	VsrxCfg    []Config `json:"vsrx"`
+	VjunosCfg  []Config `json:"vjunos"`
+	VswitchCfg []Config `json:"vswitch"`
+	VevoCfg    []Config `json:"vevo"`
 }
 
 type DefProfile struct {
