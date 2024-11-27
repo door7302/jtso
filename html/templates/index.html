@@ -26,7 +26,7 @@
                 <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
                 <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
                 <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
-                <li class="nav-item"><a class="nav-link" href="/?orgId=1" onclick="javascript:event.target.port={{.GrafanaPort}}">Grafana</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1'">Grafana</a></li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
                     <ul class="dropdown-menu">
@@ -155,7 +155,7 @@
     <div class="card chronograf" style="--box-color: #{{.Chronograf}};">
       <h3>Chronograf</h3>
       <div class="button-container">
-        <button class="button" onclick="javascript:event.target.port={{.ChronografPort}}">Open</button>
+        <button class="button" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}}">Open</button>
       </div>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>
@@ -163,7 +163,7 @@
     <div class="card grafana" style="--box-color: #{{.Grafana}};">
       <h3>Grafana</h3>
       <div class="button-container">
-        <button class="button" onclick="javascript:event.target.port={{.GrafanaPort}}">Open</button>
+        <button class="button" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}}">Open</button>
       </div>
       <img class="docker-logo" src="img/docker.png" alt="Docker">
     </div>

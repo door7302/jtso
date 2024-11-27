@@ -46,7 +46,7 @@ function addRouter() {
                   <td class="d-xxl-flex justify-content-xxl-center">
                       <!-- Reset Button -->
                       <button class="btn btn-success" onclick="reset('${h}', '${s}', this)" style="margin-right: 5px;">
-                          <i class="fa fa-refresh"></i>
+                          <i class="fa fa-sync"></i>
                       </button>
                       <!-- Delete Button -->
                       <button class="btn btn-danger" onclick="remove('${s}', this)">

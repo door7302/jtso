@@ -87,31 +87,31 @@ func ManageDebug(instance string) error {
 	instance = strings.ToLower(instance)
 
 	switch instance {
-	case "MX":
+	case "mx":
 		currentState = sqlite.ActiveAdmin.MXDebug
-	case "PTX":
+	case "ptx":
 		currentState = sqlite.ActiveAdmin.PTXDebug
-	case "ACX":
+	case "acx":
 		currentState = sqlite.ActiveAdmin.ACXDebug
-	case "EX":
+	case "ex":
 		currentState = sqlite.ActiveAdmin.EXDebug
-	case "QFX":
+	case "qfx":
 		currentState = sqlite.ActiveAdmin.QFXDebug
-	case "SRX":
+	case "srx":
 		currentState = sqlite.ActiveAdmin.SRXDebug
-	case "CRPD":
+	case "crpd":
 		currentState = sqlite.ActiveAdmin.CRPDDebug
-	case "CPTX":
+	case "cptx":
 		currentState = sqlite.ActiveAdmin.CPTXDebug
-	case "VMX":
+	case "vmx":
 		currentState = sqlite.ActiveAdmin.VMXDebug
-	case "VSRX":
+	case "vsrx":
 		currentState = sqlite.ActiveAdmin.VSRXDebug
-	case "VJUNOS":
+	case "vjunos":
 		currentState = sqlite.ActiveAdmin.VJUNOSDebug
-	case "VSWITCH":
+	case "vswitch":
 		currentState = sqlite.ActiveAdmin.VSWITCHDebug
-	case "VEVO":
+	case "vevo":
 		currentState = sqlite.ActiveAdmin.VEVODebug
 	default:
 		logger.Log.Errorf("Unsupported instance %s", instance)

@@ -29,7 +29,7 @@
                   <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
                   <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
                   <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
-                  <li class="nav-item"><a class="nav-link" href="/?orgId=1">Grafana</a></li>
+                  <li class="nav-item"><a class="nav-link" href="#" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1'">Grafana</a></li>
                   <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
                       <ul class="dropdown-menu">
@@ -87,7 +87,7 @@
                                 <th>Family</th>
                                 <th>Model</th>
                                 <th>Version</th>
-                                <th width="10%">Actions</th>
+                                <th width="5%">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -100,7 +100,7 @@
                                 <td>{{.Version}}</td>
                                 <td class="d-xxl-flex justify-content-xxl-center">
                                     <button onclick="reset('{{.Hostname}}','{{.Shortname}}', this)" class="btn btn-success" style="margin-left: 5px;" type="button">
-                                        <i class="fa fa-refresh" style="font-size: 15px;"></i>
+                                        <i class="fa fa-sync" style="font-size: 15px;"></i>
                                     </button>
                                     <button onclick="remove('{{.Shortname}}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit">
                                         <i class="fa fa-trash" style="font-size: 15px;"></i>
