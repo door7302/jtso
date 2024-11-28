@@ -89,6 +89,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/searchxpath", routeSearchPath)
 	wapp.POST("/updatedebug", routeUpdateDebug)
 	wapp.POST("/uploadrtrcsv", routeUploadRtrCsv)
+	wapp.POST("/uploadprofilecsv", routeUploadProfileCsv)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -128,12 +129,131 @@ func parseLine(line string, expectElem int) ([]string, error) {
 	// Split the line into columns
 	columns := strings.Split(line, separator)
 
-	// Check number of elem
-	if len(columns) != expectElem {
-		return nil, errors.New("line does not contain the expected number of elem")
+	if expectElem != 0 {
+		// Check number of elem - exact match
+		if len(columns) != expectElem {
+			return nil, errors.New("line does not contain the expected number of elem")
+		}
+	} else {
+		// Just check that at least 2 elems are present
+		if len(columns) < 2 {
+			return nil, errors.New("line does not contain not enough elem")
+		}
+	}
+	return columns, nil
+}
+
+func routeUploadProfileCsv(c echo.Context) error {
+	// Retrieve the file from the form field
+	file, err := c.FormFile("csvFile")
+	if err != nil {
+		logger.Log.Errorf("Failed to retrieve the file: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to retrieve the file"})
 	}
 
-	return columns, nil
+	// Open the uploaded file
+	src, err := file.Open()
+	if err != nil {
+		logger.Log.Errorf("Failed to open the file: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to open the file"})
+	}
+	defer src.Close()
+
+	scanner := bufio.NewScanner(src)
+	errorFound := 0
+	notCompatible := 0
+	alreadyAssigned := 0
+	newEntries := 0
+	familyToUpdate := make([]string, 0)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Ignore empty line
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		// Check and split the line based on the separator
+		columns, err := parseLine(line, 0)
+		if err != nil {
+			logger.Log.Errorf("Failed to parse line %s: %v", line, err)
+			errorFound++
+			continue
+		}
+		// check if router already exists and have profiles assigned
+		exist := false
+		hasProfile := false
+		fam := ""
+		version := ""
+		for _, i := range sqlite.RtrList {
+			if i.Shortname == columns[0] {
+				if i.Profile != 0 {
+					hasProfile = true
+				}
+				fam = i.Family
+				version = i.Version
+				exist = true
+				break
+			}
+		}
+
+		if exist {
+			if hasProfile {
+				logger.Log.Errorf("Could not assign profile(s) to router %s. This router is already assigned to one or several profiles", columns[0])
+				alreadyAssigned++
+				continue
+			}
+			// Create the temporary AddProfile object
+			ap := new(AddProfile)
+			ap.Shortname = columns[0]
+			ap.Profiles = make([]string, 0)
+			for _, entry := range columns[1:] {
+				ap.Profiles = append(ap.Profiles, entry)
+			}
+			// check compatibility
+			valid, errString := checkCompatibility(ap, fam, version)
+
+			if !valid {
+				logger.Log.Errorf("Router %s is not compatible with one or more profiles", columns[0])
+				logger.Log.Errorf("%s", strings.Replace(errString, "</br>", "\n", -1))
+				notCompatible++
+				continue
+			}
+
+			err = sqlite.AddAsso(ap.Shortname, ap.Profiles)
+			if err != nil {
+				logger.Log.Errorf("Unable to profile(s) to router %s in DB: %v", ap.Shortname, err)
+				errorFound++
+				continue
+			}
+			logger.Log.Infof("Profile(s) of router %s has been successfully updated", ap.Shortname)
+			familyToUpdate = append(familyToUpdate, fam)
+			newEntries++
+		} else {
+			logger.Log.Errorf("Unknown router %s. Could not assign profile(s)", columns[0])
+			errorFound++
+			continue
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		logger.Log.Errorf("Unexpected error while reading the profile csv files: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unexpected error while reading the profile csv files"})
+	}
+
+	// force metadata update
+	go worker.Collect(collectCfg.cfg)
+
+	// update the stack for the right families
+	for _, f := range familyToUpdate {
+		go association.ConfigueStack(collectCfg.cfg, f)
+	}
+
+	logger.Log.Info("A CSV file for provisioning profile has been uploaded and injested")
+	logger.Log.Infof("CSV report: %d line error(s) - %d incompatible profile issue(s) - %d already assigned router issue(s) - %d router & profile assignment passed", errorFound, notCompatible, alreadyAssigned, newEntries)
+
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("CSV well injested</br></br>Report:</br>%d line error(s)</br>%d incompatible profile issue(s)</br>%d already assigned router issue(s)</br>%d router & profile assignment passed</br></br>Check jtso logs for more details", errorFound, notCompatible, alreadyAssigned, newEntries)})
 }
 
 func routeUploadRtrCsv(c echo.Context) error {
@@ -222,7 +342,7 @@ func routeUploadRtrCsv(c echo.Context) error {
 
 	logger.Log.Info("A CSV file for provisioning router has been uploaded and injested")
 	logger.Log.Infof("CSV report: %d line error(s) - %d netconf issue(s) - %d updated router(s) - %d new router(s)", errorFound, noResponse, updatedEntries, newEntries)
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("CSV well injested</br></br>Report:</br>%d line error(s)</br>%d netconf issue(s)</br>%d updated router(s)</br>%d new router(s)</br></br>See jtso logs for more details.", errorFound, noResponse, updatedEntries, newEntries)})
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("CSV well injested</br></br>Report:</br>%d line error(s)</br>%d netconf issue(s)</br>%d updated router(s)</br>%d new router(s)</br></br>Check jtso logs for more details", errorFound, noResponse, updatedEntries, newEntries)})
 }
 
 func routeUpdateDebug(c echo.Context) error {
@@ -719,37 +839,8 @@ func checkRouterSupport(filenames []association.Config, routerVersion string) bo
 	return false
 }
 
-func routeAddProfile(c echo.Context) error {
-	var err error
-	var f bool
-
-	r := new(AddProfile)
-
-	err = c.Bind(r)
-	if err != nil {
-		logger.Log.Errorf("Unable to parse Post request for adding router profile: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to adding the router profile"})
-	}
-	f, err = sqlite.CheckAsso(r.Shortname)
-	if err != nil {
-		logger.Log.Errorf("Unable to adding router profile in DB: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to adding router profile in DB"})
-	}
-	if f {
-		logger.Log.Errorf("Router %s is already assigned to a profile", r.Shortname)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Router is already assigned to a profile."})
-	}
+func checkCompatibility(r *AddProfile, fam string, version string) (bool, string) {
 	// Check if a profile can be attached to a router
-	// find out the family of the router
-	fam := ""
-	version := ""
-	for _, i := range sqlite.RtrList {
-		if i.Shortname == r.Shortname {
-			fam = i.Family
-			version = i.Version
-			break
-		}
-	}
 	// Now check for each profile there is a given Telegraf config
 	valid := false
 	errString := ""
@@ -890,6 +981,41 @@ func routeAddProfile(c echo.Context) error {
 			errString += "There is no Telegraf config for profile " + i + " for the unknown platform.</br>"
 		}
 	}
+	return valid, errString
+}
+
+func routeAddProfile(c echo.Context) error {
+	var err error
+	var f bool
+
+	r := new(AddProfile)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for adding router profile: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to adding the router profile"})
+	}
+	f, err = sqlite.CheckAsso(r.Shortname)
+	if err != nil {
+		logger.Log.Errorf("Unable to adding router profile in DB: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to adding router profile in DB"})
+	}
+	if f {
+		logger.Log.Errorf("Router %s is already assigned to a profile", r.Shortname)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Router is already assigned to a profile."})
+	}
+
+	// find out the family of the router
+	version := ""
+	fam := ""
+	for _, i := range sqlite.RtrList {
+		if i.Shortname == r.Shortname {
+			version = i.Version
+			fam = i.Family
+			break
+		}
+	}
+	valid, errString := checkCompatibility(r, fam, version)
 
 	if !valid {
 		logger.Log.Errorf("Router %s is not compatible with one or more profiles", r.Shortname)
@@ -898,16 +1024,16 @@ func routeAddProfile(c echo.Context) error {
 
 	err = sqlite.AddAsso(r.Shortname, r.Profiles)
 	if err != nil {
-		logger.Log.Errorf("Unable to adding router profile in DB: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to adding router profile in DB"})
+		logger.Log.Errorf("Unable to profile(s) to router %s in DB: %v", r.Shortname, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to add profile(s) to router in DB"})
 	}
-	logger.Log.Infof("Profile of router %s has been successfully updated", r.Shortname)
+	logger.Log.Infof("Profile(s) of router %s has been successfully updated", r.Shortname)
 	logger.Log.Info("Force the metadata update")
 
 	go worker.Collect(collectCfg.cfg)
 	// update the stack for the right family
 	go association.ConfigueStack(collectCfg.cfg, fam)
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile updated"})
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router's Profile(s) updated"})
 
 }
 
