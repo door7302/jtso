@@ -3,6 +3,7 @@ package portal
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -114,6 +115,27 @@ func (w *WebApp) Run() {
 	}
 }
 
+func parseLine(line string, expectElem int) ([]string, error) {
+	var separator string
+	if strings.Contains(line, ",") {
+		separator = ","
+	} else if strings.Contains(line, ";") {
+		separator = ";"
+	} else {
+		return nil, errors.New("line does not contain valid separator (',' or ';')")
+	}
+
+	// Split the line into columns
+	columns := strings.Split(line, separator)
+
+	// Check number of elem
+	if len(columns) != expectElem {
+		return nil, errors.New("line does not contain the expected number of elem")
+	}
+
+	return columns, nil
+}
+
 func routeUploadRtrCsv(c echo.Context) error {
 	// Retrieve the file from the form field
 	file, err := c.FormFile("csvFile")
@@ -130,8 +152,72 @@ func routeUploadRtrCsv(c echo.Context) error {
 	}
 	defer src.Close()
 
+	scanner := bufio.NewScanner(src)
+	errorFound := 0
+	noResponse := 0
+	updatedEntries := 0
+	newEntries := 0
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Check and split the line based on the separator
+		columns, err := parseLine(line, 2)
+		if err != nil {
+			logger.Log.Errorf("Failed to parse line %s: %v", line, err)
+			errorFound++
+			continue
+		}
+		// check if router already exists
+		exist := false
+		for _, i := range sqlite.RtrList {
+			if i.Shortname == columns[0] {
+				exist = true
+				break
+			}
+		}
+
+		// here we need to issue a Netconf request to retrieve model and version
+		reply, err := netconf.GetFacts(columns[1], sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port)
+		if err != nil {
+			logger.Log.Errorf("Unable to retrieve router %s facts: %v", columns[0], err)
+			noResponse++
+			continue
+		}
+
+		// derive family from model
+		f := findFamily(reply.Model)
+
+		if exist {
+			err = sqlite.UpdateRouter(columns[0], f, reply.Model, reply.Ver)
+			if err != nil {
+				logger.Log.Errorf("Unable to update the router %s in DB: %v", columns[0], err)
+				noResponse++
+				continue
+			}
+			logger.Log.Infof("Router %s has been successfully updated - family %s - model %s - version %s", columns[0], f, reply.Model, reply.Ver)
+			updatedEntries++
+		} else {
+			err = sqlite.AddRouter(columns[1], columns[0], f, reply.Model, reply.Ver)
+			if err != nil {
+				logger.Log.Errorf("Unable to add the router %s in DB: %v", columns[0], err)
+				noResponse++
+				continue
+			}
+			logger.Log.Infof("Router %s has been successfully added - family %s - model %s - version %s", columns[0], f, reply.Model, reply.Ver)
+			newEntries++
+		}
+
+	}
+
+	if err := scanner.Err(); err != nil {
+		logger.Log.Errorf("Unexpected error while reading the router csv files: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unexpected error while reading the router csv files"})
+	}
+
 	logger.Log.Info("A CSV file for provisioning router has been uploaded and injested")
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "CSV injested"})
+	logger.Log.Infof("CSV report: %d line error(s) - %d netconf issue(s) - %d updated router(s) - %d new router(s)", errorFound, noResponse, updatedEntries, newEntries)
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("CSV well injested</br></br>Report:</br>%d line error(s)</br>%d netconf issue(s)</br>%d updated router(s)</br>%d new router(s)</br></br>See jtso logs for more details.", errorFound, noResponse, updatedEntries, newEntries)})
 }
 
 func routeUpdateDebug(c echo.Context) error {
@@ -522,7 +608,7 @@ func routeResetRouter(c echo.Context) error {
 	// here we need to issue a Netconf request to retrieve model and version
 	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port)
 	if err != nil {
-		logger.Log.Errorf("Unable to retrieve router facts: %v", err)
+		logger.Log.Errorf("Unable to retrieve router %s facts: %v", r.Shortname, err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve router facts"})
 	}
 	// derive family from model
@@ -530,10 +616,10 @@ func routeResetRouter(c echo.Context) error {
 
 	err = sqlite.UpdateRouter(r.Shortname, f, reply.Model, reply.Ver)
 	if err != nil {
-		logger.Log.Errorf("Unable to update the router in DB: %v", err)
+		logger.Log.Errorf("Unable to update the router %s in DB: %v", r.Shortname, err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update the router in DB"})
 	}
-	logger.Log.Infof("Router %s has been successfully updated - family %s - model %s - version %s", r.Hostname, f, reply.Model, reply.Ver)
+	logger.Log.Infof("Router %s has been successfully updated - family %s - model %s - version %s", r.Shortname, f, reply.Model, reply.Ver)
 	return c.JSON(http.StatusOK, ReplyRouter{Status: "OK", Family: f, Model: reply.Model, Version: reply.Ver})
 }
 
@@ -550,7 +636,7 @@ func routeAddRouter(c echo.Context) error {
 	// here we need to issue a Netconf request to retrieve model and version
 	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port)
 	if err != nil {
-		logger.Log.Errorf("Unable to retrieve router facts: %v", err)
+		logger.Log.Errorf("Unable to retrieve router %s facts: %v", r.Shortname, err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve router facts"})
 	}
 	// derive family from model
@@ -558,10 +644,10 @@ func routeAddRouter(c echo.Context) error {
 
 	err = sqlite.AddRouter(r.Hostname, r.Shortname, f, reply.Model, reply.Ver)
 	if err != nil {
-		logger.Log.Errorf("Unable to add a new router in DB: %v", err)
+		logger.Log.Errorf("Unable to add a new router %s in DB: %v", r.Shortname, err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to add router in DB"})
 	}
-	logger.Log.Infof("Router %s has been successfully added - family %s - model %s - version %s", r.Hostname, f, reply.Model, reply.Ver)
+	logger.Log.Infof("Router %s has been successfully added - family %s - model %s - version %s", r.Shortname, f, reply.Model, reply.Ver)
 	return c.JSON(http.StatusOK, ReplyRouter{Status: "OK", Family: f, Model: reply.Model, Version: reply.Ver})
 }
 

@@ -180,13 +180,17 @@ function importCSV() {
       formData.append('csvFile', file);
 
       try {
+          waitingDialog.show();
           const response = await fetch('/uploadrtrcsv', {
               method: 'POST',
               body: formData
           });
 
           const result = await response.json();
-          responseDiv.textContent = `Server Response: ${result.message}`;
+          
+          waitingDialog.hide();
+          alertify.alert("JSTO...", result.msg );  
+    
       } catch (error) {
           alertify.alert("JSTO...", "An error occurred while uploading the file")
       }
