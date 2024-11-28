@@ -224,6 +224,27 @@
   width: 100% !important; /* Ensure Bootstrap selectpicker respects full width */
 }
 
+.form-container {
+  display: flex;
+  justify-content: space-between; /* Distribute space between columns */
+}
+
+.left-column {
+  flex: 9; /* Left column takes 90% of the available space */
+  padding-right: 20px; /* Optional, for spacing between columns */
+}
+
+.right-column {
+  flex: 1; /* Right column takes 10% of the available space */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.right-column .d-flex {
+  width: 100%; /* Ensure the button is centered inside the column */
+}
+
 /* DOC page */ 
 
 
