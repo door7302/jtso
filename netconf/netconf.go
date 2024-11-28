@@ -25,7 +25,7 @@ type RouterTask struct {
 	Jsonify *output.Metadata
 }
 
-func GetFacts(r string, u string, p string, port int) (*xml.Version, error) {
+func GetFacts(r string, u string, p string, port int, timeout int) (*xml.Version, error) {
 
 	logger.Log.Infof("[%s] Get Facts for new router - open seesion on port %d for username %s", r, port, u)
 
@@ -52,7 +52,7 @@ func GetFacts(r string, u string, p string, port int) (*xml.Version, error) {
 
 	d := "<get-software-information></get-software-information>"
 	rpc := message.NewRPC(d)
-	reply, err := session.SyncRPC(rpc, int32(60))
+	reply, err := session.SyncRPC(rpc, int32(timeout))
 	if err != nil || reply == nil || strings.Contains(reply.Data, "<rpc-error>") {
 		logger.Log.Warnf("[%s] No Version information: %v", r, err)
 		return nil, err

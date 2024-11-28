@@ -74,7 +74,7 @@ function enableDebug(element) {
             dataType: "json",
             success: function (json) {
               if (json["status"] == "OK") {
-                alertify.success('The debug mode has been successfully enabled on the ' + elementId + ' Telegraf Instance</br></br>You can now monitor file /var/log/debugtelegraf_' + elementId.toLowerCase() +'.log"')
+                alertify.success('The debug mode has been successfully enabled on the ' + elementId + ' Telegraf Instance</br></br>You can now monitor file /var/log/debugtelegraf_' + elementId.toLowerCase() +'.log')
                 element.style.backgroundColor = 'red';
               } else {
                 alertify.alert("JTSO...", json.msg);

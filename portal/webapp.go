@@ -161,6 +161,11 @@ func routeUploadRtrCsv(c echo.Context) error {
 	for scanner.Scan() {
 		line := scanner.Text()
 
+		// Ignore empty line
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
 		// Check and split the line based on the separator
 		columns, err := parseLine(line, 2)
 		if err != nil {
@@ -178,7 +183,7 @@ func routeUploadRtrCsv(c echo.Context) error {
 		}
 
 		// here we need to issue a Netconf request to retrieve model and version
-		reply, err := netconf.GetFacts(columns[1], sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port)
+		reply, err := netconf.GetFacts(columns[1], sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port, 10)
 		if err != nil {
 			logger.Log.Errorf("Unable to retrieve router %s facts: %v", columns[0], err)
 			noResponse++
@@ -606,7 +611,7 @@ func routeResetRouter(c echo.Context) error {
 	}
 
 	// here we need to issue a Netconf request to retrieve model and version
-	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port)
+	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port, 30)
 	if err != nil {
 		logger.Log.Errorf("Unable to retrieve router %s facts: %v", r.Shortname, err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve router facts"})
@@ -634,7 +639,7 @@ func routeAddRouter(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to create the router"})
 	}
 	// here we need to issue a Netconf request to retrieve model and version
-	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port)
+	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port, 30)
 	if err != nil {
 		logger.Log.Errorf("Unable to retrieve router %s facts: %v", r.Shortname, err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve router facts"})
