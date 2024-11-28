@@ -56,19 +56,29 @@
             <div class="card-body">
                 <h4 class="card-title">Profile associations Management</h4>
                 <form >
-                    <label class="form-label">Select a Router:</label>
-                    <select id="router" class="selectpicker" data-width="100%" >
-                        {{range .Rtrs}}
-                        <option value="{{.Shortname}}">{{.Shortname}}</option>
-                        {{end}}
-                    </select>
-
-                    <label class="form-label">Select profile(s):</label>
-                    <select id="profiles" class="selectpicker" data-width="100%" data-actions-box="true" multiple>
-                        {{range .Profiles}}
-                        <option value="{{.}}">{{.}} profile</option>
-                        {{end}}
-                    </select>
+                    <div class="form-container">
+                        <div class="left-column">
+                            <label class="form-label">Select a Router:</label>
+                            <select id="router" class="selectpicker" data-width="100%">
+                                {{range .Rtrs}}
+                                <option value="{{.Shortname}}">{{.Shortname}}</option>
+                                {{end}}
+                            </select>
+    
+                            <label class="form-label">Select profile(s):</label>
+                            <select id="profiles" class="selectpicker" data-width="100%" data-actions-box="true" multiple>
+                                {{range .Profiles}}
+                                <option value="{{.}}">{{.}} profile</option>
+                                {{end}}
+                            </select>
+                        </div>
+    
+                        <div class="right-column">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <input onclick="addAsso();" class="btn btn-success" type="submit" value="Create association" name="addB">
+                            </div>
+                        </div>
+                    </div>
                 </form>
                 <br/>
                 <div class="d-flex justify-content-center align-items-center">
