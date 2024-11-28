@@ -87,6 +87,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/influxmgt", routeInfluxMgt)
 	wapp.POST("/searchxpath", routeSearchPath)
 	wapp.POST("/updatedebug", routeUpdateDebug)
+	wapp.POST("/uploadrtrcsv", routeUploadRtrCsv)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -111,6 +112,26 @@ func (w *WebApp) Run() {
 			panic(err)
 		}
 	}
+}
+
+func routeUploadRtrCsv(c echo.Context) error {
+	// Retrieve the file from the form field
+	file, err := c.FormFile("csvFile")
+	if err != nil {
+		logger.Log.Errorf("Failed to retrieve the file: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to retrieve the file"})
+	}
+
+	// Open the uploaded file
+	src, err := file.Open()
+	if err != nil {
+		logger.Log.Errorf("Failed to open the file: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to open the file"})
+	}
+	defer src.Close()
+
+	logger.Log.Info("A CSV file for provisioning router has been uploaded and injested")
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "CSV injested"})
 }
 
 func routeUpdateDebug(c echo.Context) error {

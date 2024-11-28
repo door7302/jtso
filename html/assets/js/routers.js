@@ -149,5 +149,46 @@ function remove(name, td) {
 }
 
 function importCSV() {
-  alertify.alert("JSTO...", "Feature not supported yet.");
+  const fileInput = document.getElementById('fileInput');
+
+  fileInput.click();
+
+  fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) {
+          alertify.alert("JSTO...", "No file selected.");  
+          return;
+      }
+
+      // Validate file extension
+      const validExtensions = ['csv'];
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      if (!validExtensions.includes(fileExtension)) {
+          alertify.alert("JSTO...", "Invalid file type. Please upload a CSV file.");  
+          return;
+      }
+
+      // Validate file content for non-binary data
+      const arrayBuffer = await file.slice(0, 1024).arrayBuffer();
+      const text = new TextDecoder().decode(new Uint8Array(arrayBuffer));
+      if (/[\x00-\x08\x0E-\x1F]/.test(text)) {
+          alertify.alert("JSTO...", "Binary files are not allowed")
+          return;
+      }
+
+      const formData = new FormData();
+      formData.append('csvFile', file);
+
+      try {
+          const response = await fetch('/uploadrtrcsv', {
+              method: 'POST',
+              body: formData
+          });
+
+          const result = await response.json();
+          responseDiv.textContent = `Server Response: ${result.message}`;
+      } catch (error) {
+          alertify.alert("JSTO...", "An error occurred while uploading the file")
+      }
+  });
 }
