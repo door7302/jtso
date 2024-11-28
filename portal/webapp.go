@@ -166,6 +166,14 @@ func routeUploadProfileCsv(c echo.Context) error {
 	newEntries := 0
 	familyToUpdate := make([]string, 0)
 
+	// extract all profiles
+	lp := make([]string, 0)
+	association.ProfileLock.Lock()
+	for k, _ := range association.ActiveProfiles {
+		lp = append(lp, k)
+	}
+	association.ProfileLock.Unlock()
+
 	for scanner.Scan() {
 		line := scanner.Text()
 
@@ -208,9 +216,28 @@ func routeUploadProfileCsv(c echo.Context) error {
 			ap := new(AddProfile)
 			ap.Shortname = columns[0]
 			ap.Profiles = make([]string, 0)
+			assoMatch := false
 			for _, entry := range columns[1:] {
+				// Check if profile exist in DB
+				entry = strings.TrimSpace(entry)
+				for _, asso := range lp {
+					if entry == asso {
+						assoMatch = true
+						break
+					}
+				}
+				if !assoMatch {
+					logger.Log.Errorf("Unknown profile %s. Skip this profile", entry)
+					continue
+				}
 				ap.Profiles = append(ap.Profiles, entry)
 			}
+			if len(ap.Profiles) == 0 {
+				logger.Log.Errorf("There is profile valid for this router %s", ap.Shortname)
+				errorFound++
+				continue
+			}
+
 			// check compatibility
 			valid, errString := checkCompatibility(ap, fam, version)
 
