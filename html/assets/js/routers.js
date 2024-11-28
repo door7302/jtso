@@ -189,7 +189,8 @@ function importCSV() {
           const result = await response.json();
           
           waitingDialog.hide();
-          alertify.alert("JSTO...", result.msg );  
+          alertify.alert("JSTO...", result.msg ); 
+          window.location.reload(); 
     
       } catch (error) {
           alertify.alert("JSTO...", "An error occurred while uploading the file")
