@@ -28,7 +28,8 @@
                     <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
                     <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
                     <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1, _blank'">Grafana</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1, _blank')">Grafana</a></li>
+                    
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
                         <ul class="dropdown-menu">
@@ -39,11 +40,11 @@
                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">Admin</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="cred.html">Credentials</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/chronograf/data-explorer, _blank'">Manage InfluxDB</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/tickscripts, _blank'">Manage Tick scripts</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/chronograf/data-explorer', '_blank')">Manage InfluxDB</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/tickscripts', '_blank')">Manage Tick scripts</a></li>
+        
                         </ul>
                     </li>
-                </ul>
                 </ul>
                   <div class="form-check form-switch ms-3">
                     <input class="form-check-input" type="checkbox" id="darkModeSwitch">
