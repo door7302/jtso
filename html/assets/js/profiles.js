@@ -145,7 +145,12 @@ function importCSV() {
           const result = await response.json();
           
           waitingDialog.hide();
-          alertify.alert("JSTO...", result.msg ); 
+          alertify.confirm(result.msg, function (e) {
+            if (e) {
+              //  nothing to do
+            }
+          }).setHeader('JSTO...');
+
           window.location.reload(); 
     
       } catch (error) {

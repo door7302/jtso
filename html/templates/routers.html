@@ -21,29 +21,29 @@
           <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2">
               <span class="visually-hidden">Toggle navigation</span>
               <span class="navbar-toggler-icon"></span>
-          </button>
-          
+          </button>     
           <div class="collapse navbar-collapse" id="navcol-2">
-              <ul class="navbar-nav ms-auto">
-                  <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                  <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
-                  <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
-                  <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
-                  <li class="nav-item"><a class="nav-link" href="#" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1, _blank'">Grafana</a></li>
-                  <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
-                      <ul class="dropdown-menu">
-                          <li><a class="dropdown-item" href="browser.html">Browser</a></li>
-                      </ul>
-                  </li>
-                  <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">Admin</a>
-                      <ul class="dropdown-menu dropdown-menu-end">
-                          <li><a class="dropdown-item" href="cred.html">Credentials</a></li>
-                          <li><a class="dropdown-item" href="#">Profile parameters</a></li>
-                      </ul>
-                  </li>
-              </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
+                <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
+                <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1, _blank'">Grafana</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="browser.html">gNMI browser</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">Admin</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="cred.html">Credentials</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/chronograf/data-explorer, _blank'"></a>>Manage InfluxDB</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="window.location.href=window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/tickscripts, _blank'"></a>>Manage Tick scripts</a></li>
+                    </ul>
+                </li>
+            </ul>
               <div class="form-check form-switch ms-3">
                 <input class="form-check-input" type="checkbox" id="darkModeSwitch">
                 <label class="form-check-label" for="darkModeSwitch">Dark Mode</label>

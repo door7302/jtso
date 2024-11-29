@@ -143,252 +143,195 @@ func parseLine(line string, expectElem int) ([]string, error) {
 	return columns, nil
 }
 
-func routeUploadProfileCsv(c echo.Context) error {
-	// Retrieve the file from the form field
-	file, err := c.FormFile("csvFile")
-	if err != nil {
-		logger.Log.Errorf("Failed to retrieve the file: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to retrieve the file"})
+func findFamily(m string) string {
+	var f string
+	firstChar := strings.ToLower(string(m[0]))
+	switch firstChar {
+	case "m":
+		f = strings.ToLower(string(m[0:2]))
+	case "p":
+		f = strings.ToLower(string(m[0:3]))
+	case "a":
+		f = strings.ToLower(string(m[0:3]))
+	case "e":
+		f = strings.ToLower(string(m[0:2]))
+	case "q":
+		f = strings.ToLower(string(m[0:3]))
+	case "s":
+		f = strings.ToLower(string(m[0:3]))
+	case "c":
+		f = strings.ToLower(string(m[0:4]))
+	case "v":
+		//twoChar := strings.ToLower(string(m[0:2]))
+		f = strings.ToLower(string(m[0:4]))
+	default:
+		f = ""
+
 	}
+	return f
+}
 
-	// Open the uploaded file
-	src, err := file.Open()
-	if err != nil {
-		logger.Log.Errorf("Failed to open the file: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to open the file"})
-	}
-	defer src.Close()
-
-	scanner := bufio.NewScanner(src)
-	errorFound := 0
-	notCompatible := 0
-	alreadyAssigned := 0
-	newEntries := 0
-	familyToUpdate := make([]string, 0)
-
-	// extract all profiles
-	lp := make([]string, 0)
-	association.ProfileLock.Lock()
-	for k, _ := range association.ActiveProfiles {
-		lp = append(lp, k)
-	}
-	association.ProfileLock.Unlock()
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		// Ignore empty line
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
-
-		// Check and split the line based on the separator
-		columns, err := parseLine(line, 0)
-		if err != nil {
-			logger.Log.Errorf("Failed to parse line %s: %v", line, err)
-			errorFound++
-			continue
-		}
-		// check if router already exists and have profiles assigned
-		exist := false
-		hasProfile := false
-		fam := ""
-		version := ""
-		for _, i := range sqlite.RtrList {
-			if i.Shortname == columns[0] {
-				if i.Profile != 0 {
-					hasProfile = true
-				}
-				fam = i.Family
-				version = i.Version
-				exist = true
-				break
-			}
-		}
-
-		if exist {
-			if hasProfile {
-				logger.Log.Errorf("Could not assign profile(s) to router %s. This router is already assigned to one or several profiles", columns[0])
-				alreadyAssigned++
-				continue
-			}
-			// Create the temporary AddProfile object
-			ap := new(AddProfile)
-			ap.Shortname = columns[0]
-			ap.Profiles = make([]string, 0)
-			assoMatch := false
-			for _, entry := range columns[1:] {
-				// Check if profile exist in DB
-				entry = strings.TrimSpace(entry)
-				for _, asso := range lp {
-					if entry == asso {
-						assoMatch = true
-						break
-					}
-				}
-				if !assoMatch {
-					logger.Log.Errorf("Unknown profile %s. Skip this profile", entry)
-					continue
-				}
-				ap.Profiles = append(ap.Profiles, entry)
-			}
-			if len(ap.Profiles) == 0 {
-				logger.Log.Errorf("There is profile valid for this router %s", ap.Shortname)
-				errorFound++
-				continue
-			}
-
-			// check compatibility
-			valid, errString := checkCompatibility(ap, fam, version)
-
-			if !valid {
-				logger.Log.Errorf("Router %s is not compatible with one or more profiles", columns[0])
-				logger.Log.Errorf("%s", strings.Replace(errString, "</br>", "\n", -1))
-				notCompatible++
-				continue
-			}
-
-			err = sqlite.AddAsso(ap.Shortname, ap.Profiles)
-			if err != nil {
-				logger.Log.Errorf("Unable to profile(s) to router %s in DB: %v", ap.Shortname, err)
-				errorFound++
-				continue
-			}
-			logger.Log.Infof("Profile(s) of router %s has been successfully updated", ap.Shortname)
-			familyToUpdate = append(familyToUpdate, fam)
-			newEntries++
+func checkRouterSupport(filenames []association.Config, routerVersion string) bool {
+	result := false
+	for _, c := range filenames {
+		// Save all config if present as a fallback solution if specific version not found
+		if c.Version == "all" {
+			return true
 		} else {
-			logger.Log.Errorf("Unknown router %s. Could not assign profile(s)", columns[0])
-			errorFound++
-			continue
+			result = result || association.CheckVersion(c.Version, routerVersion)
 		}
 	}
-
-	if err := scanner.Err(); err != nil {
-		logger.Log.Errorf("Unexpected error while reading the profile csv files: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unexpected error while reading the profile csv files"})
-	}
-
-	// force metadata update
-	go worker.Collect(collectCfg.cfg)
-
-	// update the stack for the right families
-	for _, f := range familyToUpdate {
-		go association.ConfigueStack(collectCfg.cfg, f)
-	}
-
-	logger.Log.Info("A CSV file for provisioning profile has been uploaded and injested")
-	logger.Log.Infof("CSV report: %d line error(s) - %d incompatible profile issue(s) - %d already assigned router issue(s) - %d router & profile assignment passed", errorFound, notCompatible, alreadyAssigned, newEntries)
-
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("CSV well injested</br></br>Report:</br>%d line error(s)</br>%d incompatible profile issue(s)</br>%d already assigned router issue(s)</br>%d router & profile assignment passed</br></br>Check jtso logs for more details", errorFound, notCompatible, alreadyAssigned, newEntries)})
+	return result
 }
 
-func routeUploadRtrCsv(c echo.Context) error {
-	// Retrieve the file from the form field
-	file, err := c.FormFile("csvFile")
-	if err != nil {
-		logger.Log.Errorf("Failed to retrieve the file: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to retrieve the file"})
-	}
-
-	// Open the uploaded file
-	src, err := file.Open()
-	if err != nil {
-		logger.Log.Errorf("Failed to open the file: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to open the file"})
-	}
-	defer src.Close()
-
-	scanner := bufio.NewScanner(src)
-	errorFound := 0
-	noResponse := 0
-	updatedEntries := 0
-	newEntries := 0
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		// Ignore empty line
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
-
-		// Check and split the line based on the separator
-		columns, err := parseLine(line, 2)
-		if err != nil {
-			logger.Log.Errorf("Failed to parse line %s: %v", line, err)
-			errorFound++
-			continue
-		}
-		// check if router already exists
-		exist := false
-		for _, i := range sqlite.RtrList {
-			if i.Shortname == columns[0] {
-				exist = true
-				break
+func checkCompatibility(r *AddProfile, fam string, version string) (bool, string) {
+	// Check if a profile can be attached to a router
+	// Now check for each profile there is a given Telegraf config
+	valid := false
+	errString := ""
+	for _, i := range r.Profiles {
+		allTele := association.ActiveProfiles[i].Definition.TelCfg
+		switch fam {
+		case "mx":
+			if len(allTele.MxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the MX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.MxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this MX version.</br>"
+				}
 			}
-		}
-
-		// here we need to issue a Netconf request to retrieve model and version
-		reply, err := netconf.GetFacts(columns[1], sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port, 10)
-		if err != nil {
-			logger.Log.Errorf("Unable to retrieve router %s facts: %v", columns[0], err)
-			noResponse++
-			continue
-		}
-
-		// derive family from model
-		f := findFamily(reply.Model)
-
-		if exist {
-			err = sqlite.UpdateRouter(columns[0], f, reply.Model, reply.Ver)
-			if err != nil {
-				logger.Log.Errorf("Unable to update the router %s in DB: %v", columns[0], err)
-				noResponse++
-				continue
+		case "ptx":
+			if len(allTele.PtxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the PTX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.PtxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this PTX version.</br>"
+				}
 			}
-			logger.Log.Infof("Router %s has been successfully updated - family %s - model %s - version %s", columns[0], f, reply.Model, reply.Ver)
-			updatedEntries++
-		} else {
-			err = sqlite.AddRouter(columns[1], columns[0], f, reply.Model, reply.Ver)
-			if err != nil {
-				logger.Log.Errorf("Unable to add the router %s in DB: %v", columns[0], err)
-				noResponse++
-				continue
+		case "acx":
+			if len(allTele.AcxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the ACX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.AcxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this ACX version.</br>"
+				}
 			}
-			logger.Log.Infof("Router %s has been successfully added - family %s - model %s - version %s", columns[0], f, reply.Model, reply.Ver)
-			newEntries++
+		case "ex":
+			if len(allTele.ExCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the EX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.ExCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this EX version.</br>"
+				}
+			}
+		case "qfx":
+			if len(allTele.QfxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the QFX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.QfxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this QFX version.</br>"
+				}
+			}
+		case "srx":
+			if len(allTele.SrxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the SRX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.SrxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this SRX version.</br>"
+				}
+			}
+		case "crpd":
+			if len(allTele.CrpdCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the CRPD platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.CrpdCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this CRPD version.</br>"
+				}
+			}
+		case "cptx":
+			if len(allTele.CptxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the CPTX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.CptxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this CPTX version.</br>"
+				}
+			}
+		case "vmx":
+			if len(allTele.VmxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the VMX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VmxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VMX version.</br>"
+				}
+			}
+		case "vsrx":
+			if len(allTele.VsrxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the VSRX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VsrxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VSRX version.</br>"
+				}
+			}
+		case "vjunos":
+			if len(allTele.VjunosCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the VJunos Router platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VjunosCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VJunos Router version.</br>"
+				}
+			}
+		case "vswitch":
+			if len(allTele.VswitchCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the VJunos Switch platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VswitchCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VJunos Switch version.</br>"
+				}
+			}
+		case "vevo":
+			if len(allTele.VevoCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the VJunos Evolved platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.VevoCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this VJunos Evolved version.</br>"
+				}
+			}
+		default:
+			errString += "There is no Telegraf config for profile " + i + " for the unknown platform.</br>"
 		}
-
 	}
-
-	if err := scanner.Err(); err != nil {
-		logger.Log.Errorf("Unexpected error while reading the router csv files: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unexpected error while reading the router csv files"})
-	}
-
-	logger.Log.Info("A CSV file for provisioning router has been uploaded and injested")
-	logger.Log.Infof("CSV report: %d line error(s) - %d netconf issue(s) - %d updated router(s) - %d new router(s)", errorFound, noResponse, updatedEntries, newEntries)
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("CSV well injested</br></br>Report:</br>%d line error(s)</br>%d netconf issue(s)</br>%d updated router(s)</br>%d new router(s)</br></br>Check jtso logs for more details", errorFound, noResponse, updatedEntries, newEntries)})
+	return valid, errString
 }
 
-func routeUpdateDebug(c echo.Context) error {
-	d := new(UpdateDebug)
-
-	err := c.Bind(d)
-	if err != nil {
-		logger.Log.Errorf("Unable to parse Post request for updating Debug: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the data"})
-	}
-
-	err = association.ManageDebug(d.Instance)
-	if err != nil {
-		logger.Log.Errorf("Unable to parse Post request for updating Debug: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the data"})
-	}
-
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "debug mode has been changed"})
-}
+/// ---------------------------------------------///
+/// ----------------- PAGE ----------------------///
+/// ---------------------------------------------///
 
 func routeIndex(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
@@ -625,6 +568,7 @@ func routeIndex(c echo.Context) error {
 
 func routeRouters(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
 
 	// Get all routers from db
 	var lr []RouterDetails
@@ -636,16 +580,19 @@ func routeRouters(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
+	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
 }
 
 func routeCred(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	return c.Render(http.StatusOK, "cred.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser, "Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd, "Usetls": sqlite.ActiveCred.UseTls, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTls, "GrafanaPort": grafanaPort})
+	chronografPort := collectCfg.cfg.Chronograf.Port
+	return c.Render(http.StatusOK, "cred.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser, "Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd,
+		"Usetls": sqlite.ActiveCred.UseTls, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTls, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
 }
 
 func routeProfiles(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
 	// Get all routers from db
 	var lr []RouterDetails
 	var lp []string
@@ -682,11 +629,12 @@ func routeProfiles(c echo.Context) error {
 		}
 		la = append(la, TabAsso{Shortname: r.Shortname, Profiles: asso})
 	}
-	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort})
+	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
 }
 
 func routeDoc(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
 	// Get all profiles
 	var lp []string
 
@@ -699,11 +647,12 @@ func routeDoc(c echo.Context) error {
 	association.ProfileLock.Unlock()
 	sort.Strings(lp)
 
-	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort})
+	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
 }
 
 func routeBrowse(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
 
 	// Get all routers from db
 	var lr []RouterDetails
@@ -715,35 +664,258 @@ func routeBrowse(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort})
+	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
 }
 
-func findFamily(m string) string {
-	var f string
-	firstChar := strings.ToLower(string(m[0]))
-	switch firstChar {
-	case "m":
-		f = strings.ToLower(string(m[0:2]))
-	case "p":
-		f = strings.ToLower(string(m[0:3]))
-	case "a":
-		f = strings.ToLower(string(m[0:3]))
-	case "e":
-		f = strings.ToLower(string(m[0:2]))
-	case "q":
-		f = strings.ToLower(string(m[0:3]))
-	case "s":
-		f = strings.ToLower(string(m[0:3]))
-	case "c":
-		f = strings.ToLower(string(m[0:4]))
-	case "v":
-		//twoChar := strings.ToLower(string(m[0:2]))
-		f = strings.ToLower(string(m[0:4]))
-	default:
-		f = ""
+/// ---------------------------------------------///
+/// ----------------- API -----------------------///
+/// ---------------------------------------------///
+
+func routeUploadProfileCsv(c echo.Context) error {
+	// Retrieve the file from the form field
+	file, err := c.FormFile("csvFile")
+	if err != nil {
+		logger.Log.Errorf("Failed to retrieve the file: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to retrieve the file"})
+	}
+
+	// Open the uploaded file
+	src, err := file.Open()
+	if err != nil {
+		logger.Log.Errorf("Failed to open the file: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to open the file"})
+	}
+	defer src.Close()
+
+	scanner := bufio.NewScanner(src)
+	errorFound := 0
+	notCompatible := 0
+	alreadyAssigned := 0
+	newEntries := 0
+	familyToUpdate := make([]string, 0)
+
+	// extract all profiles
+	lp := make([]string, 0)
+	association.ProfileLock.Lock()
+	for k, _ := range association.ActiveProfiles {
+		lp = append(lp, k)
+	}
+	association.ProfileLock.Unlock()
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Ignore empty line
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		// Check and split the line based on the separator
+		columns, err := parseLine(line, 0)
+		if err != nil {
+			logger.Log.Errorf("Failed to parse line %s: %v", line, err)
+			errorFound++
+			continue
+		}
+		// check if router already exists and have profiles assigned
+		exist := false
+		hasProfile := false
+		fam := ""
+		version := ""
+		for _, i := range sqlite.RtrList {
+			if i.Shortname == columns[0] {
+				if i.Profile != 0 {
+					hasProfile = true
+				}
+				fam = i.Family
+				version = i.Version
+				exist = true
+				break
+			}
+		}
+
+		if exist {
+			if hasProfile {
+				logger.Log.Errorf("Could not assign profile(s) to router %s. This router is already assigned to one or several profiles", columns[0])
+				alreadyAssigned++
+				continue
+			}
+			// Create the temporary AddProfile object
+			ap := new(AddProfile)
+			ap.Shortname = columns[0]
+			ap.Profiles = make([]string, 0)
+			assoMatch := false
+			for _, entry := range columns[1:] {
+				// Check if profile exist in DB
+				entry = strings.TrimSpace(entry)
+				for _, asso := range lp {
+					if entry == asso {
+						assoMatch = true
+						break
+					}
+				}
+				if !assoMatch {
+					logger.Log.Errorf("Unknown profile %s. Skip this profile", entry)
+					continue
+				}
+				ap.Profiles = append(ap.Profiles, entry)
+			}
+			if len(ap.Profiles) == 0 {
+				logger.Log.Errorf("There is no valid profile for this router %s", ap.Shortname)
+				errorFound++
+				continue
+			}
+
+			// check compatibility
+			valid, errString := checkCompatibility(ap, fam, version)
+
+			if !valid {
+				logger.Log.Errorf("Router %s is not compatible with one or more profiles - details:", columns[0])
+				logger.Log.Errorf("%s", strings.Replace(errString, "</br>", "\n", -1))
+				notCompatible++
+				continue
+			}
+
+			err = sqlite.AddAsso(ap.Shortname, ap.Profiles)
+			if err != nil {
+				logger.Log.Errorf("Unable to profile(s) to router %s in DB: %v", ap.Shortname, err)
+				errorFound++
+				continue
+			}
+			logger.Log.Infof("Profile(s) of router %s has been successfully updated", ap.Shortname)
+			familyToUpdate = append(familyToUpdate, fam)
+			newEntries++
+		} else {
+			logger.Log.Errorf("Unknown router %s. Could not assign profile(s)", columns[0])
+			errorFound++
+			continue
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		logger.Log.Errorf("Unexpected error while reading the profile csv files: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unexpected error while reading the profile csv files"})
+	}
+
+	// force metadata update
+	go worker.Collect(collectCfg.cfg)
+
+	// update the stack for the right families
+	for _, f := range familyToUpdate {
+		go association.ConfigueStack(collectCfg.cfg, f)
+	}
+
+	logger.Log.Info("A CSV file for provisioning profile has been uploaded and injested")
+	logger.Log.Infof("CSV report: %d line error(s) - %d incompatible profile issue(s) - %d already assigned router issue(s) - %d router & profile assignment passed", errorFound, notCompatible, alreadyAssigned, newEntries)
+
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("CSV well injested</br></br>Report:</br>%d line error(s)</br>%d incompatible profile issue(s)</br>%d already assigned router issue(s)</br>%d router & profile assignment passed</br></br>Check jtso logs for more details", errorFound, notCompatible, alreadyAssigned, newEntries)})
+}
+
+func routeUploadRtrCsv(c echo.Context) error {
+	// Retrieve the file from the form field
+	file, err := c.FormFile("csvFile")
+	if err != nil {
+		logger.Log.Errorf("Failed to retrieve the file: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to retrieve the file"})
+	}
+
+	// Open the uploaded file
+	src, err := file.Open()
+	if err != nil {
+		logger.Log.Errorf("Failed to open the file: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to open the file"})
+	}
+	defer src.Close()
+
+	scanner := bufio.NewScanner(src)
+	errorFound := 0
+	noResponse := 0
+	updatedEntries := 0
+	newEntries := 0
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Ignore empty line
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		// Check and split the line based on the separator
+		columns, err := parseLine(line, 2)
+		if err != nil {
+			logger.Log.Errorf("Failed to parse line %s: %v", line, err)
+			errorFound++
+			continue
+		}
+		// check if router already exists
+		exist := false
+		for _, i := range sqlite.RtrList {
+			if i.Shortname == columns[0] {
+				exist = true
+				break
+			}
+		}
+
+		// here we need to issue a Netconf request to retrieve model and version
+		reply, err := netconf.GetFacts(columns[1], sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port, 10)
+		if err != nil {
+			logger.Log.Errorf("Unable to retrieve router %s facts: %v", columns[0], err)
+			noResponse++
+			continue
+		}
+
+		// derive family from model
+		f := findFamily(reply.Model)
+
+		if exist {
+			err = sqlite.UpdateRouter(columns[0], f, reply.Model, reply.Ver)
+			if err != nil {
+				logger.Log.Errorf("Unable to update the router %s in DB: %v", columns[0], err)
+				noResponse++
+				continue
+			}
+			logger.Log.Infof("Router %s has been successfully updated - family %s - model %s - version %s", columns[0], f, reply.Model, reply.Ver)
+			updatedEntries++
+		} else {
+			err = sqlite.AddRouter(columns[1], columns[0], f, reply.Model, reply.Ver)
+			if err != nil {
+				logger.Log.Errorf("Unable to add the router %s in DB: %v", columns[0], err)
+				noResponse++
+				continue
+			}
+			logger.Log.Infof("Router %s has been successfully added - family %s - model %s - version %s", columns[0], f, reply.Model, reply.Ver)
+			newEntries++
+		}
 
 	}
-	return f
+
+	if err := scanner.Err(); err != nil {
+		logger.Log.Errorf("Unexpected error while reading the router csv files: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unexpected error while reading the router csv files"})
+	}
+
+	logger.Log.Info("A CSV file for provisioning router has been uploaded and injested")
+	logger.Log.Infof("CSV report: %d line error(s) - %d netconf issue(s) - %d updated router(s) - %d new router(s)", errorFound, noResponse, updatedEntries, newEntries)
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("CSV well injested</br></br>Report:</br>%d line error(s)</br>%d netconf issue(s)</br>%d updated router(s)</br>%d new router(s)</br></br>Check jtso logs for more details", errorFound, noResponse, updatedEntries, newEntries)})
+}
+
+func routeUpdateDebug(c echo.Context) error {
+	d := new(UpdateDebug)
+
+	err := c.Bind(d)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for updating Debug: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the data"})
+	}
+
+	err = association.ManageDebug(d.Instance)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for updating Debug: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the data"})
+	}
+
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "debug mode has been changed"})
 }
 
 func routeResetRouter(c echo.Context) error {
@@ -844,171 +1016,6 @@ func routeDelRouter(c echo.Context) error {
 	}
 	logger.Log.Infof("Router %s has been successfully removed", r.Shortname)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router deleted"})
-}
-
-func checkRouterSupport(filenames []association.Config, routerVersion string) bool {
-	confToApply := ""
-	defaultConfig := ""
-	for _, c := range filenames {
-		// Save all config if present as a fallback solution if specific version not found
-		if c.Version == "all" {
-			defaultConfig = c.Config
-		} else {
-			result := association.CheckVersion(c.Version, routerVersion)
-			if result && (confToApply == "") {
-				return true
-			}
-		}
-	}
-	if defaultConfig != "" {
-		return true
-	}
-	return false
-}
-
-func checkCompatibility(r *AddProfile, fam string, version string) (bool, string) {
-	// Check if a profile can be attached to a router
-	// Now check for each profile there is a given Telegraf config
-	valid := false
-	errString := ""
-	for _, i := range r.Profiles {
-		allTele := association.ActiveProfiles[i].Definition.TelCfg
-		switch fam {
-		case "mx":
-			if len(allTele.MxCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the MX platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.MxCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this MX version.</br>"
-				}
-			}
-		case "ptx":
-			if len(allTele.PtxCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the PTX platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.PtxCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this PTX version.</br>"
-				}
-			}
-		case "acx":
-			if len(allTele.AcxCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the ACX platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.AcxCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this ACX version.</br>"
-				}
-			}
-		case "ex":
-			if len(allTele.ExCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the EX platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.ExCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this EX version.</br>"
-				}
-			}
-		case "qfx":
-			if len(allTele.QfxCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the QFX platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.QfxCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this QFX version.</br>"
-				}
-			}
-		case "srx":
-			if len(allTele.SrxCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the SRX platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.SrxCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this SRX version.</br>"
-				}
-			}
-		case "crpd":
-			if len(allTele.CrpdCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the CRPD platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.CrpdCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this CRPD version.</br>"
-				}
-			}
-		case "cptx":
-			if len(allTele.CptxCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the CPTX platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.CptxCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this CPTX version.</br>"
-				}
-			}
-		case "vmx":
-			if len(allTele.VmxCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the VMX platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.VmxCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this VMX version.</br>"
-				}
-			}
-		case "vsrx":
-			if len(allTele.VsrxCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the VSRX platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.VsrxCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this VSRX version.</br>"
-				}
-			}
-		case "vjunos":
-			if len(allTele.VjunosCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the VJunos Router platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.VjunosCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this VJunos Router version.</br>"
-				}
-			}
-		case "vswitch":
-			if len(allTele.VswitchCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the VJunos Switch platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.VswitchCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this VJunos Switch version.</br>"
-				}
-			}
-		case "vevo":
-			if len(allTele.VevoCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the VJunos Evolved platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.VevoCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this VJunos Evolved version.</br>"
-				}
-			}
-		default:
-			errString += "There is no Telegraf config for profile " + i + " for the unknown platform.</br>"
-		}
-	}
-	return valid, errString
 }
 
 func routeAddProfile(c echo.Context) error {
