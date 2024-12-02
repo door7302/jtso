@@ -50,11 +50,10 @@ type Admin struct {
 	CRPDDebug int
 	CPTXDebug int
 	// VM devices
-	VMXDebug     int
-	VSRXDebug    int
-	VJUNOSDebug  int
-	VSWITCHDebug int
-	VEVODebug    int
+	VMXDebug    int
+	VSRXDebug   int
+	VJUNOSDebug int
+	VEVODebug   int
 }
 
 var db *sql.DB
@@ -136,7 +135,6 @@ func Init(f string) error {
 		vmxdebug INTEGER,
 		vsrxdebug INTEGER,
 		vjunosdebug INTEGER,
-		vswitchdebug INTEGER,
 		vevodebug INTEGER
 		);`
 
@@ -364,13 +362,13 @@ func LoadAll() error {
 	i = rows.Next()
 	if !i {
 		// nothing in the DB regarding administration  - add default one
-		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); err != nil {
+		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); err != nil {
 			logger.Log.Errorf("Error while adding default administration - err: %v", err)
 			dbMu.Unlock()
 			return err
 		}
 	} else {
-		err = rows.Scan(&ActiveAdmin.Id, &ActiveAdmin.MXDebug, &ActiveAdmin.PTXDebug, &ActiveAdmin.ACXDebug, &ActiveAdmin.EXDebug, &ActiveAdmin.QFXDebug, &ActiveAdmin.SRXDebug, &ActiveAdmin.CRPDDebug, &ActiveAdmin.CPTXDebug, &ActiveAdmin.VMXDebug, &ActiveAdmin.VSRXDebug, &ActiveAdmin.VJUNOSDebug, &ActiveAdmin.VSWITCHDebug, &ActiveAdmin.VEVODebug)
+		err = rows.Scan(&ActiveAdmin.Id, &ActiveAdmin.MXDebug, &ActiveAdmin.PTXDebug, &ActiveAdmin.ACXDebug, &ActiveAdmin.EXDebug, &ActiveAdmin.QFXDebug, &ActiveAdmin.SRXDebug, &ActiveAdmin.CRPDDebug, &ActiveAdmin.CPTXDebug, &ActiveAdmin.VMXDebug, &ActiveAdmin.VSRXDebug, &ActiveAdmin.VJUNOSDebug, &ActiveAdmin.VEVODebug)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing administration rows - err: %v", err)
 			dbMu.Unlock()

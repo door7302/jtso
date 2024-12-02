@@ -30,7 +30,6 @@ const PATH_CPTX string = "/var/shared//telegraf/cptx/telegraf.d/"
 const PATH_VMX string = "/var/shared//telegraf/vmx/telegraf.d/"
 const PATH_VSRX string = "/var/shared/telegraf/vsrx/telegraf.d/"
 const PATH_VJUNOS string = "/var/shared//telegraf/vjunos/telegraf.d/"
-const PATH_VSWITCH string = "/var/shared//telegraf/vswitch/telegraf.d/"
 const PATH_VEVO string = "/var/shared//telegraf/vevo/telegraf.d/"
 
 const TELEGRAF_ROOT_PATH string = "/var/shared/telegraf/"
@@ -109,8 +108,6 @@ func ManageDebug(instance string) error {
 		currentState = sqlite.ActiveAdmin.VSRXDebug
 	case "vjunos":
 		currentState = sqlite.ActiveAdmin.VJUNOSDebug
-	case "vswitch":
-		currentState = sqlite.ActiveAdmin.VSWITCHDebug
 	case "vevo":
 		currentState = sqlite.ActiveAdmin.VEVODebug
 	default:
@@ -236,8 +233,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		families[8] = "vmx"
 		families[9] = "vsrx"
 		families[10] = "vjunos"
-		families[11] = "vswitch"
-		families[12] = "vevo"
+		families[11] = "vevo"
 
 	} else {
 		families = make([]string, 1)
@@ -308,9 +304,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		case "vjunos":
 			readDirectory, _ = os.Open(PATH_VJUNOS)
 			directory = PATH_VJUNOS
-		case "vswitch":
-			readDirectory, _ = os.Open(PATH_VSWITCH)
-			directory = PATH_VSWITCH
 		case "vevo":
 			readDirectory, _ = os.Open(PATH_VEVO)
 			directory = PATH_VEVO
@@ -361,8 +354,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				filenames = ActiveProfiles[p].Definition.TelCfg.VsrxCfg
 			case "vjunos":
 				filenames = ActiveProfiles[p].Definition.TelCfg.VjunosCfg
-			case "vswitch":
-				filenames = ActiveProfiles[p].Definition.TelCfg.VsrxCfg
 			case "vevo":
 				filenames = ActiveProfiles[p].Definition.TelCfg.VevoCfg
 			}

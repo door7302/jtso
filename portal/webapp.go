@@ -144,6 +144,7 @@ func parseLine(line string, expectElem int) ([]string, error) {
 }
 
 func findFamily(m string) string {
+	// derive family from model
 	var f string
 	firstChar := strings.ToLower(string(m[0]))
 	switch firstChar {
@@ -162,11 +163,21 @@ func findFamily(m string) string {
 	case "c":
 		f = strings.ToLower(string(m[0:4]))
 	case "v":
-		//twoChar := strings.ToLower(string(m[0:2]))
-		f = strings.ToLower(string(m[0:4]))
+		twoChar := strings.ToLower(string(m[0:2]))
+		switch twoChar {
+		case "vm":
+			f = strings.ToLower(string(m[0:3]))
+		case "vj":
+			f = strings.ToLower(string(m[0:6]))
+		case "ve":
+			f = strings.ToLower(string(m[0:4]))
+		case "vs":
+			f = strings.ToLower(string(m[0:4]))
+		default:
+			f = ""
+		}
 	default:
 		f = ""
-
 	}
 	return f
 }
@@ -302,16 +313,6 @@ func checkCompatibility(r *AddProfile, fam string, version string) (bool, string
 					errString += "There is no Telegraf config for profile " + i + " for this VJunos Router version.</br>"
 				}
 			}
-		case "vswitch":
-			if len(allTele.VswitchCfg) == 0 {
-				errString += "There is no Telegraf config for profile " + i + " for the VJunos Switch platform.</br>"
-			} else {
-				if checkRouterSupport(allTele.VswitchCfg, version) {
-					valid = true
-				} else {
-					errString += "There is no Telegraf config for profile " + i + " for this VJunos Switch version.</br>"
-				}
-			}
 		case "vevo":
 			if len(allTele.VevoCfg) == 0 {
 				errString += "There is no Telegraf config for profile " + i + " for the VJunos Evolved platform.</br>"
@@ -351,9 +352,9 @@ func routeIndex(c echo.Context) error {
 	CRPDDebug, CPTXDebug := "grey", "grey"
 
 	// Virtual VM devices
-	teleVmx, teleVsrx, teleVjunos, teleVswitch, teleVevo := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
-	numVMX, numVSRX, numVJUNOS, numVSWITCH, numVEVO := 0, 0, 0, 0, 0
-	VMXDebug, VSRXDebug, VJUNOSDebug, VSWITCHDebug, VEVODebug := "grey", "grey", "grey", "grey", "grey"
+	teleVmx, teleVsrx, teleVjunos, teleVevo := "f8cecc", "f8cecc", "f8cecc", "f8cecc"
+	numVMX, numVSRX, numVJUNOS, numVEVO := 0, 0, 0, 0
+	VMXDebug, VSRXDebug, VJUNOSDebug, VEVODebug := "grey", "grey", "grey", "grey"
 
 	// Update Debug flag
 	if sqlite.ActiveAdmin.MXDebug == 1 {
@@ -388,9 +389,6 @@ func routeIndex(c echo.Context) error {
 	}
 	if sqlite.ActiveAdmin.VJUNOSDebug == 1 {
 		VJUNOSDebug = "red"
-	}
-	if sqlite.ActiveAdmin.VSWITCHDebug == 1 {
-		VSWITCHDebug = "red"
 	}
 	if sqlite.ActiveAdmin.VEVODebug == 1 {
 		VEVODebug = "red"
@@ -444,10 +442,6 @@ func routeIndex(c echo.Context) error {
 		case "/telegraf_vjunos":
 			if container.State == "running" {
 				teleVjunos = "ccffcc"
-			}
-		case "/telegraf_vswitch":
-			if container.State == "running" {
-				teleVswitch = "ccffcc"
 			}
 		case "/telegraf_vevo":
 			if container.State == "running" {
@@ -523,10 +517,6 @@ func routeIndex(c echo.Context) error {
 			if r.Profile == 1 {
 				numVJUNOS++
 			}
-		case "vswitch":
-			if r.Profile == 1 {
-				numVSWITCH++
-			}
 		case "vevo":
 			if r.Profile == 1 {
 				numVEVO++
@@ -558,11 +548,11 @@ func routeIndex(c echo.Context) error {
 	teleVersion := container.GetVersionLabel("jts_telegraf")
 
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "TeleEx": teleEx, "TeleQfx": teleQfx, "TeleSrx": teleSrx,
-		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVswitch": teleVswitch, "TeleVevo": teleVevo,
+		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVevo": teleVevo,
 		"Grafana": grafana, "Kapacitor": kapacitor, "Chronograf": chronograf, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
-		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVSWITCH": numVSWITCH, "NumVEVO": numVEVO,
+		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVEVO": numVEVO,
 		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
-		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VSWITCHDebug": VSWITCHDebug, "VEVODebug": VEVODebug,
+		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VEVODebug": VEVODebug,
 		"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
 }
 
@@ -1273,9 +1263,6 @@ func routeUptDoc(c echo.Context) error {
 	}
 	for _, v := range p.Definition.TelCfg.VjunosCfg {
 		tele += "For VJunos Rtr. version " + v.Version + ": " + v.Config + "</br>"
-	}
-	for _, v := range p.Definition.TelCfg.VswitchCfg {
-		tele += "For VJunos Sw. version " + v.Version + ": " + v.Config + "</br>"
 	}
 	for i, v := range p.Definition.TelCfg.VevoCfg {
 		if i == len(p.Definition.TelCfg.VevoCfg)-1 {
