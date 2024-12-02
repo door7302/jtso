@@ -87,7 +87,7 @@ func GetFacts(r string, u string, p string, port int, timeout int) (*xml.Version
 				// check if chassis has PSN or not
 				isHW := false
 				for _, mod := range HwInfo.Chassis.Modules {
-					if strings.Contains(mod.Name, "PSN") {
+					if strings.Contains(mod.Name, "PSM") {
 						isHW = true
 						break
 					}
