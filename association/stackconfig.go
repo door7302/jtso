@@ -218,7 +218,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// create the slice for which families we have to reconfigure the stack
 	if family == "all" {
-		families = make([]string, 13)
+		families = make([]string, 12)
 
 		families[0] = "mx"
 		families[1] = "ptx"
