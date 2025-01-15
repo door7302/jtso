@@ -50,9 +50,19 @@ function addAsso() {
         dataType: "json",
         success: function (json) {
           if (json.status == "OK") {
-            var row = $("<tr><td>" + r + "</td><td>" + raw_selected + '</td><td class="d-xxl-flex justify-content-xxl-center"><button onclick="removeAsso("' 
-              + r + '", this)" class="btn btn-danger" style="margin-left: 5px;" type="submit"><i class="fa fa-trash" style="font-size: 15px;"></i></button></td></tr>')
-            $("#ListProfiles").append(row).draw();
+            const table = $("#ListProfiles").DataTable(); 
+            table.row.add([
+              r,
+              raw_selected, 
+              `
+                  <div class="d-xxl-flex justify-content-xxl-center">
+                      <button class="btn btn-danger" onclick="removeAsso('${r}', this)">
+                          <i class="fa fa-trash"></i>
+                      </button>
+                  </div>
+              `
+            ]).draw(false); 
+  
             alertify.success("Profile(s) have been successfulfy added to router " + r)
             waitingDialog.hide();
           } else {
