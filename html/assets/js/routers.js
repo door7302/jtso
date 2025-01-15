@@ -59,6 +59,7 @@ function addRouter() {
               `
           ]);
           table.draw();
+          table.columns.adjust().draw();
           document.getElementById("Hostname").value = "";
           document.getElementById("Shortname").value = "";
           waitingDialog.hide();

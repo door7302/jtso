@@ -67,6 +67,7 @@ function addAsso() {
                 `
             ]);
             table.draw();
+            table.columns.adjust().draw();
             alertify.success("Profile(s) have been successfulfy added to router " + r)
             waitingDialog.hide();
           } else {
