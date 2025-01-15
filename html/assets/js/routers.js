@@ -35,27 +35,22 @@ function addRouter() {
       dataType: "json",
       success: function (json) {
         if (json.status == "OK") {
-          const tableBody = $("#ListRtrs tbody");
-          const newRow = `
-              <tr>
-                  <td>${json.name}</td>
-                  <td>${json.hostname}</td>
-                  <td>${json.family}</td>
-                  <td>${json.model}</td>
-                  <td>${json.version}</td>
-                  <td class="d-xxl-flex justify-content-xxl-center">
-                      <!-- Reset Button -->
-                      <button class="btn btn-success" onclick="reset('${h}', '${s}', this)" style="margin-right: 5px;">
-                          <i class="fa fa-sync"></i>
-                      </button>
-                      <!-- Delete Button -->
-                      <button class="btn btn-danger" onclick="remove('${s}', this)">
-                          <i class="fa fa-trash"></i>
-                      </button>
-                  </td>
-              </tr>
-          `;
-          tableBody.append(newRow);
+          const table = $("#ListRtrs").DataTable();
+          table.row.add([
+              json.name,
+              json.hostname,
+              json.family,
+              json.model,
+              json.version,
+              `
+                  <button onclick="reset('${h}', '${s}', this)" class="btn btn-success" style="margin-left: 5px;" type="button">
+                      <i class="fa fa-sync" style="font-size: 15px;"></i>
+                  </button>
+                  <button onclick="remove('${s}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit">
+                      <i class="fa fa-trash" style="font-size: 15px;"></i>
+                  </button>
+              `
+          ]).draw();
           document.getElementById("Hostname").value = "";
           document.getElementById("Shortname").value = "";
           waitingDialog.hide();
@@ -146,6 +141,10 @@ function remove(name, td) {
       });
     }
   }).setHeader('JSTO...');
+}
+
+function info() {
+  alertify.alert("JSTO...", "CSV file must include these following fields with the ';' separator:</br></br>[shortName];[HostName]</br>");  
 }
 
 function importCSV() {

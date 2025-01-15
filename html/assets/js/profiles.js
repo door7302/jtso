@@ -14,6 +14,9 @@ $(document).ready(function () {
       ]
   });
 });
+function info() {
+  alertify.alert("JSTO...", "CSV file must include these following fields with the ';' separator:</br></br>[shortName];[profileName1];[profileName2];...</br>");  
+}
 
 function addAsso() {
   var r = document.getElementById("router").value.trim();
