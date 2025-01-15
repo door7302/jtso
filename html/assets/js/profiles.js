@@ -15,6 +15,7 @@ $(document).ready(function () {
       ]
   });
 });
+
 function showInfo() {
   alertify.alert("JSTO...", "CSV file must include these following fields with the ';' separator:</br></br>[shortName];[profileName1];[profileName2];...</br>");  
 }
@@ -30,11 +31,12 @@ function addAsso() {
       raw_selected = raw_selected + option.value + " ; "
     }
   }
-  raw_selected = raw_selected.slice(0, -3);
+  
 
   if (selected.length == 0) {
     alertify.alert("JSTO...", "Please select at least one Profile in the list.");
   } else {
+    raw_selected = raw_selected.slice(0, -3);
     var dataToSend = {
       "shortname": r,
       "profiles": selected
@@ -49,6 +51,7 @@ function addAsso() {
         contentType: "application/json",
         dataType: "json",
         success: function (json) {
+          alert(JSON.stringify(json))
           if (json.status == "OK") {
             const table = $("#ListProfiles").DataTable(); 
             table.row.add([
