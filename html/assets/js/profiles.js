@@ -14,7 +14,7 @@ $(document).ready(function () {
       ]
   });
 });
-function info() {
+function showInfo() {
   alertify.alert("JSTO...", "CSV file must include these following fields with the ';' separator:</br></br>[shortName];[profileName1];[profileName2];...</br>");  
 }
 
@@ -49,20 +49,18 @@ function addAsso() {
         dataType: "json",
         success: function (json) {
           if (json.status == "OK") {
-            const tableBody = $("#ListProfiles tbody");
-            const newRow = `
-                <tr>
-                    <td>${r}</td>
-                    <td>${raw_selected}</td>
+            const table = $("#ListProfiles").DataTable(); 
+            table.row.add([
+                r,
+                raw_selected, 
+                `
                     <td class="d-xxl-flex justify-content-xxl-center">
-                        <!-- Delete Button -->
                         <button class="btn btn-danger" onclick="removeAsso('${s}', this)">
                             <i class="fa fa-trash"></i>
                         </button>
                     </td>
-                </tr>
-            `;
-            tableBody.append(newRow);
+                `
+            ]).draw();
             alertify.success("Profile(s) have been successfulfy added to router " + r)
             waitingDialog.hide();
           } else {

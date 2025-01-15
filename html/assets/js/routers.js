@@ -37,8 +37,8 @@ function addRouter() {
         if (json.status == "OK") {
           const table = $("#ListRtrs").DataTable();
           table.row.add([
-              json.name,
-              json.hostname,
+              s,
+              h,
               json.family,
               json.model,
               json.version,
@@ -143,7 +143,7 @@ function remove(name, td) {
   }).setHeader('JSTO...');
 }
 
-function info() {
+function showInfo() {
   alertify.alert("JSTO...", "CSV file must include these following fields with the ';' separator:</br></br>[shortName];[HostName]</br>");  
 }
 
