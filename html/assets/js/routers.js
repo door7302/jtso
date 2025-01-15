@@ -43,14 +43,14 @@ function addRouter() {
               json.model,
               json.version,
               `   
-              <td class="d-xxl-flex justify-content-xxl-center">
+              <div class="d-xxl-flex justify-content-xxl-center">
                   <button onclick="reset('${h}', '${s}', this)" class="btn btn-success" style="margin-left: 5px;" type="button">
                       <i class="fa fa-sync" style="font-size: 15px;"></i>
                   </button>
                   <button onclick="remove('${s}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit">
                       <i class="fa fa-trash" style="font-size: 15px;"></i>
                   </button>
-              </td>
+              </div>
               `
           ]).draw();
           document.getElementById("Hostname").value = "";

@@ -54,11 +54,11 @@ function addAsso() {
                 r,
                 raw_selected, 
                 `
-                    <td class="d-xxl-flex justify-content-xxl-center">
+                    <div class="d-xxl-flex justify-content-xxl-center">
                         <button class="btn btn-danger" onclick="removeAsso('${s}', this)">
                             <i class="fa fa-trash"></i>
                         </button>
-                    </td>
+                    </div>
                 `
             ]).draw();
             alertify.success("Profile(s) have been successfulfy added to router " + r)
