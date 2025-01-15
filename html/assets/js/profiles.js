@@ -50,6 +50,10 @@ function addAsso() {
         success: function (json) {
           if (json.status == "OK") {
             const table = $("#ListProfiles").DataTable(); 
+            if (table.data().count() === 0) {
+              table.clear().draw(); 
+            }
+  
             table.row.add([
                 r,
                 raw_selected, 

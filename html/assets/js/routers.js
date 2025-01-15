@@ -36,6 +36,9 @@ function addRouter() {
       success: function (json) {
         if (json.status == "OK") {
           const table = $("#ListRtrs").DataTable();
+          if (table.data().count() === 0) {
+            table.clear().draw(); 
+          }
           table.row.add([
               s,
               h,
