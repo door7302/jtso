@@ -5,6 +5,7 @@ $(document).ready(function () {
       ordering: true, // Enable column sorting
       info: false, // Show table info (e.g., "Showing 1 to 10 of 50 entries")
       responsive: true, // Make the table responsive
+      deferRender: false,
       language: {
           search: "Filter:", // Customize the search box label
           lengthMenu: "Show _MENU_ entries",
@@ -13,6 +14,7 @@ $(document).ready(function () {
           { orderable: false, targets: 5 } // Disable sorting on the "Actions" column
       ]
   });
+
 });
 
 function addRouter() {
