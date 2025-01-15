@@ -55,7 +55,8 @@ function addRouter() {
                   </button>
               </div>
               `
-          ]).draw();
+          ]);
+          table.draw();
           document.getElementById("Hostname").value = "";
           document.getElementById("Shortname").value = "";
           waitingDialog.hide();

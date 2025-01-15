@@ -64,7 +64,8 @@ function addAsso() {
                         </button>
                     </div>
                 `
-            ]).draw();
+            ]);
+            table.draw();
             alertify.success("Profile(s) have been successfulfy added to router " + r)
             waitingDialog.hide();
           } else {
