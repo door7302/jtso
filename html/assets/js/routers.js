@@ -59,6 +59,7 @@ function addRouter() {
           document.getElementById("Hostname").value = "";
           document.getElementById("Shortname").value = "";
           waitingDialog.hide();
+          
           alertify.success("Router " + s + " has been successfulfy added");
         } else {
           waitingDialog.hide();

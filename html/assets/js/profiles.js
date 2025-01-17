@@ -20,6 +20,7 @@ function showInfo() {
 }
 
 function addAsso() {
+
   var r = document.getElementById("router").value.trim();
   var all_selected = document.getElementById('profiles').options
   var selected = [];
@@ -56,15 +57,17 @@ function addAsso() {
               r,
               raw_selected, 
               `
-                  <div class="d-xxl-flex justify-content-xxl-center">
-                      <button class="btn btn-danger" onclick="removeAsso('${r}', this)">
-                          <i class="fa fa-trash"></i>
-                      </button>
-                  </div>
+                <div class="d-xxl-flex justify-content-xxl-center">
+                    <button class="btn btn-danger" onclick="removeAsso('${r}', this)">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
               `
             ]);
             table.draw(false); 
+
             waitingDialog.hide();
+       
             alertify.success("Profile(s) have been successfulfy added to router " + r)
         
           } else {
