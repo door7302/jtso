@@ -560,7 +560,7 @@ func routeIndex(c echo.Context) error {
 		"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
 }
 
-func routerStats(c echo.Context) error {
+func routeStats(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
 
