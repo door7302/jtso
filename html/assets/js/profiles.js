@@ -62,18 +62,21 @@ function addAsso() {
                       </button>
                   </div>
               `
-            ]).draw(false); 
-  
+            ]);
+            table.draw(false); 
+            waitingDialog.hide();
             alertify.success("Profile(s) have been successfulfy added to router " + r)
-            waitingDialog.hide();
+        
           } else {
-            alertify.alert("JSTO...", json.msg);
             waitingDialog.hide();
+            alertify.alert("JSTO...", json.msg);
+            
           }
         },
         error: function (xhr, ajaxOptions, thrownError) {
-          alertify.alert("JSTO...", "Unexpected error");
           waitingDialog.hide();
+          alertify.alert("JSTO...", "Unexpected error");
+         
         }
       });
     });
