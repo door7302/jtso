@@ -1,6 +1,6 @@
 $(document).ready(function () {
     const $gaugeContainer = $('#container-gauges');
-    const refreshInterval = 5000; // 5 seconds
+    const refreshInterval = 30000; // 5 seconds
 
     // Function to fetch stats and update gauges
     function fetchStats() {
