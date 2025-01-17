@@ -49,6 +49,12 @@ type (
 		Msg    string `json:"msg"`
 	}
 
+	ReplyStats struct {
+		Status string      `json:"status"`
+		Msg    string      `json:"msg"`
+		Data   interface{} `json:"data,omitempty"`
+	}
+
 	ReplyRouter struct {
 		Status  string `json:"status"`
 		Family  string `json:"family"`

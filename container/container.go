@@ -2,6 +2,7 @@ package container
 
 import (
 	"context"
+	"encoding/json"
 	"jtso/logger"
 
 	"github.com/docker/docker/api/types"
@@ -9,18 +10,72 @@ import (
 	"github.com/docker/docker/client"
 )
 
-func ListContainers() []types.Container {
-	// Open Docker API
-	var containers []types.Container
-	containers = make([]types.Container, 0)
+func calculateCPUPercent(stats types.StatsJSON) float64 {
+	cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage) - float64(stats.PreCPUStats.CPUUsage.TotalUsage)
+	systemDelta := float64(stats.CPUStats.SystemUsage) - float64(stats.PreCPUStats.SystemUsage)
+	if systemDelta > 0.0 && cpuDelta > 0.0 {
+		return (cpuDelta / systemDelta) * float64(len(stats.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+	}
+	return 0.0
+}
 
+func GetContainerStats() (map[string]map[string]float64, error) {
+	statsMap := make(map[string]map[string]float64)
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		logger.Log.Errorf("Error creating Docker client: %v", err)
+		return nil, err
+	}
+
+	// Get the list of running containers
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	if err != nil {
+		logger.Log.Errorf("Error listing containers: %v", err)
+		return nil, err
+	}
+
+	for _, container := range containers {
+		// Retrieve stats for each container
+		stats, err := cli.ContainerStats(context.Background(), container.ID, false)
+		if err != nil {
+			logger.Log.Errorf("Error getting stats for container %s: %v", container.ID, err)
+			continue
+		}
+		defer stats.Body.Close()
+
+		var stat types.StatsJSON
+		if err := json.NewDecoder(stats.Body).Decode(&stat); err != nil {
+			logger.Log.Errorf("Error decoding stats for container %s: %v", container.ID, err)
+			continue
+		}
+
+		// Calculate CPU percentage
+		cpuPercent := calculateCPUPercent(stat)
+
+		// Calculate memory usage percentage
+		memUsage := stat.MemoryStats.Usage
+		memLimit := stat.MemoryStats.Limit
+		memPercent := float64(memUsage) / float64(memLimit) * 100.0
+
+		// Add stats to the map
+		statsMap[container.Names[0][1:]] = map[string]float64{
+			"cpu": cpuPercent,
+			"mem": memPercent,
+		}
+	}
+
+	return statsMap, nil
+}
+
+func ListContainers() []types.Container {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		logger.Log.Errorf("Unable to open Docker session: %v", err)
 	}
 	defer cli.Close()
 
-	containers, err = cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
 	if err != nil {
 		logger.Log.Errorf("Unable to list container state: %v", err)
 	}

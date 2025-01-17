@@ -76,6 +76,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/doc.html", routeDoc)
 	wapp.GET("/browser.html", routeBrowse)
 	wapp.GET("/stream", routeStream)
+	wapp.GET("/stats", routeStats)
 
 	// configure POST routers
 	wapp.POST("/addrouter", routeAddRouter)
@@ -1093,6 +1094,16 @@ func routeSearchPath(c echo.Context) error {
 	parser.StreamObj.StopStreaming = make(chan struct{})
 
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Streaming well started."})
+}
+
+func routeStats(c echo.Context) error {
+	statsMap, err := container.GetContainerStats()
+	if err != nil {
+		logger.Log.Errorf("Error retrieving container stats: %v", err)
+		return c.JSON(http.StatusOK, ReplyStats{Status: "NOK", Msg: "Unable to retrieve container stats", Data: nil})
+	}
+
+	return c.JSON(http.StatusOK, ReplyStats{Status: "OK", Msg: "Container stats", Data: statsMap})
 }
 
 func routeStream(c echo.Context) error {
