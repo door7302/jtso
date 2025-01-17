@@ -49,9 +49,7 @@ function addAsso() {
         data: JSON.stringify(dataToSend),
         contentType: "application/json",
         dataType: "json",
-        timeout: 5000,
         success: function (json) {
-          alert(JSON.stringify(json));
           if (json.status == "OK") {
             const table = $("#ListProfiles").DataTable(); 
             table.row.add([
@@ -76,9 +74,6 @@ function addAsso() {
         error: function (xhr, ajaxOptions, thrownError) {
           alertify.alert("JSTO...", "Unexpected error");
           waitingDialog.hide();
-        },
-        complete: function () {
-          alert("toto");
         }
       });
     });

@@ -6,6 +6,7 @@ import (
 	"jtso/sqlite"
 	"jtso/xml"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -173,6 +174,15 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 									}
 									m.Meta[rd.Family][rd.RtrName][key1]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
 									m.Meta[rd.Family][rd.RtrName][key2]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+									// Add channel up to 4
+									for channel := 0; channel < 4; channel++ {
+										key3 := key2 + strconv.Itoa(channel)
+										_, ok = m.Meta[rd.Family][rd.RtrName][key3]
+										if !ok {
+											m.Meta[rd.Family][rd.RtrName][key3] = make(map[string]string)
+										}
+										m.Meta[rd.Family][rd.RtrName][key3]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel)
+									}
 								}
 							}
 						}
@@ -205,6 +215,15 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 							}
 							m.Meta[rd.Family][rd.RtrName][key1]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
 							m.Meta[rd.Family][rd.RtrName][key2]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+							// Add channel up to 4
+							for channel := 0; channel < 4; channel++ {
+								key3 := key2 + strconv.Itoa(channel)
+								_, ok = m.Meta[rd.Family][rd.RtrName][key3]
+								if !ok {
+									m.Meta[rd.Family][rd.RtrName][key3] = make(map[string]string)
+								}
+								m.Meta[rd.Family][rd.RtrName][key3]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel)
+							}
 
 						}
 					}
