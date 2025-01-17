@@ -5,7 +5,7 @@ $(document).ready(function () {
     // Function to fetch stats and update gauges
     function fetchStats() {
         $.ajax({
-            url: '/stats',
+            url: '/containerstats',
             method: 'GET',
             success: function (response) {
                 if (response.status === 'OK') {

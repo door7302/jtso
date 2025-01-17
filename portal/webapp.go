@@ -78,7 +78,10 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/stream", routeStream)
 	wapp.GET("/stats", routeStats)
 
-	// configure POST routers
+	// GET API routes
+	wapp.GET("/containerstats", routeContainerStats)
+
+	//  POST API routes
 	wapp.POST("/addrouter", routeAddRouter)
 	wapp.POST("/delrouter", routeDelRouter)
 	wapp.POST("/resetrouter", routeResetRouter)
@@ -555,6 +558,13 @@ func routeIndex(c echo.Context) error {
 		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
 		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VEVODebug": VEVODebug,
 		"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
+}
+
+func routerStats(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
+
+	return c.Render(http.StatusOK, "stats.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
 }
 
 func routeRouters(c echo.Context) error {
@@ -1096,7 +1106,7 @@ func routeSearchPath(c echo.Context) error {
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Streaming well started."})
 }
 
-func routeStats(c echo.Context) error {
+func routeContainerStats(c echo.Context) error {
 	statsMap, err := container.GetContainerStats()
 	if err != nil {
 		logger.Log.Errorf("Error retrieving container stats: %v", err)
