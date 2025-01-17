@@ -67,7 +67,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 		templates: template.Must(template.ParseGlob("html/templates/*")),
 	}
 
-	// configure GET routes
+	// Get pages
 	wapp.GET("/", routeIndex)
 	wapp.GET("/index.html", routeIndex)
 	wapp.GET("/routers.html", routeRouters)
@@ -75,10 +75,10 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/cred.html", routeCred)
 	wapp.GET("/doc.html", routeDoc)
 	wapp.GET("/browser.html", routeBrowse)
-	wapp.GET("/stream", routeStream)
-	wapp.GET("/stats", routeStats)
+	wapp.GET("/stats.html", routeStats)
 
 	// GET API routes
+	wapp.GET("/stream", routeStream)
 	wapp.GET("/containerstats", routeContainerStats)
 
 	//  POST API routes
