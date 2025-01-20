@@ -13,6 +13,21 @@ import (
 	"github.com/docker/docker/client"
 )
 
+type ContainerStats struct {
+	Interval int
+	Stats    map[string]map[string]float64
+	StMu     *sync.Mutex
+}
+
+var Cstats *ContainerStats
+
+func Init(i int) {
+	Cstats = new(ContainerStats)
+	Cstats.Interval = i
+	Cstats.Stats = make(map[string]map[string]float64)
+	Cstats.StMu = new(sync.Mutex)
+}
+
 func calculateCPUPercent(current, previous types.StatsJSON) float64 {
 	cpuDelta := float64(current.CPUStats.CPUUsage.TotalUsage - previous.CPUStats.CPUUsage.TotalUsage)
 	systemDelta := float64(current.CPUStats.SystemUsage - previous.CPUStats.SystemUsage)
@@ -33,31 +48,31 @@ func collectStats(cli *client.Client, container types.Container, resultChan chan
 	// Get initial stats
 	stats, err := cli.ContainerStats(context.Background(), container.ID, false)
 	if err != nil {
-		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1}}
+		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1.0}}
 		return
 	}
 	defer stats.Body.Close()
 
 	var prevStats types.StatsJSON
 	if err := json.NewDecoder(stats.Body).Decode(&prevStats); err != nil {
-		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1}}
+		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1.0}}
 		return
 	}
 
 	// Wait for 1 second
-	time.Sleep(1 * time.Second)
+	time.Sleep(time.Duration(Cstats.Interval) * time.Second)
 
 	// Get next stats
 	stats, err = cli.ContainerStats(context.Background(), container.ID, false)
 	if err != nil {
-		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1}}
+		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1.0}}
 		return
 	}
 	defer stats.Body.Close()
 
 	var currentStats types.StatsJSON
 	if err := json.NewDecoder(stats.Body).Decode(&currentStats); err != nil {
-		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1}}
+		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1.0}}
 		return
 	}
 
@@ -82,19 +97,21 @@ func collectStats(cli *client.Client, container types.Container, resultChan chan
 	}
 }
 
-func GetContainerStats() (map[string]map[string]float64, error) {
+func GetContainerStats() {
+	logger.Log.Debug("Start collecting container stats")
+
 	// Initialize Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		logger.Log.Errorf("Error creating Docker client: %v\n", err)
-		return nil, nil
+		return
 	}
 
 	// Get list of containers
 	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
 	if err != nil {
 		logger.Log.Errorf("Error listing containers: %v\n", err)
-		return nil, nil
+		return
 	}
 
 	// Set up synchronization
@@ -112,14 +129,15 @@ func GetContainerStats() (map[string]map[string]float64, error) {
 	close(resultChan)
 
 	// Aggregate results
-	statsMap := make(map[string]map[string]float64)
+	Cstats.StMu.Lock()
+	Cstats.Stats = make(map[string]map[string]float64)
 	for result := range resultChan {
 		for containerName, stats := range result {
-			statsMap[containerName] = stats
+			Cstats.Stats[containerName] = stats
 		}
 	}
-
-	return statsMap, nil
+	Cstats.StMu.Unlock()
+	logger.Log.Debug("End of the container stats collection")
 }
 
 func ListContainers() []types.Container {

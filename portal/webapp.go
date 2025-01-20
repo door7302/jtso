@@ -1107,11 +1107,9 @@ func routeSearchPath(c echo.Context) error {
 }
 
 func routeContainerStats(c echo.Context) error {
-	statsMap, err := container.GetContainerStats()
-	if err != nil {
-		logger.Log.Errorf("Error retrieving container stats: %v", err)
-		return c.JSON(http.StatusOK, ReplyStats{Status: "NOK", Msg: "Unable to retrieve container stats", Data: nil})
-	}
+	container.Cstats.StMu.Lock()
+	statsMap := container.Cstats
+	container.Cstats.StMu.Unlock()
 
 	return c.JSON(http.StatusOK, ReplyStats{Status: "OK", Msg: "Container stats", Data: statsMap})
 }

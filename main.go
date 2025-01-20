@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"jtso/association"
 	"jtso/config"
+	"jtso/container"
 	"jtso/kapacitor"
 	"jtso/logger"
 	_ "jtso/output"
@@ -91,10 +92,10 @@ func main() {
 		}
 	}()
 
-	// create a ticker to refresh the Enrichment struct
+	// create a ticker to refresh the profiles
 	ticker2 := time.NewTicker(1 * time.Minute)
 
-	// Create the Thread that periodically refreshes the Enrichment struct
+	// Create the Thread that periodically refreshes the profiles
 	go func() {
 		for {
 			select {
@@ -108,6 +109,20 @@ func main() {
 	association.PeriodicCheck()
 	go worker.Collect(Cfg)
 	go association.ConfigueStack(Cfg, "all")
+
+	// create a ticker to refresh the docker statistics
+	ticker3 := time.NewTicker(1 * time.Minute)
+
+	// Create the Thread that periodically the docker statistics
+	container.Init(1)
+	go func() {
+		for {
+			select {
+			case <-ticker3.C:
+				container.GetContainerStats()
+			}
+		}
+	}()
 
 	// Waiting exit
 	c := make(chan os.Signal, 1)
