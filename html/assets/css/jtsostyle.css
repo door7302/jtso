@@ -315,6 +315,7 @@ body.dark-mode .other-card {
 
 body.dark-mode h1,
 body.dark-mode h4.card-title,
+body.dark-mode h5.card-title,
 body.dark-mode label {
   color: #ffffff !important;
 }
