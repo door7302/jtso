@@ -151,7 +151,7 @@ func ListContainers() []types.Container {
 	if err != nil {
 		logger.Log.Errorf("Unable to list container state: %v", err)
 	}
-	logger.Log.Info("List of containers has been retrieved")
+	logger.Log.Debug("List of containers has been retrieved")
 	return containers
 }
 

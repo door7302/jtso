@@ -12,7 +12,7 @@ $(document).ready(function () {
                 if (response.status === 'OK') {
                     waitingDialog.hide();
                     const data = response.Data;
-                    alert(JSON.stringify(response))
+                    
                     // Clear existing gauges
                     $gaugeContainer.empty();
 
@@ -21,6 +21,7 @@ $(document).ready(function () {
                         const cpu = data[container].cpu;
                         const mem = data[container].mem;
 
+                        alert(container + " cpu : " + cpu)
                         // Create a container for the gauges
                         const gaugeCard = $(`
                             <div class="col-md-6 mb-4">
