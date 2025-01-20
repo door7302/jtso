@@ -12,49 +12,53 @@ $(document).ready(function () {
                 if (response.status === 'OK') {
                     waitingDialog.hide();
                     const data = response.data;
-                    
+    
                     // Clear existing gauges
                     $gaugeContainer.empty();
-
+    
                     // Create gauges for each container
                     Object.keys(data).forEach(container => {
-                        const cpu = data[container].cpu;
-                        const mem = data[container].mem;
-
+                        const cpu = (data[container].cpu || 0).toFixed(2); // Two decimals for CPU
+                        const mem = (data[container].mem || 0).toFixed(2); // Two decimals for Memory
+    
                         // Create a container for the gauges
                         const gaugeCard = $(`
-                            <div class="col-md-6 mb-4">
+                            <div class="col-md-4 mb-4">
                                 <div class="card shadow-sm">
                                     <div class="card-body text-center">
                                         <h5 class="card-title">${container}</h5>
                                         <div id="gauge-cpu-${container}" class="gauge mb-3"></div>
-                                        <p class="mb-0 text-muted">CPU Utilization</p>
+                                        <p class="mb-0 text-muted text-center">CPU Utilization</p>
                                         <div id="gauge-mem-${container}" class="gauge mt-3"></div>
-                                        <p class="mb-0 text-muted">Memory Utilization</p>
+                                        <p class="mb-0 text-muted text-center">Memory Utilization</p>
                                     </div>
                                 </div>
                             </div>
                         `);
-
+    
                         $gaugeContainer.append(gaugeCard);
-
+    
                         // Initialize gauges
                         new JustGage({
                             id: `gauge-cpu-${container}`,
-                            value: cpu,
+                            value: parseFloat(cpu),
                             min: 0,
                             max: 100,
                             title: "CPU",
                             levelColors: ["#28a745", "#ffc107", "#dc3545"],
+                            label: `${cpu}%`, // Display the formatted value
+                            decimals: true // Enable decimals (supported in some versions of JustGage)
                         });
-
+    
                         new JustGage({
                             id: `gauge-mem-${container}`,
-                            value: mem,
+                            value: parseFloat(mem),
                             min: 0,
                             max: 100,
                             title: "Memory",
                             levelColors: ["#007bff", "#17a2b8", "#6f42c1"],
+                            label: `${mem}%`, // Display the formatted value
+                            decimals: true // Enable decimals
                         });
                     });
                 } else {
@@ -66,6 +70,7 @@ $(document).ready(function () {
             }
         });
     }
+    
 
     // Fetch stats immediately and set up periodic refresh
     fetchStats();
