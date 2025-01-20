@@ -28,9 +28,9 @@ $(document).ready(function () {
                                     <div class="card-body text-center">
                                         <h5 class="card-title">${container}</h5>
                                         <div id="gauge-cpu-${container}" class="gauge mb-3"></div>
-                                        <p class="mb-0 text-muted text-center">CPU Utilization</p>
+                                      
                                         <div id="gauge-mem-${container}" class="gauge mt-3"></div>
-                                        <p class="mb-0 text-muted text-center">Memory Utilization</p>
+                                       
                                     </div>
                                 </div>
                             </div>
@@ -46,8 +46,8 @@ $(document).ready(function () {
                             max: 100,
                             title: "CPU",
                             levelColors: ["#28a745", "#ffc107", "#dc3545"],
-                            label: `${cpu}%`, // Display the formatted value
-                            decimals: true // Enable decimals (supported in some versions of JustGage)
+                            label: `${cpu}%`, 
+                            decimals: true 
                         });
     
                         new JustGage({
@@ -57,8 +57,8 @@ $(document).ready(function () {
                             max: 100,
                             title: "Memory",
                             levelColors: ["#007bff", "#17a2b8", "#6f42c1"],
-                            label: `${mem}%`, // Display the formatted value
-                            decimals: true // Enable decimals
+                            label: `${mem}%`, 
+                            decimals: true 
                         });
                     });
                 } else {
