@@ -76,9 +76,4 @@ $(document).ready(function () {
     fetchStats();
     setInterval(fetchStats, refreshInterval);
 
-    // Dark mode toggle
-    $('#darkModeSwitch').change(function () {
-        const theme = $(this).is(':checked') ? 'dark' : 'light';
-        $('html').attr('data-bs-theme', theme);
-    });
 });

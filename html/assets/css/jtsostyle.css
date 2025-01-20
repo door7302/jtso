@@ -375,7 +375,12 @@ body.dark-mode, body.light-mode {
 }
 
 
-
+/* Gauge */ 
+body.dark-mode .gauge {
+  background-color: #333333 !important; /* Dark background for gauge container */
+  color: #ffffff !important; /* Text color inside the gauge */
+  border: 1px solid #444444 !important; /* Border for gauge container */
+}
 
 
 
