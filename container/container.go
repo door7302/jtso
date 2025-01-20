@@ -4,64 +4,118 @@ import (
 	"context"
 	"encoding/json"
 	"jtso/logger"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 )
 
-func calculateCPUPercent(stats types.StatsJSON) float64 {
-	cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage) - float64(stats.PreCPUStats.CPUUsage.TotalUsage)
-	systemDelta := float64(stats.CPUStats.SystemUsage) - float64(stats.PreCPUStats.SystemUsage)
-	if systemDelta > 0.0 && cpuDelta > 0.0 {
-		return (cpuDelta / systemDelta) * float64(len(stats.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+func calculateCPUPercent(current, previous types.StatsJSON) float64 {
+	cpuDelta := float64(current.CPUStats.CPUUsage.TotalUsage - previous.CPUStats.CPUUsage.TotalUsage)
+	systemDelta := float64(current.CPUStats.SystemUsage - previous.CPUStats.SystemUsage)
+	onlineCPUs := float64(current.CPUStats.OnlineCPUs)
+
+	// Avoid division by zero
+	if systemDelta <= 0.0 || onlineCPUs <= 0.0 {
+		return 0.0
 	}
-	return 0.0
+
+	// Calculate CPU percentage
+	return (cpuDelta / systemDelta) * onlineCPUs * 100.0
+}
+
+func collectStats(cli *client.Client, container types.Container, resultChan chan<- map[string]map[string]float64, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	// Get initial stats
+	stats, err := cli.ContainerStats(context.Background(), container.ID, false)
+	if err != nil {
+		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1}}
+		return
+	}
+	defer stats.Body.Close()
+
+	var prevStats types.StatsJSON
+	if err := json.NewDecoder(stats.Body).Decode(&prevStats); err != nil {
+		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1}}
+		return
+	}
+
+	// Wait for 1 second
+	time.Sleep(1 * time.Second)
+
+	// Get next stats
+	stats, err = cli.ContainerStats(context.Background(), container.ID, false)
+	if err != nil {
+		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1}}
+		return
+	}
+	defer stats.Body.Close()
+
+	var currentStats types.StatsJSON
+	if err := json.NewDecoder(stats.Body).Decode(&currentStats); err != nil {
+		resultChan <- map[string]map[string]float64{container.Names[0]: {"error": 1}}
+		return
+	}
+
+	// Calculate CPU percentage
+	cpuPercent := calculateCPUPercent(currentStats, prevStats)
+
+	// Calculate memory percentage
+	memUsage := float64(currentStats.MemoryStats.Usage)
+	memLimit := float64(currentStats.MemoryStats.Limit)
+	memPercent := 0.0
+	if memLimit > 0 {
+		memPercent = (memUsage / memLimit) * 100.0
+	}
+
+	// Format results
+	containerName := strings.TrimPrefix(container.Names[0], "/")
+	resultChan <- map[string]map[string]float64{
+		containerName: {
+			"cpu": cpuPercent,
+			"mem": memPercent,
+		},
+	}
 }
 
 func GetContainerStats() (map[string]map[string]float64, error) {
-	statsMap := make(map[string]map[string]float64)
-
+	// Initialize Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		logger.Log.Errorf("Error creating Docker client: %v", err)
-		return nil, err
+		logger.Log.Errorf("Error creating Docker client: %v\n", err)
+		return nil, nil
 	}
 
-	// Get the list of running containers
+	// Get list of containers
 	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
 	if err != nil {
-		logger.Log.Errorf("Error listing containers: %v", err)
-		return nil, err
+		logger.Log.Errorf("Error listing containers: %v\n", err)
+		return nil, nil
 	}
 
+	// Set up synchronization
+	var wg sync.WaitGroup
+	resultChan := make(chan map[string]map[string]float64, len(containers))
+
+	// Collect stats in parallel
 	for _, container := range containers {
-		// Retrieve stats for each container
-		stats, err := cli.ContainerStats(context.Background(), container.ID, false)
-		if err != nil {
-			logger.Log.Errorf("Error getting stats for container %s: %v", container.ID, err)
-			continue
-		}
-		defer stats.Body.Close()
+		wg.Add(1)
+		go collectStats(cli, container, resultChan, &wg)
+	}
 
-		var stat types.StatsJSON
-		if err := json.NewDecoder(stats.Body).Decode(&stat); err != nil {
-			logger.Log.Errorf("Error decoding stats for container %s: %v", container.ID, err)
-			continue
-		}
+	// Wait for all goroutines to finish
+	wg.Wait()
+	close(resultChan)
 
-		// Calculate CPU percentage
-		cpuPercent := calculateCPUPercent(stat)
-
-		// Calculate memory usage percentage
-		memUsage := stat.MemoryStats.Usage
-		memLimit := stat.MemoryStats.Limit
-		memPercent := float64(memUsage) / float64(memLimit) * 100.0
-
-		// Add stats to the map
-		statsMap[container.Names[0][1:]] = map[string]float64{
-			"cpu": cpuPercent,
-			"mem": memPercent,
+	// Aggregate results
+	statsMap := make(map[string]map[string]float64)
+	for result := range resultChan {
+		for containerName, stats := range result {
+			statsMap[containerName] = stats
 		}
 	}
 
