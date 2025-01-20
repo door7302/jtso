@@ -1108,7 +1108,7 @@ func routeSearchPath(c echo.Context) error {
 
 func routeContainerStats(c echo.Context) error {
 	container.Cstats.StMu.Lock()
-	statsMap := container.Cstats
+	statsMap := container.Cstats.Stats
 	container.Cstats.StMu.Unlock()
 
 	return c.JSON(http.StatusOK, ReplyStats{Status: "OK", Msg: "Container stats", Data: statsMap})
