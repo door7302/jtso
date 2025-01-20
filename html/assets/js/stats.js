@@ -11,13 +11,13 @@ $(document).ready(function () {
             success: function (response) {
                 if (response.status === 'OK') {
                     waitingDialog.hide();
-                    const data = response.Data;
+                    const data = response.data;
                     
                     // Clear existing gauges
                     $gaugeContainer.empty();
 
                     // Create gauges for each container
-                    for (const container in data) {
+                    Object.keys(data).forEach(container => {
                         const cpu = data[container].cpu;
                         const mem = data[container].mem;
 
@@ -57,7 +57,7 @@ $(document).ready(function () {
                             title: "Memory",
                             levelColors: ["#007bff", "#17a2b8", "#6f42c1"],
                         });
-                    }
+                    });
                 } else {
                     alertify.error('Failed to fetch stats: Invalid status');
                 }
