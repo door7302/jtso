@@ -12,7 +12,7 @@ $(document).ready(function () {
                 if (response.status === 'OK') {
                     waitingDialog.hide();
                     const data = response.Data;
-                    alert(JSON.stringify(data))
+                    alert(JSON.stringify(response))
                     // Clear existing gauges
                     $gaugeContainer.empty();
 
