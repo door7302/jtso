@@ -382,6 +382,10 @@ body.dark-mode .gauge {
   border: 1px solid #444444 !important; /* Border for gauge container */
 }
 
+/* Adjust SVG Titles and Values Inside Gauges */
+body.dark-mode .gauge text {
+  fill: #ffffff !important; /* Make text inside gauges (titles and values) white */
+}
 
 
 
