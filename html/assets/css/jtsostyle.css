@@ -475,9 +475,30 @@ body.dark-mode .jstree {
   color: #ffffff !important; 
 }
 
+/* for doc - config rendering */ 
+
 .dark-mode code {
   background-color: #3f3f3f;
   color: #f0f0f0;
   padding: 10px;
   border-radius: 5px;
+}
+
+.dark-mode .token.comment {
+  color: #5c6370;
+  font-style: italic;
+}
+.dark-mode .token.string {
+  color: #98c379;
+}
+.dark-mode .token.number,
+.dark-mode .token.boolean {
+  color: #d19a66;
+}
+.dark-mode .token.keyword {
+  color: #c678dd;
+  font-weight: bold;
+}
+.dark-mode .token.operator {
+  color: #56b6c2;
 }
