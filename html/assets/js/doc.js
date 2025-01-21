@@ -60,12 +60,8 @@ async function loadConfig(fileName) {
       // Add syntax highlighting
       const highlightedToml = Prism.highlight(tomlContent, Prism.languages.toml, 'toml');
 
-      // Create <code> element with optional dark mode class
-      const isDarkMode = document.body.classList.contains('dark-mode');
-      const codeBlock = `<pre><code class="language-toml ${isDarkMode ? 'dark-mode' : ''}">${highlightedToml}</code></pre>`;
-
-      // Update modal content
-      document.getElementById('modalcore').innerHTML = codeBlock;
+      // Update modal content with highlighted TOML
+      document.getElementById('modalcore').innerHTML = `<pre><code class="language-toml">${highlightedToml}</code></pre>`;
 
       // Show the modal
       const modal = new bootstrap.Modal(document.getElementById('logs'));
