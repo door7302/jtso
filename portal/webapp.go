@@ -60,7 +60,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp := echo.New()
 	//configure app
 	wapp.Use(middleware.Static("html/assets"))
-	wapp.Use(middleware.Static("jtso/active_profiles"))
+	wapp.Use(middleware.Static("var/active_profiles"))
 	wapp.Use(middleware.CORS())
 
 	//Templating config
