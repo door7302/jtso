@@ -81,6 +81,10 @@ func collectStats(cli *client.Client, container types.Container, resultChan chan
 
 	// Calculate memory percentage
 	memUsage := float64(currentStats.MemoryStats.Usage)
+	// Substract the cache mem
+	if cache, ok := currentStats.MemoryStats.Stats["cache"]; ok {
+		memUsage -= float64(cache)
+	}
 	memLimit := float64(currentStats.MemoryStats.Limit)
 	memPercent := 0.0
 	if memLimit > 0 {
