@@ -474,3 +474,10 @@ body.dark-mode .modal-backdrop {
 body.dark-mode .jstree {
   color: #ffffff !important; 
 }
+
+.dark-mode code {
+  background-color: #3f3f3f;
+  color: #f0f0f0;
+  padding: 10px;
+  border-radius: 5px;
+}

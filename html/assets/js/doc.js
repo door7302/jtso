@@ -60,14 +60,18 @@ async function loadConfig(fileName) {
       // Add syntax highlighting
       const highlightedToml = Prism.highlight(tomlContent, Prism.languages.toml, 'toml');
 
-      // Update modal content with highlighted TOML
-      document.getElementById('modalcore').innerHTML = `<pre><code class="language-toml">${highlightedToml}</code></pre>`;
+      // Create <code> element with optional dark mode class
+      const isDarkMode = document.body.classList.contains('dark-mode');
+      const codeBlock = `<pre><code class="language-toml ${isDarkMode ? 'dark-mode' : ''}">${highlightedToml}</code></pre>`;
+
+      // Update modal content
+      document.getElementById('modalcore').innerHTML = codeBlock;
 
       // Show the modal
       const modal = new bootstrap.Modal(document.getElementById('logs'));
       modal.show();
   } catch (error) {
-      console.error('Error loading config:', error);
+      alertify.alert("JSTO...", "Error loading config:" + error);
       document.getElementById('modalcore').textContent = 'Error loading configuration.';
   }
 }
