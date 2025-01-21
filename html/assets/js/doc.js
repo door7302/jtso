@@ -57,14 +57,8 @@ async function loadConfig(fileName) {
 
       const tomlContent = await response.text();
 
-      // Optional: Parse the TOML file (you can skip this if you just want to display raw TOML)
-      const parsedToml = TOML.parse(tomlContent);
-
-      // Pretty-print the TOML (stringify the parsed object)
-      const prettyToml = TOML.stringify(parsedToml);
-
       // Add syntax highlighting
-      const highlightedToml = Prism.highlight(prettyToml, Prism.languages.toml, 'toml');
+      const highlightedToml = Prism.highlight(tomlContent, Prism.languages.toml, 'toml');
 
       // Update modal content with highlighted TOML
       document.getElementById('modalcore').innerHTML = `<pre><code class="language-toml">${highlightedToml}</code></pre>`;

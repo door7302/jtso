@@ -1,7 +1,7 @@
 $(document).ready(function () {
     const $gaugeContainer = $('#container-gauges');
     const refreshInterval = 30000; // 5 seconds
-    waitingDialog.show();
+
     // Function to fetch stats and update gauges
     function fetchStats() {
         $.ajax({
@@ -10,7 +10,7 @@ $(document).ready(function () {
             timeout: 10000,
             success: function (response) {
                 if (response.status === 'OK') {
-                    waitingDialog.hide();
+        
                     const data = response.data;
     
                     // Clear existing gauges
