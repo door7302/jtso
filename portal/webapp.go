@@ -1252,43 +1252,43 @@ func routeUptDoc(c echo.Context) error {
 	tele := ""
 
 	for _, v := range p.Definition.TelCfg.MxCfg {
-		tele += "For MX version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For MX version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.PtxCfg {
-		tele += "For PTX version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For PTX version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.AcxCfg {
-		tele += "For ACX version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For ACX version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.ExCfg {
-		tele += "For EX version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For EX version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.QfxCfg {
-		tele += "For QFX version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For QFX version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.SrxCfg {
-		tele += "For SRX version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For SRX version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.CrpdCfg {
-		tele += "For CRPD version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For CRPD version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.CptxCfg {
-		tele += "For CPTX version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For CPTX version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.VmxCfg {
-		tele += "For VMX version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For VMX version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.VsrxCfg {
-		tele += "For VSRX version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For VSRX version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.VjunosCfg {
-		tele += "For VJunos Rtr. version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+		tele += "For VJunos Rtr. version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 	}
 	for i, v := range p.Definition.TelCfg.VevoCfg {
 		if i == len(p.Definition.TelCfg.VevoCfg)-1 {
-			tele += "For VJunos Evo. version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a>"
+			tele += "For VJunos Evo. version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a>"
 		} else {
-			tele += "For VJunos Evo. version " + v.Version + ": <a  onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
+			tele += "For VJunos Evo. version " + v.Version + ": <a href=\"javascript:void(0)\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">" + v.Config + "</a></br>"
 		}
 	}
 	if tele == "" {

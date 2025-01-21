@@ -48,27 +48,32 @@ function updateDoc() {
   }
 }
 
-  async function loadConfig(fileName) {
-      try {
-          // Fetch the content of the file from the server
-          const response = await fetch(fileName);
-          
-          // Check if the fetch was successful
-          if (!response.ok) {
-              throw new Error(`Failed to load ${fileName}: ${response.statusText}`);
-          }
-          
-          // Read the content as text
-          const fileContent = await response.text();
-          
-          // Update the modal content
-          document.getElementById('modalcore').textContent = fileContent;
-          
-          // Show the modal (Bootstrap specific)
-          const modal = new bootstrap.Modal(document.getElementById('logs'));
-          modal.show();
-      } catch (error) {
-          console.error('Error loading config:', error);
-          document.getElementById('modalcore').textContent = 'Error loading configuration.';
+async function loadConfig(fileName) {
+  try {
+      const response = await fetch(fileName);
+      if (!response.ok) {
+          throw new Error(`Failed to load ${fileName}: ${response.statusText}`);
       }
+
+      const tomlContent = await response.text();
+
+      // Optional: Parse the TOML file (you can skip this if you just want to display raw TOML)
+      const parsedToml = TOML.parse(tomlContent);
+
+      // Pretty-print the TOML (stringify the parsed object)
+      const prettyToml = TOML.stringify(parsedToml);
+
+      // Add syntax highlighting
+      const highlightedToml = Prism.highlight(prettyToml, Prism.languages.toml, 'toml');
+
+      // Update modal content with highlighted TOML
+      document.getElementById('modalcore').innerHTML = `<pre><code class="language-toml">${highlightedToml}</code></pre>`;
+
+      // Show the modal
+      const modal = new bootstrap.Modal(document.getElementById('logs'));
+      modal.show();
+  } catch (error) {
+      console.error('Error loading config:', error);
+      document.getElementById('modalcore').textContent = 'Error loading configuration.';
   }
+}
