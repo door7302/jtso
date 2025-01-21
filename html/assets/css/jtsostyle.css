@@ -478,15 +478,14 @@ body.dark-mode .jstree {
 /* for doc - config rendering */ 
 
 .dark-mode code {
-  background-color: #3f3f3f;
   color: #f0f0f0;
-  padding: 10px;
-  border-radius: 5px;
 }
 
+.dark-mode .token.cdata {
+  color: #f0f0f0;
+}
 .dark-mode .token.comment {
-  color: #5c6370;
-  font-style: italic;
+  color: #f0f0f0;
 }
 .dark-mode .token.string {
   color: #98c379;
