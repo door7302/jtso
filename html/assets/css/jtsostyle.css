@@ -479,6 +479,7 @@ body.dark-mode .jstree {
 
 .dark-mode code {
   color: #f0f0f0;
+  text-shadow: none;
 }
 
 .dark-mode .token.cdata {
@@ -496,7 +497,6 @@ body.dark-mode .jstree {
 }
 .dark-mode .token.keyword {
   color: #c678dd;
-  font-weight: bold;
 }
 .dark-mode .token.operator {
   color: #56b6c2;
