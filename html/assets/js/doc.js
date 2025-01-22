@@ -64,10 +64,19 @@ async function loadConfig(fileName) {
       document.getElementById('modalcore').innerHTML = `<pre><code class="language-toml">${highlightedToml}</code></pre>`;
 
       // Show the modal
-      const modal = new bootstrap.Modal(document.getElementById('logs'));
+      const modal = new bootstrap.Modal(document.getElementById('config'));
       modal.show();
   } catch (error) {
       alertify.alert("JSTO...", "Error loading config:" + error);
       document.getElementById('modalcore').textContent = 'Error loading configuration.';
   }
 }
+
+document.querySelector('#config .close').addEventListener('click', function () {
+  const modal = document.getElementById('config');
+  modal.classList.remove('show'); // Remove the `show` class
+  modal.style.display = 'none';  // Hide the modal
+  document.body.classList.remove('modal-open'); // Remove the modal-open class from body
+  const backdrop = document.querySelector('.modal-backdrop');
+  if (backdrop) backdrop.remove(); // Remove the backdrop element
+});
