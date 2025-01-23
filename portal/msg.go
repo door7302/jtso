@@ -2,8 +2,8 @@ package portal
 
 type (
 	TabAsso struct {
-		Shortname string
-		Profiles  string
+		Shortname string `json:"shortname"`
+		Profiles  string `json:"profiles"`
 	}
 
 	LongRouter struct {
