@@ -720,7 +720,7 @@ type StrEntry struct {
 type Strings struct {
 	Order    int        `json:"order"`
 	Namepass []string   `json:"namepass"`
-	Entries  []RegEntry `json:"entries"`
+	Entries  []StrEntry `json:"entries"`
 }
 
 // Go Template
