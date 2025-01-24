@@ -22,6 +22,7 @@ type TelegrafConfig struct {
 	CloneList      []Clone        `json:"clone_list"`
 	PivotList      []Pivot        `json:"pivot_list"`
 	RenameList     []Rename       `json:"rename_list"`
+	XreducerList   []Xreducer     `json:"xreducer_list"`
 	ConverterList  []Converter    `json:"converter_list"`
 	EnrichmentList []Enrichment   `json:"enrichment_list"`
 	RateList       []Rate         `json:"rate_list"`
@@ -69,7 +70,7 @@ const GnmiInputTemplate = `
 #                               GNMI INPUT PLUGIN                             #
 ###############################################################################
 
-{{range .GnmiList}}
+{{range .}}
 [[inputs.gnmi]]
  
   addresses = [
@@ -155,7 +156,7 @@ const NetconfInputTemplate = `
 #                             NETCONF INPUT PLUGIN                            #
 ###############################################################################
 
-{{range .NetconfList}}
+{{range .}}
 [[inputs.netconf_junos]]
   ## Address of the Juniper NETCONF server
   addresses = [
@@ -220,7 +221,7 @@ const PivotTemplate = `
 #                               PIVOT PLUGIN                                  #
 ###############################################################################
 
-{{range .PivotList}}
+{{range .}}
 [[processors.pivot]]
   order = {{.Order}}
   namepass = [
@@ -259,7 +260,7 @@ const RenameTemplate = `
 #                               RENAME PLUGIN                                 #
 ###############################################################################
 
-{{range .RenameList}}
+{{range .}}
 [[processors.rename]]
   order = {{.Order}}
   namepass = [
@@ -278,6 +279,51 @@ const RenameTemplate = `
     dest = "{{.To}}"
     {{end}}
   {{end}}
+{{end}}
+`
+
+// ---------------------------------------------------- //
+// Xreducer Processor
+// ---------------------------------------------------- //
+
+type Xreducer struct {
+	Order    int      `json:"order"`
+	Namepass []string `json:"namepass"`
+	Tags     []string `json:"tags"`
+	Fields   []string `json:"fields"`
+}
+
+// Go Template
+// we pass a list of Xreducer object = XreducerList
+
+const XreducerTemplate = `
+###############################################################################
+#                                XREDUCER PLUGIN                              #
+###############################################################################
+
+{{range .}}
+[[processors.xreducer]]
+  order = {{.Order}}
+  namepass = [
+  {{- range $index, $name := .Namepass}}
+  {{if $index}},{{end}}"{{$name}}"
+  {{- end}}
+  ]
+
+  {{if .Tags}} 
+  [[processors.xreducer.tags]]
+    {{range .Tags}}
+    key = {{.}}
+	{{end}}
+  {{end}}
+
+  {{if .Fields}} 
+  [[processors.xreducer.fields]]
+    {{range .Fields}}
+    key = {{.}}
+	{{end}}
+  {{end}}
+
 {{end}}
 `
 
@@ -304,7 +350,7 @@ const ConverterTemplate = `
 #                               CONVERTER PLUGIN                              #
 ###############################################################################
 
-{{range .ConverterList}}
+{{range .}}
 [[processors.converter]]
   order = {{.Order}}
   namepass = [
@@ -386,7 +432,7 @@ const EnrichmentTemplate = `
 #                               ENRICHMENT PLUGIN                             #
 ###############################################################################
 
-{{range .EnrichmentList}}
+{{range .}}
 [[processors.enrichment]]
   order = {{.Order}}
   namepass = [
@@ -429,7 +475,7 @@ const RateTemplate = `
 #                                  RATE PLUGIN                                #
 ###############################################################################
 
-{{range .RateList}}
+{{range .}}
 [[processors.rate]]
   order = {{.Order}}
   namepass = [
@@ -478,7 +524,7 @@ const MonitoringTemplate = `
 #                              MONITORING PLUGIN                              #
 ###############################################################################
 
-{{range .MonitoringList}}
+{{range .}}
 [[processors.monitoring]]
   order = {{.Order}}
   namepass = [
@@ -536,7 +582,7 @@ const FilteringTemplate = `
 #                                  FILTER PLUGIN                              #
 ###############################################################################
 
-{{range .FilteringList}}
+{{range .}}
 [[processors.filtering]]
   order = {{.Order}}
   namepass = [
@@ -587,7 +633,7 @@ const EnumTemplate = `
 #                                   ENUM PLUGIN                              #
 ###############################################################################
 
-{{range .EnumList}}
+{{range .}}
 [[processors.enum]]
   order = {{.Order}}
   namepass = [
@@ -637,7 +683,7 @@ const RegexTemplate = `
 #                                   REGEX PLUGIN                              #
 ###############################################################################
 
-{{range .RegexList}}
+{{range .}}
 [[processors.regex]]
   order = {{.Order}}
   namepass = [
@@ -685,7 +731,7 @@ const StringTemplate = `
 #                                  STRING PLUGIN                              #
 ###############################################################################
 
-{{range .StringsList}}
+{{range .}}
 [[processors.strings]]
   order = {{.Order}}
   namepass = [
@@ -728,7 +774,7 @@ const CloneTemplate = `
 #                                  CLONE PLUGIN                               #
 ###############################################################################
 
-{{range .CloneList}}
+{{range .}}
 [[processors.clone]]
   order = {{.Order}}
   namepass = [
@@ -757,7 +803,7 @@ const InfluxTemplate = `
 #                              INFLUX OUTPUT PLUGIN                           #
 ###############################################################################
 
-{{range .InfluxList}}
+{{range .}}
 [[outputs.influxdb]]
   database="jtsdb"
   urls = ["http://influxdb:8086"]
@@ -786,7 +832,7 @@ const FileTemplate = `
 #                               FILE OUTPUT PLUGIN                            #
 ###############################################################################
 
-{{range .FileList}}
+{{range .}}
 [[outputs.file]]
   files = ["/var/log/{{.Filename}}"]
   data_format = "{{.Format}}"

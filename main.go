@@ -9,7 +9,6 @@ import (
 	"jtso/container"
 	"jtso/kapacitor"
 	"jtso/logger"
-	"jtso/maker"
 	_ "jtso/output"
 	_ "jtso/parser"
 	"jtso/portal"
@@ -124,10 +123,6 @@ func main() {
 			}
 		}
 	}()
-
-	// TO_REMOVE
-	maker.GenerateTemplate("mytemplate")
-	// --------
 
 	// Waiting exit
 	c := make(chan os.Signal, 1)

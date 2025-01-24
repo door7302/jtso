@@ -8,6 +8,7 @@ import (
 	"jtso/container"
 	"jtso/kapacitor"
 	"jtso/logger"
+	"jtso/maker"
 	"jtso/sqlite"
 	"os"
 	"regexp"
@@ -399,6 +400,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			}
 
 			for filename, v := range perVersion {
+				fullPath := "/var/active_profiles/" + p + "/" + filename
 
 				rendRtrs := make([]string, 0)
 				rendRtrsNet := make([]string, 0)
@@ -407,36 +409,68 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					rendRtrsNet = append(rendRtrsNet, r.Hostname)
 
 				}
-				// render profile
-				t, err := template.ParseFiles("/var/active_profiles/" + p + "/" + filename)
-				if err != nil {
-					logger.Log.Errorf("Unable to open the telegraf file for rendering %s - err: %v", filename, err)
-					continue
-				}
-				var mustErr error
-				temp = template.Must(t, mustErr)
-				if err != nil {
-					logger.Log.Errorf("Unable to render file %s - err: %v", filename, err)
-					continue
-				}
-				renderFile, err := os.Create(directory + filename)
-				if err != nil {
-					logger.Log.Errorf("Unable to open the target rendering file - err: %v", err)
-					continue
-				}
-				defer renderFile.Close()
-				err = temp.Execute(renderFile, map[string]interface{}{"rtrs": rendRtrs,
-					"username":     sqlite.ActiveCred.GnmiUser,
-					"password":     sqlite.ActiveCred.GnmiPwd,
-					"tls":          tls,
-					"skip":         skip,
-					"tls_client":   clienttls,
-					"usernetconf":  sqlite.ActiveCred.NetconfUser,
-					"pwdnetconf":   sqlite.ActiveCred.NetconfPwd,
-					"rtrs_netconf": rendRtrsNet})
-				if err != nil {
-					logger.Log.Errorf("Unable to write into render telegraf file - err: %v", err)
-					continue
+
+				// Check old model (raw file) vs new model (json)
+				if strings.Contains(fullPath, ".json") {
+					logger.Log.Info("New model detected")
+
+					// new model
+					newCfg, err := maker.LoadConfig(fullPath)
+					if err != nil {
+						continue
+					}
+					payload, err := maker.RenderConf(newCfg)
+					if err != nil {
+						continue
+					}
+					newFileName := strings.TrimSuffix(filename, ".json") + ".conf"
+					file, err := os.Create(directory + newFileName)
+					if err != nil {
+						logger.Log.Errorf("Unable to open the target rendering file %s - err: %v", newFileName, err)
+						continue
+					}
+					defer file.Close()
+
+					// Write text to the file
+					_, err = file.WriteString(*payload)
+					if err != nil {
+						logger.Log.Errorf("Error writing to file %s: %v", newFileName, err)
+						continue
+					}
+
+				} else {
+					//old model
+					// render profile
+					t, err := template.ParseFiles(fullPath)
+					if err != nil {
+						logger.Log.Errorf("Unable to open the telegraf file for rendering %s - err: %v", filename, err)
+						continue
+					}
+					var mustErr error
+					temp = template.Must(t, mustErr)
+					if mustErr != nil {
+						logger.Log.Errorf("Unable to render file %s - err: %v", filename, mustErr)
+						continue
+					}
+					renderFile, err := os.Create(directory + filename)
+					if err != nil {
+						logger.Log.Errorf("Unable to open the target rendering file %s - err: %v", filename, err)
+						continue
+					}
+					defer renderFile.Close()
+					err = temp.Execute(renderFile, map[string]interface{}{"rtrs": rendRtrs,
+						"username":     sqlite.ActiveCred.GnmiUser,
+						"password":     sqlite.ActiveCred.GnmiPwd,
+						"tls":          tls,
+						"skip":         skip,
+						"tls_client":   clienttls,
+						"usernetconf":  sqlite.ActiveCred.NetconfUser,
+						"pwdnetconf":   sqlite.ActiveCred.NetconfPwd,
+						"rtrs_netconf": rendRtrsNet})
+					if err != nil {
+						logger.Log.Errorf("Unable to write into render telegraf file - err: %v", err)
+						continue
+					}
 				}
 			}
 		}
