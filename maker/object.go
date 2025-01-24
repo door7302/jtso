@@ -441,19 +441,19 @@ const EnrichmentTemplate = `
   {{- end}}
   ]
   enrichfilepath = "/var/metadata/metadata_{{.Family}}.json"
-  {{if .TwoLevels}}
-  twolevels = true
-  {{else}}
-  twolevels = false
-  {{end}}
   refreshperiod = 1 
-  level1tagkey = "{{Level1}}"
+  level1tagkey = "{{.Level1}}"
+  {{if .TwoLevels}}
   level2tagkey =  [
   {{- range $index, $name := .Level2}}
   {{if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
-
+  twolevels = true
+  {{else}}
+  twolevels = false
+  {{end}}
+  
 {{end}}
 `
 
