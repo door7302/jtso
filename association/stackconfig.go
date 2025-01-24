@@ -419,6 +419,25 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					if err != nil {
 						continue
 					}
+					// Fill missing data
+					if len(newCfg.GnmiList) > 0 {
+						for i, _ := range newCfg.GnmiList {
+							newCfg.GnmiList[i].Rtrs = rendRtrs
+							newCfg.GnmiList[i].Username = sqlite.ActiveCred.GnmiUser
+							newCfg.GnmiList[i].Password = sqlite.ActiveCred.GnmiPwd
+							newCfg.GnmiList[i].UseTls = tls
+							newCfg.GnmiList[i].UseTlsClient = clienttls
+							newCfg.GnmiList[i].SkipVerify = skip
+						}
+					}
+					if len(newCfg.NetconfList) > 0 {
+						for i, _ := range newCfg.NetconfList {
+							newCfg.NetconfList[i].Rtrs = rendRtrsNet
+							newCfg.NetconfList[i].Username = sqlite.ActiveCred.NetconfUser
+							newCfg.NetconfList[i].Password = sqlite.ActiveCred.NetconfPwd
+						}
+					}
+					// render file
 					payload, err := maker.RenderConf(newCfg)
 					if err != nil {
 						continue
