@@ -421,7 +421,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					}
 					// Fill missing data
 					if len(newCfg.GnmiList) > 0 {
-						for i, _ := range newCfg.GnmiList {
+						for i := range newCfg.GnmiList {
 							newCfg.GnmiList[i].Rtrs = rendRtrs
 							newCfg.GnmiList[i].Username = sqlite.ActiveCred.GnmiUser
 							newCfg.GnmiList[i].Password = sqlite.ActiveCred.GnmiPwd
@@ -431,7 +431,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 						}
 					}
 					if len(newCfg.NetconfList) > 0 {
-						for i, _ := range newCfg.NetconfList {
+						for i := range newCfg.NetconfList {
 							newCfg.NetconfList[i].Rtrs = rendRtrsNet
 							newCfg.NetconfList[i].Username = sqlite.ActiveCred.NetconfUser
 							newCfg.NetconfList[i].Password = sqlite.ActiveCred.NetconfPwd

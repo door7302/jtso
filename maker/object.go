@@ -69,10 +69,7 @@ const GnmiInputTemplate = `
 ###############################################################################
 #                               GNMI INPUT PLUGIN                             #
 ###############################################################################
-
-{{range .}}
-[[inputs.gnmi]]
- 
+{{range .}}[[inputs.gnmi]]
   addresses = [
       {{- range $index, $name := .Rtrs}}
       {{if $index}},{{end}}"{{$name}}"
@@ -80,48 +77,37 @@ const GnmiInputTemplate = `
       ]
 
   username = "{{.Username}}"
-  password = "{{.Password}}"
-  
-  {{if .UseTls}}
+  password = "{{.Password}}" {{if .UseTls}}
   ## enable client-side TLS and define CA to authenticate the device
   enable_tls = true
   tls_ca = "/var/cert/RootCA.crt"
   ## Minimal TLS version to accept by the client
-  # tls_min_version = "TLS12"
-  {{if .SkipVerify}}
+  # tls_min_version = "TLS12" {{if .SkipVerify}}
   ## Use TLS but skip chain & host verification
-  insecure_skip_verify = true
-  {{end}}
+  insecure_skip_verify = true {{end}}
   {{if .UseTlsClient}}
   ## define client-side TLS certificate & key to authenticate to the device
   tls_cert = "/var/cert/client.crt"
-  tls_key = "/var/cert/client.key"
+  tls_key = "/var/cert/client.key" {{end}}
   {{end}}
-  {{end}}
-
   encoding = "proto"
   redial = "10s"
   long_tag = true
   long_field = true
   check_jnpr_extension = true
 
-    [inputs.gnmi.aliases]
-	  {{range .Aliases}}
+    [inputs.gnmi.aliases] {{range .Aliases}}
       {{.Name}} = [
       {{- range $index, $name := .Prefixes}}
       {{if $index}},{{end}}"{{$name}}"
       {{- end}}
-      ]
-	  {{end}}
-
+      ]{{end}}
 	{{range .Subs}}
     [[inputs.gnmi.subscription]]
       name = " {{.Name}}"
       path = "{{.Path}}"
       subscription_mode = "{{.Mode}}"
-      sample_interval = "{{.Interval}}s"
-	{{end}}
-
+      sample_interval = "{{.Interval}}s" {{end}}
 {{end}}
 `
 
@@ -155,9 +141,7 @@ const NetconfInputTemplate = `
 ###############################################################################
 #                             NETCONF INPUT PLUGIN                            #
 ###############################################################################
-
-{{range .}}
-[[inputs.netconf_junos]]
+{{range .}}[[inputs.netconf_junos]]
   ## Address of the Juniper NETCONF server
   addresses = [
       {{- range $index, $name := .Rtrs}}
@@ -175,8 +159,7 @@ const NetconfInputTemplate = `
   ## Time Layout for epoch convertion - specify a sample Date/Time layout - default layout is the following:
   time_layout = "2006-01-02 15:04:05 MST"
 
-  {{range .Subs}}
-  [[inputs.netconf_junos.subscription]]
+  {{range .Subs}} [[inputs.netconf_junos.subscription]]
     ## Name of the measurement that will be emitted
     name = "{{.Name}}"
 
@@ -196,9 +179,7 @@ const NetconfInputTemplate = `
     ]
 
     ## Interval to request the RPC
-    sample_interval = "{{.Interval}}"
-  {{end}}
-
+    sample_interval = "{{.Interval}}" {{end}}
 {{end}}
 `
 
@@ -220,9 +201,7 @@ const PivotTemplate = `
 ###############################################################################
 #                               PIVOT PLUGIN                                  #
 ###############################################################################
-
-{{range .}}
-[[processors.pivot]]
+{{range .}}[[processors.pivot]]
   order = {{.Order}}
   namepass = [
     {{- range $index, $name := .Namepass}}
@@ -231,7 +210,6 @@ const PivotTemplate = `
   ]
   tag_key = "{{.Tag}}"
   value_key = "{{.Field}}"
-
 {{end}}
 `
 
@@ -259,26 +237,19 @@ const RenameTemplate = `
 ###############################################################################
 #                               RENAME PLUGIN                                 #
 ###############################################################################
-
-{{range .}}
-[[processors.rename]]
+{{range .}}[[processors.rename]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
   {{if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
-
   {{range .Entries}}
-  [[processors.rename.replace]]
-    {{if eq .TypeRename 0}}
+  [[processors.rename.replace]] {{if eq .TypeRename 0}}
     tag = "{{.From}}"
-    dest = "{{.To}}
-    {{else}}
+    dest = "{{.To}}" {{else}}
     field = "{{.From}}"
-    dest = "{{.To}}"
-    {{end}}
-  {{end}}
+    dest = "{{.To}}" {{end}} {{end}}
 {{end}}
 `
 
@@ -300,30 +271,20 @@ const XreducerTemplate = `
 ###############################################################################
 #                                XREDUCER PLUGIN                              #
 ###############################################################################
-
-{{range .}}
-[[processors.xreducer]]
+{{range .}}[[processors.xreducer]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
   {{if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
-
   {{if .Tags}} 
-  [[processors.xreducer.tags]]
-    {{range .Tags}}
-    key = {{.}}
-	{{end}}
-  {{end}}
-
-  {{if .Fields}} 
+  [[processors.xreducer.tags]] {{range .Tags}}
+    key = "{{.}}" {{end}}
+  {{end}} {{if .Fields}} 
   [[processors.xreducer.fields]]
     {{range .Fields}}
-    key = {{.}}
-	{{end}}
-  {{end}}
-
+    key = "{{.}}" {{end}} {{end}}
 {{end}}
 `
 
@@ -349,9 +310,7 @@ const ConverterTemplate = `
 ###############################################################################
 #                               CONVERTER PLUGIN                              #
 ###############################################################################
-
-{{range .}}
-[[processors.converter]]
+{{range .}}[[processors.converter]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
@@ -359,55 +318,42 @@ const ConverterTemplate = `
   {{- end}}
   ]
 
-  [processors.converter.fields]
-    {{if .IntegerType}}
+  [processors.converter.fields] {{if .IntegerType}}
     integer = [
     {{- range $index, $name := .IntegerType}}
     {{if $index}},{{end}}"{{$name}}"
     {{- end}}
-    ]
-	{{end}}
-
+    ] {{end}}
 	{{if .TagType}}
 	tag = [
     {{- range $index, $name := .TagType}}
     {{if $index}},{{end}}"{{$name}}"
     {{- end}}
-    ]
-	{{end}}
-
+    ] {{end}}
     {{if .FloatType}}
 	float = [
     {{- range $index, $name := .FloatType}}
     {{if $index}},{{end}}"{{$name}}"
     {{- end}}
-    ]
-	{{end}}
-
+    ] {{end}}
     {{if .StringType}}    
 	string = [
     {{- range $index, $name := .StringType}}
     {{if $index}},{{end}}"{{$name}}"
     {{- end}}
-    ]
-	{{end}}
-
+    ] {{end}}
     {{if .BoolType}}    
 	boolean = [
     {{- range $index, $name := .BoolType}}
     {{if $index}},{{end}}"{{$name}}"
     {{- end}}
-    ]
-	{{end}}
-
+    ] {{end}}
     {{if .UnsignedType}}    
 	unsigned = [
     {{- range $index, $name := .UnsignedType}}
     {{if $index}},{{end}}"{{$name}}"
     {{- end}}
-    ]
-	{{end}}
-
+    ]{{end}}
 {{end}}
 `
 
@@ -431,9 +377,7 @@ const EnrichmentTemplate = `
 ###############################################################################
 #                               ENRICHMENT PLUGIN                             #
 ###############################################################################
-
-{{range .}}
-[[processors.enrichment]]
+{{range .}}[[processors.enrichment]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
@@ -442,18 +386,14 @@ const EnrichmentTemplate = `
   ]
   enrichfilepath = "/var/metadata/metadata_{{.Family}}.json"
   refreshperiod = 1 
-  level1tagkey = "{{.Level1}}"
-  {{if .TwoLevels}}
+  level1tagkey = "{{.Level1}}" {{if .TwoLevels}}
   level2tagkey =  [
   {{- range $index, $name := .Level2}}
   {{if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
-  twolevels = true
-  {{else}}
-  twolevels = false
-  {{end}}
-  
+  twolevels = true {{else}}
+  twolevels = false {{end}}
 {{end}}
 `
 
@@ -474,9 +414,7 @@ const RateTemplate = `
 ###############################################################################
 #                                  RATE PLUGIN                                #
 ###############################################################################
-
-{{range .}}
-[[processors.rate]]
+{{range .}}[[processors.rate]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
@@ -493,7 +431,6 @@ const RateTemplate = `
   {{if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
-
 {{end}}
 `
 
@@ -523,9 +460,7 @@ const MonitoringTemplate = `
 ###############################################################################
 #                              MONITORING PLUGIN                              #
 ###############################################################################
-
-{{range .}}
-[[processors.monitoring]]
+{{range .}}[[processors.monitoring]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
@@ -536,7 +471,6 @@ const MonitoringTemplate = `
   tag_name = "ALARM_TYPE"
   period = "10m"
   retention = "1h"
-
   {{range .Entries}}
   [[processors.monitoring.probe]]
     alarm_name = "{{.Name}}"
@@ -549,10 +483,7 @@ const MonitoringTemplate = `
     {{- range $index, $name := .Tags}}
     {{if $index}},{{end}}"{{$name}}"
     {{- end}}
-    ]
-
-  {{end}}
-
+    ]{{end}}
 {{end}}
 `
 
@@ -581,27 +512,19 @@ const FilteringTemplate = `
 ###############################################################################
 #                                  FILTER PLUGIN                              #
 ###############################################################################
-
-{{range .}}
-[[processors.filtering]]
+{{range .}}[[processors.filtering]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
   {{if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
-
-  {{range .Filters}}
-  {{if eq .FilterType 0}}
-  [[processors.filtering.tags]]
-  {{else}}
-  [[processors.filtering.fields]]
-  {{end}}
+  {{range .Filters}} {{if eq .FilterType 0}}
+  [[processors.filtering.tags]] {{else}}
+  [[processors.filtering.fields]] {{end}}
   key = "{{.Key}}"
   pattern = "{{.Pattern}}"
-  Action = "{{.Action}}"
-  {{end}}
-
+  Action = "{{.Action}}" {{end}}
 {{end}}
 `
 
@@ -632,29 +555,21 @@ const EnumTemplate = `
 ###############################################################################
 #                                   ENUM PLUGIN                              #
 ###############################################################################
-
-{{range .}}
-[[processors.enum]]
+{{range .}}[[processors.enum]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
   {{if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
-  
   {{range .Entries}}
   [[processors.enum.mapping]]
     tag = "{{.Tag}}"
-	dest = "{{.Dest}}"
-	{{if .Maps}}  
+	dest = "{{.Dest}}" {{if .Maps}}  
 	[processors.enum.mapping.value_mappings]
       {{range .Maps}}
-      "{{.In}}" = "{{.Out}}
-      {{end}}
-	{{end}}
-  
-  {{end}}
-
+      "{{.In}}" = "{{.Out}}" {{end}}
+	{{end}} {{end}}
 {{end}}
 `
 
@@ -682,26 +597,18 @@ const RegexTemplate = `
 ###############################################################################
 #                                   REGEX PLUGIN                              #
 ###############################################################################
-
-{{range .}}
-[[processors.regex]]
+{{range .}}[[processors.regex]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
   {{if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
-  
-  {{range .Entries}}
-  {{if eq .RegType 0}}
-  [[processors.regex.tag_rename]]
-  {{else}}
-  [[processors.regex.field_rename]]
-  {{end}}
+  {{range .Entries}} {{if eq .RegType 0}}
+  [[processors.regex.tag_rename]] {{else}}
+  [[processors.regex.field_rename]] {{end}}
     pattern = "{{.Pattern}}"
-    replacement = "{{.Replacement}}"
-  {{end}}
-
+    replacement = "{{.Replacement}}" {{end}}
 {{end}}
 `
 
@@ -730,29 +637,18 @@ const StringTemplate = `
 ###############################################################################
 #                                  STRING PLUGIN                              #
 ###############################################################################
-
-{{range .}}
-[[processors.strings]]
+{{range .}}[[processors.strings]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
   {{if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
-  
-  {{range .Entries}}
-    {{if eq .Method 0}}
-  [[processors.strings.lowercase]]
-    {{else}}
-  [[processors.strings.uppercase]]
-    {{end}}
-    {{if eq .RegType 0}}
-    tag = "{{.Data}}"    
-	{{else}}
-    field = "{{.Data}}"   
-    {{end}}
-  {{end}}
-
+  {{range .Entries}} {{if eq .Method 0}}
+  [[processors.strings.lowercase]] {{else}}
+  [[processors.strings.uppercase]] {{end}} {{if eq .RegType 0}}
+    tag = "{{.Data}}" {{else}}
+    field = "{{.Data}}" {{end}} {{end}}
 {{end}}
 `
 
@@ -773,9 +669,7 @@ const CloneTemplate = `
 ###############################################################################
 #                                  CLONE PLUGIN                               #
 ###############################################################################
-
-{{range .}}
-[[processors.clone]]
+{{range .}}[[processors.clone]]
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
@@ -783,7 +677,6 @@ const CloneTemplate = `
   {{- end}}
   ]
   name_override = "{{.Override}}"
-
 {{end}}
 `
 
@@ -802,9 +695,7 @@ const InfluxTemplate = `
 ###############################################################################
 #                              INFLUX OUTPUT PLUGIN                           #
 ###############################################################################
-
-{{range .}}
-[[outputs.influxdb]]
+{{range .}}[[outputs.influxdb]]
   database="jtsdb"
   urls = ["http://influxdb:8086"]
   retention_policy = "{{.Retention}}"
@@ -831,9 +722,7 @@ const FileTemplate = `
 ###############################################################################
 #                               FILE OUTPUT PLUGIN                            #
 ###############################################################################
-
-{{range .}}
-[[outputs.file]]
+{{range .}}[[outputs.file]]
   files = ["/var/log/{{.Filename}}"]
   data_format = "{{.Format}}"
 {{end}}
