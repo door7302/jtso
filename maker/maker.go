@@ -54,7 +54,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.GnmiList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Gnmi toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Gnmi toml payload - err: %v", err)
 				} else {
 					header += result.String()
 					hasInput = true
@@ -75,7 +75,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.NetconfList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Netconf toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Netconf toml payload - err: %v", err)
 				} else {
 					header += result.String()
 					hasInput = true
@@ -96,7 +96,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.InfluxList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Influx toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Influx toml payload - err: %v", err)
 				} else {
 					footer += result.String()
 					hasOutput = true
@@ -117,7 +117,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.FileList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate File toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate File toml payload - err: %v", err)
 				} else {
 					footer += result.String()
 					hasOutput = true
@@ -145,7 +145,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.CloneList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Clone toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Clone toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -166,7 +166,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.PivotList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Pivot toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Pivot toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -187,7 +187,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.RenameList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Rename toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Rename toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -208,7 +208,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.XreducerList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Xreducer toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Xreducer toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -229,7 +229,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.XreducerList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Converter toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Converter toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -250,7 +250,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.EnrichmentList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Enricher toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Enricher toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -271,7 +271,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.RateList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Rate toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Rate toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -292,7 +292,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.MonitoringList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Monitoring toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Monitoring toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -313,7 +313,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.FilteringList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Filtering toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Filtering toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -334,7 +334,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.EnumList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Enum toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Enum toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -355,7 +355,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.RegexList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Regex toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Regex toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
@@ -376,7 +376,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, config.StringsList)
 				if err != nil {
-					logger.Log.Errorf("Unable to generate Strings toml payload - err: %v", mustErr)
+					logger.Log.Errorf("Unable to generate Strings toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
