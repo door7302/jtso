@@ -95,16 +95,16 @@ const GnmiInputTemplate = `
   long_tag = true
   long_field = true
   check_jnpr_extension = true
-
+    {{if .Aliases}} 
     [inputs.gnmi.aliases] {{range .Aliases}}
       {{.Name}} = [
       {{- range $index, $name := .Prefixes}}
       {{if $index}},{{end}}"{{$name}}"
       {{- end}}
-      ]{{end}}
+      ]{{end}}{{end}}
 	{{range .Subs}}
     [[inputs.gnmi.subscription]]
-      name = " {{.Name}}"
+      name = "{{.Name}}"
       path = "{{.Path}}"
       subscription_mode = "{{.Mode}}"
       sample_interval = "{{.Interval}}s" {{end}}
