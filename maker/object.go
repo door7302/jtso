@@ -261,6 +261,7 @@ const RenameTemplate = `
     dest = "{{.To}}" {{else}}
     field = "{{.From}}"
     dest = "{{.To}}" {{end}} {{end}}
+    
 {{end}}
 `
 
