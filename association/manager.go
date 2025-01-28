@@ -36,6 +36,7 @@ type Telegraf struct {
 }
 
 type DefProfile struct {
+	Version     int      `json:"version"`
 	Cheatsheet  string   `json:"cheatsheet"`
 	Description string   `json:"description"`
 	TelCfg      Telegraf `json:"telegraf"`
@@ -84,8 +85,9 @@ func PeriodicCheck() {
 		if strings.Contains(file.Name(), "tgz") {
 			filename := strings.Replace(file.Name(), ".tgz", "", -1)
 
-			if _, ok := ActiveProfiles[filename]; ok {
-				entry, _ := ActiveProfiles[filename]
+			entry, ok := ActiveProfiles[filename]
+
+			if ok {
 				// existing profile - check if update
 				// compute the hash of the file
 				tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
@@ -129,7 +131,7 @@ func PeriodicCheck() {
 					json.Unmarshal(byteValue, entry.Definition)
 					entry.Hash = MD5String
 
-					// Copy cheatsheet image in the right assets directory
+					// Copy cheatsheet image in the right assets directories
 					source, err := os.Open("/var/active_profiles/" + filename + "/" + entry.Definition.Cheatsheet) //open the source file
 					if err != nil {
 						logger.Log.Errorf("Unable to open the Cheatsheet file %s - err: %v", entry.Definition.Cheatsheet, err)
@@ -196,7 +198,7 @@ func PeriodicCheck() {
 				// push json into definition structure
 				json.Unmarshal(byteValue, entry.Definition)
 
-				// Copy cheatsheet image in the right assets directory
+				// Copy cheatsheet image in the right assets directories
 				source, err := os.Open("/var/active_profiles/" + filename + "/" + entry.Definition.Cheatsheet) //open the source file
 				if err != nil {
 					logger.Log.Errorf("Unable to open the Cheatsheet file %s - err: %v", entry.Definition.Cheatsheet, err)

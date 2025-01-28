@@ -6,8 +6,17 @@ import (
 	"errors"
 	"jtso/logger"
 	"os"
+	"sync"
 	"text/template"
 )
+
+var MyCollection *TelegrafCollection
+
+func init() {
+	MyCollection = new(TelegrafCollection)
+	MyCollection.Collection = make(map[string]map[string]*TelegrafConfig)
+	MyCollection.Mu = new(sync.Mutex)
+}
 
 func LoadConfig(filePath string) (*TelegrafConfig, error) {
 
@@ -29,6 +38,10 @@ func LoadConfig(filePath string) (*TelegrafConfig, error) {
 
 	logger.Log.Infof("Successfully Load JSON template from %s", filePath)
 	return &config, nil
+}
+
+func OptimizeConf(listOfConf []*TelegrafConfig) (*TelegrafConfig, error) {
+	return nil, nil
 }
 
 func RenderConf(config *TelegrafConfig) (*string, error) {
@@ -227,7 +240,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				logger.Log.Errorf("Unable to render Converter json template - err: %v", mustErr)
 			} else {
 				var result bytes.Buffer
-				err = tmpl.Execute(&result, config.XreducerList)
+				err = tmpl.Execute(&result, config.ConverterList)
 				if err != nil {
 					logger.Log.Errorf("Unable to generate Converter toml payload - err: %v", err)
 				} else {
