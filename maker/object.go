@@ -77,7 +77,7 @@ const GnmiInputTemplate = `
 {{range .}}[[inputs.gnmi]]
   addresses = [
       {{- range $index, $name := .Rtrs}}
-      "{{$name}}"{{if $index}},{{end}}
+      {{- if $index}},{{end}}"{{$name}}"
       {{- end}}
       ]
 
@@ -104,7 +104,7 @@ const GnmiInputTemplate = `
     [inputs.gnmi.aliases] {{range .Aliases}}
       {{.Name}} = [
       {{- range $index, $name := .Prefixes}}
-      "{{$name}}"{{if $index}},{{end}}
+      {{- if $index}},{{end}}"{{$name}}"
       {{- end}}
       ]{{end}}{{end}}
 	{{range .Subs}}
@@ -151,7 +151,7 @@ const NetconfInputTemplate = `
   ## Address of the Juniper NETCONF server
   addresses = [
       {{- range $index, $name := .Rtrs}}
-      "{{$name}}"{{if $index}},{{end}}
+      {{- if $index}},{{end}}"{{$name}}"
       {{- end}}
       ]
 
@@ -211,7 +211,7 @@ const PivotTemplate = `
   order = {{.Order}}
   namepass = [
     {{- range $index, $name := .Namepass}}
-    "{{$name}}"{{if $index}},{{end}}
+    {{- if $index}},{{end}}"{{$name}}"
     {{- end}}
   ]
   tag_key = "{{.Tag}}"
@@ -247,7 +247,7 @@ const RenameTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   {{range .Entries}}
@@ -281,7 +281,7 @@ const XreducerTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   {{if .Tags}} 
@@ -320,44 +320,44 @@ const ConverterTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
 
   [processors.converter.fields] {{if .IntegerType}}
     integer = [
     {{- range $index, $name := .IntegerType}}
-    "{{$name}}"{{if $index}},{{end}}
+    {{- if $index}},{{end}}"{{$name}}"
     {{- end}}
     ] {{end}}
 	  {{if .TagType}}
 	  tag = [
     {{- range $index, $name := .TagType}}
-    "{{$name}}"{{if $index}},{{end}}
+    {{- if $index}},{{end}}"{{$name}}"
     {{- end}}
     ] {{end}}
     {{if .FloatType}}
 	  float = [
     {{- range $index, $name := .FloatType}}
-    "{{$name}}"{{if $index}},{{end}}
+    {{- if $index}},{{end}}"{{$name}}"
     {{- end}}
     ] {{end}}
     {{if .StringType}}    
 	  string = [
     {{- range $index, $name := .StringType}}
-    "{{$name}}"{{if $index}},{{end}}
+    {{- if $index}},{{end}}"{{$name}}"
     {{- end}}
     ] {{end}}
     {{if .BoolType}}    
 	  boolean = [
     {{- range $index, $name := .BoolType}}
-    "{{$name}}"{{if $index}},{{end}}
+    {{- if $index}},{{end}}"{{$name}}"
     {{- end}}
     ] {{end}}
     {{if .UnsignedType}}    
 	  unsigned = [
     {{- range $index, $name := .UnsignedType}}
-    "{{$name}}"{{if $index}},{{end}}
+    {{- if $index}},{{end}}"{{$name}}"
     {{- end}}
     ]{{end}}
 {{end}}
@@ -387,7 +387,7 @@ const EnrichmentTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   enrichfilepath = "/var/metadata/metadata_{{.Family}}.json"
@@ -395,7 +395,7 @@ const EnrichmentTemplate = `
   level1tagkey = "{{.Level1}}" {{if .TwoLevels}}
   level2tagkey =  [
   {{- range $index, $name := .Level2}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   twolevels = true {{else}}
@@ -424,7 +424,7 @@ const RateTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   period = "10m"
@@ -434,7 +434,7 @@ const RateTemplate = `
   delta_min = "10s"
   fields = [
   {{- range $index, $name := .Fields}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
 {{end}}
@@ -470,7 +470,7 @@ const MonitoringTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   measurement = "ALARMING"
@@ -487,7 +487,7 @@ const MonitoringTemplate = `
     copy_tag = true
     tags = [
     {{- range $index, $name := .Tags}}
-    "{{$name}}"{{if $index}},{{end}}
+    {{- if $index}},{{end}}"{{$name}}"
     {{- end}}
     ]{{end}}
 {{end}}
@@ -522,7 +522,7 @@ const FilteringTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   {{range .Filters}} {{if eq .FilterType 0}}
@@ -565,7 +565,7 @@ const EnumTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   {{range .Entries}}
@@ -607,7 +607,7 @@ const RegexTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   {{range .Entries}} {{if eq .RegType 0}}
@@ -647,7 +647,7 @@ const StringTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   {{range .Entries}} {{if eq .Method 0}}
@@ -679,7 +679,7 @@ const CloneTemplate = `
   order = {{.Order}}
   namepass = [
   {{- range $index, $name := .Namepass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
   name_override = "{{.Override}}"
@@ -707,7 +707,7 @@ const InfluxTemplate = `
   retention_policy = "{{.Retention}}"
   fieldpass = [
   {{- range $index, $name := .Fieldpass}}
-  "{{$name}}"{{if $index}},{{end}}
+  {{- if $index}},{{end}}"{{$name}}"
   {{- end}}
   ]
 {{end}}
