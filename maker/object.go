@@ -496,7 +496,7 @@ const MonitoringTemplate = `
   tag_name = "ALARM_TYPE"
   period = "10m"
   retention = "1h"
-  {{range .Entries}}
+  {{range .Probes}}
   [[processors.monitoring.probe]]
     alarm_name = "{{.Name}}"
     field = "{{.Field}}"
@@ -509,7 +509,8 @@ const MonitoringTemplate = `
     {{- if $index}},{{end}}
       "{{$name}}"
     {{- end}}
-    ]{{end}}
+    ]
+    {{end}}
 {{end}}
 `
 
