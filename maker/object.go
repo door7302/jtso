@@ -466,7 +466,7 @@ type Probe struct {
 	Name      string   `json:"name"`
 	Field     string   `json:"field"`
 	ProbeType string   `json:"type"`
-	Threshold float32  `json:"threshold"`
+	Threshold int      `json:"threshold"`
 	Operator  string   `json:"operator"`
 	Tags      []string `json:"tags"`
 }
@@ -501,7 +501,7 @@ const MonitoringTemplate = `
     alarm_name = "{{.Name}}"
     field = "{{.Field}}"
     probe_type = "{{.ProbeType}}"
-    threshold = {{.Threshold}}
+    threshold = {{.Threshold}}.0
     operator = "{{.Operator}}"
     copy_tag = true
     tags = [
