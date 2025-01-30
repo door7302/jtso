@@ -101,6 +101,8 @@ const GnmiInputTemplate = `
   long_tag = true
   long_field = true
   check_jnpr_extension = true
+  bytes2float = true
+  
     {{if .Aliases}} 
     [inputs.gnmi.aliases] {{range .Aliases}}
       {{.Name}} = [
