@@ -316,7 +316,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					savedVersion = "all"
 				} else {
 					result := CheckVersion(c.Version, rtr.Version)
-					if result && (profileFilenames[i] == "") {
+					if result && (savedVersion == "" || savedVersion == "all") {
 						profileFilenames[i] = c.Config
 						savedVersion = c.Version
 					}
