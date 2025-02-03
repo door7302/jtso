@@ -470,6 +470,8 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			var filenames []Config
 			perVersion := make(map[string][]*sqlite.RtrEntry)
 
+			logger.Log.Errorf("DEBUG %s: %v", f, p)
+
 			// extract definition of the profile
 			switch f {
 
