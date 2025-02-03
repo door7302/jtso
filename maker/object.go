@@ -102,7 +102,7 @@ const GnmiInputTemplate = `
   long_field = true
   check_jnpr_extension = true
   bytes2float = true
-  
+
     {{if .Aliases}} 
     [inputs.gnmi.aliases] {{range .Aliases}}
       {{.Name}} = [
@@ -342,35 +342,35 @@ const ConverterTemplate = `
     {{- end}}
     ] {{end}}
 	  {{if .TagType}}
-	  tag = [
+    tag = [
     {{- range $index, $name := .TagType}}
     {{- if $index}},{{end}}
       "{{$name}}"
     {{- end}}
     ] {{end}}
     {{if .FloatType}}
-	  float = [
+    float = [
     {{- range $index, $name := .FloatType}}
     {{- if $index}},{{end}}
       "{{$name}}"
     {{- end}}
     ] {{end}}
     {{if .StringType}}    
-	  string = [
+    string = [
     {{- range $index, $name := .StringType}}
     {{- if $index}},{{end}}
       "{{$name}}"
     {{- end}}
     ] {{end}}
     {{if .BoolType}}    
-	  boolean = [
+    boolean = [
     {{- range $index, $name := .BoolType}}
     {{- if $index}},{{end}}
       "{{$name}}"
     {{- end}}
     ] {{end}}
     {{if .UnsignedType}}    
-	  unsigned = [
+    unsigned = [
     {{- range $index, $name := .UnsignedType}}
     {{- if $index}},{{end}}
       "{{$name}}"

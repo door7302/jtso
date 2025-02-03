@@ -20,6 +20,11 @@ type RtrEntry struct {
 	Profile   int
 }
 
+type Collection struct {
+	Profiles []string
+	Routers  []*RtrEntry
+}
+
 type AssoEntry struct {
 	Id        int
 	Shortname string

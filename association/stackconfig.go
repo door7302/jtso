@@ -3,6 +3,7 @@ package association
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"jtso/config"
 	"jtso/container"
@@ -12,6 +13,7 @@ import (
 	"jtso/sqlite"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -240,6 +242,85 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		families = make([]string, 1)
 		families[0] = family
 	}
+	// FIRST DEBUG ----------------------------------------------------------------------------
+
+	// Map to store collections (family → collection → Collection struct)
+	collections := make(map[string]map[string]sqlite.Collection)
+
+	// Step 1: Build a lookup map for router profiles from AssoList
+	routerProfiles := make(map[string][]string) // key: Shortname → value: Profile List
+	for _, asso := range sqlite.AssoList {
+		routerProfiles[asso.Shortname] = asso.Assos
+	}
+
+	// Step 2: Group routers by their profile sets
+	profileSetToRouters := make(map[string][]*sqlite.RtrEntry)
+	profileSetIndex := make(map[string]int) // Map unique profile sets to collection IDs
+	collectionCounter := 1
+
+	for _, rtr := range sqlite.RtrList {
+		// Ignore routers with Profile = 0
+		if rtr.Profile == 0 {
+			continue
+		}
+
+		// Get the profiles from routerProfiles map
+		profileKeys, exists := routerProfiles[rtr.Shortname]
+		if !exists {
+			continue // Skip if no profile association is found
+		}
+
+		// Sort profiles for uniqueness
+		sort.Strings(profileKeys)
+
+		// Create a unique profile key
+		profileKey := fmt.Sprintf("%v", profileKeys)
+
+		// Assign a collection ID if this profile set is new
+		if _, exists := profileSetIndex[profileKey]; !exists {
+			profileSetIndex[profileKey] = collectionCounter
+			collectionCounter++
+		}
+
+		// Store the router in the corresponding profile set
+		profileSetToRouters[profileKey] = append(profileSetToRouters[profileKey], rtr)
+	}
+
+	// Step 3: Construct the collections map
+	for profileKey, routers := range profileSetToRouters {
+		collectionID := "collect_" + strconv.Itoa(profileSetIndex[profileKey])
+
+		// Extract actual profile slice
+		profileSlice := []string{}
+		fmt.Sscanf(profileKey, "%v", &profileSlice)
+
+		// Get the family of the first router (all in the same family)
+		family := routers[0].Family
+
+		// Ensure family exists in the collections map
+		if _, exists := collections[family]; !exists {
+			collections[family] = make(map[string]sqlite.Collection)
+		}
+
+		// Assign to the collections map
+		collections[family][collectionID] = sqlite.Collection{
+			Profiles: profileSlice,
+			Routers:  routers,
+		}
+	}
+
+	for family, familyCollections := range collections {
+		logger.Log.Info("Family:", family)
+		for collectionID, collection := range familyCollections {
+			logger.Log.Info("  ", collectionID, "=> Profiles:", collection.Profiles)
+			logger.Log.Infof("     Routers:")
+			for _, r := range collection.Routers {
+				logger.Log.Info("       -", r.Hostname)
+			}
+		}
+	}
+
+	//// ----------------------------------------------------------------------------
 
 	// first create per type > per profile structure
 	var cfgHierarchy map[string]map[string][]*sqlite.RtrEntry
