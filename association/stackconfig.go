@@ -255,6 +255,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// Step 2: Group routers by their profile sets
 	profileSetToRouters := make(map[string][]*sqlite.RtrEntry)
+	profileSetToProfiles := make(map[string][]string)
 	profileSetIndex := make(map[string]int) // Map unique profile sets to collection IDs
 	collectionCounter := 1
 
@@ -273,12 +274,13 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		// Sort profiles for uniqueness
 		sort.Strings(profileKeys)
 
-		// Create a unique profile key
+		// Create a unique profile key (string format for map indexing)
 		profileKey := fmt.Sprintf("%v", profileKeys)
 
-		// Assign a collection ID if this profile set is new
+		// Store profile slice before hashing to prevent later issues
 		if _, exists := profileSetIndex[profileKey]; !exists {
 			profileSetIndex[profileKey] = collectionCounter
+			profileSetToProfiles[profileKey] = profileKeys // Store the actual slice
 			collectionCounter++
 		}
 
@@ -290,9 +292,8 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	for profileKey, routers := range profileSetToRouters {
 		collectionID := "collect_" + strconv.Itoa(profileSetIndex[profileKey])
 
-		// Extract actual profile slice
-		profileSlice := []string{}
-		fmt.Sscanf(profileKey, "%v", &profileSlice)
+		// Retrieve original profile slice
+		profileSlice := profileSetToProfiles[profileKey]
 
 		// Get the family of the first router (all in the same family)
 		family := routers[0].Family
