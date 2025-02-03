@@ -21,8 +21,9 @@ type RtrEntry struct {
 }
 
 type Collection struct {
-	Profiles []string
-	Routers  []*RtrEntry
+	ProfilesName []string
+	ProfilesConf []string
+	Routers      []*RtrEntry
 }
 
 type AssoEntry struct {
