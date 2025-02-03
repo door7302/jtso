@@ -335,6 +335,8 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		// Create a unique profile key (string format for map indexing)
 		profileKey := fmt.Sprintf("%v", profileKeys)
 
+		logger.Log.Info("profileKey %v", profileKey)
+
 		// Store profile slice before hashing to prevent later issues
 		if _, exists := profileSetIndex[profileKey]; !exists {
 			profileSetIndex[profileKey] = collectionCounter
