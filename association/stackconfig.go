@@ -312,7 +312,10 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	for family, familyCollections := range collections {
 		logger.Log.Info("Family:", family)
 		for collectionID, collection := range familyCollections {
-			logger.Log.Info("  ", collectionID, "=> Profiles:", collection.Profiles)
+			logger.Log.Info("  ", collectionID, "=> Profiles:")
+			for _, p := range collection.Profiles {
+				logger.Log.Info("     >", p)
+			}
 			logger.Log.Infof("     Routers:")
 			for _, r := range collection.Routers {
 				logger.Log.Info("       -", r.Hostname)
