@@ -255,6 +255,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// Step 2: Group routers by their profile sets
 	profileSetToRouters := make(map[string][]*sqlite.RtrEntry)
+
 	profileSetToProfiles := make(map[string][]string)
 	profileSetIndex := make(map[string]int) // Map unique profile sets to collection IDs
 	collectionCounter := 1
@@ -271,6 +272,60 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			continue // Skip if no profile association is found
 		}
 
+		// check if version is assigned to a profile and save file name
+		profileFilenames := make([]string, len(profileKeys))
+		for i, p := range profileKeys {
+			var filenames []Config
+			switch rtr.Family {
+			case "mx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.MxCfg
+			case "ptx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.PtxCfg
+			case "acx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.AcxCfg
+			case "ex":
+				filenames = ActiveProfiles[p].Definition.TelCfg.ExCfg
+			case "qfx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.QfxCfg
+			case "srx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.SrxCfg
+			case "crpd":
+				filenames = ActiveProfiles[p].Definition.TelCfg.CrpdCfg
+			case "cptx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.CptxCfg
+			case "vmx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.VmxCfg
+			case "vsrx":
+				filenames = ActiveProfiles[p].Definition.TelCfg.VsrxCfg
+			case "vjunos":
+				filenames = ActiveProfiles[p].Definition.TelCfg.VjunosCfg
+			case "vevo":
+				filenames = ActiveProfiles[p].Definition.TelCfg.VevoCfg
+			}
+			savedVersion := ""
+			profileFilenames[i] = ""
+
+			for _, c := range filenames {
+				// Save all config if present as a fallback solution if specific version not found
+				if c.Version == "all" {
+					profileFilenames[i] = c.Config
+					savedVersion = "all"
+				} else {
+					result := CheckVersion(c.Version, rtr.Version)
+					if result && (profileFilenames[i] == "") {
+						profileFilenames[i] = c.Config
+						savedVersion = c.Version
+					}
+				}
+			}
+			if savedVersion != "" {
+				profileKeys[i] = p + "_" + savedVersion
+			} else {
+				// Reset entry if there is no filename found
+				profileKeys[i] = ""
+			}
+		}
+
 		// Sort profiles for uniqueness
 		sort.Strings(profileKeys)
 
@@ -280,7 +335,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		// Store profile slice before hashing to prevent later issues
 		if _, exists := profileSetIndex[profileKey]; !exists {
 			profileSetIndex[profileKey] = collectionCounter
-			profileSetToProfiles[profileKey] = profileKeys // Store the actual slice
+			profileSetToProfiles[profileKey] = profileFilenames // Store the actual slice
 			collectionCounter++
 		}
 
@@ -293,7 +348,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		collectionID := "collect_" + strconv.Itoa(profileSetIndex[profileKey])
 
 		// Retrieve original profile slice
-		profileSlice := profileSetToProfiles[profileKey]
+		profileFilenames := profileSetToProfiles[profileKey]
 
 		// Get the family of the first router (all in the same family)
 		family := routers[0].Family
@@ -305,9 +360,10 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 		// Assign to the collections map
 		collections[family][collectionID] = sqlite.Collection{
-			Profiles: profileSlice,
+			Profiles: profileFilenames,
 			Routers:  routers,
 		}
+
 	}
 
 	for family, familyCollections := range collections {
