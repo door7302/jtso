@@ -250,7 +250,11 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// Step 1: Build a lookup map for router profiles from AssoList
 	routerProfiles := make(map[string][]string) // key: Shortname → value: Profile List
 	for _, asso := range sqlite.AssoList {
-		routerProfiles[asso.Shortname] = asso.Assos
+		// Create a new slice with the same length as asso.Assos
+		assosCopy := make([]string, len(asso.Assos))
+		// Copy the contents of asso.Assos into the new slice
+		copy(assosCopy, asso.Assos)
+		routerProfiles[asso.Shortname] = assosCopy
 	}
 
 	// Step 2: Group routers by their profile sets
