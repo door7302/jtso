@@ -255,7 +255,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// Step 2: Group routers by their profile sets
 	profileSetToRouters := make(map[string][]*sqlite.RtrEntry)
-
 	profileSetToProfiles := make(map[string][]string)
 	profileSetIndex := make(map[string]int) // Map unique profile sets to collection IDs
 	collectionCounter := 1
@@ -275,37 +274,37 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		// check if version is assigned to a profile and save file name
 		profileFilenames := make([]string, len(profileKeys))
 		for i, p := range profileKeys {
-			var filenames []Config
+			var filenameList []Config
 			switch rtr.Family {
 			case "mx":
-				filenames = ActiveProfiles[p].Definition.TelCfg.MxCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.MxCfg
 			case "ptx":
-				filenames = ActiveProfiles[p].Definition.TelCfg.PtxCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.PtxCfg
 			case "acx":
-				filenames = ActiveProfiles[p].Definition.TelCfg.AcxCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.AcxCfg
 			case "ex":
-				filenames = ActiveProfiles[p].Definition.TelCfg.ExCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.ExCfg
 			case "qfx":
-				filenames = ActiveProfiles[p].Definition.TelCfg.QfxCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.QfxCfg
 			case "srx":
-				filenames = ActiveProfiles[p].Definition.TelCfg.SrxCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.SrxCfg
 			case "crpd":
-				filenames = ActiveProfiles[p].Definition.TelCfg.CrpdCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.CrpdCfg
 			case "cptx":
-				filenames = ActiveProfiles[p].Definition.TelCfg.CptxCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.CptxCfg
 			case "vmx":
-				filenames = ActiveProfiles[p].Definition.TelCfg.VmxCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.VmxCfg
 			case "vsrx":
-				filenames = ActiveProfiles[p].Definition.TelCfg.VsrxCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.VsrxCfg
 			case "vjunos":
-				filenames = ActiveProfiles[p].Definition.TelCfg.VjunosCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.VjunosCfg
 			case "vevo":
-				filenames = ActiveProfiles[p].Definition.TelCfg.VevoCfg
+				filenameList = ActiveProfiles[p].Definition.TelCfg.VevoCfg
 			}
 			savedVersion := ""
 			profileFilenames[i] = ""
 
-			for _, c := range filenames {
+			for _, c := range filenameList {
 				// Save all config if present as a fallback solution if specific version not found
 				if c.Version == "all" {
 					profileFilenames[i] = c.Config
