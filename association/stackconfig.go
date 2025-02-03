@@ -310,6 +310,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 			for _, c := range filenameList {
 				// Save all config if present as a fallback solution if specific version not found
+				logger.Log.Infof("Config: %v  -   C.Ver %v; R.Ver %v", c.Config, c.Version, rtr.Version)
 				if c.Version == "all" {
 					profileFilenames[i] = c.Config
 					savedVersion = "all"
@@ -334,8 +335,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 		// Create a unique profile key (string format for map indexing)
 		profileKey := fmt.Sprintf("%v", profileKeys)
-
-		logger.Log.Info("profileKey %v", profileKey)
 
 		// Store profile slice before hashing to prevent later issues
 		if _, exists := profileSetIndex[profileKey]; !exists {
