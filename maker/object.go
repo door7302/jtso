@@ -1,20 +1,5 @@
 package maker
 
-import "sync"
-
-// ---------------------------------------------------- //
-// ---------------------------------------------------- //
-// A CONFIG COLLECTION
-// ---------------------------------------------------- //
-// ---------------------------------------------------- //
-
-// Map 1th key is the device family mx, ptx etc...
-// the nested map key is version
-type TelegrafCollection struct {
-	Collection map[string]map[string]*TelegrafConfig
-	Mu         *sync.Mutex
-}
-
 // ---------------------------------------------------- //
 // ---------------------------------------------------- //
 // A FULL CONFIG

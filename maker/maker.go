@@ -6,17 +6,9 @@ import (
 	"errors"
 	"jtso/logger"
 	"os"
-	"sync"
+	"strings"
 	"text/template"
 )
-
-var MyCollection *TelegrafCollection
-
-func init() {
-	MyCollection = new(TelegrafCollection)
-	MyCollection.Collection = make(map[string]map[string]*TelegrafConfig)
-	MyCollection.Mu = new(sync.Mutex)
-}
 
 func LoadConfig(filePath string) (*TelegrafConfig, error) {
 
@@ -40,8 +32,88 @@ func LoadConfig(filePath string) (*TelegrafConfig, error) {
 	return &config, nil
 }
 
+func mergeUniqueInPlaceString(a *[]string, b []string) {
+	unique := make(map[string]struct{}) // Track unique values
+
+	// Preserve existing elements from A
+	for _, val := range *a {
+		unique[val] = struct{}{}
+	}
+
+	// Add elements from B if they are not already in A
+	for _, val := range b {
+		if _, exists := unique[val]; !exists {
+			unique[val] = struct{}{}
+			*a = append(*a, val) // Append directly to A
+		}
+	}
+}
+
+func findShortestSubstring(A, B string) string {
+	if strings.Contains(A, B) {
+		return B // B is a substring of A, return the shorter one (B)
+	}
+	if strings.Contains(B, A) {
+		return A // A is a substring of B, return the shorter one (A)
+	}
+	return "" // No match
+}
+
 func OptimizeConf(listOfConf []*TelegrafConfig) (*TelegrafConfig, error) {
-	return nil, nil
+	// keep consistent order
+	//var order int
+	// Target config
+	var config TelegrafConfig
+
+	for _, entry := range listOfConf {
+
+		// Optimise GNMI input plugin
+		if len(config.GnmiList) == 0 {
+			config.GnmiList = append([]GnmiInput{}, entry.GnmiList...)
+		} else {
+			// Merge Alias first - Today we support only one gNMI INPUT - this explain [0]
+			lenAlias := len(config.GnmiList[0].Aliases)
+			for _, newEntry := range entry.GnmiList[0].Aliases {
+				match := false
+				for i := 0; i < lenAlias; i++ {
+					if newEntry.Name == config.GnmiList[0].Aliases[i].Name {
+						mergeUniqueInPlaceString(&config.GnmiList[0].Aliases[i].Prefixes, newEntry.Prefixes)
+						match = true
+						break
+					}
+				}
+				if !match {
+					config.GnmiList[0].Aliases = append(config.GnmiList[0].Aliases, newEntry)
+				}
+			}
+
+			// Now merge Subscriptions
+			lenSubs := len(config.GnmiList[0].Subs)
+			for _, newEntry := range entry.GnmiList[0].Subs {
+				match := false
+				for i := 0; i < lenSubs; i++ {
+					// First check if same MEASUREMENT NAME and same MODE
+					if newEntry.Name == config.GnmiList[0].Subs[i].Name && newEntry.Mode == config.GnmiList[0].Subs[i].Mode {
+						shortestPath := findShortestSubstring(newEntry.Path, config.GnmiList[0].Subs[i].Path)
+						if shortestPath != "" {
+							// keep the shortest
+							config.GnmiList[0].Subs[i].Path = shortestPath
+							// keep lowest interval
+							if newEntry.Interval < config.GnmiList[0].Subs[i].Interval {
+								config.GnmiList[0].Subs[i].Interval = newEntry.Interval
+							}
+							match = true
+							break
+						}
+					}
+				}
+				if !match {
+					config.GnmiList[0].Subs = append(config.GnmiList[0].Subs, newEntry)
+				}
+			}
+		}
+	}
+	return &config, nil
 }
 
 func RenderConf(config *TelegrafConfig) (*string, error) {

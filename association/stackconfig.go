@@ -8,6 +8,7 @@ import (
 	"jtso/config"
 	"jtso/container"
 	"jtso/logger"
+	"jtso/maker"
 	"jtso/sqlite"
 	"os"
 	"regexp"
@@ -34,6 +35,8 @@ const PATH_VEVO string = "/var/shared//telegraf/vevo/telegraf.d/"
 const TELEGRAF_ROOT_PATH string = "/var/shared/telegraf/"
 
 const PATH_GRAFANA string = "/var/shared/grafana/dashboards/"
+
+const ACTIVE_PROFILES string = "/var/active_profiles/"
 
 func hashStringFNV(input string) uint32 {
 	hasher := fnv.New32a()
@@ -267,6 +270,18 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		if rtr.Profile == 0 {
 			continue
 		}
+		foundFam := false
+		for _, f := range families {
+			if rtr.Family == f {
+				foundFam = true
+				break
+			}
+		}
+		// Ignore if not match requested family
+		if !foundFam {
+
+			continue
+		}
 
 		// Get the profiles from routerProfiles map
 		profileKeys, exists := routerProfiles[rtr.Shortname]
@@ -486,6 +501,69 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		}
 	}
 	//// ----------------------------------------------------------------------------
+
+	// Now for each family create for each collection the optmized Telegraf config
+	var telegrafCfgList []*maker.TelegrafConfig
+	for _, f := range families {
+		// For each collection
+		for id, collection := range collections[f] {
+			// create a new collection of config before optimisation
+			telegrafCfgList = make([]*maker.TelegrafConfig, 0)
+			for index, file := range collection.ProfilesConf {
+				fullPath := ACTIVE_PROFILES + collection.ProfilesName[index] + "/" + file
+				newCfg, err := maker.LoadConfig(fullPath)
+				if err != nil {
+					continue
+				}
+				telegrafCfgList = append(telegrafCfgList, newCfg)
+			}
+			// Create one unique config based on the list of configs
+			mergedCfg, err := maker.OptimizeConf(telegrafCfgList)
+			if err != nil {
+				continue
+			}
+
+			// Fill missing data
+			if len(mergedCfg.GnmiList) > 0 {
+				for i := range mergedCfg.GnmiList {
+					mergedCfg.GnmiList[i].Rtrs = rendRtrs
+					mergedCfg.GnmiList[i].Username = sqlite.ActiveCred.GnmiUser
+					mergedCfg.GnmiList[i].Password = sqlite.ActiveCred.GnmiPwd
+					mergedCfg.GnmiList[i].UseTls = tls
+					mergedCfg.GnmiList[i].UseTlsClient = clienttls
+					mergedCfg.GnmiList[i].SkipVerify = skip
+				}
+			}
+			if len(mergedCfg.NetconfList) > 0 {
+				for i := range mergedCfg.NetconfList {
+					mergedCfg.NetconfList[i].Rtrs = rendRtrsNet
+					mergedCfg.NetconfList[i].Username = sqlite.ActiveCred.NetconfUser
+					mergedCfg.NetconfList[i].Password = sqlite.ActiveCred.NetconfPwd
+				}
+			}
+			// render file
+			payload, err := maker.RenderConf(mergedCfg)
+			if err != nil {
+				continue
+			}
+			newFileName := strings.TrimSuffix(filename, ".json") + ".conf"
+			file, err := os.Create(directory + newFileName)
+			if err != nil {
+				logger.Log.Errorf("Unable to open the target rendering file %s - err: %v", newFileName, err)
+				continue
+			}
+			defer file.Close()
+
+			// Write text to the file
+			_, err = file.WriteString(*payload)
+			if err != nil {
+				logger.Log.Errorf("Error writing to file %s: %v", newFileName, err)
+				continue
+			}
+
+		}
+
+	}
 
 	logger.Log.Infof("All JTS components reconfigured for family %s", family)
 	return nil
