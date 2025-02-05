@@ -67,7 +67,9 @@ func OptimizeConf(listOfConf []*TelegrafConfig) (*TelegrafConfig, error) {
 
 	for _, entry := range listOfConf {
 
+		// -------------------------------
 		// Optimise GNMI input plugin
+		//--------------------------------
 		if len(config.GnmiList) == 0 {
 			config.GnmiList = append([]GnmiInput{}, entry.GnmiList...)
 		} else {
@@ -112,7 +114,18 @@ func OptimizeConf(listOfConf []*TelegrafConfig) (*TelegrafConfig, error) {
 				}
 			}
 		}
+
+		// -------------------------------
+		// Optimise Influx output  plugin
+		//--------------------------------
+		if len(config.InfluxList) == 0 {
+			config.InfluxList = append([]InfluxOutput{}, entry.InfluxList...)
+		} else {
+			// We merge fieldpass - we support today only one Influx Output that explains the [0]
+			mergeUniqueInPlaceString(&config.InfluxList[0].Fieldpass, entry.InfluxList[0].Fieldpass)
+		}
 	}
+
 	return &config, nil
 }
 
