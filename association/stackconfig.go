@@ -13,30 +13,31 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 )
 
-const PATH_MX string = "/var/shared/telegraf/mx/telegraf.d/"
-const PATH_PTX string = "/var/shared//telegraf/ptx/telegraf.d/"
-const PATH_ACX string = "/var/shared//telegraf/acx/telegraf.d/"
-const PATH_EX string = "/var/shared//telegraf/ex/telegraf.d/"
-const PATH_QFX string = "/var/shared//telegraf/qfx/telegraf.d/"
-const PATH_SRX string = "/var/shared//telegraf/srx/telegraf.d/"
+const (
+	TELEGRAF_ROOT_PATH string = "/var/shared/telegraf/"
+	PATH_GRAFANA       string = "/var/shared/grafana/dashboards/"
+	ACTIVE_PROFILES    string = "/var/active_profiles/"
+)
 
-const PATH_CRPD string = "/var/shared//telegraf/crpd/telegraf.d/"
-const PATH_CPTX string = "/var/shared//telegraf/cptx/telegraf.d/"
-
-const PATH_VMX string = "/var/shared//telegraf/vmx/telegraf.d/"
-const PATH_VSRX string = "/var/shared/telegraf/vsrx/telegraf.d/"
-const PATH_VJUNOS string = "/var/shared//telegraf/vjunos/telegraf.d/"
-const PATH_VEVO string = "/var/shared//telegraf/vevo/telegraf.d/"
-
-const TELEGRAF_ROOT_PATH string = "/var/shared/telegraf/"
-
-const PATH_GRAFANA string = "/var/shared/grafana/dashboards/"
-
-const ACTIVE_PROFILES string = "/var/active_profiles/"
+var PathMap = map[string]string{
+	"mx":     "/var/shared/telegraf/mx/telegraf.d/",
+	"ptx":    "/var/shared/telegraf/ptx/telegraf.d/",
+	"acx":    "/var/shared/telegraf/acx/telegraf.d/",
+	"ex":     "/var/shared/telegraf/ex/telegraf.d/",
+	"qfx":    "/var/shared/telegraf/qfx/telegraf.d/",
+	"srx":    "/var/shared/telegraf/srx/telegraf.d/",
+	"crpd":   "/var/shared/telegraf/crpd/telegraf.d/",
+	"cptx":   "/var/shared/telegraf/cptx/telegraf.d/",
+	"vmx":    "/var/shared/telegraf/vmx/telegraf.d/",
+	"vsrx":   "/var/shared/telegraf/vsrx/telegraf.d/",
+	"vjunos": "/var/shared/telegraf/vjunos/telegraf.d/",
+	"vevo":   "/var/shared/telegraf/vevo/telegraf.d/",
+}
 
 func hashStringFNV(input string) uint32 {
 	hasher := fnv.New32a()
@@ -301,105 +302,45 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 			profilesName[i] = p
 
+			path, exists := PathMap[rtr.Family]
+			if !exists {
+				logger.Log.Errorf("Unknown router family: %s", rtr.Family)
+				continue
+			}
+
 			switch rtr.Family {
 			case "mx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.MxCfg
-				readDirectory, err = os.Open(PATH_MX)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_MX, err)
-					continue
-				}
-				directory = PATH_MX
 			case "ptx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.PtxCfg
-				readDirectory, err = os.Open(PATH_PTX)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_PTX, err)
-					continue
-				}
-				directory = PATH_PTX
 			case "acx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.AcxCfg
-				readDirectory, err = os.Open(PATH_ACX)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_ACX, err)
-					continue
-				}
-				directory = PATH_ACX
 			case "ex":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.ExCfg
-				readDirectory, err = os.Open(PATH_EX)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_EX, err)
-					continue
-				}
-				directory = PATH_EX
-
 			case "qfx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.QfxCfg
-				readDirectory, err = os.Open(PATH_QFX)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_QFX, err)
-					continue
-				}
-				directory = PATH_QFX
 			case "srx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.SrxCfg
-				readDirectory, err = os.Open(PATH_SRX)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_SRX, err)
-					continue
-				}
-				directory = PATH_SRX
 			case "crpd":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.CrpdCfg
-				readDirectory, err = os.Open(PATH_CRPD)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_CRPD, err)
-					continue
-				}
-				directory = PATH_CRPD
 			case "cptx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.CptxCfg
-				readDirectory, err = os.Open(PATH_CPTX)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_CPTX, err)
-					continue
-				}
-				directory = PATH_CPTX
 			case "vmx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.VmxCfg
-				readDirectory, err = os.Open(PATH_VMX)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_VMX, err)
-					continue
-				}
-				directory = PATH_VMX
 			case "vsrx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.VsrxCfg
-				readDirectory, err = os.Open(PATH_VSRX)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_VSRX, err)
-					continue
-				}
-				directory = PATH_VSRX
 			case "vjunos":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.VjunosCfg
-				readDirectory, err = os.Open(PATH_VJUNOS)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_VJUNOS, err)
-					continue
-				}
-				directory = PATH_VJUNOS
 			case "vevo":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.VevoCfg
-				readDirectory, err = os.Open(PATH_VEVO)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", PATH_VEVO, err)
-					continue
-				}
-				directory = PATH_VEVO
 			}
+
+			readDirectory, err = os.Open(path)
+			if err != nil {
+				logger.Log.Errorf("Unable to parse the folder %s: %v", path, err)
+				continue
+			}
+			directory = path
 
 			// clean the right directory only if there are files
 			allFiles, _ := readDirectory.Readdir(0)
@@ -505,6 +446,11 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// Now for each family create for each collection the optmized Telegraf config
 	var telegrafCfgList []*maker.TelegrafConfig
 	for _, f := range families {
+		path, exists := PathMap[f]
+		if !exists {
+			logger.Log.Errorf("Unknown router family: %s", f)
+			continue
+		}
 		// For each collection
 		for id, collection := range collections[f] {
 			// create a new collection of config before optimisation
@@ -521,6 +467,28 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			mergedCfg, err := maker.OptimizeConf(telegrafCfgList)
 			if err != nil {
 				continue
+			}
+
+			// Retrieve some common flags
+			tls := false
+			skip := false
+			clienttls := false
+			if sqlite.ActiveCred.UseTls == "yes" {
+				tls = true
+			}
+			if sqlite.ActiveCred.SkipVerify == "yes" {
+				skip = true
+			}
+			if sqlite.ActiveCred.ClientTls == "yes" {
+				clienttls = true
+			}
+
+			// create the list of rtr with port
+			rendRtrs := make([]string, 0)
+			rendRtrsNet := make([]string, 0)
+			for _, r := range collection.Routers {
+				rendRtrs = append(rendRtrs, r.Hostname+":"+strconv.Itoa(cfg.Gnmi.Port))
+				rendRtrsNet = append(rendRtrsNet, r.Hostname)
 			}
 
 			// Fill missing data
@@ -546,10 +514,11 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			if err != nil {
 				continue
 			}
-			newFileName := strings.TrimSuffix(filename, ".json") + ".conf"
-			file, err := os.Create(directory + newFileName)
+
+			savedName := path + f + "_" + id + ".conf"
+			file, err := os.Create(savedName)
 			if err != nil {
-				logger.Log.Errorf("Unable to open the target rendering file %s - err: %v", newFileName, err)
+				logger.Log.Errorf("Unable to open the target rendering file %s - err: %v", savedName, err)
 				continue
 			}
 			defer file.Close()
@@ -557,7 +526,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			// Write text to the file
 			_, err = file.WriteString(*payload)
 			if err != nil {
-				logger.Log.Errorf("Error writing to file %s: %v", newFileName, err)
+				logger.Log.Errorf("Error writing to file %s: %v", savedName, err)
 				continue
 			}
 
