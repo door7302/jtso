@@ -113,6 +113,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 	// Target config
 	var config TelegrafConfig
 	var keepOrder int
+	firstTime := false
 
 	for _, entry := range listOfConf {
 
@@ -136,6 +137,29 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 					if !match {
 						config.GnmiList[0].Aliases = append(config.GnmiList[0].Aliases, newEntry)
+					}
+				}
+				// Rearange the existing subscriptions - only the first time
+				if firstTime {
+					lenSubs := len(config.GnmiList[0].Subs)
+					for i := 0; i < lenSubs; i++ {
+						if i == lenSubs-1 {
+						} else {
+							if config.GnmiList[0].Subs[i].Name == config.GnmiList[0].Subs[i+1].Name && config.GnmiList[0].Subs[i].Mode == config.GnmiList[0].Subs[i+1].Mode {
+								shortestPath, who := findShortestSubstring(config.GnmiList[0].Subs[i].Path, config.GnmiList[0].Subs[i].Path)
+								if shortestPath != "" {
+									if config.GnmiList[0].Subs[i].Interval < config.GnmiList[0].Subs[i+1].Interval {
+										config.GnmiList[0].Subs[i+1].Interval = config.GnmiList[0].Subs[i].Interval
+									}
+									if who == "B" {
+										config.GnmiList[0].Subs = append(config.GnmiList[0].Subs[:i+1], config.GnmiList[0].Subs[i+2:]...)
+									} else {
+										config.GnmiList[0].Subs = append(config.GnmiList[0].Subs[:i], config.GnmiList[0].Subs[i+1:]...)
+									}
+									lenSubs = len(config.GnmiList[0].Subs)
+								}
+							}
+						}
 					}
 				}
 
