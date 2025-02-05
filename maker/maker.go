@@ -598,16 +598,26 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 	}
 
 	// Last step is to optimize Gnmi subscriptions
-	// Optimize subscriptions in a single pass
 	if len(config.GnmiList) > 0 {
 		for i := 0; i < len(config.GnmiList[0].Subs); i++ {
 			for j := 0; j < len(config.GnmiList[0].Subs); j++ {
 				if i != j {
 					shortestPath, who := findShortestSubstring(config.GnmiList[0].Subs[i].Path, config.GnmiList[0].Subs[j].Path)
 					if shortestPath != "" {
+
 						if who == "B" {
+							// Keep lowest interval
+							if config.GnmiList[0].Subs[i].Interval < config.GnmiList[0].Subs[j].Interval {
+								config.GnmiList[0].Subs[j].Interval = config.GnmiList[0].Subs[i].Interval
+							}
+							// remove longest xpath
 							config.GnmiList[0].Subs = append(config.GnmiList[0].Subs[:i], config.GnmiList[0].Subs[i+1:]...)
 						} else {
+							// Keep lowest interval
+							if config.GnmiList[0].Subs[j].Interval < config.GnmiList[0].Subs[i].Interval {
+								config.GnmiList[0].Subs[i].Interval = config.GnmiList[0].Subs[j].Interval
+							}
+							// remove longest xpath
 							config.GnmiList[0].Subs = append(config.GnmiList[0].Subs[:j], config.GnmiList[0].Subs[j+1:]...)
 						}
 					}

@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"io"
 	"jtso/config"
 	"jtso/container"
+	"jtso/kapacitor"
 	"jtso/logger"
 	"jtso/maker"
 	"jtso/sqlite"
@@ -426,18 +428,19 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	}
 
+	// only for debug
 	for family, familyCollections := range collections {
-		logger.Log.Info("Update collections of Telegraf configs:")
-		logger.Log.Infof(" Family: %s", family)
+		logger.Log.Debug("Update collections of Telegraf configs:")
+		logger.Log.Debugf(" Family: %s", family)
 		for collectionID, collection := range familyCollections {
-			logger.Log.Infof("  ID: %s:", collectionID)
-			logger.Log.Info("     Profiles [files]:")
+			logger.Log.Debugf("  ID: %s:", collectionID)
+			logger.Log.Debug("     Profiles [files]:")
 			for i, p := range collection.ProfilesConf {
-				logger.Log.Infof("       -%s [%s]", collection.ProfilesName[i], p)
+				logger.Log.Debugf("       -%s [%s]", collection.ProfilesName[i], p)
 			}
-			logger.Log.Info("     Routers part of the collection:")
+			logger.Log.Debug("     Routers part of the collection:")
 			for _, r := range collection.Routers {
-				logger.Log.Infof("       -%s", r.Hostname)
+				logger.Log.Debugf("       -%s", r.Hostname)
 			}
 		}
 	}
@@ -529,6 +532,136 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 		}
 
+	}
+
+	// create the list of active profile dashboard name and copy the new version of each dashboard
+	var excludeDash []string
+	excludeDash = make([]string, 0)
+	excludeDash = append(excludeDash, "home.json")
+	for _, v := range collections {
+		for _, c := range v {
+			for _, p := range c.ProfilesName {
+				for _, d := range ActiveProfiles[p].Definition.GrafaCfg {
+					excludeDash = append(excludeDash, d)
+					source, err := os.Open("/var/active_profiles/" + p + "/" + d) //open the source file
+					if err != nil {
+						logger.Log.Errorf("Unable to open the source dashboard %s - err: %v", d, err)
+						continue
+					}
+					defer source.Close()
+					destination, err := os.Create(PATH_GRAFANA + d) //create the destination file
+					if err != nil {
+						logger.Log.Errorf("Unable to open the destination dashboard %s - err: %v", d, err)
+						continue
+					}
+					defer destination.Close()
+					_, err = io.Copy(destination, source) //copy the contents of source to destination file
+					if err != nil {
+						logger.Log.Errorf("Unable to update the dashboard %s - err: %v", d, err)
+						continue
+					}
+				}
+			}
+		}
+	}
+
+	// Now clean grafana dashbord directory and keep only dashbords related to active profiles
+	readDirectory, _ := os.Open(PATH_GRAFANA)
+	allFiles, _ := readDirectory.Readdir(0)
+	for f := range allFiles {
+		file := allFiles[f]
+
+		fileName := file.Name()
+		filePath := PATH_GRAFANA + fileName
+
+		// exclude home dashboard and active dashboards profile
+		found := false
+		for _, v := range excludeDash {
+			if v == fileName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			err := os.Remove(filePath)
+			if err != nil {
+
+				continue
+			}
+		}
+	}
+
+	// Create the list of Active Kapacitor script
+	var kapaStart, kapaStop, kapaAll []string
+	kapaStart = make([]string, 0)
+	kapaStop = make([]string, 0)
+	kapaAll = make([]string, 0)
+	for _, v := range collections {
+		for _, c := range v {
+			for _, p := range c.ProfilesName {
+				for _, d := range ActiveProfiles[p].Definition.KapaCfg {
+					fileKapa := "/var/active_profiles/" + p + "/" + d
+					to_add := true
+					for _, a := range kapaAll {
+						if a == fileKapa {
+							to_add = false
+							break
+						}
+					}
+					if to_add {
+						// kapaAll is to compare with ActiveTick later to delete unwanted tick scripts
+						kapaAll = append(kapaAll, fileKapa)
+					}
+					found := false
+					for i, _ := range kapacitor.ActiveTick {
+						if i == fileKapa {
+							found = true
+							break
+						}
+					}
+					// if kapa script not already active
+					if !found {
+						kapaStart = append(kapaStart, fileKapa)
+					}
+				}
+			}
+		}
+	}
+	// check now those that need to be deleted
+	for i, _ := range kapacitor.ActiveTick {
+		found := false
+		for _, v := range kapaAll {
+			if i == v {
+				found = true
+				break
+			}
+		}
+		if !found {
+			kapaStop = append(kapaStop, i)
+		}
+	}
+
+	// remove non active Kapascript
+	kapacitor.DeleteTick(kapaStop)
+	// Enable active scripts
+	kapacitor.StartTick(kapaStart)
+
+	// Restart grafana
+	container.RestartContainer("grafana")
+
+	// Restart telegraf instance(s)
+	for _, f := range families {
+		cntr := 0
+		for _, c := range collections[f] {
+			cntr += len(c.Routers)
+		}
+
+		// if cntr == 0 prefer shutdown the telegraf container
+		if cntr == 0 {
+			container.StopContainer("telegraf_" + f)
+		} else {
+			container.RestartContainer("telegraf_" + f)
+		}
 	}
 
 	logger.Log.Infof("All JTS components reconfigured for family %s", family)
