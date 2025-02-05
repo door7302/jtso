@@ -363,7 +363,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 			for _, c := range filenameList {
 				// Save all config if present as a fallback solution if specific version not found
-				logger.Log.Infof("Config: %v  -   C.Ver %v; R.Ver %v", c.Config, c.Version, rtr.Version)
 				if c.Version == "all" && savedVersion == "" {
 					profilesFilename[i] = c.Config
 					savedVersion = "all"

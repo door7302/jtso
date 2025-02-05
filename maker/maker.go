@@ -112,47 +112,49 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		//---------------------------------------------------------------
 		// Optimise GNMI input plugin
 		//---------------------------------------------------------------
-		if len(config.GnmiList) == 0 {
-			config.GnmiList = append([]GnmiInput{}, entry.GnmiList...)
-		} else {
-			// Merge Alias first - Today we support only one gNMI INPUT - this explain [0]
-			lenAlias := len(config.GnmiList[0].Aliases)
-			for _, newEntry := range entry.GnmiList[0].Aliases {
-				match := false
-				for i := 0; i < lenAlias; i++ {
-					if newEntry.Name == config.GnmiList[0].Aliases[i].Name {
-						mergeUniqueInPlaceString(&config.GnmiList[0].Aliases[i].Prefixes, newEntry.Prefixes)
-						match = true
-						break
-					}
-				}
-				if !match {
-					config.GnmiList[0].Aliases = append(config.GnmiList[0].Aliases, newEntry)
-				}
-			}
-
-			// Now merge Subscriptions
-			lenSubs := len(config.GnmiList[0].Subs)
-			for _, newEntry := range entry.GnmiList[0].Subs {
-				match := false
-				for i := 0; i < lenSubs; i++ {
-					// First check if same MEASUREMENT NAME and same MODE
-					if newEntry.Name == config.GnmiList[0].Subs[i].Name && newEntry.Mode == config.GnmiList[0].Subs[i].Mode {
-						shortestPath := findShortestSubstring(newEntry.Path, config.GnmiList[0].Subs[i].Path)
-						if shortestPath != "" {
-							// keep the shortest
-							config.GnmiList[0].Subs[i].Path = shortestPath
-							// keep lowest interval
-							if newEntry.Interval < config.GnmiList[0].Subs[i].Interval {
-								config.GnmiList[0].Subs[i].Interval = newEntry.Interval
-							}
+		if len(entry.GnmiList) > 0 {
+			if len(config.GnmiList) == 0 {
+				config.GnmiList = append([]GnmiInput{}, entry.GnmiList...)
+			} else {
+				// Merge Alias first - Today we support only one gNMI INPUT - this explain [0]
+				lenAlias := len(config.GnmiList[0].Aliases)
+				for _, newEntry := range entry.GnmiList[0].Aliases {
+					match := false
+					for i := 0; i < lenAlias; i++ {
+						if newEntry.Name == config.GnmiList[0].Aliases[i].Name {
+							mergeUniqueInPlaceString(&config.GnmiList[0].Aliases[i].Prefixes, newEntry.Prefixes)
 							match = true
 							break
 						}
 					}
+					if !match {
+						config.GnmiList[0].Aliases = append(config.GnmiList[0].Aliases, newEntry)
+					}
 				}
-				if !match {
-					config.GnmiList[0].Subs = append(config.GnmiList[0].Subs, newEntry)
+
+				// Now merge Subscriptions
+				lenSubs := len(config.GnmiList[0].Subs)
+				for _, newEntry := range entry.GnmiList[0].Subs {
+					match := false
+					for i := 0; i < lenSubs; i++ {
+						// First check if same MEASUREMENT NAME and same MODE
+						if newEntry.Name == config.GnmiList[0].Subs[i].Name && newEntry.Mode == config.GnmiList[0].Subs[i].Mode {
+							shortestPath := findShortestSubstring(newEntry.Path, config.GnmiList[0].Subs[i].Path)
+							if shortestPath != "" {
+								// keep the shortest
+								config.GnmiList[0].Subs[i].Path = shortestPath
+								// keep lowest interval
+								if newEntry.Interval < config.GnmiList[0].Subs[i].Interval {
+									config.GnmiList[0].Subs[i].Interval = newEntry.Interval
+								}
+								match = true
+								break
+							}
+						}
+					}
+					if !match {
+						config.GnmiList[0].Subs = append(config.GnmiList[0].Subs, newEntry)
+					}
 				}
 			}
 		}
@@ -160,23 +162,25 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		//---------------------------------------------------------------
 		// Optimise Netconf input plugin
 		//---------------------------------------------------------------
-		if len(config.NetconfList) == 0 {
-			config.NetconfList = append([]NetconfInput{}, entry.NetconfList...)
-		} else {
-			// Merge Subscriptions
-			lenSubs := len(config.NetconfList[0].Subs)
-			for _, newEntry := range entry.NetconfList[0].Subs {
-				match := false
-				for i := 0; i < lenSubs; i++ {
-					// First check if same MEASUREMENT NAME and same RPC
-					if newEntry.Name == config.NetconfList[0].Subs[i].Name && newEntry.RPC == config.NetconfList[0].Subs[i].RPC {
-						mergeNetFieldsInPlaceNetField(&config.NetconfList[0].Subs[i].Fields, newEntry.Fields)
-						match = true
-						break
+		if len(entry.NetconfList) > 0 {
+			if len(config.NetconfList) == 0 {
+				config.NetconfList = append([]NetconfInput{}, entry.NetconfList...)
+			} else {
+				// Merge Subscriptions
+				lenSubs := len(config.NetconfList[0].Subs)
+				for _, newEntry := range entry.NetconfList[0].Subs {
+					match := false
+					for i := 0; i < lenSubs; i++ {
+						// First check if same MEASUREMENT NAME and same RPC
+						if newEntry.Name == config.NetconfList[0].Subs[i].Name && newEntry.RPC == config.NetconfList[0].Subs[i].RPC {
+							mergeNetFieldsInPlaceNetField(&config.NetconfList[0].Subs[i].Fields, newEntry.Fields)
+							match = true
+							break
+						}
 					}
-				}
-				if !match {
-					config.NetconfList[0].Subs = append(config.NetconfList[0].Subs, newEntry)
+					if !match {
+						config.NetconfList[0].Subs = append(config.NetconfList[0].Subs, newEntry)
+					}
 				}
 			}
 		}
@@ -185,415 +189,445 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		// Optimise Clone plugin: No optimisation
 		//---------------------------------------------------------------
 		// Save smallest order
-		keepOrder = 0
-		if len(config.CloneList) == 0 {
-			config.CloneList = append([]Clone{}, entry.CloneList...)
-		} else {
-			// We merge both list of clone
-			mergeInPlaceStruct(&config.CloneList, entry.CloneList)
-		}
-
-		for _, e := range config.CloneList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.CloneList) > 0 {
+			keepOrder = 0
+			if len(config.CloneList) == 0 {
+				config.CloneList = append([]Clone{}, entry.CloneList...)
+			} else {
+				// We merge both list of clone
+				mergeInPlaceStruct(&config.CloneList, entry.CloneList)
 			}
-		}
-		// now we reallocate the order
-		for i := 0; i < len(config.CloneList); i++ {
-			config.CloneList[i].Order = keepOrder + i
+
+			for _, e := range config.CloneList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+			}
+			// now we reallocate the order
+			for i := 0; i < len(config.CloneList); i++ {
+				config.CloneList[i].Order = keepOrder + i
+			}
 		}
 
 		//---------------------------------------------------------------
 		// Optimise PIVOT plugin
 		//---------------------------------------------------------------
 		// Save smallest order
-		keepOrder = 0
-		if len(config.PivotList) == 0 {
-			config.PivotList = append([]Pivot{}, entry.PivotList...)
-		} else {
-			for _, e := range entry.PivotList {
-				match := false
-				lenEntry := len(config.PivotList)
-				for i := 0; i < lenEntry; i++ {
-					if config.PivotList[i].Tag == e.Tag && config.PivotList[i].Field == e.Field {
-						// here we have similar pivot - merge namepass
-						mergeUniqueInPlaceString(&config.PivotList[i].Namepass, e.Namepass)
-						match = true
-						break
+		if len(entry.PivotList) > 0 {
+			keepOrder = 0
+			if len(config.PivotList) == 0 {
+				config.PivotList = append([]Pivot{}, entry.PivotList...)
+			} else {
+				for _, e := range entry.PivotList {
+					match := false
+					lenEntry := len(config.PivotList)
+					for i := 0; i < lenEntry; i++ {
+						if config.PivotList[i].Tag == e.Tag && config.PivotList[i].Field == e.Field {
+							// here we have similar pivot - merge namepass
+							mergeUniqueInPlaceString(&config.PivotList[i].Namepass, e.Namepass)
+							match = true
+							break
+						}
+					}
+					if !match {
+						// Unknown Pivot add to the List
+						config.PivotList = append(config.PivotList, e)
 					}
 				}
-				if !match {
-					// Unknown Pivot add to the List
-					config.PivotList = append(config.PivotList, e)
+			}
+
+			for _, e := range config.PivotList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
 				}
 			}
-		}
-
-		for _, e := range config.PivotList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+			// now we reallocate the order
+			for i := 0; i < len(config.PivotList); i++ {
+				config.PivotList[i].Order = keepOrder + i
 			}
-		}
-		// now we reallocate the order
-		for i := 0; i < len(config.PivotList); i++ {
-			config.PivotList[i].Order = keepOrder + i
 		}
 
 		//---------------------------------------------------------------
 		// Optimise Rename plugin: No optimisation
 		//---------------------------------------------------------------
 		// Save smallest order
-		keepOrder = 0
-		if len(config.RenameList) == 0 {
-			config.RenameList = append([]Rename{}, entry.RenameList...)
-		} else {
-			// We merge both list of RenameList
-			mergeInPlaceStruct(&config.RenameList, entry.RenameList)
-		}
-
-		for _, e := range config.RenameList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.RenameList) > 0 {
+			keepOrder = 0
+			if len(config.RenameList) == 0 {
+				config.RenameList = append([]Rename{}, entry.RenameList...)
+			} else {
+				// We merge both list of RenameList
+				mergeInPlaceStruct(&config.RenameList, entry.RenameList)
 			}
-		}
-		// now we reallocate the order
-		for i := 0; i < len(config.RenameList); i++ {
-			config.RenameList[i].Order = keepOrder + i
+
+			for _, e := range config.RenameList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+			}
+			// now we reallocate the order
+			for i := 0; i < len(config.RenameList); i++ {
+				config.RenameList[i].Order = keepOrder + i
+			}
 		}
 
 		//---------------------------------------------------------------
 		// Optimise Enrichment plugin
 		//---------------------------------------------------------------
 		// Save smallest order
-		keepOrder = 0
-		if len(config.EnrichmentList) == 0 {
-			config.EnrichmentList = append([]Enrichment{}, entry.EnrichmentList...)
-		} else {
-			for _, e := range entry.EnrichmentList {
-				match := false
-				lenEntry := len(config.EnrichmentList)
-				for i := 0; i < lenEntry; i++ {
-					if config.EnrichmentList[i].Level1 == e.Level1 && config.EnrichmentList[i].Family == e.Family {
-						// here we have similar enrichment - merge namepass
-						mergeUniqueInPlaceString(&config.EnrichmentList[i].Namepass, e.Namepass)
-						// then check if we have level2 tag in entry if yes merge with existing l2 tag and override twolevel flag
-						mergeUniqueInPlaceString(&config.EnrichmentList[i].Level2, e.Level2)
-						config.EnrichmentList[i].TwoLevels = true
-						match = true
-						break
+		if len(entry.EnrichmentList) > 0 {
+			keepOrder = 0
+			if len(config.EnrichmentList) == 0 {
+				config.EnrichmentList = append([]Enrichment{}, entry.EnrichmentList...)
+			} else {
+				for _, e := range entry.EnrichmentList {
+					match := false
+					lenEntry := len(config.EnrichmentList)
+					for i := 0; i < lenEntry; i++ {
+						if config.EnrichmentList[i].Level1 == e.Level1 && config.EnrichmentList[i].Family == e.Family {
+							// here we have similar enrichment - merge namepass
+							mergeUniqueInPlaceString(&config.EnrichmentList[i].Namepass, e.Namepass)
+							// then check if we have level2 tag in entry if yes merge with existing l2 tag and override twolevel flag
+							mergeUniqueInPlaceString(&config.EnrichmentList[i].Level2, e.Level2)
+							config.EnrichmentList[i].TwoLevels = true
+							match = true
+							break
+						}
+					}
+					if !match {
+						// Unknown Pivot add to the List
+						config.EnrichmentList = append(config.EnrichmentList, e)
 					}
 				}
-				if !match {
-					// Unknown Pivot add to the List
-					config.EnrichmentList = append(config.EnrichmentList, e)
+			}
+
+			for _, e := range config.EnrichmentList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
 				}
 			}
-		}
-
-		for _, e := range config.EnrichmentList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+			// now we reallocate the order
+			for i := 0; i < len(config.EnrichmentList); i++ {
+				config.EnrichmentList[i].Order = keepOrder + i
 			}
-		}
-		// now we reallocate the order
-		for i := 0; i < len(config.EnrichmentList); i++ {
-			config.EnrichmentList[i].Order = keepOrder + i
 		}
 
 		//--------------------------------------------------------------------
 		// Optimise rate plugin: keep only one
 		//--------------------------------------------------------------------
 		// Init with one empty Rate opbject
-		if len(config.RateList) == 0 {
-			config.RateList = append(config.RateList, Rate{
-				Order:    0,
-				Namepass: []string{},
-				Fields:   []string{},
-			})
-		}
-		keepOrder = config.RateList[0].Order
-
-		for _, e := range entry.RateList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.RateList) > 0 {
+			if len(config.RateList) == 0 {
+				config.RateList = append(config.RateList, Rate{
+					Order:    0,
+					Namepass: []string{},
+					Fields:   []string{},
+				})
 			}
-			mergeUniqueInPlaceString(&config.RateList[0].Namepass, e.Namepass)
-			mergeUniqueInPlaceString(&config.RateList[0].Fields, e.Fields)
+			keepOrder = config.RateList[0].Order
+
+			for _, e := range entry.RateList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+				mergeUniqueInPlaceString(&config.RateList[0].Namepass, e.Namepass)
+				mergeUniqueInPlaceString(&config.RateList[0].Fields, e.Fields)
+			}
+			config.RateList[0].Order = keepOrder
 		}
-		config.RateList[0].Order = keepOrder
 
 		//---------------------------------------------------------------
 		// Optimise Xreducer plugin: No optimisation
 		//---------------------------------------------------------------
 		// Save smallest order
-		keepOrder = 0
-		if len(config.XreducerList) == 0 {
-			config.XreducerList = append([]Xreducer{}, entry.XreducerList...)
-		} else {
-			// We merge both list of XreducerList
-			mergeInPlaceStruct(&config.XreducerList, entry.XreducerList)
-		}
-
-		for _, e := range entry.XreducerList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.XreducerList) > 0 {
+			keepOrder = 0
+			if len(config.XreducerList) == 0 {
+				config.XreducerList = append([]Xreducer{}, entry.XreducerList...)
+			} else {
+				// We merge both list of XreducerList
+				mergeInPlaceStruct(&config.XreducerList, entry.XreducerList)
 			}
-		}
-		// now we reallocate the order
-		for i := 0; i < len(config.XreducerList); i++ {
-			config.XreducerList[i].Order = keepOrder + i
+
+			for _, e := range entry.XreducerList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+			}
+			// now we reallocate the order
+			for i := 0; i < len(config.XreducerList); i++ {
+				config.XreducerList[i].Order = keepOrder + i
+			}
 		}
 
 		//---------------------------------------------------------------
 		// Optimise Converter plugin - keep only one
 		//---------------------------------------------------------------
 		// Init with one empty Rate opbject
-		if len(config.ConverterList) == 0 {
-			config.ConverterList = append(config.ConverterList, Converter{
-				Order:        0,
-				Namepass:     []string{},
-				IntegerType:  []string{},
-				TagType:      []string{},
-				FloatType:    []string{},
-				StringType:   []string{},
-				BoolType:     []string{},
-				UnsignedType: []string{},
-			})
-		}
-		keepOrder = config.ConverterList[0].Order
-
-		for _, e := range entry.ConverterList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.ConverterList) > 0 {
+			if len(config.ConverterList) == 0 {
+				config.ConverterList = append(config.ConverterList, Converter{
+					Order:        0,
+					Namepass:     []string{},
+					IntegerType:  []string{},
+					TagType:      []string{},
+					FloatType:    []string{},
+					StringType:   []string{},
+					BoolType:     []string{},
+					UnsignedType: []string{},
+				})
 			}
-			mergeUniqueInPlaceString(&config.ConverterList[0].Namepass, e.Namepass)
-			mergeUniqueInPlaceString(&config.ConverterList[0].IntegerType, e.IntegerType)
-			mergeUniqueInPlaceString(&config.ConverterList[0].TagType, e.TagType)
-			mergeUniqueInPlaceString(&config.ConverterList[0].FloatType, e.FloatType)
-			mergeUniqueInPlaceString(&config.ConverterList[0].StringType, e.StringType)
-			mergeUniqueInPlaceString(&config.ConverterList[0].BoolType, e.BoolType)
-			mergeUniqueInPlaceString(&config.ConverterList[0].UnsignedType, e.UnsignedType)
+			keepOrder = config.ConverterList[0].Order
+
+			for _, e := range entry.ConverterList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+				mergeUniqueInPlaceString(&config.ConverterList[0].Namepass, e.Namepass)
+				mergeUniqueInPlaceString(&config.ConverterList[0].IntegerType, e.IntegerType)
+				mergeUniqueInPlaceString(&config.ConverterList[0].TagType, e.TagType)
+				mergeUniqueInPlaceString(&config.ConverterList[0].FloatType, e.FloatType)
+				mergeUniqueInPlaceString(&config.ConverterList[0].StringType, e.StringType)
+				mergeUniqueInPlaceString(&config.ConverterList[0].BoolType, e.BoolType)
+				mergeUniqueInPlaceString(&config.ConverterList[0].UnsignedType, e.UnsignedType)
+			}
+			config.ConverterList[0].Order = keepOrder
 		}
-		config.ConverterList[0].Order = keepOrder
 
 		//---------------------------------------------------------------
 		// Optimise filtering plugin: keep one
 		//---------------------------------------------------------------
 		// Init with one empty Filter  opbject
-		if len(config.FilteringList) == 0 {
-			config.FilteringList = append(config.FilteringList, Filtering{
-				Order:    0,
-				Namepass: []string{},
-				Filters:  []Filter{},
-			})
-		}
-		keepOrder = config.FilteringList[0].Order
-
-		for _, e := range entry.FilteringList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.FilteringList) > 0 {
+			if len(config.FilteringList) == 0 {
+				config.FilteringList = append(config.FilteringList, Filtering{
+					Order:    0,
+					Namepass: []string{},
+					Filters:  []Filter{},
+				})
 			}
-			mergeUniqueInPlaceString(&config.FilteringList[0].Namepass, e.Namepass)
-			for _, f := range e.Filters {
-				lenEntry := len(config.FilteringList[0].Filters)
-				match := false
-				for i := 0; i < lenEntry; i++ {
-					if f.Key == config.FilteringList[0].Filters[i].Key && f.Pattern == config.FilteringList[0].Filters[i].Pattern &&
-						f.Action == config.FilteringList[0].Filters[i].Action && f.FilterType == config.FilteringList[0].Filters[i].FilterType {
-						// existing entry - do nothing
-						match = true
-						break
+			keepOrder = config.FilteringList[0].Order
+
+			for _, e := range entry.FilteringList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+				mergeUniqueInPlaceString(&config.FilteringList[0].Namepass, e.Namepass)
+				for _, f := range e.Filters {
+					lenEntry := len(config.FilteringList[0].Filters)
+					match := false
+					for i := 0; i < lenEntry; i++ {
+						if f.Key == config.FilteringList[0].Filters[i].Key && f.Pattern == config.FilteringList[0].Filters[i].Pattern &&
+							f.Action == config.FilteringList[0].Filters[i].Action && f.FilterType == config.FilteringList[0].Filters[i].FilterType {
+							// existing entry - do nothing
+							match = true
+							break
+						}
+					}
+					if !match {
+						config.FilteringList[0].Filters = append(config.FilteringList[0].Filters, f)
 					}
 				}
-				if !match {
-					config.FilteringList[0].Filters = append(config.FilteringList[0].Filters, f)
-				}
 			}
+			config.FilteringList[0].Order = keepOrder
 		}
-		config.FilteringList[0].Order = keepOrder
 
 		//---------------------------------------------------------------
 		// Optimise Converter plugin - keep only one
 		//---------------------------------------------------------------
 		// Init with one empty Rate opbject
-		if len(config.ConverterList) == 0 {
-			config.ConverterList = append(config.ConverterList, Converter{
-				Order:        0,
-				Namepass:     []string{},
-				IntegerType:  []string{},
-				TagType:      []string{},
-				FloatType:    []string{},
-				StringType:   []string{},
-				BoolType:     []string{},
-				UnsignedType: []string{},
-			})
-		}
-		keepOrder = config.ConverterList[0].Order
-
-		for _, e := range entry.ConverterList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.ConverterList) > 0 {
+			if len(config.ConverterList) == 0 {
+				config.ConverterList = append(config.ConverterList, Converter{
+					Order:        0,
+					Namepass:     []string{},
+					IntegerType:  []string{},
+					TagType:      []string{},
+					FloatType:    []string{},
+					StringType:   []string{},
+					BoolType:     []string{},
+					UnsignedType: []string{},
+				})
 			}
-			mergeUniqueInPlaceString(&config.ConverterList[0].Namepass, e.Namepass)
-			mergeUniqueInPlaceString(&config.ConverterList[0].IntegerType, e.IntegerType)
-			mergeUniqueInPlaceString(&config.ConverterList[0].TagType, e.TagType)
-			mergeUniqueInPlaceString(&config.ConverterList[0].FloatType, e.FloatType)
-			mergeUniqueInPlaceString(&config.ConverterList[0].StringType, e.StringType)
-			mergeUniqueInPlaceString(&config.ConverterList[0].BoolType, e.BoolType)
-			mergeUniqueInPlaceString(&config.ConverterList[0].UnsignedType, e.UnsignedType)
+			keepOrder = config.ConverterList[0].Order
+
+			for _, e := range entry.ConverterList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+				mergeUniqueInPlaceString(&config.ConverterList[0].Namepass, e.Namepass)
+				mergeUniqueInPlaceString(&config.ConverterList[0].IntegerType, e.IntegerType)
+				mergeUniqueInPlaceString(&config.ConverterList[0].TagType, e.TagType)
+				mergeUniqueInPlaceString(&config.ConverterList[0].FloatType, e.FloatType)
+				mergeUniqueInPlaceString(&config.ConverterList[0].StringType, e.StringType)
+				mergeUniqueInPlaceString(&config.ConverterList[0].BoolType, e.BoolType)
+				mergeUniqueInPlaceString(&config.ConverterList[0].UnsignedType, e.UnsignedType)
+			}
+			config.ConverterList[0].Order = keepOrder
 		}
-		config.ConverterList[0].Order = keepOrder
 
 		//---------------------------------------------------------------
 		// Optimise Enum plugin: No optimisation
 		//---------------------------------------------------------------
 		// Save smallest order
-		keepOrder = 0
-		if len(config.EnumList) == 0 {
-			config.EnumList = append([]Enum{}, entry.EnumList...)
-		} else {
-			// We merge both list of EnumList
-			mergeInPlaceStruct(&config.EnumList, entry.EnumList)
-		}
-
-		for _, e := range config.EnumList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.EnumList) > 0 {
+			keepOrder = 0
+			if len(config.EnumList) == 0 {
+				config.EnumList = append([]Enum{}, entry.EnumList...)
+			} else {
+				// We merge both list of EnumList
+				mergeInPlaceStruct(&config.EnumList, entry.EnumList)
 			}
-		}
-		// now we reallocate the order
-		for i := 0; i < len(config.EnumList); i++ {
-			config.EnumList[i].Order = keepOrder + i
+
+			for _, e := range config.EnumList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+			}
+			// now we reallocate the order
+			for i := 0; i < len(config.EnumList); i++ {
+				config.EnumList[i].Order = keepOrder + i
+			}
 		}
 
 		//---------------------------------------------------------------
 		// Optimise regex plugin: keep one
 		//---------------------------------------------------------------
 		// Init with one empty Filter  opbject
-		if len(config.RegexList) == 0 {
-			config.RegexList = append(config.RegexList, Regex{
-				Order:    0,
-				Namepass: []string{},
-				Entries:  []RegEntry{},
-			})
-		}
-		keepOrder = config.RegexList[0].Order
-
-		for _, e := range entry.RegexList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.RegexList) > 0 {
+			if len(config.RegexList) == 0 {
+				config.RegexList = append(config.RegexList, Regex{
+					Order:    0,
+					Namepass: []string{},
+					Entries:  []RegEntry{},
+				})
 			}
-			mergeUniqueInPlaceString(&config.RegexList[0].Namepass, e.Namepass)
-			for _, f := range e.Entries {
-				lenEntry := len(config.RegexList[0].Entries)
-				match := false
-				for i := 0; i < lenEntry; i++ {
-					if f.RegType == config.RegexList[0].Entries[i].RegType && f.Pattern == config.RegexList[0].Entries[i].Pattern &&
-						f.Replacement == config.RegexList[0].Entries[i].Replacement {
-						// existing entry - do nothing
-						match = true
-						break
+			keepOrder = config.RegexList[0].Order
+
+			for _, e := range entry.RegexList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+				mergeUniqueInPlaceString(&config.RegexList[0].Namepass, e.Namepass)
+				for _, f := range e.Entries {
+					lenEntry := len(config.RegexList[0].Entries)
+					match := false
+					for i := 0; i < lenEntry; i++ {
+						if f.RegType == config.RegexList[0].Entries[i].RegType && f.Pattern == config.RegexList[0].Entries[i].Pattern &&
+							f.Replacement == config.RegexList[0].Entries[i].Replacement {
+							// existing entry - do nothing
+							match = true
+							break
+						}
+					}
+					if !match {
+						config.RegexList[0].Entries = append(config.RegexList[0].Entries, f)
 					}
 				}
-				if !match {
-					config.RegexList[0].Entries = append(config.RegexList[0].Entries, f)
-				}
 			}
+			config.RegexList[0].Order = keepOrder
 		}
-		config.RegexList[0].Order = keepOrder
 
 		//---------------------------------------------------------------
 		// Optimise string plugin: keep one
 		//---------------------------------------------------------------
 		// Init with one empty Filter  opbject
-		if len(config.StringsList) == 0 {
-			config.StringsList = append(config.StringsList, Strings{
-				Order:    0,
-				Namepass: []string{},
-				Entries:  []StrEntry{},
-			})
-		}
-		keepOrder = config.StringsList[0].Order
-
-		for _, e := range entry.StringsList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.StringsList) > 0 {
+			if len(config.StringsList) == 0 {
+				config.StringsList = append(config.StringsList, Strings{
+					Order:    0,
+					Namepass: []string{},
+					Entries:  []StrEntry{},
+				})
 			}
-			mergeUniqueInPlaceString(&config.StringsList[0].Namepass, e.Namepass)
-			for _, f := range e.Entries {
-				lenEntry := len(config.StringsList[0].Entries)
-				match := false
-				for i := 0; i < lenEntry; i++ {
-					if f.StrType == config.StringsList[0].Entries[i].StrType && f.Method == config.StringsList[0].Entries[i].Method &&
-						f.Data == config.StringsList[0].Entries[i].Data {
-						// existing entry - do nothing
-						match = true
-						break
+			keepOrder = config.StringsList[0].Order
+
+			for _, e := range entry.StringsList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+				mergeUniqueInPlaceString(&config.StringsList[0].Namepass, e.Namepass)
+				for _, f := range e.Entries {
+					lenEntry := len(config.StringsList[0].Entries)
+					match := false
+					for i := 0; i < lenEntry; i++ {
+						if f.StrType == config.StringsList[0].Entries[i].StrType && f.Method == config.StringsList[0].Entries[i].Method &&
+							f.Data == config.StringsList[0].Entries[i].Data {
+							// existing entry - do nothing
+							match = true
+							break
+						}
+					}
+					if !match {
+						config.StringsList[0].Entries = append(config.StringsList[0].Entries, f)
 					}
 				}
-				if !match {
-					config.StringsList[0].Entries = append(config.StringsList[0].Entries, f)
-				}
 			}
+			config.StringsList[0].Order = keepOrder
 		}
-		config.StringsList[0].Order = keepOrder
 
 		//---------------------------------------------------------------
 		// Optimise monitoring plugin: keep one
 		//---------------------------------------------------------------
 		// Init with one empty Filter  opbject
-		if len(config.MonitoringList) == 0 {
-			config.MonitoringList = append(config.MonitoringList, Monitoring{
-				Order:    0,
-				Namepass: []string{},
-				Probes:   []Probe{},
-			})
-		}
-		keepOrder = config.MonitoringList[0].Order
-
-		for _, e := range entry.MonitoringList {
-			if e.Order < keepOrder || keepOrder == 0 {
-				keepOrder = e.Order
+		if len(entry.MonitoringList) > 0 {
+			if len(config.MonitoringList) == 0 {
+				config.MonitoringList = append(config.MonitoringList, Monitoring{
+					Order:    0,
+					Namepass: []string{},
+					Probes:   []Probe{},
+				})
 			}
-			mergeUniqueInPlaceString(&config.MonitoringList[0].Namepass, e.Namepass)
-			for _, f := range e.Probes {
-				lenEntry := len(config.MonitoringList[0].Probes)
-				match := false
-				for i := 0; i < lenEntry; i++ {
-					if f.Name == config.MonitoringList[0].Probes[i].Name && f.Field == config.MonitoringList[0].Probes[i].Field &&
-						f.ProbeType == config.MonitoringList[0].Probes[i].ProbeType && f.Threshold == config.MonitoringList[0].Probes[i].Threshold &&
-						f.Operator == config.MonitoringList[0].Probes[i].Operator {
-						// existing entry - merge tags
-						mergeUniqueInPlaceString(&config.MonitoringList[0].Probes[i].Tags, f.Tags)
-						match = true
-						break
+			keepOrder = config.MonitoringList[0].Order
+
+			for _, e := range entry.MonitoringList {
+				if e.Order < keepOrder || keepOrder == 0 {
+					keepOrder = e.Order
+				}
+				mergeUniqueInPlaceString(&config.MonitoringList[0].Namepass, e.Namepass)
+				for _, f := range e.Probes {
+					lenEntry := len(config.MonitoringList[0].Probes)
+					match := false
+					for i := 0; i < lenEntry; i++ {
+						if f.Name == config.MonitoringList[0].Probes[i].Name && f.Field == config.MonitoringList[0].Probes[i].Field &&
+							f.ProbeType == config.MonitoringList[0].Probes[i].ProbeType && f.Threshold == config.MonitoringList[0].Probes[i].Threshold &&
+							f.Operator == config.MonitoringList[0].Probes[i].Operator {
+							// existing entry - merge tags
+							mergeUniqueInPlaceString(&config.MonitoringList[0].Probes[i].Tags, f.Tags)
+							match = true
+							break
+						}
+					}
+					if !match {
+						config.MonitoringList[0].Probes = append(config.MonitoringList[0].Probes, f)
 					}
 				}
-				if !match {
-					config.MonitoringList[0].Probes = append(config.MonitoringList[0].Probes, f)
-				}
 			}
+			config.MonitoringList[0].Order = keepOrder
 		}
-		config.MonitoringList[0].Order = keepOrder
 
 		//---------------------------------------------------------------
 		// Optimise Influx output plugin
 		//---------------------------------------------------------------
-		if len(config.InfluxList) == 0 {
-			config.InfluxList = append([]InfluxOutput{}, entry.InfluxList...)
-		} else {
-			// We merge fieldpass - we support today only one Influx Output that explains the [0]
-			mergeUniqueInPlaceString(&config.InfluxList[0].Fieldpass, entry.InfluxList[0].Fieldpass)
+		if len(entry.InfluxList) > 0 {
+			if len(config.InfluxList) == 0 {
+				config.InfluxList = append([]InfluxOutput{}, entry.InfluxList...)
+			} else {
+				// We merge fieldpass - we support today only one Influx Output that explains the [0]
+				mergeUniqueInPlaceString(&config.InfluxList[0].Fieldpass, entry.InfluxList[0].Fieldpass)
+			}
 		}
 
 		//---------------------------------------------------------------
 		// Optimise File output plugin : no optimization
 		//---------------------------------------------------------------
-		if len(config.FileList) == 0 {
-			config.FileList = append([]FileOutput{}, entry.FileList...)
-		} else {
-			// We merge both list of FileList
-			mergeInPlaceStruct(&config.FileList, entry.FileList)
+		if len(entry.FileList) > 0 {
+			if len(config.FileList) == 0 {
+				config.FileList = append([]FileOutput{}, entry.FileList...)
+			} else {
+				// We merge both list of FileList
+				mergeInPlaceStruct(&config.FileList, entry.FileList)
+			}
 		}
 	}
 
@@ -785,6 +819,27 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 		}
 	}
 
+	// Manage Filtering Processor
+	if len(config.FilteringList) > 0 {
+		t, err := template.New("filteringTemplate").Parse(FilteringTemplate)
+		if err != nil {
+			logger.Log.Errorf("Error parsing Filtering template: %v", err)
+		} else {
+			tmpl = template.Must(t, mustErr)
+			if mustErr != nil {
+				logger.Log.Errorf("Unable to render Filtering json template - err: %v", mustErr)
+			} else {
+				var result bytes.Buffer
+				err = tmpl.Execute(&result, config.FilteringList)
+				if err != nil {
+					logger.Log.Errorf("Unable to generate Filtering toml payload - err: %v", err)
+				} else {
+					payload += result.String()
+				}
+			}
+		}
+	}
+
 	// Manage Converter Processor
 	if len(config.ConverterList) > 0 {
 		t, err := template.New("converterTemplate").Parse(ConverterTemplate)
@@ -848,48 +903,6 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 		}
 	}
 
-	// Manage Monitoring Processor
-	if len(config.MonitoringList) > 0 {
-		t, err := template.New("monitoringTemplate").Parse(MonitoringTemplate)
-		if err != nil {
-			logger.Log.Errorf("Error parsing Monitoring template: %v", err)
-		} else {
-			tmpl = template.Must(t, mustErr)
-			if mustErr != nil {
-				logger.Log.Errorf("Unable to render Monitoring json template - err: %v", mustErr)
-			} else {
-				var result bytes.Buffer
-				err = tmpl.Execute(&result, config.MonitoringList)
-				if err != nil {
-					logger.Log.Errorf("Unable to generate Monitoring toml payload - err: %v", err)
-				} else {
-					payload += result.String()
-				}
-			}
-		}
-	}
-
-	// Manage Filtering Processor
-	if len(config.FilteringList) > 0 {
-		t, err := template.New("filteringTemplate").Parse(FilteringTemplate)
-		if err != nil {
-			logger.Log.Errorf("Error parsing Filtering template: %v", err)
-		} else {
-			tmpl = template.Must(t, mustErr)
-			if mustErr != nil {
-				logger.Log.Errorf("Unable to render Filtering json template - err: %v", mustErr)
-			} else {
-				var result bytes.Buffer
-				err = tmpl.Execute(&result, config.FilteringList)
-				if err != nil {
-					logger.Log.Errorf("Unable to generate Filtering toml payload - err: %v", err)
-				} else {
-					payload += result.String()
-				}
-			}
-		}
-	}
-
 	// Manage Enum Processor
 	if len(config.EnumList) > 0 {
 		t, err := template.New("enumTemplate").Parse(EnumTemplate)
@@ -946,6 +959,27 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				err = tmpl.Execute(&result, config.StringsList)
 				if err != nil {
 					logger.Log.Errorf("Unable to generate Strings toml payload - err: %v", err)
+				} else {
+					payload += result.String()
+				}
+			}
+		}
+	}
+
+	// Manage Monitoring Processor
+	if len(config.MonitoringList) > 0 {
+		t, err := template.New("monitoringTemplate").Parse(MonitoringTemplate)
+		if err != nil {
+			logger.Log.Errorf("Error parsing Monitoring template: %v", err)
+		} else {
+			tmpl = template.Must(t, mustErr)
+			if mustErr != nil {
+				logger.Log.Errorf("Unable to render Monitoring json template - err: %v", mustErr)
+			} else {
+				var result bytes.Buffer
+				err = tmpl.Execute(&result, config.MonitoringList)
+				if err != nil {
+					logger.Log.Errorf("Unable to generate Monitoring toml payload - err: %v", err)
 				} else {
 					payload += result.String()
 				}
