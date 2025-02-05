@@ -180,6 +180,35 @@ const NetconfInputTemplate = `
 `
 
 // ---------------------------------------------------- //
+// Clone Processor
+// ---------------------------------------------------- //
+
+type Clone struct {
+	Order    int      `json:"order"`
+	Namepass []string `json:"namepass"`
+	Override string   `json:"override"`
+}
+
+// Go Template
+// we pass a list of Clone object = CloneList
+
+const CloneTemplate = `
+###############################################################################
+#                                  CLONE PLUGIN                               #
+###############################################################################
+{{range .}}[[processors.clone]]
+  order = {{.Order}}
+  namepass = [
+  {{- range $index, $name := .Namepass}}
+  {{- if $index}},{{end}}
+      "{{$name}}"
+  {{- end}}
+  ]
+  name_override = "{{.Override}}"
+{{end}}
+`
+
+// ---------------------------------------------------- //
 // Processor pivot
 // ---------------------------------------------------- //
 
@@ -634,7 +663,7 @@ const RegexTemplate = `
 // ---------------------------------------------------- //
 
 type StrEntry struct {
-	RegType int `json:"type"`
+	StrType int `json:"type"`
 	// 0 = tag - 1 = field
 	Method int `json:"method"`
 	// 0 = lowercase , 1 = uppercase
@@ -664,38 +693,9 @@ const StringTemplate = `
   ]
   {{range .Entries}} {{if eq .Method 0}}
   [[processors.strings.lowercase]] {{else}}
-  [[processors.strings.uppercase]] {{end}} {{if eq .RegType 0}}
+  [[processors.strings.uppercase]] {{end}} {{if eq .StrType 0}}
     tag = "{{.Data}}" {{else}}
     field = "{{.Data}}" {{end}} {{end}}
-{{end}}
-`
-
-// ---------------------------------------------------- //
-// Clone Processor
-// ---------------------------------------------------- //
-
-type Clone struct {
-	Order    int      `json:"order"`
-	Namepass []string `json:"namepass"`
-	Override string   `json:"override"`
-}
-
-// Go Template
-// we pass a list of Clone object = CloneList
-
-const CloneTemplate = `
-###############################################################################
-#                                  CLONE PLUGIN                               #
-###############################################################################
-{{range .}}[[processors.clone]]
-  order = {{.Order}}
-  namepass = [
-  {{- range $index, $name := .Namepass}}
-  {{- if $index}},{{end}}
-      "{{$name}}"
-  {{- end}}
-  ]
-  name_override = "{{.Override}}"
 {{end}}
 `
 

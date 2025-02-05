@@ -463,11 +463,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				}
 				telegrafCfgList = append(telegrafCfgList, newCfg)
 			}
+
 			// Create one unique config based on the list of configs
-			mergedCfg, err := maker.OptimizeConf(telegrafCfgList)
-			if err != nil {
-				continue
-			}
+			mergedCfg := maker.OptimizeConf(telegrafCfgList)
 
 			// Retrieve some common flags
 			tls := false
