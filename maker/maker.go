@@ -113,7 +113,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 	// Target config
 	var config TelegrafConfig
 	var keepOrder int
-	firstTime := false
+	firstTime := true
 
 	for _, entry := range listOfConf {
 
@@ -139,6 +139,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 						config.GnmiList[0].Aliases = append(config.GnmiList[0].Aliases, newEntry)
 					}
 				}
+
 				// Rearange the existing subscriptions - only the first time
 				if firstTime {
 					lenSubs := len(config.GnmiList[0].Subs)
@@ -161,6 +162,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 							}
 						}
 					}
+					firstTime = false
 				}
 
 				// Now merge Subscriptions
