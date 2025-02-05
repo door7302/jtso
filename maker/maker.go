@@ -613,7 +613,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 						(*subs)[i+1].Interval = subA.Interval
 					}
 					// Remove redundant entry
-					if who == "B" {
+					if who == "A" {
 						*subs = append((*subs)[:i+1], (*subs)[i+2:]...)
 					} else {
 						*subs = append((*subs)[:i], (*subs)[i+1:]...)
