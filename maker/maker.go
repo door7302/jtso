@@ -113,7 +113,6 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 	// Target config
 	var config TelegrafConfig
 	var keepOrder int
-	firstTime := true
 
 	for _, entry := range listOfConf {
 
@@ -140,61 +139,60 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 
-				// Rearrange the existing subscriptions - only the first time
-				if firstTime {
-					subs := &config.GnmiList[0].Subs
-					i := 0
-					for i < len(*subs)-1 {
-						subA := (*subs)[i]
-						subB := (*subs)[i+1]
+				// Optimize subscription merging
+				subs := &config.GnmiList[0].Subs
 
-						if subA.Name == subB.Name && subA.Mode == subB.Mode {
-							shortestPath, who := findShortestSubstring(subA.Path, subB.Path)
-							if shortestPath != "" {
-								// Set the lowest interval
-								if subA.Interval < subB.Interval {
-									(*subs)[i+1].Interval = subA.Interval
-								}
-								// Remove the redundant entry
-								if who == "B" {
-									*subs = append((*subs)[:i+1], (*subs)[i+2:]...)
-								} else {
-									*subs = append((*subs)[:i], (*subs)[i+1:]...)
-								}
-								// No need to increment `i` here, recheck the same index
-								continue
-							}
-						}
-						i++ // Only increment if no deletion occurred
-					}
-					firstTime = false
+				// Create a map for fast lookup (Key: Name+Mode)
+				subMap := make(map[string]int)
+				for i, sub := range *subs {
+					subMap[sub.Name+"|"+sub.Mode] = i
 				}
 
-				// Now merge Subscriptions
-				lenSubs := len(config.GnmiList[0].Subs)
+				// Merge new subscriptions efficiently
 				for _, newEntry := range entry.GnmiList[0].Subs {
-					match := false
-					for i := 0; i < lenSubs; i++ {
-						// First check if same MEASUREMENT NAME and same MODE
-						if newEntry.Name == config.GnmiList[0].Subs[i].Name && newEntry.Mode == config.GnmiList[0].Subs[i].Mode {
-							shortestPath, who := findShortestSubstring(config.GnmiList[0].Subs[i].Path, newEntry.Path)
-							if shortestPath != "" {
-								if who == "B" {
-									// keep the shortest xpath
-									config.GnmiList[0].Subs[i].Path = shortestPath
-								}
-								// keep lowest interval
-								if newEntry.Interval < config.GnmiList[0].Subs[i].Interval {
-									config.GnmiList[0].Subs[i].Interval = newEntry.Interval
-								}
-								match = true
-								break
+					key := newEntry.Name + "|" + newEntry.Mode
+					if idx, exists := subMap[key]; exists {
+						// Found a match, check for shortest path
+						shortestPath, who := findShortestSubstring((*subs)[idx].Path, newEntry.Path)
+						if shortestPath != "" {
+							if who == "B" {
+								(*subs)[idx].Path = shortestPath
+							}
+							// Keep the lowest interval
+							if newEntry.Interval < (*subs)[idx].Interval {
+								(*subs)[idx].Interval = newEntry.Interval
 							}
 						}
+					} else {
+						// No match, append the new entry
+						*subs = append(*subs, newEntry)
+						subMap[key] = len(*subs) - 1 // Update map
 					}
-					if !match {
-						config.GnmiList[0].Subs = append(config.GnmiList[0].Subs, newEntry)
+				}
+
+				// Optimize subscriptions in a single pass
+				i := 0
+				for i < len(*subs)-1 {
+					subA, subB := (*subs)[i], (*subs)[i+1]
+
+					if subA.Name == subB.Name && subA.Mode == subB.Mode {
+						shortestPath, who := findShortestSubstring(subA.Path, subB.Path)
+						if shortestPath != "" {
+							// Keep the lowest interval
+							if subA.Interval < subB.Interval {
+								(*subs)[i+1].Interval = subA.Interval
+							}
+
+							// Remove redundant entry
+							if who == "B" {
+								*subs = append((*subs)[:i+1], (*subs)[i+2:]...)
+							} else {
+								*subs = append((*subs)[:i], (*subs)[i+1:]...)
+							}
+							continue // Recheck at the same index
+						}
 					}
+					i++ // Only increment if no deletion occurred
 				}
 			}
 		}
