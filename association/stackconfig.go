@@ -427,21 +427,21 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	}
 
-	// DEBUG ----------------------------------------------------------------------------
 	for family, familyCollections := range collections {
-		logger.Log.Info("Family:", family)
+		logger.Log.Info("Update collections of Telegraf configs:")
+		logger.Log.Infof(" Family: %s", family)
 		for collectionID, collection := range familyCollections {
-			logger.Log.Info("  ", collectionID, "=> Profiles:")
+			logger.Log.Infof("  ID: %s:", collectionID)
+			logger.Log.Info("     Profiles [files]:")
 			for i, p := range collection.ProfilesConf {
-				logger.Log.Info("     >", collection.ProfilesName[i], " : ", p)
+				logger.Log.Infof("       -%s [%s]", collection.ProfilesName[i], p)
 			}
-			logger.Log.Infof("     Routers:")
+			logger.Log.Info("     Routers part of the collection:")
 			for _, r := range collection.Routers {
-				logger.Log.Info("       -", r.Hostname)
+				logger.Log.Infof("       -%s", r.Hostname)
 			}
 		}
 	}
-	//// ----------------------------------------------------------------------------
 
 	// Now for each family create for each collection the optmized Telegraf config
 	var telegrafCfgList []*maker.TelegrafConfig
