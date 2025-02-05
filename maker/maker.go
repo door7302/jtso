@@ -36,7 +36,7 @@ func LoadConfig(filePath string) (*TelegrafConfig, error) {
 		return nil, err
 	}
 
-	logger.Log.Infof("Successfully Load JSON template from %s", filePath)
+	logger.Log.Debugf("Successfully Load JSON template from %s", filePath)
 	return &config, nil
 }
 

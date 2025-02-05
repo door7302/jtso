@@ -642,9 +642,14 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	}
 
 	// remove non active Kapascript
-	kapacitor.DeleteTick(kapaStop)
+	if len(kapaStop) > 0 {
+		kapacitor.DeleteTick(kapaStop)
+	}
+
 	// Enable active scripts
-	kapacitor.StartTick(kapaStart)
+	if len(kapaStart) > 0 {
+		kapacitor.StartTick(kapaStart)
+	}
 
 	// Restart grafana
 	container.RestartContainer("grafana")
