@@ -140,27 +140,32 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 
-				// Rearange the existing subscriptions - only the first time
+				// Rearrange the existing subscriptions - only the first time
 				if firstTime {
-					lenSubs := len(config.GnmiList[0].Subs)
-					for i := 0; i < lenSubs; i++ {
-						if i == lenSubs-1 {
-						} else {
-							if config.GnmiList[0].Subs[i].Name == config.GnmiList[0].Subs[i+1].Name && config.GnmiList[0].Subs[i].Mode == config.GnmiList[0].Subs[i+1].Mode {
-								shortestPath, who := findShortestSubstring(config.GnmiList[0].Subs[i].Path, config.GnmiList[0].Subs[i].Path)
-								if shortestPath != "" {
-									if config.GnmiList[0].Subs[i].Interval < config.GnmiList[0].Subs[i+1].Interval {
-										config.GnmiList[0].Subs[i+1].Interval = config.GnmiList[0].Subs[i].Interval
-									}
-									if who == "B" {
-										config.GnmiList[0].Subs = append(config.GnmiList[0].Subs[:i+1], config.GnmiList[0].Subs[i+2:]...)
-									} else {
-										config.GnmiList[0].Subs = append(config.GnmiList[0].Subs[:i], config.GnmiList[0].Subs[i+1:]...)
-									}
-									lenSubs = len(config.GnmiList[0].Subs)
+					subs := &config.GnmiList[0].Subs
+					i := 0
+					for i < len(*subs)-1 {
+						subA := (*subs)[i]
+						subB := (*subs)[i+1]
+
+						if subA.Name == subB.Name && subA.Mode == subB.Mode {
+							shortestPath, who := findShortestSubstring(subA.Path, subB.Path)
+							if shortestPath != "" {
+								// Set the lowest interval
+								if subA.Interval < subB.Interval {
+									(*subs)[i+1].Interval = subA.Interval
 								}
+								// Remove the redundant entry
+								if who == "B" {
+									*subs = append((*subs)[:i+1], (*subs)[i+2:]...)
+								} else {
+									*subs = append((*subs)[:i], (*subs)[i+1:]...)
+								}
+								// No need to increment `i` here, recheck the same index
+								continue
 							}
 						}
+						i++ // Only increment if no deletion occurred
 					}
 					firstTime = false
 				}
