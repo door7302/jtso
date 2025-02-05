@@ -11,6 +11,13 @@ import (
 	"text/template"
 )
 
+const (
+	CLONE_ORDER     int = 1
+	PIVOT_ORDER     int = 10
+	RENAME_ORDER    int = 100
+	PROCESSOR_ORDER int = 200
+)
+
 func LoadConfig(filePath string) (*TelegrafConfig, error) {
 
 	// First load JSON file
@@ -90,14 +97,14 @@ func mergeInPlaceStruct(a interface{}, b interface{}) {
 
 }
 
-func findShortestSubstring(A, B string) string {
+func findShortestSubstring(A, B string) (string, string) {
 	if strings.Contains(A, B) {
-		return B // B is a substring of A, return the shorter one (B)
+		return B, "B" // B is a substring of A, return the shorter one (B)
 	}
 	if strings.Contains(B, A) {
-		return A // A is a substring of B, return the shorter one (A)
+		return A, "A" // A is a substring of B, return the shorter one (A)
 	}
-	return "" // No match
+	return "", "" // No match
 }
 
 func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
@@ -139,10 +146,12 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					for i := 0; i < lenSubs; i++ {
 						// First check if same MEASUREMENT NAME and same MODE
 						if newEntry.Name == config.GnmiList[0].Subs[i].Name && newEntry.Mode == config.GnmiList[0].Subs[i].Mode {
-							shortestPath := findShortestSubstring(newEntry.Path, config.GnmiList[0].Subs[i].Path)
+							shortestPath, who := findShortestSubstring(config.GnmiList[0].Subs[i].Path, newEntry.Path)
 							if shortestPath != "" {
-								// keep the shortest
-								config.GnmiList[0].Subs[i].Path = shortestPath
+								if who == "B" {
+									// keep the shortest xpath
+									config.GnmiList[0].Subs[i].Path = shortestPath
+								}
 								// keep lowest interval
 								if newEntry.Interval < config.GnmiList[0].Subs[i].Interval {
 									config.GnmiList[0].Subs[i].Interval = newEntry.Interval
@@ -190,22 +199,16 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		//---------------------------------------------------------------
 		// Save smallest order
 		if len(entry.CloneList) > 0 {
-			keepOrder = 0
+
 			if len(config.CloneList) == 0 {
 				config.CloneList = append([]Clone{}, entry.CloneList...)
 			} else {
 				// We merge both list of clone
 				mergeInPlaceStruct(&config.CloneList, entry.CloneList)
 			}
-
-			for _, e := range config.CloneList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
-			}
 			// now we reallocate the order
 			for i := 0; i < len(config.CloneList); i++ {
-				config.CloneList[i].Order = keepOrder + i
+				config.CloneList[i].Order = CLONE_ORDER + i
 			}
 		}
 
@@ -214,7 +217,6 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		//---------------------------------------------------------------
 		// Save smallest order
 		if len(entry.PivotList) > 0 {
-			keepOrder = 0
 			if len(config.PivotList) == 0 {
 				config.PivotList = append([]Pivot{}, entry.PivotList...)
 			} else {
@@ -235,15 +237,9 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 			}
-
-			for _, e := range config.PivotList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
-			}
 			// now we reallocate the order
 			for i := 0; i < len(config.PivotList); i++ {
-				config.PivotList[i].Order = keepOrder + i
+				config.PivotList[i].Order = PIVOT_ORDER + i
 			}
 		}
 
@@ -252,7 +248,6 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		//---------------------------------------------------------------
 		// Save smallest order
 		if len(entry.RenameList) > 0 {
-			keepOrder = 0
 			if len(config.RenameList) == 0 {
 				config.RenameList = append([]Rename{}, entry.RenameList...)
 			} else {
@@ -260,14 +255,9 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 				mergeInPlaceStruct(&config.RenameList, entry.RenameList)
 			}
 
-			for _, e := range config.RenameList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
-			}
 			// now we reallocate the order
 			for i := 0; i < len(config.RenameList); i++ {
-				config.RenameList[i].Order = keepOrder + i
+				config.RenameList[i].Order = RENAME_ORDER + i
 			}
 		}
 
@@ -308,7 +298,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 			}
 			// now we reallocate the order
 			for i := 0; i < len(config.EnrichmentList); i++ {
-				config.EnrichmentList[i].Order = keepOrder + i
+				config.EnrichmentList[i].Order = PROCESSOR_ORDER + keepOrder + i
 			}
 		}
 
@@ -333,7 +323,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 				mergeUniqueInPlaceString(&config.RateList[0].Namepass, e.Namepass)
 				mergeUniqueInPlaceString(&config.RateList[0].Fields, e.Fields)
 			}
-			config.RateList[0].Order = keepOrder
+			config.RateList[0].Order = PROCESSOR_ORDER + keepOrder
 		}
 
 		//---------------------------------------------------------------
@@ -356,7 +346,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 			}
 			// now we reallocate the order
 			for i := 0; i < len(config.XreducerList); i++ {
-				config.XreducerList[i].Order = keepOrder + i
+				config.XreducerList[i].Order = PROCESSOR_ORDER + keepOrder + i
 			}
 		}
 
@@ -391,7 +381,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 				mergeUniqueInPlaceString(&config.ConverterList[0].BoolType, e.BoolType)
 				mergeUniqueInPlaceString(&config.ConverterList[0].UnsignedType, e.UnsignedType)
 			}
-			config.ConverterList[0].Order = keepOrder
+			config.ConverterList[0].Order = PROCESSOR_ORDER + keepOrder
 		}
 
 		//---------------------------------------------------------------
@@ -429,7 +419,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 			}
-			config.FilteringList[0].Order = keepOrder
+			config.FilteringList[0].Order = PROCESSOR_ORDER + keepOrder
 		}
 
 		//---------------------------------------------------------------
@@ -463,7 +453,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 				mergeUniqueInPlaceString(&config.ConverterList[0].BoolType, e.BoolType)
 				mergeUniqueInPlaceString(&config.ConverterList[0].UnsignedType, e.UnsignedType)
 			}
-			config.ConverterList[0].Order = keepOrder
+			config.ConverterList[0].Order = PROCESSOR_ORDER + keepOrder
 		}
 
 		//---------------------------------------------------------------
@@ -486,7 +476,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 			}
 			// now we reallocate the order
 			for i := 0; i < len(config.EnumList); i++ {
-				config.EnumList[i].Order = keepOrder + i
+				config.EnumList[i].Order = PROCESSOR_ORDER + keepOrder + i
 			}
 		}
 
@@ -525,7 +515,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 			}
-			config.RegexList[0].Order = keepOrder
+			config.RegexList[0].Order = PROCESSOR_ORDER + keepOrder
 		}
 
 		//---------------------------------------------------------------
@@ -563,7 +553,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 			}
-			config.StringsList[0].Order = keepOrder
+			config.StringsList[0].Order = PROCESSOR_ORDER + keepOrder
 		}
 
 		//---------------------------------------------------------------
@@ -603,7 +593,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 			}
-			config.MonitoringList[0].Order = keepOrder
+			config.MonitoringList[0].Order = PROCESSOR_ORDER + keepOrder
 		}
 
 		//---------------------------------------------------------------
