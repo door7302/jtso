@@ -139,61 +139,8 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 
-				// Optimize subscription merging
-				subs := &config.GnmiList[0].Subs
-
-				// Create a map for fast lookup (Key: Name+Mode)
-				subMap := make(map[string]int)
-				for i, sub := range *subs {
-					subMap[sub.Name+"|"+sub.Mode] = i
-				}
-
-				// Merge new subscriptions efficiently
-				for _, newEntry := range entry.GnmiList[0].Subs {
-					key := newEntry.Name + "|" + newEntry.Mode
-					if idx, exists := subMap[key]; exists {
-						// Found a match, check for shortest path
-						shortestPath, who := findShortestSubstring((*subs)[idx].Path, newEntry.Path)
-						if shortestPath != "" {
-							if who == "B" {
-								(*subs)[idx].Path = shortestPath
-							}
-							// Keep the lowest interval
-							if newEntry.Interval < (*subs)[idx].Interval {
-								(*subs)[idx].Interval = newEntry.Interval
-							}
-						}
-					} else {
-						// No match, append the new entry
-						*subs = append(*subs, newEntry)
-						subMap[key] = len(*subs) - 1 // Update map
-					}
-				}
-
-				// Optimize subscriptions in a single pass
-				i := 0
-				for i < len(*subs)-1 {
-					subA, subB := (*subs)[i], (*subs)[i+1]
-
-					if subA.Name == subB.Name && subA.Mode == subB.Mode {
-						shortestPath, who := findShortestSubstring(subA.Path, subB.Path)
-						if shortestPath != "" {
-							// Keep the lowest interval
-							if subA.Interval < subB.Interval {
-								(*subs)[i+1].Interval = subA.Interval
-							}
-
-							// Remove redundant entry
-							if who == "B" {
-								*subs = append((*subs)[:i+1], (*subs)[i+2:]...)
-							} else {
-								*subs = append((*subs)[:i], (*subs)[i+1:]...)
-							}
-							continue // Recheck at the same index
-						}
-					}
-					i++ // Only increment if no deletion occurred
-				}
+				// Then Merge all subscriptions - optimisation will be done later
+				mergeInPlaceStruct(&config.GnmiList[0].Subs, entry.GnmiList[0].Subs)
 			}
 		}
 
@@ -647,6 +594,34 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 				// We merge both list of FileList
 				mergeInPlaceStruct(&config.FileList, entry.FileList)
 			}
+		}
+	}
+
+	// Last step is to optimize Gnmi subscriptions
+	// Optimize subscriptions in a single pass
+	if len(config.GnmiList) > 0 {
+		subs := &config.GnmiList[0].Subs
+		i := 0
+		for i < len(*subs)-1 {
+			subA, subB := (*subs)[i], (*subs)[i+1]
+
+			if subA.Name == subB.Name && subA.Mode == subB.Mode {
+				shortestPath, who := findShortestSubstring(subA.Path, subB.Path)
+				if shortestPath != "" {
+					// Keep the lowest interval
+					if subA.Interval < subB.Interval {
+						(*subs)[i+1].Interval = subA.Interval
+					}
+					// Remove redundant entry
+					if who == "B" {
+						*subs = append((*subs)[:i+1], (*subs)[i+2:]...)
+					} else {
+						*subs = append((*subs)[:i], (*subs)[i+1:]...)
+					}
+					continue // Recheck at the same index
+				}
+			}
+			i++ // Only increment if no deletion occurred
 		}
 	}
 
