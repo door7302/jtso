@@ -15,22 +15,34 @@
 
 <body>
 
-    <div class="modal fade" style="animation-name: animatetop;" id="logs" tabindex="-1" role="dialog"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document" style="max-width: 95%">
+    <div class="modal fade" style="animation-name: animatetop;" id="logs" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document" style="max-width: 47.5%;">
             <div class="modal-content">
                 <div class="modal-header" style="background-color: #13215c; color: white;">
-                    <h5 class="modal-title" id="modaltitle">Sensor collection, please wait...<i>This may take 2
-                            minutes</i></h5>
-                    <span aria-hidden="true">&times;</span>
+                    <h5 class="modal-title" id="modaltitle">Sensor collection, please wait...
+                        <i>This may take 2 minutes</i>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="background: none; border: none;">
+                        <i class="fas fa-times" aria-hidden="true" style="font-size: 1.5rem; color: white;"></i>
                     </button>
                 </div>
-                <div class="modal-body" id="modalcore"
-                    style='font-family: "Courier New", Courier, monospace; max-height: 600px;'>
+                <div class="modal-body" 
+                    style='display: flex;'>
+                    
+                    <!-- First Column (75%) -->
+                    <div id="modalcore" style='flex: 3; padding: 10px; font-family: "Courier New", Courier, monospace; border-right: 1px solid #ddd;'>
+        
+                    </div>
+    
+                    <!-- Second Column (25%) -->
+                    <div id="modalgauge" style="flex: 1; padding: 10px;">
+                        <p>Second Column Content</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    
 
 
 

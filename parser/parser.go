@@ -44,6 +44,8 @@ type Streamer struct {
 	Flusher       http.Flusher
 	Writer        http.ResponseWriter
 	Error         error
+	XpathCpt      int
+	XpathList     map[string]struct{}
 	StopStreaming chan struct{}
 }
 
@@ -201,7 +203,13 @@ func parseXpath(xpath string, value string, merge bool) error {
 	key = make([]string, 0)
 
 	lpath := advancedSplit(xpath, merge)
-	StreamData(fmt.Sprintf("XPATH Extracted: %s", strings.Join(lpath, "/")), "OK")
+
+	// increment counter and save the Xpath
+	StreamObj.XpathCpt += 1
+	StreamObj.XpathList[strings.Join(lpath, "/")] = struct{}{}
+	StreamData(fmt.Sprintf("XPATH:%d", StreamObj.XpathCpt), "OK")
+	// Old method to share XPATH
+	// StreamData(fmt.Sprintf("XPATH Extracted: %s", strings.Join(lpath, "/")), "OK")
 
 	parent = root
 	for i, v := range lpath {

@@ -27,8 +27,11 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-const PATH_CERT string = "/var/cert/"
-const PATH_JTS_VERS string = "/etc/jtso/openjts.version"
+const (
+	PATH_RAW      string = "html/rawfiles/"
+	PATH_CERT     string = "/var/cert/"
+	PATH_JTS_VERS string = "/etc/jtso/openjts.version"
+)
 
 type WebApp struct {
 	listen string
@@ -60,6 +63,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp := echo.New()
 	//configure app
 	wapp.Use(middleware.Static("html/assets"))
+	wapp.Use(middleware.Static("html/rawfiles"))
 	wapp.Use(middleware.Static("var/active_profiles"))
 	wapp.Use(middleware.CORS())
 
@@ -1083,6 +1087,9 @@ func routeSearchPath(c echo.Context) error {
 	}
 	// change the streamer state to pending stream API request
 	parser.StreamObj.Stream = 1
+	// reinit counter and xpath bucket
+	parser.StreamObj.XpathCpt = 0
+	parser.StreamObj.XpathList = make(map[string]struct{})
 
 	r := new(SearchPath)
 	err = c.Bind(r)
@@ -1164,6 +1171,27 @@ func routeStream(c echo.Context) error {
 						// Convert the JSON data to a string
 						jsonString := string(jsonData)
 						parser.StreamData("End of the collection.", "END", jsonString)
+						// saved the XPATH raw list in a static file
+						keys := make([]string, 0, len(parser.StreamObj.XpathList))
+						for key := range parser.StreamObj.XpathList {
+							keys = append(keys, key)
+						}
+						sort.Strings(keys)
+						// Open file for writing
+						file, err := os.Create(PATH_RAW + "xpaths-result.txt")
+						if err != nil {
+							logger.Log.Errorf("Error creating the xpath raw output file: %v", err)
+						} else {
+							defer file.Close()
+							// Write each sorted key to a new line in the file
+							for _, key := range keys {
+								_, err := file.WriteString(key + "\n")
+								if err != nil {
+									logger.Log.Errorf("Error writing the xpath raw output to file: %v", err)
+									break
+								}
+							}
+						}
 					}
 				} else {
 					logger.Log.Errorf("Unexpected gnmi error: %v", errString)
