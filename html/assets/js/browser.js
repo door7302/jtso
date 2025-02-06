@@ -78,7 +78,7 @@ browseButton.addEventListener("click", function () {
           browseButton.disabled = false;
           $('#result').jstree(true).settings.core.data = JSON.parse(data.payload);
           $('#result').jstree(true).refresh();
-          $('#logs').modal('hide');
+          //$('#logs').modal('hide');
           alertify.success('Here the results!')
         }
         if (data.status == "ERROR") {

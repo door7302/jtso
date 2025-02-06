@@ -36,22 +36,21 @@
                     </div>
     
                     <!-- Second Column (25%) -->
-                    <div id="modalgauge" style="flex: 1; padding: 10px;">
-                    
+                    <div class="justify-content-center align-items-center" id="modalgauge" style="flex: 1; padding: 10px;">
+                        <p>XPATH Received</p>
                         <div id="tick" class="tick" data-value="0">
                             <div data-layout="horizontal center" data-repeat="true">
-                                <p>XPATH Received</p>
                                 <span data-view="flip" data-transform="arrive(5, .01) -> round -> split -> delay(rtl, 100, 150)"></span>
                             </div>
                         </div>
+                        <input class="btn btn-success" type="submit" value="Export XPATHs" name="export" id="export"
+                        style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-
-
 
     <nav class="navbar navbar-light navbar-expand-md py-3">
         <div class="container">
