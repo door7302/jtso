@@ -2,20 +2,33 @@ package kapacitor
 
 import (
 	"jtso/logger"
+	"net"
 	"os"
 	"strconv"
+	"time"
 
 	client "github.com/influxdata/kapacitor/client/v1"
 )
 
 const (
-	kapacitorURL = "http://kapacitor:9092"
+	kapacitorURL                   = "http://kapacitor:9092"
+	kapacitorConnect               = "kapacitor:9092"
+	kapaTimeout      time.Duration = 1 * time.Second
 )
 
 var ActiveTick map[string]client.Task
 
 func init() {
 	ActiveTick = make(map[string]client.Task)
+}
+
+func IsKapaRun() bool {
+	conn, err := net.DialTimeout("tcp", kapacitorConnect, kapaTimeout)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+	return true
 }
 
 func CleanKapa() error {

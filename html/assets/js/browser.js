@@ -1,6 +1,8 @@
 let eventSource;
 const browseButton = document.getElementById("browse");
 const modal = document.getElementById("modalcore")
+const tick = document.getElementById("tick")
+
 modal.style.scrollBehavior = 'smooth';
 
 $(document).ready(function () {
@@ -40,6 +42,7 @@ browseButton.addEventListener("click", function () {
   var m = document.getElementById("merge").checked;
   var r = document.getElementById("router").value.trim();
 
+
   var dataToSend = {
     "shortname": r,
     "xpath": p,
@@ -64,6 +67,9 @@ browseButton.addEventListener("click", function () {
         if (data.status == "OK") {
           appendContent(data.msg);
           scrollToBottom()
+        }
+        if (data.status == "XPATH") {
+          tick.setAttribute('data-value', data.msg);
         }
         if (data.status == "END") {
           appendContent(data.msg);

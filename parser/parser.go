@@ -207,7 +207,7 @@ func parseXpath(xpath string, value string, merge bool) error {
 	// increment counter and save the Xpath
 	StreamObj.XpathCpt += 1
 	StreamObj.XpathList[strings.Join(lpath, "/")] = struct{}{}
-	StreamData(fmt.Sprintf("XPATH:%d", StreamObj.XpathCpt), "OK")
+	StreamData(fmt.Sprintf("%d", StreamObj.XpathCpt), "XPATH")
 	// Old method to share XPATH
 	// StreamData(fmt.Sprintf("XPATH Extracted: %s", strings.Join(lpath, "/")), "OK")
 

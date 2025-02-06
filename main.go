@@ -55,12 +55,21 @@ func main() {
 	// Create a shared Context with cancel function
 	_, close := context.WithCancel(context.Background())
 
-	// wait 5 seconds to let docker DNS service to start
-	time.Sleep(5 * time.Second)
-
 	// Clean all kapacitor tasks
-	logger.Log.Info("Start cleaning all active Kapacitor tasks")
-	kapacitor.CleanKapa()
+	maxAttempts := Cfg.Kapacitor.BootTimeout
+	for i := 1; i <= maxAttempts; i++ {
+		if kapacitor.IsKapaRun() {
+			logger.Log.Info("Kapacitor module is up and running")
+			// Clean all kapacitor tasks
+			logger.Log.Info("Start cleaning all active Kapacitor tasks")
+			kapacitor.CleanKapa()
+			break
+		}
+		time.Sleep(1 * time.Second)
+		if i == maxAttempts {
+			logger.Log.Error("Unable to clean Kapacitor tasks. Make sure Kapacitor container is running")
+		}
+	}
 
 	// Init the sqliteDB
 	//err = sqlite.Init("./jtso.db")

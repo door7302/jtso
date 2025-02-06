@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	PATH_RAW      string = "html/rawfiles/"
+	PATH_RAW      string = "/html/rawfiles/"
 	PATH_CERT     string = "/var/cert/"
 	PATH_JTS_VERS string = "/etc/jtso/openjts.version"
 )

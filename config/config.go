@@ -25,6 +25,10 @@ type GrafanaConfig struct {
 	Port int
 }
 
+type KapacitorConfig struct {
+	BootTimeout int
+}
+
 type ChronografConfig struct {
 	Port int
 }
@@ -44,6 +48,7 @@ type EnricherConfig struct {
 	Workers  int
 }
 type ConfigContainer struct {
+	Kapacitor  *KapacitorConfig
 	Chronograf *ChronografConfig
 	Grafana    *GrafanaConfig
 	Enricher   *EnricherConfig
@@ -70,6 +75,9 @@ func NewConfigContainer(f string) *ConfigContainer {
 	// Ser default value for chronograf
 	viper.SetDefault("modules.chronograf.port", 8081)
 
+	// Ser default value for kapacitor
+	viper.SetDefault("modules.kapacitor.timeout", 15)
+
 	// Ser default value for portal
 	viper.SetDefault("modules.portal.https", false)
 	viper.SetDefault("modules.portal.server_crt", "")
@@ -94,6 +102,9 @@ func NewConfigContainer(f string) *ConfigContainer {
 		},
 		Chronograf: &ChronografConfig{
 			Port: viper.GetInt("modules.chronograf.port"),
+		},
+		Kapacitor: &KapacitorConfig{
+			BootTimeout: viper.GetInt("modules.kapacitor.timeout"),
 		},
 		Portal: &PortalConfig{
 			Port:      viper.GetInt("modules.portal.port"),
