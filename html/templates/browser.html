@@ -37,10 +37,11 @@
     
                     <!-- Second Column (25%) -->
                     <div id="modalgauge" style="flex: 1; padding: 10px;">
-                        <p>XPATH Received</p>
+                    
                         <div id="tick" class="tick" data-value="0">
                             <div data-layout="horizontal center" data-repeat="true">
-                                <span data-view="flip"></span>
+                                <p>XPATH Received</p>
+                                <span data-view="flip" data-transform="arrive(5, .01) -> round -> split -> delay(rtl, 100, 150)"></span>
                             </div>
                         </div>
                     </div>

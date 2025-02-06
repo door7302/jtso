@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	PATH_RAW      string = "/html/rawfiles/"
+	PATH_RAW      string = "/html/assets/rawfiles/"
 	PATH_CERT     string = "/var/cert/"
 	PATH_JTS_VERS string = "/etc/jtso/openjts.version"
 )
@@ -63,7 +63,6 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp := echo.New()
 	//configure app
 	wapp.Use(middleware.Static("html/assets"))
-	wapp.Use(middleware.Static("html/rawfiles"))
 	wapp.Use(middleware.Static("var/active_profiles"))
 	wapp.Use(middleware.CORS())
 
