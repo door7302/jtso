@@ -203,14 +203,16 @@ func parseXpath(xpath string, value string, merge bool) error {
 	key = make([]string, 0)
 
 	lpath := advancedSplit(xpath, merge)
-
+	xpathKey := strings.Join(lpath, "/")
 	// increment counter and save the Xpath
-	StreamObj.XpathCpt += 1
-	StreamObj.XpathList[strings.Join(lpath, "/")] = struct{}{}
-	StreamData(fmt.Sprintf("%d", StreamObj.XpathCpt), "XPATH")
+	_, ok := StreamObj.XpathList[xpathKey]
+	if !ok {
+		StreamObj.XpathCpt += 1
+		StreamObj.XpathList[strings.Join(lpath, "/")] = struct{}{}
+		StreamData(fmt.Sprintf("%d", StreamObj.XpathCpt), "XPATH")
+	}
 	// Old method to share XPATH
 	// StreamData(fmt.Sprintf("XPATH Extracted: %s", strings.Join(lpath, "/")), "OK")
-
 	parent = root
 	for i, v := range lpath {
 		if i == len(lpath)-1 {
@@ -378,6 +380,7 @@ func LaunchSearch() {
 
 	subRspChan, subErrChan := tg.ReadSubscriptions()
 	StreamData("Start collection data", "OK")
+	StreamData("Please wait...", "OK")
 	StreamObj.ForceFlush = false
 	for {
 		select {
