@@ -1,8 +1,10 @@
 package container
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"jtso/logger"
 	"strings"
 	"sync"
@@ -101,10 +103,66 @@ func collectStats(cli *client.Client, container types.Container, resultChan chan
 	}
 }
 
-func GetContainerLogs(c string) (string, error) {
+func GetContainerLogs(containerName string) ([]string, error) {
+	var logLines []string
+	logLines = make([]string, 0)
 
-	return "", nil
+	// Open Docker API
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		logger.Log.Errorf("Unable to open Docker session: %v", err)
+		return logLines, err
+	}
+	defer cli.Close()
+
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{All: true})
+	if err != nil {
+		logger.Log.Errorf("Unable to list the containers: %v", err)
+		return logLines, err
+	}
+
+	var containerID string
+	for _, container := range containers {
+		for _, name := range container.Names {
+			if name == "/"+containerName {
+				containerID = container.ID
+				break
+			}
+		}
+	}
+
+	if containerID == "" {
+		logger.Log.Errorf("Container with name '%s' not found", containerName)
+		return logLines, fmt.Errorf("container with name '%s' not found", containerName)
+	}
+
+	ctx := context.Background()
+	options := types.ContainerLogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Tail:       fmt.Sprintf("%d", 200),
+	}
+
+	logs, err := cli.ContainerLogs(ctx, containerID, options)
+	if err != nil {
+		logger.Log.Errorf("Unable to retrieve log for container %s: %v", containerName, err)
+		return logLines, err
+	}
+	defer logs.Close()
+
+	scanner := bufio.NewScanner(logs)
+	for scanner.Scan() {
+		logLines = append(logLines, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		logger.Log.Errorf("Unexpected error while collecting log fors container %s: %v", containerName, err)
+		return logLines, err
+	}
+
+	return logLines, nil
 }
+
 func GetContainerStats() {
 	logger.Log.Debug("Start collecting container stats")
 
@@ -201,7 +259,7 @@ func StopContainer(name string) {
 		logger.Log.Errorf("Unable to stop %s container: %v", name, err)
 		return
 	}
-	logger.Log.Infof("%s container has been stopped - no more router attached", name)
+	logger.Log.Infof("%s container has been stopped - no router to collect", name)
 
 }
 

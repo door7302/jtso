@@ -50,25 +50,25 @@ function updateDoc() {
 
 async function loadConfig(fileName) {
   try {
-      const response = await fetch(fileName);
-      if (!response.ok) {
-          throw new Error(`Failed to load ${fileName}: ${response.statusText}`);
-      }
+    const response = await fetch(fileName);
+    if (!response.ok) {
+      throw new Error(`Failed to load ${fileName}: ${response.statusText}`);
+    }
 
-      const tomlContent = await response.text();
+    const tomlContent = await response.text();
 
-      // Add syntax highlighting
-      const highlightedToml = Prism.highlight(tomlContent, Prism.languages.toml, 'toml');
+    // Add syntax highlighting
+    const highlightedToml = Prism.highlight(tomlContent, Prism.languages.toml, 'toml');
 
-      // Update modal content with highlighted TOML
-      document.getElementById('modalcore').innerHTML = `<pre><code class="language-toml">${highlightedToml}</code></pre>`;
+    // Update modal content with highlighted TOML
+    document.getElementById('modalcore').innerHTML = `<pre><code class="language-toml">${highlightedToml}</code></pre>`;
 
-      // Show the modal
-      const modal = new bootstrap.Modal(document.getElementById('config'));
-      modal.show();
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('config'));
+    modal.show();
   } catch (error) {
-      alertify.alert("JSTO...", "Error loading config:" + error);
-      document.getElementById('modalcore').textContent = 'Error loading configuration.';
+    alertify.alert("JSTO...", "Error loading config:" + error);
+    document.getElementById('modalcore').textContent = 'Error loading configuration.';
   }
 }
 

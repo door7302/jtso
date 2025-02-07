@@ -49,12 +49,12 @@ browseButton.addEventListener("click", function () {
     "merge": m
   };
   fetch("/searchxpath", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(dataToSend),
-    })
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(dataToSend),
+  })
     .then(response => response.json())
     .then(data => {
       browseButton.disabled = true;

@@ -84,6 +84,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	// GET API routes
 	wapp.GET("/stream", routeStream)
 	wapp.GET("/containerstats", routeContainerStats)
+	wapp.GET("/containerlogs", routeContainerLogs)
 
 	//  POST API routes
 	wapp.POST("/addrouter", routeAddRouter)
@@ -1111,6 +1112,18 @@ func routeSearchPath(c echo.Context) error {
 	parser.StreamObj.StopStreaming = make(chan struct{})
 
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Streaming well started."})
+}
+
+func routeContainerLogs(c echo.Context) error {
+	containerName := c.Param("name")
+
+	logs, err := container.GetContainerLogs(containerName)
+
+	if err != nil {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve the logs. Make sure the container is running."})
+	}
+
+	return c.JSON(http.StatusOK, ReplyStats{Status: "OK", Msg: "Container logs", Data: logs})
 }
 
 func routeContainerStats(c echo.Context) error {
