@@ -61,7 +61,7 @@ function enableDebug(element) {
     }).setHeader('JSTO...');
   } else {
 
-    alertify.confirm("Are you sure you want to enable Debug mode for the " + elementId + " Telegraf Instance?<br/><br/><b>Note:</b> The instance will be automatically reloaded. Enabling debug mode may produce a significant volume of logs.", function (e) {
+    alertify.confirm("Are you sure you want to enable Debug mode for the " + elementId + " Telegraf Instance?<br/><br/><b>Note:</b> The instance will be automatically reloaded. Enabling debug mode may produce a significant volume of logs.</b> You should be able to see debug logs into the file /var/tmp/debugtelegraf_" + elementId.toLowerCase() + ".log", function (e) {
       if (e) {
         $(function () {
           $.ajax({
