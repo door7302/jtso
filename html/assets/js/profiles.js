@@ -53,6 +53,7 @@ function addAsso() {
         success: function (json) {
           if (json.status == "OK") {
             const table = $("#ListProfiles").DataTable(); 
+            
             table.row.add([
               r,
               raw_selected, 
@@ -100,7 +101,9 @@ function removeAsso(name, td) {
       dataType: "json",
       success: function (json) {
         if (json.status == "OK") {
-          $(td).closest("tr").remove();
+          const table = $("#ListProfiles").DataTable(); 
+          table.row($(td).closest("tr")).remove().draw(false); 
+ 
           alertify.success("Router " + name + " has been successfulfy removed")
         } else {
           alertify.alert("JSTO...", json.msg);
