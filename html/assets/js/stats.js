@@ -30,6 +30,9 @@ $(document).ready(function () {
                                         <div id="gauge-cpu-${container}" class="gauge mb-3"></div>
                                       
                                         <div id="gauge-mem-${container}" class="gauge mt-3"></div>
+                                         <button class="btn btn-success" onclick="getLogs('${container}')">
+                                            <i class="fa fa-history"></i> Last logs
+                                        </button>
                                        
                                     </div>
                                 </div>
@@ -77,3 +80,7 @@ $(document).ready(function () {
     setInterval(fetchStats, refreshInterval);
 
 });
+
+function getLogs(c) {
+    alert(c);
+}

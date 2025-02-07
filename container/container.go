@@ -101,6 +101,10 @@ func collectStats(cli *client.Client, container types.Container, resultChan chan
 	}
 }
 
+func GetContainerLogs(c string) (string, error) {
+
+	return "", nil
+}
 func GetContainerStats() {
 	logger.Log.Debug("Start collecting container stats")
 
