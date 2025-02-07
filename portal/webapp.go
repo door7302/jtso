@@ -1115,7 +1115,7 @@ func routeSearchPath(c echo.Context) error {
 }
 
 func routeContainerLogs(c echo.Context) error {
-	containerName := c.Param("name")
+	containerName := c.QueryParam("name")
 
 	logs, err := container.GetContainerLogs(containerName)
 
@@ -1171,7 +1171,7 @@ func routeStream(c echo.Context) error {
 				if strings.Contains(errString, "context canceled") {
 
 					parser.StreamData("End of the subscription. Close gNMI session", "OK")
-					logger.Log.Info("Generate payload based on the Tree")
+					logger.Log.Debug("Generate payload based on the Tree")
 					jsTree = make([]parser.TreeJs, 0)
 					parser.TraverseTree(parser.StreamObj.Result, "#", &jsTree)
 					jsonData, err := json.Marshal(jsTree)
@@ -1179,7 +1179,7 @@ func routeStream(c echo.Context) error {
 						logger.Log.Errorf("Unable to marshall the result: %v", err)
 						parser.StreamData(fmt.Sprintf("Unable to marshall the result: %s", err.Error()), "ERROR")
 					} else {
-						logger.Log.Info("Marshall the result: success")
+						logger.Log.Debug("Marshall the result: success")
 						// Convert the JSON data to a string
 						jsonString := string(jsonData)
 						parser.StreamData("End of the collection.", "END", jsonString)

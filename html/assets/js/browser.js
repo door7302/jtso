@@ -1,5 +1,6 @@
 let eventSource;
 const browseButton = document.getElementById("browse");
+const exportButton = document.getElementById("export");
 const modal = document.getElementById("modalcore")
 const tick = document.getElementById("tick")
 
@@ -48,6 +49,7 @@ browseButton.addEventListener("click", function () {
     "xpath": p,
     "merge": m
   };
+  exportButton.disabled = true;
   fetch("/searchxpath", {
     method: "POST",
     headers: {
@@ -76,6 +78,7 @@ browseButton.addEventListener("click", function () {
           scrollToBottom()
           eventSource.close();
           browseButton.disabled = false;
+          exportButton.disabled = false;
           $('#result').jstree(true).settings.core.data = JSON.parse(data.payload);
           $('#result').jstree(true).refresh();
           //$('#logs').modal('hide');
@@ -122,3 +125,30 @@ function appendContent(text) {
 function scrollToBottom() {
   modal.scrollTop = modal.scrollHeight;
 }
+
+document.querySelector('#config .close').addEventListener('click', function () {
+  const modal = document.getElementById('config');
+  modal.classList.remove('show'); // Remove the `show` class
+  modal.style.display = 'none';  // Hide the modal
+  document.body.classList.remove('modal-open'); // Remove the modal-open class from body
+  const backdrop = document.querySelector('.modal-backdrop');
+  if (backdrop) backdrop.remove(); // Remove the backdrop element
+});
+
+
+document.getElementById("export").addEventListener("click", function() {
+
+  const fileUrl = "assets/rawfiles/xpaths-result.txt"; 
+  const suggestedFileName = "xpaths-result.txt"; 
+
+  // Create a link element
+  const link = document.createElement('a');
+  link.href = fileUrl; 
+  link.download = suggestedFileName; 
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  document.body.removeChild(link);
+});
