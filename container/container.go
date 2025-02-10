@@ -152,6 +152,7 @@ func GetContainerLogs(containerName string) ([]string, error) {
 
 	scanner := bufio.NewScanner(logs)
 	for scanner.Scan() {
+		logger.Log.Error(scanner.Text())
 		logLines = append(logLines, scanner.Text())
 	}
 

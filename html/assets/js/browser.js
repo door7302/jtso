@@ -6,6 +6,10 @@ const tick = document.getElementById("tick")
 
 modal.style.scrollBehavior = 'smooth';
 
+document.querySelector("meta[http-equiv='Content-Security-Policy']")
+  ?.setAttribute("content", "upgrade-insecure-requests");
+
+  
 $(document).ready(function () {
 
   $('#searching').on('input', function () {
@@ -44,6 +48,7 @@ browseButton.addEventListener("click", function () {
   var r = document.getElementById("router").value.trim();
 
   modal.innerHTML = '';
+  tick.setAttribute('data-value', 0);
   var dataToSend = {
     "shortname": r,
     "xpath": p,

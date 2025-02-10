@@ -104,7 +104,6 @@ function getLogs(c) {
             url: "/containerlogs?name=" + encodeURIComponent(c),
             success: function (json) {
                 if (json.status == "OK") {
-                    alert(JSON.stringify(json.data));
                     modal.innerHTML = '';
                     for (let i = 0; i < json.data.length; i++) {
                         appendContent(json.data[i])
