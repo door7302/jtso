@@ -126,17 +126,17 @@ function scrollToBottom() {
   modal.scrollTop = modal.scrollHeight;
 }
 
-document.querySelector('#config .close').addEventListener('click', function () {
+function closeModal() {
   const modal = document.getElementById('config');
   modal.classList.remove('show'); // Remove the `show` class
   modal.style.display = 'none';  // Hide the modal
   document.body.classList.remove('modal-open'); // Remove the modal-open class from body
   const backdrop = document.querySelector('.modal-backdrop');
   if (backdrop) backdrop.remove(); // Remove the backdrop element
-});
+}
 
 
-document.getElementById("export").addEventListener("click", function() {
+function exportXpath() {
 
   const fileUrl = "assets/rawfiles/xpaths-result.txt"; 
   const suggestedFileName = "xpaths-result.txt"; 
@@ -151,4 +151,4 @@ document.getElementById("export").addEventListener("click", function() {
   link.click();
 
   document.body.removeChild(link);
-});
+}
