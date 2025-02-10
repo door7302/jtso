@@ -6,6 +6,10 @@ const tick = document.getElementById("tick")
 
 modal.style.scrollBehavior = 'smooth';
 
+document.querySelector("meta[http-equiv='Content-Security-Policy']")
+  ?.setAttribute("content", "upgrade-insecure-requests");
+
+  
 $(document).ready(function () {
 
   $('#searching').on('input', function () {
