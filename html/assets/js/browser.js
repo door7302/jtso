@@ -127,12 +127,7 @@ function scrollToBottom() {
 }
 
 function closeModal() {
-  const modal = document.getElementById('config');
-  modal.classList.remove('show'); // Remove the `show` class
-  modal.style.display = 'none';  // Hide the modal
-  document.body.classList.remove('modal-open'); // Remove the modal-open class from body
-  const backdrop = document.querySelector('.modal-backdrop');
-  if (backdrop) backdrop.remove(); // Remove the backdrop element
+  $('#logs').modal('hide');
 }
 
 
