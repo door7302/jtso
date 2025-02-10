@@ -152,8 +152,11 @@ func GetContainerLogs(containerName string) ([]string, error) {
 
 	scanner := bufio.NewScanner(logs)
 	for scanner.Scan() {
-		logger.Log.Error(scanner.Text())
-		logLines = append(logLines, scanner.Text())
+		line := scanner.Bytes()
+		if len(line) > 8 {
+			line = line[8:] // Remove Docker log stream header
+		}
+		logLines = append(logLines, string(line))
 	}
 
 	if err := scanner.Err(); err != nil {
