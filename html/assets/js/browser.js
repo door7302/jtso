@@ -6,10 +6,6 @@ const tick = document.getElementById("tick")
 
 modal.style.scrollBehavior = 'smooth';
 
-document.querySelector("meta[http-equiv='Content-Security-Policy']")
-  ?.setAttribute("content", "upgrade-insecure-requests");
-
-  
 $(document).ready(function () {
 
   $('#searching').on('input', function () {
@@ -47,7 +43,7 @@ browseButton.addEventListener("click", function () {
   var m = document.getElementById("merge").checked;
   var r = document.getElementById("router").value.trim();
 
-
+  modal.innerHTML = '';
   var dataToSend = {
     "shortname": r,
     "xpath": p,
@@ -66,7 +62,6 @@ browseButton.addEventListener("click", function () {
       browseButton.disabled = true;
       // Start the EventSource for streaming
       eventSource = new EventSource("/stream");
-      modal.innerHTML = '';
       $('#logs').modal('show');
       eventSource.onmessage = function (event) {
         const data = JSON.parse(event.data);
@@ -131,7 +126,11 @@ function scrollToBottom() {
 }
 
 function closeModal() {
+  const modal = document.getElementById('config');
   $('#logs').modal('hide');
+  modal.style.display = 'none';  // Hide the modal
+  const backdrop = document.querySelector('.modal-backdrop');
+  if (backdrop) backdrop.remove(); // Remove the backdrop element
 }
 
 
