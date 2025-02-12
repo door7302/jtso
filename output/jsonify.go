@@ -158,7 +158,9 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 										m.Meta[rd.Family][rd.RtrName][key2] = make(map[string]string)
 									}
 									m.Meta[rd.Family][rd.RtrName][key1]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
+									m.Meta[rd.Family][rd.RtrName][key1]["channel"] = "no"
 									m.Meta[rd.Family][rd.RtrName][key2]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
+									m.Meta[rd.Family][rd.RtrName][key2]["channel"] = "no"
 									// Add channel up to 4
 									for channel := 0; channel < 4; channel++ {
 										key3 := key2 + strconv.Itoa(channel)
@@ -167,6 +169,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 											m.Meta[rd.Family][rd.RtrName][key3] = make(map[string]string)
 										}
 										m.Meta[rd.Family][rd.RtrName][key3]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel)
+										m.Meta[rd.Family][rd.RtrName][key3]["channel"] = "yes"
 									}
 								}
 							}
@@ -191,7 +194,9 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 								m.Meta[rd.Family][rd.RtrName][key2] = make(map[string]string)
 							}
 							m.Meta[rd.Family][rd.RtrName][key1]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
+							m.Meta[rd.Family][rd.RtrName][key1]["channel"] = "no"
 							m.Meta[rd.Family][rd.RtrName][key2]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
+							m.Meta[rd.Family][rd.RtrName][key2]["channel"] = "no"
 							// Add channel up to 4
 							for channel := 0; channel < 4; channel++ {
 								key3 := key2 + strconv.Itoa(channel)
@@ -200,6 +205,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 									m.Meta[rd.Family][rd.RtrName][key3] = make(map[string]string)
 								}
 								m.Meta[rd.Family][rd.RtrName][key3]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel)
+								m.Meta[rd.Family][rd.RtrName][key3]["channel"] = "yes"
 							}
 						}
 					}
