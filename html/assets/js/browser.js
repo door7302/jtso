@@ -140,6 +140,6 @@ function closeModal() {
 
 
 function exportXpath() {
-  const fileUrl = "assets/rawfiles/xpaths-result.txt"; 
+  const fileUrl = "rawfiles/xpaths-result.txt"; 
   window.open(fileUrl, "_blank");
 }

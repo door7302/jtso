@@ -7,6 +7,7 @@ import (
 	"io"
 	"jtso/logger"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -59,6 +60,26 @@ func init() {
 	ProfileLock = new(sync.Mutex)
 }
 
+func CleanActiveDirectory() error {
+	entries, err := os.ReadDir(ACTIVE_PROFILES)
+	if err != nil {
+		logger.Log.Errorf("Unable to open %s directory: %v", ACTIVE_PROFILES, err)
+		return err
+	}
+
+	for _, entry := range entries {
+		entryPath := filepath.Join(ACTIVE_PROFILES, entry.Name())
+		err := os.RemoveAll(entryPath)
+		if err != nil {
+			logger.Log.Errorf("Unable to remove %s: %v", entryPath, err)
+			return err
+		}
+	}
+
+	logger.Log.Infof("Directoy %s has been cleaned", ACTIVE_PROFILES)
+	return nil
+
+}
 func PeriodicCheck() {
 	logger.Log.Debug("Start periodic update of the profile db - scanning is starting")
 
@@ -70,14 +91,14 @@ func PeriodicCheck() {
 	}
 
 	// retrieve all tgz
-	dir, err := os.Open("/var/profiles/")
+	dir, err := os.Open(PROFILES)
 	if err != nil {
-		logger.Log.Errorf("Unable to open /var/profiles directory: %v", err)
+		logger.Log.Errorf("Unable to open %s directory: %v", PROFILES, err)
 		return
 	}
 	files, err := dir.ReadDir(0)
 	if err != nil {
-		logger.Log.Errorf("Unable to read /var/profiles directory: %v", err)
+		logger.Log.Errorf("Unable to read %s directory: %v", PROFILES, err)
 		return
 	}
 
@@ -90,7 +111,7 @@ func PeriodicCheck() {
 			if ok {
 				// existing profile - check if update
 				// compute the hash of the file
-				tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
+				tmpFile, err := os.Open(PROFILES + filename + ".tgz")
 				if err != nil {
 					logger.Log.Errorf("Unable to open file %s: %v", filename, err)
 					continue
@@ -164,7 +185,7 @@ func PeriodicCheck() {
 				entry.Definition = new(DefProfile)
 
 				// compute the hash of the file
-				tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
+				tmpFile, err := os.Open(PROFILES + filename + ".tgz")
 				if err != nil {
 					logger.Log.Errorf("Unable to open file %s: %v", filename, err)
 					continue
@@ -179,7 +200,7 @@ func PeriodicCheck() {
 				MD5String := hex.EncodeToString(hashInBytes)
 				entry.Hash = MD5String
 
-				err = targz.Extract("/var/profiles/"+filename+".tgz", ACTIVE_PROFILES)
+				err = targz.Extract(PROFILES+filename+".tgz", ACTIVE_PROFILES)
 				if err != nil {
 					logger.Log.Errorf("Unable to extract new profile %s: %v", filename, err)
 					continue

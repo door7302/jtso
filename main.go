@@ -114,8 +114,12 @@ func main() {
 		}
 	}()
 
+	// Clean Active profiles - reset directory
+	association.CleanActiveDirectory()
+
 	// Trigger a first run of some background processes
 	association.PeriodicCheck()
+
 	go worker.Collect(Cfg)
 	go association.ConfigueStack(Cfg, "all")
 
