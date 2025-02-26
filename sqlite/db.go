@@ -329,7 +329,7 @@ func LoadAll() error {
 			return err
 		}
 		// Fix legacy naming - be deprecated in future release
-		//tmpList = strings.ReplaceAll(tmpList, "power_extensive", "power")
+		tmpList = strings.ReplaceAll(tmpList, "power_extensive", "power")
 
 		i.Assos = strings.Split(tmpList, "|")
 

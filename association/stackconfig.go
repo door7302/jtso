@@ -312,6 +312,8 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 			switch rtr.Family {
 			case "mx":
+				logger.Log.Errorf("DEBUG 0: %v", p)
+				logger.Log.Errorf("DEBUG 1: %v", ActiveProfiles)
 				filenameList = ActiveProfiles[p].Definition.TelCfg.MxCfg
 			case "ptx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.PtxCfg
