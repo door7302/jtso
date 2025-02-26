@@ -285,7 +285,7 @@ func LaunchSearch() {
 
 	if tls {
 		if clienttls {
-			StreamData("Try to create Target - option 3", "OK")
+			StreamData("Try to create Target", "OK")
 			// create a target
 			tg, err = api.NewTarget(
 				api.Name("jtso"),
@@ -300,7 +300,7 @@ func LaunchSearch() {
 			)
 
 		} else {
-			StreamData("Try to create Target - option 2", "OK")
+			StreamData("Try to create Target", "OK")
 			// create a target
 			tg, err = api.NewTarget(
 				api.Name("jtso"),
@@ -314,7 +314,7 @@ func LaunchSearch() {
 
 		}
 	} else {
-		StreamData("Try to create Target - option 1", "OK")
+		StreamData("Try to create Target", "OK")
 		// create a target
 		tg, err = api.NewTarget(
 			api.Name("jtso"),
@@ -333,7 +333,7 @@ func LaunchSearch() {
 		close(StreamObj.StopStreaming)
 		return
 	}
-	StreamData("Create gNMI Target", "OK")
+	StreamData("gNMI Target created", "OK")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
