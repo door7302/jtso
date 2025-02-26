@@ -23,6 +23,7 @@ import (
 const (
 	TELEGRAF_ROOT_PATH string = "/var/shared/telegraf/"
 	PATH_GRAFANA       string = "/var/shared/grafana/dashboards/"
+	PROFILES           string = "/var/profiles/"
 	ACTIVE_PROFILES    string = "/var/active_profiles/"
 )
 
