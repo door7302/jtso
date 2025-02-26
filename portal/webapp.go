@@ -627,6 +627,9 @@ func routeProfiles(c echo.Context) error {
 	for _, r := range sqlite.AssoList {
 		var asso string
 		for i, a := range r.Assos {
+			// Fix legacy naming
+			a = strings.ReplaceAll(a, "power_extensive", "power")
+
 			if i != len(r.Assos)-1 {
 				asso += a + " ; "
 			} else {

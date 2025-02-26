@@ -328,7 +328,11 @@ func LoadAll() error {
 			dbMu.Unlock()
 			return err
 		}
+		// Fix legacy naming - be deprecated in future release
+		tmpList = strings.ReplaceAll(tmpList, "power_extensive", "power")
+
 		i.Assos = strings.Split(tmpList, "|")
+
 		AssoList = append(AssoList, &i)
 	}
 
