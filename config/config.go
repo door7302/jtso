@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const JTSO_VERSION string = "1.0.5"
+const JTSO_VERSION string = "1.0.9"
 
 var SUPPORTED_DEVICE = []string{"MX", "PTX", "ACX", "EX", "QFX", "SRX", "CRPD", "CPTX", "VMX", "VSRX", "VJUNOS", "VEVO"}
 
