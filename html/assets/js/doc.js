@@ -55,22 +55,26 @@ async function loadConfig(fileName) {
       throw new Error(`Failed to load ${fileName}: ${response.statusText}`);
     }
 
-    const tomlContent = await response.text();
+    const jsonContent = await response.json(); // Parse JSON
+
+    // Pretty-print JSON
+    const formattedJson = JSON.stringify(jsonContent, null, 2);
 
     // Add syntax highlighting
-    const highlightedToml = Prism.highlight(tomlContent, Prism.languages.toml, 'toml');
+    const highlightedJson = Prism.highlight(formattedJson, Prism.languages.json, 'json');
 
-    // Update modal content with highlighted TOML
-    document.getElementById('modalcore').innerHTML = `<pre><code class="language-toml">${highlightedToml}</code></pre>`;
+    // Update modal content with highlighted JSON
+    document.getElementById('modalcore').innerHTML = `<pre><code class="language-json">${highlightedJson}</code></pre>`;
 
     // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('config'));
     modal.show();
   } catch (error) {
-    alertify.alert("JSTO...", "Error loading config:" + error);
+    alertify.alert("JSTO...", "Error loading config: " + error);
     document.getElementById('modalcore').textContent = 'Error loading configuration.';
   }
 }
+
 
 document.querySelector('#config .close').addEventListener('click', function () {
   const modal = document.getElementById('config');

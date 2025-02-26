@@ -550,7 +550,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			for _, p := range c.ProfilesName {
 				for _, d := range ActiveProfiles[p].Definition.GrafaCfg {
 					excludeDash = append(excludeDash, d)
-					source, err := os.Open("/var/active_profiles/" + p + "/" + d) //open the source file
+					source, err := os.Open(ACTIVE_PROFILES + p + "/" + d) //open the source file
 					if err != nil {
 						logger.Log.Errorf("Unable to open the source dashboard %s - err: %v", d, err)
 						continue
@@ -607,7 +607,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		for _, c := range v {
 			for _, p := range c.ProfilesName {
 				for _, d := range ActiveProfiles[p].Definition.KapaCfg {
-					fileKapa := "/var/active_profiles/" + p + "/" + d
+					fileKapa := ACTIVE_PROFILES + p + "/" + d
 					to_add := true
 					for _, a := range kapaAll {
 						if a == fileKapa {
