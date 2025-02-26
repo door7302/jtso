@@ -297,6 +297,13 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		profilesName := make([]string, len(profileKeys))
 		for i, p := range profileKeys {
 
+			// bypass unknown profile
+			_, ok := ActiveProfiles[p]
+			if !ok {
+				logger.Log.Errorf("Unknown profile detected: %s - skip it", p)
+				continue
+			}
+
 			var filenameList []Config
 			var directory string
 			var err error
@@ -312,8 +319,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 			switch rtr.Family {
 			case "mx":
-				logger.Log.Errorf("DEBUG 0: %v", p)
-				logger.Log.Errorf("DEBUG 1: %v", ActiveProfiles)
 				filenameList = ActiveProfiles[p].Definition.TelCfg.MxCfg
 			case "ptx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.PtxCfg
