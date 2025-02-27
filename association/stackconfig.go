@@ -593,7 +593,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		if !found {
 			err := os.Remove(filePath)
 			if err != nil {
-
 				continue
 			}
 		}
