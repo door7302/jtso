@@ -259,7 +259,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		families[0] = family
 	}
 
+	// -----------------------------------------------------------------------------------------------------
 	// Build a lookup map for router profiles from AssoList
+	// -----------------------------------------------------------------------------------------------------
 	routerProfiles := make(map[string][]string) // key: Shortname → value: Profile List
 	for _, asso := range sqlite.AssoList {
 		// Create a new slice with the same length as asso.Assos
@@ -269,20 +271,12 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		routerProfiles[asso.Shortname] = assosCopy
 	}
 
+	// -----------------------------------------------------------------------------------------------------
+	// Create the collection - based on Routers which are associated to profiles
+	// -----------------------------------------------------------------------------------------------------
 	for _, rtr := range sqlite.RtrList {
 		// Ignore routers with Profile = 0
 		if rtr.Profile == 0 {
-			continue
-		}
-		foundFam := false
-		for _, f := range families {
-			if rtr.Family == f {
-				foundFam = true
-				break
-			}
-		}
-		// Ignore if not match requested family
-		if !foundFam {
 			continue
 		}
 
@@ -409,7 +403,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		profileSetToRouters[profileKey] = append(profileSetToRouters[profileKey], rtr)
 	}
 
-	// Construct the collections map
+	// Finally the construction of  the collections map
 	for profileKey, routers := range profileSetToRouters {
 		// create the unit name
 		collectionID := fmt.Sprintf("collection_%d", profileSetIndex[profileKey])
@@ -435,7 +429,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	}
 
+	// -----------------------------------------------------------------------------------------------------
 	// only for debug
+	// -----------------------------------------------------------------------------------------------------
 	for family, familyCollections := range collections {
 		logger.Log.Debug("Update collections of Telegraf configs:")
 		logger.Log.Debugf(" Family: %s", family)
@@ -452,7 +448,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		}
 	}
 
-	// Now for each family create for each collection the optmized Telegraf config
+	// -----------------------------------------------------------------------------------------------------
+	// Now for each requested family - create the Telegraf optmized config
+	// -----------------------------------------------------------------------------------------------------
 	var telegrafCfgList []*maker.TelegrafConfig
 	for _, f := range families {
 		path, exists := PathMap[f]
@@ -541,7 +539,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	}
 
+	// -----------------------------------------------------------------------------------------------------
 	// create the list of active profile dashboard name and copy the new version of each dashboard
+	// -----------------------------------------------------------------------------------------------------
 	var excludeDash []string
 	excludeDash = make([]string, 0)
 	excludeDash = append(excludeDash, "home.json")
@@ -598,7 +598,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		}
 	}
 
+	// -----------------------------------------------------------------------------------------------------
 	// Create the list of Active Kapacitor script
+	// -----------------------------------------------------------------------------------------------------
 	var kapaStart, kapaStop, kapaAll []string
 	kapaStart = make([]string, 0)
 	kapaStop = make([]string, 0)
@@ -661,7 +663,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// Restart grafana
 	container.RestartContainer("grafana")
 
-	// Restart telegraf instance(s)
+	// -----------------------------------------------------------------------------------------------------
+	// Restart telegraf instance(s) : only for the affected families
+	// -----------------------------------------------------------------------------------------------------
 	for _, f := range families {
 		cntr := 0
 		for _, c := range collections[f] {
