@@ -283,7 +283,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		}
 		// Ignore if not match requested family
 		if !foundFam {
-
 			continue
 		}
 
@@ -410,7 +409,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		profileSetToRouters[profileKey] = append(profileSetToRouters[profileKey], rtr)
 	}
 
-	// Step 3: Construct the collections map
+	// Construct the collections map
 	for profileKey, routers := range profileSetToRouters {
 		// create the unit name
 		collectionID := fmt.Sprintf("collection_%d", profileSetIndex[profileKey])
