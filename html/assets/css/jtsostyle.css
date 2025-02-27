@@ -480,24 +480,31 @@ body.dark-mode .jstree {
 .dark-mode code {
   color: #f0f0f0;
   text-shadow: none;
+  background:none;
 }
 
 .dark-mode .token.cdata {
   color: #f0f0f0;
+  background:none;
 }
 .dark-mode .token.comment {
   color: #f0f0f0;
+  background:none;
 }
 .dark-mode .token.string {
   color: #98c379;
+  background:none;
 }
-.dark-mode .token.number,
-.dark-mode .token.boolean {
-  color: #d19a66;
-}
+
 .dark-mode .token.keyword {
   color: #c678dd;
+  background:none;
 }
 .dark-mode .token.operator {
   color: #56b6c2;
+  background:none;
+}
+
+.dark-mode .token.boolean, .token.constant, .token.deleted, .token.number, .token.property, .token.symbol, .token.tag {
+  color: #dc3545;
 }
