@@ -294,7 +294,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			// bypass unknown profile
 			_, ok := ActiveProfiles[p]
 			if !ok {
-				logger.Log.Errorf("Unknown profile detected: %s - skip it", p)
+				logger.Log.Errorf("Collection issue - Unknown profile detected: %s - skip it", p)
 				continue
 			}
 
@@ -548,6 +548,12 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	for _, v := range collections {
 		for _, c := range v {
 			for _, p := range c.ProfilesName {
+				// bypass unknown profile
+				_, ok := ActiveProfiles[p]
+				if !ok {
+					logger.Log.Errorf("Grafana update - Unknown profile detected: %s - skip it", p)
+					continue
+				}
 				for _, d := range ActiveProfiles[p].Definition.GrafaCfg {
 					excludeDash = append(excludeDash, d)
 					source, err := os.Open(ACTIVE_PROFILES + p + "/" + d) //open the source file
@@ -607,6 +613,12 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	for _, v := range collections {
 		for _, c := range v {
 			for _, p := range c.ProfilesName {
+				// bypass unknown profile
+				_, ok := ActiveProfiles[p]
+				if !ok {
+					logger.Log.Errorf("Kapacitor update - Unknown profile detected: %s - skip it", p)
+					continue
+				}
 				for _, d := range ActiveProfiles[p].Definition.KapaCfg {
 					fileKapa := ACTIVE_PROFILES + p + "/" + d
 					to_add := true
