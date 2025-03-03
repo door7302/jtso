@@ -128,6 +128,8 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"] = make(map[string]string)
 	}
 	m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["MODEL"] = strings.Trim(rd.HwInfo.Chassis.Desc, "\n")
+	m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["SHORTNAME"] = strings.Trim(rtr.Shortname, "\n")
+	m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["FAMILY"] = strings.Trim(family, "\n")
 	if rtr.Version != "" {
 		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["VERSION"] = strings.Trim(rtr.Version, "\n")
 	}
