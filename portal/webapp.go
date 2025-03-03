@@ -713,7 +713,7 @@ func routeUploadProfileCsv(c echo.Context) error {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-
+		logger.Log.Errorf("%s", line)
 		// Ignore empty line
 		if strings.TrimSpace(line) == "" {
 			continue
