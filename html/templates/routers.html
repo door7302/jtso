@@ -7,86 +7,126 @@
     <title>jts-portal</title>
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
-    <link rel="stylesheet" href="css/Navbar-Right-Links-icons.css">
     <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/jtsostyle.css">
+    <link rel="stylesheet" href="css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="css/bootstrap-multiselect.css">
 </head>
 
 <body>
     <nav class="navbar navbar-light navbar-expand-md py-3">
-        <div class="container"><img src="img/logo.png" width="129" height="67"><a
-                class="navbar-brand d-flex align-items-center" href="#"><span>Juniper Telemetry Stack</span></a><button
-                data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2"><span
-                    class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
-            <div class="collapse navbar-collapse" id="navcol-2">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="cred.html">Credentials</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="routers.html"
-                            style="border-color: rgba(0, 0, 0, 0.65);">Routers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
-                    <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
-                    <li class="nav-item"><a class="nav-link" href="browser.html">Browser</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/?orgId=1"
-                            onclick="javascript:event.target.port={{.GrafanaPort}}">Grafana</a></li>
-                </ul>
+      <div class="container">
+          <img src="img/logo-new.png" width="300" height="50">
+          <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2">
+              <span class="visually-hidden">Toggle navigation</span>
+              <span class="navbar-toggler-icon"></span>
+          </button>     
+          <div class="collapse navbar-collapse" id="navcol-2">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
+                <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
+                <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1, _blank')">Grafana</a></li>
+                
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="browser.html">gNMI browser</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">Admin</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="cred.html">Credentials</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/chronograf/data-explorer', '_blank')">Manage InfluxDB</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/tickscripts', '_blank')">Manage Tick scripts</a></li>
+                        <li><a class="dropdown-item" href="stats.html">Stack Util. & Logs</a></li>
+                    </ul>
+                </li>
+            </ul>
+              <div class="form-check form-switch ms-3">
+                <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                <label class="form-check-label" for="darkModeSwitch">Dark Mode</label>
             </div>
-        </div>
-    </nav>
-
-    <div class="card">
-        <div class="card-body">
-            <h4 class="card-title">Router Management</h4>
-            <form><label class="form-label">Short Name:</label><input id="Shortname" class="form-control" type="text">
-            </form>
-            <form><label class="form-label" style="margin-top: 10px;">Hostname or IP:</label><input id="Hostname"
-                    class="form-control" type="text">
-            </form>
-            <div class="d-flex justify-content-center align-items-center">
-                <input onclick="addRouter();" class="btn btn-primary" type="submit" value="Add Router" name="addB">
+          </div>
+      </div>
+  </nav>
+  
+    <div class="other-div">
+        <div class="card other-card">
+            <div class="card-body">
+                <h4 class="card-title">Router Management</h4>
+                <form><label class="form-label">Short Name:</label><input id="Shortname" class="form-control" type="text">
+                </form>
+                <form><label class="form-label">Hostname or IP:</label><input id="Hostname"
+                        class="form-control" type="text">
+                </form>
+                <br/>
+                <div class="d-flex justify-content-center align-items-center">
+                    <input onclick="addRouter();" class="btn btn-success" type="button" value="Add Router" name="addB">
+                </div>
             </div>
         </div>
     </div>
-    <div class="card">
-        <div class="card-body">
-            <h4 class="card-title">Current routers</h4>
-            <div class="table-responsive">
-                <table id="ListRtrs" class="table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Hostname</th>
-                            <th>Family</th>
-                            <th>Model</th>
-                            <th>Version</th>
-                            <th width="5%">Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{range .Rtrs}}
-                        <tr>
-                            <td>{{.Shortname}}</td>
-                            <td>{{.Hostname}}</td>
-                            <td>{{.Family}}</td>
-                            <td>{{.Model}}</td>
-                            <td>{{.Version}}</td>
-                            <td class="d-xxl-flex justify-content-xxl-center"><button
-                                    onclick="remove('{{.Shortname}}', this)" class="btn btn-danger"
-                                    style="margin-left: 5px;" type="submit"><i class="fa fa-trash"
-                                    style="font-size: 15px;"></i></button></td>
-                        </tr>
-                        {{end}}
-                    </tbody>
-                </table>
+    <br/>
+    <div class="other-div">
+        <div class="card other-card">
+            <div class="card-body">
+                <h4 class="card-title">Current Routers</h4>
+                <div class="d-flex justify-content-start align-items-center mb-3">
+                    <button class="btn btn-success" onclick="importCSV()">
+                        <i class="fa fa-upload"></i> Import CSV
+                    </button>
+                    <button class="btn btn-success ms-2" onclick="showInfo()">
+                        <i class="fa fa-info-circle"></i> Info
+                    </button>
+                    <input type="file" id="fileInput" accept=".csv" style="display: none;" />
+                </div>
+                <div class="table-responsive">
+                    <table id="ListRtrs" class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Hostname</th>
+                                <th>Family</th>
+                                <th>Model</th>
+                                <th>Version</th>
+                                <th width="5%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                         {{range .Rtrs}}
+                            <tr>
+                                <td>{{.Shortname}}</td>
+                                <td>{{.Hostname}}</td>
+                                <td>{{.Family}}</td>
+                                <td>{{.Model}}</td>
+                                <td>{{.Version}}</td>
+                                <td class="d-xxl-flex justify-content-xxl-center">
+                                    <button onclick="reset('{{.Hostname}}','{{.Shortname}}', this)" class="btn btn-success" style="margin-left: 5px;" type="button">
+                                        <i class="fa fa-sync" style="font-size: 15px;"></i>
+                                    </button>
+                                    <button onclick="remove('{{.Shortname}}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit">
+                                        <i class="fa fa-trash" style="font-size: 15px;"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
     <script src="js/jquery-3.6.4.min.js"></script>
+    <script src="js/jquery.dataTables.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
-    <script src="js/alertify.min.js"></script>
     <script src="js/bootstrap-multiselect.js"></script>
+    <script src="js/alertify.min.js"></script>
     <script src="js/bootstrap-waitingfor.min.js"></script>
     <script src="js/routers.js"></script>
+    <script src="js/dark.js"></script>
 
 </body>
 

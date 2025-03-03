@@ -10,7 +10,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-const JTSO_VERSION string = "1.0.8"
+// this is config displayed on the main page
+const JTSO_VERSION string = "1.0.9"
 
 type PortalConfig struct {
 	Https     bool
@@ -20,6 +21,14 @@ type PortalConfig struct {
 }
 
 type GrafanaConfig struct {
+	Port int
+}
+
+type KapacitorConfig struct {
+	BootTimeout int
+}
+
+type ChronografConfig struct {
 	Port int
 }
 
@@ -38,11 +47,13 @@ type EnricherConfig struct {
 	Workers  int
 }
 type ConfigContainer struct {
-	Grafana  *GrafanaConfig
-	Enricher *EnricherConfig
-	Portal   *PortalConfig
-	Netconf  *NetconfConfig
-	Gnmi     *GnmiConfig
+	Kapacitor  *KapacitorConfig
+	Chronograf *ChronografConfig
+	Grafana    *GrafanaConfig
+	Enricher   *EnricherConfig
+	Portal     *PortalConfig
+	Netconf    *NetconfConfig
+	Gnmi       *GnmiConfig
 }
 
 func NewConfigContainer(f string) *ConfigContainer {
@@ -57,14 +68,20 @@ func NewConfigContainer(f string) *ConfigContainer {
 
 	logger.Log.Info("Read configuration file")
 
-	// Ser default value for portal
+	// Ser default value for grafana
 	viper.SetDefault("modules.grafana.port", 8080)
+
+	// Ser default value for chronograf
+	viper.SetDefault("modules.chronograf.port", 8081)
+
+	// Ser default value for kapacitor
+	viper.SetDefault("modules.kapacitor.timeout", 15)
 
 	// Ser default value for portal
 	viper.SetDefault("modules.portal.https", false)
 	viper.SetDefault("modules.portal.server_crt", "")
 	viper.SetDefault("modules.portal.server_key", "")
-	viper.SetDefault("modules.portal.port", 8081)
+	viper.SetDefault("modules.portal.port", 8082)
 
 	// Ser default value for enricher
 	viper.SetDefault("modules.enricher.folder", "/var/metadata/")
@@ -81,6 +98,12 @@ func NewConfigContainer(f string) *ConfigContainer {
 	return &ConfigContainer{
 		Grafana: &GrafanaConfig{
 			Port: viper.GetInt("modules.grafana.port"),
+		},
+		Chronograf: &ChronografConfig{
+			Port: viper.GetInt("modules.chronograf.port"),
+		},
+		Kapacitor: &KapacitorConfig{
+			BootTimeout: viper.GetInt("modules.kapacitor.timeout"),
 		},
 		Portal: &PortalConfig{
 			Port:      viper.GetInt("modules.portal.port"),

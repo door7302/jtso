@@ -60,7 +60,7 @@ func Collect(cfg *config.ConfigContainer) {
 		if err != nil {
 			logger.Log.Error("Unexpected error while creating the Json files: ", err)
 		}
-		logger.Log.Info("All jobs done... now sleep")
+		logger.Log.Info("Workers have done all their jobs")
 	} else {
 		logger.Log.Info("No enrichment job to do")
 	}

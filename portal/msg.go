@@ -2,11 +2,11 @@ package portal
 
 type (
 	TabAsso struct {
-		Shortname string
-		Profiles  string
+		Shortname string `json:"shortname"`
+		Profiles  string `json:"profiles"`
 	}
 
-	NewRouter struct {
+	LongRouter struct {
 		Hostname  string `json:"hostname"`
 		Shortname string `json:"shortname"`
 	}
@@ -25,7 +25,9 @@ type (
 		Version   string `json:"version"`
 	}
 
-	DeletedRouter struct {
+	ByShortname []RouterDetails
+
+	ShortRouter struct {
 		Shortname string `json:"shortname"`
 	}
 
@@ -45,6 +47,12 @@ type (
 	Reply struct {
 		Status string `json:"status"`
 		Msg    string `json:"msg"`
+	}
+
+	ReplyStats struct {
+		Status string      `json:"status"`
+		Msg    string      `json:"msg"`
+		Data   interface{} `json:"data,omitempty"`
 	}
 
 	ReplyRouter struct {
@@ -77,4 +85,12 @@ type (
 		Action string `json:"action"`
 		Data   string `json:"data"`
 	}
+
+	UpdateDebug struct {
+		Instance string `json:"instance"`
+	}
 )
+
+func (a ByShortname) Len() int           { return len(a) }
+func (a ByShortname) Less(i, j int) bool { return a[i].Shortname < a[j].Shortname }
+func (a ByShortname) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }

@@ -7,6 +7,7 @@ import (
 	"io"
 	"jtso/logger"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -19,13 +20,24 @@ type Config struct {
 }
 
 type Telegraf struct {
-	VmxCfg []Config `json:"vmx"`
 	MxCfg  []Config `json:"mx"`
 	PtxCfg []Config `json:"ptx"`
 	AcxCfg []Config `json:"acx"`
+	ExCfg  []Config `json:"ex"`
+	QfxCfg []Config `json:"qfx"`
+	SrxCfg []Config `json:"srx"`
+
+	CrpdCfg []Config `json:"crpd"`
+	CptxCfg []Config `json:"cptx"`
+
+	VmxCfg    []Config `json:"vmx"`
+	VsrxCfg   []Config `json:"vsrx"`
+	VjunosCfg []Config `json:"vjunos"`
+	VevoCfg   []Config `json:"vevo"`
 }
 
 type DefProfile struct {
+	Version     int      `json:"version"`
 	Cheatsheet  string   `json:"cheatsheet"`
 	Description string   `json:"description"`
 	TelCfg      Telegraf `json:"telegraf"`
@@ -48,6 +60,26 @@ func init() {
 	ProfileLock = new(sync.Mutex)
 }
 
+func CleanActiveDirectory() error {
+	entries, err := os.ReadDir(ACTIVE_PROFILES)
+	if err != nil {
+		logger.Log.Errorf("Unable to open %s directory: %v", ACTIVE_PROFILES, err)
+		return err
+	}
+
+	for _, entry := range entries {
+		entryPath := filepath.Join(ACTIVE_PROFILES, entry.Name())
+		err := os.RemoveAll(entryPath)
+		if err != nil {
+			logger.Log.Errorf("Unable to remove %s: %v", entryPath, err)
+			return err
+		}
+	}
+
+	logger.Log.Infof("Directoy %s has been cleaned", ACTIVE_PROFILES)
+	return nil
+
+}
 func PeriodicCheck() {
 	logger.Log.Debug("Start periodic update of the profile db - scanning is starting")
 
@@ -59,14 +91,14 @@ func PeriodicCheck() {
 	}
 
 	// retrieve all tgz
-	dir, err := os.Open("/var/profiles/")
+	dir, err := os.Open(PROFILES)
 	if err != nil {
-		logger.Log.Errorf("Unable to open /var/active_profiles directory: %v", err)
+		logger.Log.Errorf("Unable to open %s directory: %v", PROFILES, err)
 		return
 	}
 	files, err := dir.ReadDir(0)
 	if err != nil {
-		logger.Log.Errorf("Unable to read /var/active_profiles directory: %v", err)
+		logger.Log.Errorf("Unable to read %s directory: %v", PROFILES, err)
 		return
 	}
 
@@ -74,11 +106,12 @@ func PeriodicCheck() {
 		if strings.Contains(file.Name(), "tgz") {
 			filename := strings.Replace(file.Name(), ".tgz", "", -1)
 
-			if _, ok := ActiveProfiles[filename]; ok {
-				entry, _ := ActiveProfiles[filename]
+			entry, ok := ActiveProfiles[filename]
+
+			if ok {
 				// existing profile - check if update
 				// compute the hash of the file
-				tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
+				tmpFile, err := os.Open(PROFILES + filename + ".tgz")
 				if err != nil {
 					logger.Log.Errorf("Unable to open file %s: %v", filename, err)
 					continue
@@ -94,19 +127,19 @@ func PeriodicCheck() {
 
 				if ActiveProfiles[filename].Hash != MD5String {
 					// Update profile
-					err := os.RemoveAll("active_profile/" + filename + "/")
+					err := os.RemoveAll(ACTIVE_PROFILES + filename + "/")
 					if err != nil {
 						logger.Log.Errorf("Unable to remove profile %s: %v", filename, err)
 						continue
 					}
-					err = targz.Extract("/var/profiles/"+filename+".tgz", "/var/active_profiles/")
+					err = targz.Extract(PROFILES+filename+".tgz", ACTIVE_PROFILES)
 					if err != nil {
 						logger.Log.Errorf("Unable to extract new profile %s: %v", filename, err)
 						continue
 					}
 
 					// update definition JSON file
-					jsonFile, err := os.Open("/var/active_profiles/" + filename + "/definition.json")
+					jsonFile, err := os.Open(ACTIVE_PROFILES + filename + "/definition.json")
 					if err != nil {
 						logger.Log.Errorf("Unable to open defintion.json for profile %s: %v", filename, err)
 						continue
@@ -119,8 +152,8 @@ func PeriodicCheck() {
 					json.Unmarshal(byteValue, entry.Definition)
 					entry.Hash = MD5String
 
-					// Copy cheatsheet image in the right assets directory
-					source, err := os.Open("/var/active_profiles/" + filename + "/" + entry.Definition.Cheatsheet) //open the source file
+					// Copy cheatsheet image in the right assets directories
+					source, err := os.Open(ACTIVE_PROFILES + filename + "/" + entry.Definition.Cheatsheet) //open the source file
 					if err != nil {
 						logger.Log.Errorf("Unable to open the Cheatsheet file %s - err: %v", entry.Definition.Cheatsheet, err)
 						continue
@@ -152,7 +185,7 @@ func PeriodicCheck() {
 				entry.Definition = new(DefProfile)
 
 				// compute the hash of the file
-				tmpFile, err := os.Open("/var/profiles/" + filename + ".tgz")
+				tmpFile, err := os.Open(PROFILES + filename + ".tgz")
 				if err != nil {
 					logger.Log.Errorf("Unable to open file %s: %v", filename, err)
 					continue
@@ -167,14 +200,14 @@ func PeriodicCheck() {
 				MD5String := hex.EncodeToString(hashInBytes)
 				entry.Hash = MD5String
 
-				err = targz.Extract("/var/profiles/"+filename+".tgz", "/var/active_profiles/")
+				err = targz.Extract(PROFILES+filename+".tgz", ACTIVE_PROFILES)
 				if err != nil {
 					logger.Log.Errorf("Unable to extract new profile %s: %v", filename, err)
 					continue
 				}
 
 				// open definition JSON file
-				jsonFile, err := os.Open("/var/active_profiles/" + filename + "/definition.json")
+				jsonFile, err := os.Open(ACTIVE_PROFILES + filename + "/definition.json")
 				if err != nil {
 					logger.Log.Errorf("Unable to open defintion.json for profile %s: %v", filename, err)
 					continue
@@ -186,8 +219,8 @@ func PeriodicCheck() {
 				// push json into definition structure
 				json.Unmarshal(byteValue, entry.Definition)
 
-				// Copy cheatsheet image in the right assets directory
-				source, err := os.Open("/var/active_profiles/" + filename + "/" + entry.Definition.Cheatsheet) //open the source file
+				// Copy cheatsheet image in the right assets directories
+				source, err := os.Open(ACTIVE_PROFILES + filename + "/" + entry.Definition.Cheatsheet) //open the source file
 				if err != nil {
 					logger.Log.Errorf("Unable to open the Cheatsheet file %s - err: %v", entry.Definition.Cheatsheet, err)
 					continue
@@ -215,7 +248,7 @@ func PeriodicCheck() {
 	for k, v := range ActiveProfiles {
 		if !v.Present {
 			// Update profile
-			err := os.RemoveAll("/var/active_profiles/" + v.Filename)
+			err := os.RemoveAll(ACTIVE_PROFILES + v.Filename)
 			if err != nil {
 				logger.Log.Errorf("Unable to remove profile %s: %v", v.Filename, err)
 			}

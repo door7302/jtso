@@ -1,0 +1,510 @@
+/* Common */ 
+
+  body {
+    visibility: hidden;
+  }
+
+  /* JTSO main logo */
+  .jtso-logo {
+    height: auto;
+    display: block;  
+    margin: auto;  
+    }
+
+  .card {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    position: relative;
+    color: black;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    text-align: center;
+    background: linear-gradient(to bottom, white, var(--box-color));
+  }
+
+  .card h3 {
+    margin: 0 0 10px;
+  }
+
+  .card .docker-logo {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+  }
+
+/* main page */ 
+
+  .main-div {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+  }
+
+  .main-card {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: rgb(255, 255, 255);
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    width: 80%;
+    display: grid;
+    grid-template-areas:
+      "jtso jtso jtso"
+      "telegraf influx influx"
+      "telegraf influx influx"
+      "telegraf kapacitor chronograf"
+      "telegraf grafana grafana";
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 20px;
+  }
+
+   /* Specific placement for each card */
+   .jtso {
+    --box-color: #f8cfcc; /* Soft red */
+    grid-area: jtso;
+  }
+
+  .telegraf {
+    --box-color: #85c1e9; /* Blue for Telegraf */
+    grid-area: telegraf;
+  }
+
+  .influx {
+   
+    grid-area: influx;
+  }
+
+  .kapacitor {
+    --box-color: #f8cfcc; /* Soft red */
+    grid-area: kapacitor;
+  }
+
+  .chronograf {
+    --box-color: #f8cfcc; /* Soft red */
+    grid-area: chronograf;
+  }
+
+  .grafana {
+    --box-color: #f8cfcc; /* Soft red */
+    grid-area: grafana;
+  }
+
+  /* Telegraf Sub-Boxes */
+  .telegraf-sub-boxes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .telegraf-sub-box {
+    background: linear-gradient(to bottom, white, #f8cfcc); 
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    position: relative;
+  }
+
+  /* KPI Mini Boxes */
+  .kpi-box {
+    position: absolute;
+    width: 40px;
+    height: 25px;
+    font-size: 12px;
+    line-height: 25px;
+    text-align: center;
+    color: black;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, transform 0.1s ease; /* Smooth hover/click effects */
+  }
+
+  .kpi-blue {
+    background-color: lightblue;
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .kpi-grey {
+    bottom: 10px;
+    right: 10px;
+    cursor: pointer;
+  }
+
+  .kpi-grey:hover {
+    background-color: darkgrey; /* Slightly darker on hover */
+    transform: scale(1.05); /* Slight zoom effect on hover */
+  }
+  
+    /* Optional: Add active/click effect */
+  .kpi-grey:active {
+    transform: scale(0.95); /* Slight shrink on click */
+  } 
+
+  .kpi-red {
+    background-color: grey;
+    bottom: 10px;
+    right: 10px;
+  }
+
+  /* Button */
+  .button-container {
+    margin-top: 20px;
+  }
+
+  .button {
+    background-color: black;
+    color: white;
+    padding: 1px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
+
+/* Routers pages */ 
+
+  #ListRtrs td, #ListRtrs th {
+    text-align: left !important; /* Ensures that all cells are left-aligned */
+  }
+
+  .other-div {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+  }
+
+  .other-card {
+    background-color: rgb(255, 255, 255);
+    width: 95%;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: black;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    text-align: center;
+    }
+
+  .other-card h4 {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: black;
+    text-align: center;
+    display: block; /* Ensure it takes up the full width of the parent */
+    margin-top: 10px; 
+  }
+  .other-card label {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    text-align: left;
+    display: block; /* Ensure it takes up the full width of the parent */
+    margin-top: 10px; 
+  }
+
+/* Profile page */ 
+
+#ListProfiles td, #ListProfiles th {
+  text-align: left !important; /* Ensures that all cells are left-aligned */
+}
+
+
+.other-card select {
+  text-align: left !important; /* Align the text inside the <select> */
+  text-align-last: left !important; /* Ensure alignment for selected text */
+  width: 100% !important; /* Ensure the select takes up the full width */
+  box-sizing: border-box; /* Include padding and border in the width */
+}
+
+.selectpicker {
+  width: 100% !important; /* Ensure Bootstrap selectpicker respects full width */
+}
+
+.form-container {
+  display: flex;
+  justify-content: space-between; /* Distribute space between columns */
+}
+
+.left-column {
+  flex: 9; /* Left column takes 90% of the available space */
+  padding-right: 20px; /* Optional, for spacing between columns */
+}
+
+.right-column {
+  flex: 1; /* Right column takes 10% of the available space */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.right-column .d-flex {
+  width: 100%; /* Ensure the button is centered inside the column */
+}
+
+/* DOC page */ 
+
+
+.other-card p {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: black;
+  text-align: left;
+  display: block; /* Ensure it takes up the full width of the parent */
+  margin-top: 10px; 
+}
+
+
+/* BROWSER page */ 
+
+#result {
+  text-align: left; /* Align text to the left */
+  display: block; /* Ensure the div behaves as a block-level element */
+
+}
+
+
+
+
+ /* Dark Mode Styles */
+/* General Dark Mode Styles */
+body.dark-mode {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+/* Navbar */
+body.dark-mode .navbar {
+  background-color: #121212 !important;
+}
+
+body.dark-mode .navbar .nav-link {
+  color: #ffffff !important;
+}
+
+
+body.dark-mode .navbar .dropdown-menu {
+  background-color: #282828 !important; /* Dark background for dropdown */
+  border-color: #121212 !important; /* Border color for dropdown */
+}
+
+body.dark-mode .navbar .dropdown-item {
+  color: #ffffff !important; /* White text color for dropdown items */
+}
+
+body.dark-mode .navbar .dropdown-item:hover {
+  background-color: #282828 !important; /* Slightly lighter background when hovering */
+}
+
+body.dark-mode .navbar .dropdown-item:focus, 
+body.dark-mode .navbar .dropdown-item:active {
+  background-color: #282828 !important; /* Darker background when focused or active */
+}
+
+body.dark-mode .navbar-brand span {
+  color: white !important;
+}
+
+/* Card Styles */
+body.dark-mode .main-card,
+body.dark-mode .other-card {
+  background-color: #282828;
+}
+
+body.dark-mode h1,
+body.dark-mode h4.card-title,
+body.dark-mode h5.card-title,
+body.dark-mode label {
+  color: #ffffff !important;
+}
+
+/* Form Inputs */
+body.dark-mode input.form-control {
+  color: #ffffff !important;
+  background-color: #575757 !important;
+  border-color: #555555 !important;
+}
+
+/* Table Styles */
+body.dark-mode .other-card .table {
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .other-card .table thead {
+  background-color: #3f3f3f !important;
+}
+
+body.dark-mode .other-card .table th,
+body.dark-mode .other-card .table td {
+  border-color: #555555 !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .other-card .table td {
+  background-color: #575757 !important;
+}
+
+body.dark-mode .other-card .table th {
+  background-color: #3f3f3f !important;
+}
+
+/* Button Styles */
+body.dark-mode .other-card .btn-danger {
+  background-color: #cc4444 !important;
+  border-color: #cc4444 !important;
+}
+
+body.dark-mode .other-card .btn-danger:hover {
+  background-color: #ff6666 !important;
+}
+
+/* Paragraph Styles */
+body.dark-mode .card-text {
+  color: #ffffff;
+  background-color: #282828;
+}
+
+body.dark-mode .card-text:hover {
+  background-color: #282828; /* Slightly lighter background when hovered */
+}
+
+body.dark-mode, body.light-mode {
+  visibility: visible;
+}
+
+
+/* Gauge */ 
+body.dark-mode .gauge {
+  background-color: #333333 !important; /* Dark background for gauge container */
+  color: #ffffff !important; /* Text color inside the gauge */
+  border: 1px solid #444444 !important; /* Border for gauge container */
+}
+
+/* Adjust SVG Titles and Values Inside Gauges */
+body.dark-mode .gauge text {
+  fill: #ffffff !important; /* Make text inside gauges (titles and values) white */
+}
+
+
+
+/* Popup Body Styling */
+
+body.dark-mode .ajs-dialog {
+  background-color: #282828 !important; /* Darker popup body */
+  color: #ffffff !important; /* White text */
+  border: 1px solid #555555 !important; /* Subtle border for contrast */
+}
+
+/* Popup Header Styling */
+body.dark-mode .ajs-header {
+  background-color: #282828 !important; /* Dark header background */
+  color: #ffffff !important; /* White header text */
+}
+
+/* Popup Header Styling */
+body.dark-mode .ajs-footer {
+  background-color: #282828 !important; /* Dark header background */
+  color: #ffffff !important; /* White header text */
+}
+
+/* Footer Buttons */
+body.dark-mode .ajs-footer .ajs-buttons .ajs-ok,
+body.dark-mode .ajs-footer .ajs-buttons .ajs-cancel,
+body.dark-mode .ajs-footer .ajs-buttons .ajs-close {
+  background-color: #282828 !important; /* Match input background */
+  color: #ffffff !important; /* White text for buttons */
+  border: 1px solid #555555 !important; /* Border matching other elements */
+}
+
+body.dark-mode .ajs-footer .ajs-buttons .ajs-ok:hover,
+body.dark-mode .ajs-footer .ajs-buttons .ajs-cancel:hover,
+body.dark-mode .ajs-footer .ajs-buttons .ajs-close:hover {
+  background-color: #444444 !important; /* Slightly darker hover effect */
+}
+
+/* Close Button Styling */
+body.dark-mode .ajs-close {
+  color: #ffffff !important;
+}
+
+/* Optional: Adjust Transition Backgrounds */
+body.dark-mode .ajs-overlay {
+  background-color: rgba(18, 18, 18, 0.85) !important; /* Dark semi-transparent overlay */
+}
+
+
+/* Dark Mode Styles for Modal */
+body.dark-mode .modal-content {
+  background-color: #3f3f3f !important; /* Dark background for modal */
+  color: #ffffff !important; /* White text for modal */
+}
+
+body.dark-mode .modal-header {
+  background-color: #282828 !important; /* Dark header background */
+  color: #ffffff !important; /* White text for header */
+}
+
+body.dark-mode .modal-header .modal-title {
+  color: #ffffff !important; /* Ensures title text stays white */
+}
+
+body.dark-mode .modal-body {
+  background-color: #3f3f3f !important; /* Dark background for the modal body */
+  color: #ffffff !important; /* White text for the modal body */
+}
+
+body.dark-mode .modal-body pre {
+  color: #ffffff !important; /* White text in preformatted blocks */
+  background-color: #3f3f3f !important; /* Dark background for preformatted text */
+}
+
+body.dark-mode .modal .close {
+  color: #ffffff !important; /* White close button */
+  opacity: 1 !important; /* Ensure close button is visible */
+}
+
+/* Adjust modal backdrop in dark mode */
+body.dark-mode .modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.7) !important; /* Darker backdrop */
+}
+
+body.dark-mode .jstree {
+  color: #ffffff !important; 
+}
+
+/* for doc - config rendering */ 
+
+.dark-mode code {
+  color: #f0f0f0;
+  text-shadow: none;
+  background:none;
+}
+
+.dark-mode .token.cdata {
+  color: #f0f0f0;
+  background:none;
+}
+.dark-mode .token.comment {
+  color: #f0f0f0;
+  background:none;
+}
+.dark-mode .token.string {
+  color: #98c379;
+  background:none;
+}
+
+.dark-mode .token.keyword {
+  color: #c678dd;
+  background:none;
+}
+.dark-mode .token.operator {
+  color: #56b6c2;
+  background:none;
+}
+
+.dark-mode .token.boolean, .token.constant, .token.deleted, .token.number, .token.property, .token.symbol, .token.tag {
+  color: #dc3545;
+}

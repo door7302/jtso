@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"jtso/association"
 	"jtso/config"
+	"jtso/container"
 	"jtso/kapacitor"
 	"jtso/logger"
 	_ "jtso/output"
@@ -54,12 +55,21 @@ func main() {
 	// Create a shared Context with cancel function
 	_, close := context.WithCancel(context.Background())
 
-	// wait 5 seconds to let docker DNS service to start
-	time.Sleep(5 * time.Second)
-
 	// Clean all kapacitor tasks
-	logger.Log.Info("Start cleaning all active Kapacitor tasks")
-	kapacitor.CleanKapa()
+	maxAttempts := Cfg.Kapacitor.BootTimeout
+	for i := 1; i <= maxAttempts; i++ {
+		if kapacitor.IsKapaRun() {
+			logger.Log.Info("Kapacitor module is up and running")
+			// Clean all kapacitor tasks
+			logger.Log.Info("Start cleaning all active Kapacitor tasks")
+			kapacitor.CleanKapa()
+			break
+		}
+		time.Sleep(1 * time.Second)
+		if i == maxAttempts {
+			logger.Log.Error("Unable to clean Kapacitor tasks. Make sure Kapacitor container is running")
+		}
+	}
 
 	// Init the sqliteDB
 	//err = sqlite.Init("./jtso.db")
@@ -91,10 +101,10 @@ func main() {
 		}
 	}()
 
-	// create a ticker to refresh the Enrichment struct
+	// create a ticker to refresh the profiles
 	ticker2 := time.NewTicker(1 * time.Minute)
 
-	// Create the Thread that periodically refreshes the Enrichment struct
+	// Create the Thread that periodically refreshes the profiles
 	go func() {
 		for {
 			select {
@@ -104,10 +114,28 @@ func main() {
 		}
 	}()
 
+	// Clean Active profiles - reset directory
+	association.CleanActiveDirectory()
+
 	// Trigger a first run of some background processes
 	association.PeriodicCheck()
+
 	go worker.Collect(Cfg)
 	go association.ConfigueStack(Cfg, "all")
+
+	// create a ticker to refresh the docker statistics
+	ticker3 := time.NewTicker(1 * time.Minute)
+
+	// Create the Thread that periodically the docker statistics
+	container.Init(1)
+	go func() {
+		for {
+			select {
+			case <-ticker3.C:
+				container.GetContainerStats()
+			}
+		}
+	}()
 
 	// Waiting exit
 	c := make(chan os.Signal, 1)

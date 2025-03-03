@@ -44,6 +44,8 @@ type Streamer struct {
 	Flusher       http.Flusher
 	Writer        http.ResponseWriter
 	Error         error
+	XpathCpt      int
+	XpathList     map[string]struct{}
 	StopStreaming chan struct{}
 }
 
@@ -201,8 +203,16 @@ func parseXpath(xpath string, value string, merge bool) error {
 	key = make([]string, 0)
 
 	lpath := advancedSplit(xpath, merge)
-	StreamData(fmt.Sprintf("XPATH Extracted: %s", strings.Join(lpath, "/")), "OK")
-
+	xpathKey := strings.Join(lpath, "/")
+	// increment counter and save the Xpath
+	_, ok := StreamObj.XpathList[xpathKey]
+	if !ok {
+		StreamObj.XpathCpt += 1
+		StreamObj.XpathList[strings.Join(lpath, "/")] = struct{}{}
+		StreamData(fmt.Sprintf("%d", StreamObj.XpathCpt), "XPATH")
+	}
+	// Old method to share XPATH
+	// StreamData(fmt.Sprintf("XPATH Extracted: %s", strings.Join(lpath, "/")), "OK")
 	parent = root
 	for i, v := range lpath {
 		if i == len(lpath)-1 {
@@ -275,7 +285,7 @@ func LaunchSearch() {
 
 	if tls {
 		if clienttls {
-			StreamData("Try to create Target - option 3", "OK")
+			StreamData("Try to create Target", "OK")
 			// create a target
 			tg, err = api.NewTarget(
 				api.Name("jtso"),
@@ -290,7 +300,7 @@ func LaunchSearch() {
 			)
 
 		} else {
-			StreamData("Try to create Target - option 2", "OK")
+			StreamData("Try to create Target", "OK")
 			// create a target
 			tg, err = api.NewTarget(
 				api.Name("jtso"),
@@ -304,7 +314,7 @@ func LaunchSearch() {
 
 		}
 	} else {
-		StreamData("Try to create Target - option 1", "OK")
+		StreamData("Try to create Target", "OK")
 		// create a target
 		tg, err = api.NewTarget(
 			api.Name("jtso"),
@@ -323,7 +333,7 @@ func LaunchSearch() {
 		close(StreamObj.StopStreaming)
 		return
 	}
-	StreamData("Create gNMI Target", "OK")
+	StreamData("gNMI Target created", "OK")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -370,6 +380,7 @@ func LaunchSearch() {
 
 	subRspChan, subErrChan := tg.ReadSubscriptions()
 	StreamData("Start collection data", "OK")
+	StreamData("Please wait...", "OK")
 	StreamObj.ForceFlush = false
 	for {
 		select {

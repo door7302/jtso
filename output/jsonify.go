@@ -116,6 +116,13 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 	// Find out the router entry to extract version already collected by the get Facts
 	var rtr *sqlite.RtrEntry
 	rtr = new(sqlite.RtrEntry)
+	family := ""
+	for _, r := range sqlite.RtrList {
+		if r.Hostname == rd.RtrName {
+			rtr = r
+			family = r.Family
+		}
+	}
 	_, ok = m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]
 	if !ok {
 		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"] = make(map[string]string)
@@ -147,8 +154,16 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 								sssmSlot := strings.Trim(strings.Replace(sssm.Name, " ", "", 1), "\n")
 								if strings.Contains(sssmSlot, "Xcvr") {
 									portSlot := strings.Replace(ssmSlot, "Xcvr", "", 1)
+									prfx := "et-"
 									key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 									key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
+									if family != "ptx" && family != "acx" && family == "vevo" {
+										if strings.Contains(sssm.Desc, "1G") {
+											prfx = "ge-"
+										} else if strings.Contains(sssm.Desc, "1G") {
+											prfx = "xe-"
+										}
+									}
 									_, ok := m.Meta[rd.Family][rd.RtrName][key1]
 									if !ok {
 										m.Meta[rd.Family][rd.RtrName][key1] = make(map[string]string)
@@ -157,10 +172,14 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 									if !ok {
 										m.Meta[rd.Family][rd.RtrName][key2] = make(map[string]string)
 									}
+
+									m.Meta[rd.Family][rd.RtrName][key1]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+									m.Meta[rd.Family][rd.RtrName][key2]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
 									m.Meta[rd.Family][rd.RtrName][key1]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
 									m.Meta[rd.Family][rd.RtrName][key1]["channel"] = "no"
 									m.Meta[rd.Family][rd.RtrName][key2]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
 									m.Meta[rd.Family][rd.RtrName][key2]["channel"] = "no"
+
 									// Add channel up to 4
 									for channel := 0; channel < 4; channel++ {
 										key3 := key2 + strconv.Itoa(channel)
@@ -168,6 +187,8 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 										if !ok {
 											m.Meta[rd.Family][rd.RtrName][key3] = make(map[string]string)
 										}
+
+										m.Meta[rd.Family][rd.RtrName][key3]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel)
 										m.Meta[rd.Family][rd.RtrName][key3]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel)
 										m.Meta[rd.Family][rd.RtrName][key3]["channel"] = "yes"
 									}
@@ -183,8 +204,16 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 						ssmSlot := strings.Trim(strings.Replace(ssm.Name, " ", "", 1), "\n")
 						if strings.Contains(ssmSlot, "Xcvr") {
 							portSlot := strings.Replace(ssmSlot, "Xcvr", "", 1)
+							prfx := "et-"
 							key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 							key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
+							if family != "ptx" && family != "acx" && family == "vevo" {
+								if strings.Contains(ssm.Desc, "1G") {
+									prfx = "ge-"
+								} else if strings.Contains(ssm.Desc, "1G") {
+									prfx = "xe-"
+								}
+							}
 							_, ok := m.Meta[rd.Family][rd.RtrName][key1]
 							if !ok {
 								m.Meta[rd.Family][rd.RtrName][key1] = make(map[string]string)
@@ -193,10 +222,14 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 							if !ok {
 								m.Meta[rd.Family][rd.RtrName][key2] = make(map[string]string)
 							}
+
+							m.Meta[rd.Family][rd.RtrName][key1]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
+							m.Meta[rd.Family][rd.RtrName][key2]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot
 							m.Meta[rd.Family][rd.RtrName][key1]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
 							m.Meta[rd.Family][rd.RtrName][key1]["channel"] = "no"
 							m.Meta[rd.Family][rd.RtrName][key2]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
 							m.Meta[rd.Family][rd.RtrName][key2]["channel"] = "no"
+
 							// Add channel up to 4
 							for channel := 0; channel < 4; channel++ {
 								key3 := key2 + strconv.Itoa(channel)
@@ -204,9 +237,11 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 								if !ok {
 									m.Meta[rd.Family][rd.RtrName][key3] = make(map[string]string)
 								}
+								m.Meta[rd.Family][rd.RtrName][key3]["if_name"] = prfx + fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel)
 								m.Meta[rd.Family][rd.RtrName][key3]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel)
 								m.Meta[rd.Family][rd.RtrName][key3]["channel"] = "yes"
 							}
+
 						}
 					}
 				}
