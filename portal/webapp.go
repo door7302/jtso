@@ -713,7 +713,7 @@ func routeUploadProfileCsv(c echo.Context) error {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		logger.Log.Errorf("%s", line)
+
 		// Ignore empty line
 		if strings.TrimSpace(line) == "" {
 			continue
@@ -757,6 +757,9 @@ func routeUploadProfileCsv(c echo.Context) error {
 			for _, entry := range columns[1:] {
 				// Check if profile exist in DB
 				entry = strings.TrimSpace(entry)
+				if entry == "" {
+					continue
+				}
 				for _, asso := range lp {
 					if entry == asso {
 						assoMatch = true
@@ -861,6 +864,7 @@ func routeUploadRtrCsv(c echo.Context) error {
 		exist := false
 		for _, i := range sqlite.RtrList {
 			if i.Shortname == columns[0] {
+				logger.Log.Warnf("Router %s already exists in DB", columns[0])
 				exist = true
 				break
 			}
@@ -966,6 +970,19 @@ func routeAddRouter(c echo.Context) error {
 		logger.Log.Errorf("Unable to parse Post request for creating a new router: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to create the router"})
 	}
+	// check if router already exists
+	exist := false
+	for _, v := range sqlite.RtrList {
+		if v.Shortname == r.Shortname {
+			exist = true
+			break
+		}
+	}
+	if exist {
+		logger.Log.Warnf("Router %s already exists in DB", r.Shortname)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Router already exists"})
+	}
+
 	// here we need to issue a Netconf request to retrieve model and version
 	reply, err := netconf.GetFacts(r.Hostname, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, collectCfg.cfg.Netconf.Port, 30)
 	if err != nil {
