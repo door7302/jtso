@@ -196,15 +196,12 @@ function importCSV() {
       waitingDialog.hide();
 
       alertify.confirm(result.msg, function (e) {
-        if (e) {
-          //  nothing to do
-        }
+          window.location.reload();
       }).setHeader('JSTO...');
 
-      window.location.reload();
-
     } catch (error) {
-      alertify.alert("JSTO...", "An error occurred while uploading the file")
+      alertify.alert("JSTO...", "An error occurred while uploading the file: "+JSON.stringify(error))
+      waitingDialog.hide();
     }
   });
 }
