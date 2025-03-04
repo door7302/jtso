@@ -183,15 +183,16 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 			operator = searchVersion[0:2]
 			searchVersion = searchVersion[2:]
 		}
+		// PRefer Contains for ==
 		// Find out if routerVersion can be reduced
-		r, _ := regexp.Compile(searchVersion + "*")
-		result := r.FindString(routerVersion)
-		if result != "" {
-			routerVersion = result
-		}
+		// r, _ := regexp.Compile(searchVersion + "*")
+		// result := r.FindString(routerVersion)
+		// if result != "" {
+		//	routerVersion = result
+		// }
 		switch operator {
 		case "==":
-			if strings.Compare(routerVersion, searchVersion) == 0 {
+			if strings.Contains(routerVersion, searchVersion) {
 				return true
 			}
 
@@ -436,9 +437,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		}
 	}
 
-	// -----------------------------------------------------------------------------------------------------
-	// only for debug
-	// -----------------------------------------------------------------------------------------------------
 	for family, familyCollections := range collections {
 		logger.Log.Info("Update collections of Telegraf configs:")
 		logger.Log.Infof(" Family: %s", family)
