@@ -440,17 +440,17 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// only for debug
 	// -----------------------------------------------------------------------------------------------------
 	for family, familyCollections := range collections {
-		logger.Log.Debug("Update collections of Telegraf configs:")
-		logger.Log.Debugf(" Family: %s", family)
+		logger.Log.Info("Update collections of Telegraf configs:")
+		logger.Log.Infof(" Family: %s", family)
 		for collectionID, collection := range familyCollections {
-			logger.Log.Debugf("  ID: %s:", collectionID)
-			logger.Log.Debug("     Profiles [files]:")
+			logger.Log.Infof("  ID: %s:", collectionID)
+			logger.Log.Info("     Profiles [files]:")
 			for i, p := range collection.ProfilesConf {
-				logger.Log.Debugf("       -%s [%s]", collection.ProfilesName[i], p)
+				logger.Log.Infof("       -%s [%s]", collection.ProfilesName[i], p)
 			}
-			logger.Log.Debug("     Routers part of the collection:")
+			logger.Log.Info("     Routers part of the collection:")
 			for _, r := range collection.Routers {
-				logger.Log.Debugf("       -%s", r.Hostname)
+				logger.Log.Infof("       -%s", r.Hostname)
 			}
 		}
 	}
