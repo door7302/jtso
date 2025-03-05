@@ -156,7 +156,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 							for _, sssm := range ssm.SubSubSubMods {
 								sssmSlot := strings.Trim(strings.Replace(sssm.Name, " ", "", 1), "\n")
 								if strings.Contains(sssmSlot, "Xcvr") {
-									portSlot := strings.Replace(ssmSlot, "Xcvr", "", 1)
+									portSlot := strings.Replace(sssmSlot, "Xcvr", "", 1)
 									key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 									key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
 
