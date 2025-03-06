@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"jtso/logger"
 
@@ -11,13 +10,14 @@ import (
 )
 
 // this is config displayed on the main page
-const JTSO_VERSION string = "1.0.10"
+const JTSO_VERSION string = "1.0.11"
 
 type PortalConfig struct {
-	Https     bool
-	ServerCrt string
-	ServerKey string
-	Port      int
+	Https          bool
+	ServerCrt      string
+	ServerKey      string
+	Port           int
+	BrowserTimeout int
 }
 
 type GrafanaConfig struct {
@@ -43,9 +43,10 @@ type GnmiConfig struct {
 
 type EnricherConfig struct {
 	Folder   string
-	Interval time.Duration
+	Interval int
 	Workers  int
 }
+
 type ConfigContainer struct {
 	Kapacitor  *KapacitorConfig
 	Chronograf *ChronografConfig
@@ -82,10 +83,11 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("modules.portal.server_crt", "")
 	viper.SetDefault("modules.portal.server_key", "")
 	viper.SetDefault("modules.portal.port", 8082)
+	viper.SetDefault("modules.portal.browsertimeout", 40)
 
 	// Ser default value for enricher
 	viper.SetDefault("modules.enricher.folder", "/var/metadata/")
-	viper.SetDefault("modules.enricher.interval", 720*time.Minute)
+	viper.SetDefault("modules.enricher.interval", 240)
 	viper.SetDefault("modules.enricher.workers", 4)
 
 	// Set default value for Netconf
@@ -106,14 +108,15 @@ func NewConfigContainer(f string) *ConfigContainer {
 			BootTimeout: viper.GetInt("modules.kapacitor.timeout"),
 		},
 		Portal: &PortalConfig{
-			Port:      viper.GetInt("modules.portal.port"),
-			Https:     viper.GetBool("modules.portal.https"),
-			ServerCrt: viper.GetString("modules.portal.server_crt"),
-			ServerKey: viper.GetString("modules.portal.server_key"),
+			Port:           viper.GetInt("modules.portal.port"),
+			Https:          viper.GetBool("modules.portal.https"),
+			ServerCrt:      viper.GetString("modules.portal.server_crt"),
+			ServerKey:      viper.GetString("modules.portal.server_key"),
+			BrowserTimeout: viper.GetInt("modules.portal.browsertimeout"),
 		},
 		Enricher: &EnricherConfig{
 			Folder:   viper.GetString("modules.enricher.folder"),
-			Interval: viper.GetDuration("modules.enricher.interval") * time.Minute,
+			Interval: viper.GetInt("modules.enricher.interval"),
 			Workers:  viper.GetInt("modules.enricher.workers"),
 		},
 		Netconf: &NetconfConfig{

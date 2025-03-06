@@ -258,9 +258,9 @@ func parseXpath(xpath string, value string, merge bool) error {
 	return nil
 }
 
-func LaunchSearch() {
+func LaunchSearch(timeout int) {
 
-	logger.Log.Infof("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path)
+	logger.Log.Infof("Start subscription for router %s and xpath %s (timeout is %d)", StreamObj.Router, StreamObj.Path, timeout)
 	StreamData(fmt.Sprintf("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
 
 	// Init global variable
@@ -372,7 +372,7 @@ func LaunchSearch() {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(40 * time.Second):
+		case <-time.After(time.Duration(timeout) * time.Second):
 			logger.Log.Infof("End of the subscription timer")
 			tg.StopSubscription("sub1")
 		}
@@ -393,7 +393,7 @@ func LaunchSearch() {
 		case gnmiErr := <-subErrChan:
 			//traverseTree(root)
 			StreamObj.ForceFlush = true
-			logger.Log.Infof("End of the subscription after the 40 secs analysis - status of the end: %v", gnmiErr.Err.Error())
+			logger.Log.Infof("End of the subscription after timeout exprired - status of the end: %v", gnmiErr.Err.Error())
 			StreamObj.Error = gnmiErr.Err
 			time.Sleep(1 * time.Second)
 			StreamObj.Result = root
