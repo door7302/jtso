@@ -84,7 +84,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 			//Default description TAG
 			m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = "Unknown"
 			if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
-				m.Meta[rd.Family][rd.RtrName][phy_name]["port_name"] = phy_name[3:]
+				m.Meta[rd.Family][rd.RtrName][phy_name]["port_name"] = phy_name[3:] + " - Unknown"
 				if strings.Contains(phy_name, ":") {
 					m.Meta[rd.Family][rd.RtrName][phy_name]["channel"] = "yes"
 				} else {
@@ -113,8 +113,11 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 
 					//add to the map
 					if len(phy_name) > 3 {
-						// Keep only the cage name
-						mapDesc[phy_name[3:]] = strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
+
+						if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
+							m.Meta[rd.Family][rd.RtrName][phy_name]["port_name"] = phy_name[3:] + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
+							mapDesc[phy_name[3:]] = strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
+						}
 					}
 
 				}
