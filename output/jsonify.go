@@ -59,8 +59,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 	m.Mu.Lock()
 
 	// For easy search for optical mapping
-	var mapDesc map[string]string
-	mapDesc = make(map[string]string)
+	mapDesc := make(map[string]string)
 
 	// init Map
 	_, ok := m.Meta[rd.Family]
@@ -230,9 +229,15 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 												if !ok {
 													m.Meta[rd.Family][rd.RtrName][key3] = make(map[string]string)
 												}
+												portDesc = "Unknown"
+												if len(found) > 3 {
+													cageDesc, ok := mapDesc[fpcSlot+"/"+picSlot+"/"+portSlot+":"+strconv.Itoa(channel)]
+													if ok {
+														portDesc = cageDesc
+													}
+												}
 												m.Meta[rd.Family][rd.RtrName][key3]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel) + " - " + portDesc
 												m.Meta[rd.Family][rd.RtrName][key3]["channel"] = "yes"
-
 												m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"] += fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel) + " ; "
 												m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"] += fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel) + " ; "
 											}
@@ -307,6 +312,13 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 										_, ok = m.Meta[rd.Family][rd.RtrName][key3]
 										if !ok {
 											m.Meta[rd.Family][rd.RtrName][key3] = make(map[string]string)
+										}
+										portDesc = "Unknown"
+										if len(found) > 3 {
+											cageDesc, ok := mapDesc[fpcSlot+"/"+picSlot+"/"+portSlot+":"+strconv.Itoa(channel)]
+											if ok {
+												portDesc = cageDesc
+											}
 										}
 										m.Meta[rd.Family][rd.RtrName][key3]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel) + " - " + portDesc
 										m.Meta[rd.Family][rd.RtrName][key3]["channel"] = "yes"
