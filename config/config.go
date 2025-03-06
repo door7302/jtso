@@ -14,10 +14,11 @@ import (
 const JTSO_VERSION string = "1.0.10"
 
 type PortalConfig struct {
-	Https     bool
-	ServerCrt string
-	ServerKey string
-	Port      int
+	Https          bool
+	ServerCrt      string
+	ServerKey      string
+	Port           int
+	BrowserTimeout time.Duration
 }
 
 type GrafanaConfig struct {
@@ -46,6 +47,7 @@ type EnricherConfig struct {
 	Interval time.Duration
 	Workers  int
 }
+
 type ConfigContainer struct {
 	Kapacitor  *KapacitorConfig
 	Chronograf *ChronografConfig
@@ -82,6 +84,7 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("modules.portal.server_crt", "")
 	viper.SetDefault("modules.portal.server_key", "")
 	viper.SetDefault("modules.portal.port", 8082)
+	viper.SetDefault("modules.portal.browsertimeout", 40*time.Second)
 
 	// Ser default value for enricher
 	viper.SetDefault("modules.enricher.folder", "/var/metadata/")
@@ -106,10 +109,11 @@ func NewConfigContainer(f string) *ConfigContainer {
 			BootTimeout: viper.GetInt("modules.kapacitor.timeout"),
 		},
 		Portal: &PortalConfig{
-			Port:      viper.GetInt("modules.portal.port"),
-			Https:     viper.GetBool("modules.portal.https"),
-			ServerCrt: viper.GetString("modules.portal.server_crt"),
-			ServerKey: viper.GetString("modules.portal.server_key"),
+			Port:           viper.GetInt("modules.portal.port"),
+			Https:          viper.GetBool("modules.portal.https"),
+			ServerCrt:      viper.GetString("modules.portal.server_crt"),
+			ServerKey:      viper.GetString("modules.portal.server_key"),
+			BrowserTimeout: viper.GetDuration("modules.portal.browsertimeout") * time.Second,
 		},
 		Enricher: &EnricherConfig{
 			Folder:   viper.GetString("modules.enricher.folder"),
