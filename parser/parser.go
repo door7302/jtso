@@ -260,7 +260,7 @@ func parseXpath(xpath string, value string, merge bool) error {
 
 func LaunchSearch(timeout time.Duration) {
 
-	logger.Log.Infof("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path)
+	logger.Log.Infof("Start subscription for router %s and xpath %s (timeout is %d)", StreamObj.Router, StreamObj.Path, timeout)
 	StreamData(fmt.Sprintf("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
 
 	// Init global variable
