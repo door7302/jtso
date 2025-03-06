@@ -258,7 +258,7 @@ func parseXpath(xpath string, value string, merge bool) error {
 	return nil
 }
 
-func LaunchSearch(timeout time.Duration) {
+func LaunchSearch(timeout int) {
 
 	logger.Log.Infof("Start subscription for router %s and xpath %s (timeout is %d)", StreamObj.Router, StreamObj.Path, timeout)
 	StreamData(fmt.Sprintf("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
@@ -372,7 +372,7 @@ func LaunchSearch(timeout time.Duration) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(timeout * time.Second):
+		case <-time.After(time.Duration(timeout) * time.Second):
 			logger.Log.Infof("End of the subscription timer")
 			tg.StopSubscription("sub1")
 		}

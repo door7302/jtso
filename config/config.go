@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"jtso/logger"
 
@@ -18,7 +17,7 @@ type PortalConfig struct {
 	ServerCrt      string
 	ServerKey      string
 	Port           int
-	BrowserTimeout time.Duration
+	BrowserTimeout int
 }
 
 type GrafanaConfig struct {
@@ -44,7 +43,7 @@ type GnmiConfig struct {
 
 type EnricherConfig struct {
 	Folder   string
-	Interval time.Duration
+	Interval int
 	Workers  int
 }
 
@@ -84,11 +83,11 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("modules.portal.server_crt", "")
 	viper.SetDefault("modules.portal.server_key", "")
 	viper.SetDefault("modules.portal.port", 8082)
-	viper.SetDefault("modules.portal.browsertimeout", 40*time.Second)
+	viper.SetDefault("modules.portal.browsertimeout", 40)
 
 	// Ser default value for enricher
 	viper.SetDefault("modules.enricher.folder", "/var/metadata/")
-	viper.SetDefault("modules.enricher.interval", 720*time.Minute)
+	viper.SetDefault("modules.enricher.interval", 240)
 	viper.SetDefault("modules.enricher.workers", 4)
 
 	// Set default value for Netconf
@@ -113,11 +112,11 @@ func NewConfigContainer(f string) *ConfigContainer {
 			Https:          viper.GetBool("modules.portal.https"),
 			ServerCrt:      viper.GetString("modules.portal.server_crt"),
 			ServerKey:      viper.GetString("modules.portal.server_key"),
-			BrowserTimeout: viper.GetDuration("modules.portal.browsertimeout") * time.Second,
+			BrowserTimeout: viper.GetInt("modules.portal.browsertimeout"),
 		},
 		Enricher: &EnricherConfig{
 			Folder:   viper.GetString("modules.enricher.folder"),
-			Interval: viper.GetDuration("modules.enricher.interval") * time.Minute,
+			Interval: viper.GetInt("modules.enricher.interval"),
 			Workers:  viper.GetInt("modules.enricher.workers"),
 		},
 		Netconf: &NetconfConfig{

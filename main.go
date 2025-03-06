@@ -89,7 +89,7 @@ func main() {
 	go webapp.Run()
 
 	// create a ticker to refresh the Enrichment struct
-	ticker := time.NewTicker(Cfg.Enricher.Interval)
+	ticker := time.NewTicker(time.Duration(Cfg.Enricher.Interval) * time.Minute)
 
 	// Create the Thread that periodically refreshes the Enrichment struct
 	go func() {
