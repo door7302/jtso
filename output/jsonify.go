@@ -58,6 +58,9 @@ func (m *Metadata) ClearRtr(p string, r string) {
 func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 	m.Mu.Lock()
 
+	// For easy search for optical mapping
+	mapDesc := make(map[string]string)
+
 	// init Map
 	_, ok := m.Meta[rd.Family]
 	if !ok {
@@ -79,6 +82,15 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 			}
 			//Default description TAG
 			m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = "Unknown"
+			if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
+				m.Meta[rd.Family][rd.RtrName][phy_name]["port_name"] = phy_name[3:] + " - Unknown"
+				if strings.Contains(phy_name, ":") {
+					m.Meta[rd.Family][rd.RtrName][phy_name]["channel"] = "yes"
+				} else {
+					m.Meta[rd.Family][rd.RtrName][phy_name]["channel"] = "no"
+				}
+			}
+
 			m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy_name + " - " + "Unknown"
 
 			// Add also the parent LAG name if physical interface is a child link.
@@ -94,8 +106,19 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 				phy2_desc := strings.Trim(phy2.Desc, "\n")
 
 				if phy2_name == phy_name && phy2_desc != "" {
+
 					m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy2_name + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
 					m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
+
+					//add to the map
+					if len(phy_name) > 3 {
+
+						if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
+							m.Meta[rd.Family][rd.RtrName][phy_name]["port_name"] = phy_name[3:] + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
+							mapDesc[phy_name[3:]] = strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
+						}
+					}
+
 				}
 			}
 		}
@@ -172,6 +195,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 									// Search if a cage match a port
 									cageSlot := fpcSlot + "/" + picSlot + "/" + portSlot
 									found := ""
+
 									for _, phy := range rd.IfList.Physicals {
 										phy_name := strings.Trim(phy.Name, "\n")
 										// Keep only WAN ports
@@ -183,26 +207,48 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 										}
 									}
 									if found != "" {
+										portDesc := "Unknown"
+										if len(found) > 3 {
+											cageDesc, ok := mapDesc[found[3:]]
+											if ok {
+												portDesc = cageDesc
+											}
+										}
 										// is channelized port ?
 										if strings.Contains(found, ":") {
 											// Channelized port
 											m.Meta[rd.Family][rd.RtrName][key1]["channel"] = "yes"
 											m.Meta[rd.Family][rd.RtrName][key2]["channel"] = "yes"
+											m.Meta[rd.Family][rd.RtrName][key1]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + " - " + portDesc
+											m.Meta[rd.Family][rd.RtrName][key2]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + " - " + portDesc
+											m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"] = ""
+											m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"] = ""
 											for channel := 0; channel < 4; channel++ {
 												key3 := key2 + strconv.Itoa(channel)
 												_, ok = m.Meta[rd.Family][rd.RtrName][key3]
 												if !ok {
 													m.Meta[rd.Family][rd.RtrName][key3] = make(map[string]string)
 												}
-												m.Meta[rd.Family][rd.RtrName][key3]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel)
+												portDesc = "Unknown"
+												if len(found) > 3 {
+													cageDesc, ok := mapDesc[fpcSlot+"/"+picSlot+"/"+portSlot+":"+strconv.Itoa(channel)]
+													if ok {
+														portDesc = cageDesc
+													}
+												}
+												m.Meta[rd.Family][rd.RtrName][key3]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel) + " - " + portDesc
 												m.Meta[rd.Family][rd.RtrName][key3]["channel"] = "yes"
+												m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"] += fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel) + " ; "
+												m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"] += fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel) + " ; "
 											}
+											m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"] = m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"][:len(m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"])-3]
+											m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"] = m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"][:len(m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"])-3]
 										} else {
 											// non channelized port
-											m.Meta[rd.Family][rd.RtrName][key1]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
+											m.Meta[rd.Family][rd.RtrName][key1]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + " - " + portDesc
 											m.Meta[rd.Family][rd.RtrName][key1]["channel"] = "no"
 
-											m.Meta[rd.Family][rd.RtrName][key2]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
+											m.Meta[rd.Family][rd.RtrName][key2]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + " - " + portDesc
 											m.Meta[rd.Family][rd.RtrName][key2]["channel"] = "no"
 
 										}
@@ -245,26 +291,48 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 								}
 							}
 							if found != "" {
+								portDesc := "Unknown"
+								if len(found) > 3 {
+									cageDesc, ok := mapDesc[found[3:]]
+									if ok {
+										portDesc = cageDesc
+									}
+								}
 								// is channelized port ?
 								if strings.Contains(found, ":") {
 									// Channelized port
 									m.Meta[rd.Family][rd.RtrName][key1]["channel"] = "yes"
 									m.Meta[rd.Family][rd.RtrName][key2]["channel"] = "yes"
+									m.Meta[rd.Family][rd.RtrName][key1]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + " - " + portDesc
+									m.Meta[rd.Family][rd.RtrName][key2]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + " - " + portDesc
+									m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"] = ""
+									m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"] = ""
 									for channel := 0; channel < 4; channel++ {
 										key3 := key2 + strconv.Itoa(channel)
 										_, ok = m.Meta[rd.Family][rd.RtrName][key3]
 										if !ok {
 											m.Meta[rd.Family][rd.RtrName][key3] = make(map[string]string)
 										}
-										m.Meta[rd.Family][rd.RtrName][key3]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel)
+										portDesc = "Unknown"
+										if len(found) > 3 {
+											cageDesc, ok := mapDesc[fpcSlot+"/"+picSlot+"/"+portSlot+":"+strconv.Itoa(channel)]
+											if ok {
+												portDesc = cageDesc
+											}
+										}
+										m.Meta[rd.Family][rd.RtrName][key3]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel) + " - " + portDesc
 										m.Meta[rd.Family][rd.RtrName][key3]["channel"] = "yes"
+										m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"] += fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel) + " ; "
+										m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"] += fpcSlot + "/" + picSlot + "/" + portSlot + ":" + strconv.Itoa(channel) + " ; "
 									}
+									m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"] = m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"][:len(m.Meta[rd.Family][rd.RtrName][key1]["sub_ports"])-3]
+									m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"] = m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"][:len(m.Meta[rd.Family][rd.RtrName][key2]["sub_ports"])-3]
 								} else {
 									// non channelized port
-									m.Meta[rd.Family][rd.RtrName][key1]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
+									m.Meta[rd.Family][rd.RtrName][key1]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + " - " + portDesc
 									m.Meta[rd.Family][rd.RtrName][key1]["channel"] = "no"
 
-									m.Meta[rd.Family][rd.RtrName][key2]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot
+									m.Meta[rd.Family][rd.RtrName][key2]["port_name"] = fpcSlot + "/" + picSlot + "/" + portSlot + " - " + portDesc
 									m.Meta[rd.Family][rd.RtrName][key2]["channel"] = "no"
 
 								}
