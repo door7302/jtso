@@ -83,6 +83,15 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 			}
 			//Default description TAG
 			m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = "Unknown"
+			if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
+				m.Meta[rd.Family][rd.RtrName][phy_name]["port_name"] = phy_name[3:]
+				if strings.Contains(phy_name, ":") {
+					m.Meta[rd.Family][rd.RtrName][phy_name]["channel"] = "yes"
+				} else {
+					m.Meta[rd.Family][rd.RtrName][phy_name]["channel"] = "no"
+				}
+			}
+
 			m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy_name + " - " + "Unknown"
 
 			// Add also the parent LAG name if physical interface is a child link.
