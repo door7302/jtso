@@ -599,31 +599,40 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 
 	// Last step is to optimize Gnmi subscriptions
 	if len(config.GnmiList) > 0 {
+		newSubs := config.GnmiList[0].Subs[:0] // Reuse the existing slice memory
+
 		for i := 0; i < len(config.GnmiList[0].Subs); i++ {
+			remove := false
 			for j := 0; j < len(config.GnmiList[0].Subs); j++ {
 				if i != j {
 					shortestPath, who := findShortestSubstring(config.GnmiList[0].Subs[i].Path, config.GnmiList[0].Subs[j].Path)
 					if shortestPath != "" {
-
 						if who == "B" {
 							// Keep lowest interval
 							if config.GnmiList[0].Subs[i].Interval < config.GnmiList[0].Subs[j].Interval {
 								config.GnmiList[0].Subs[j].Interval = config.GnmiList[0].Subs[i].Interval
 							}
-							// remove longest xpath
-							config.GnmiList[0].Subs = append(config.GnmiList[0].Subs[:i], config.GnmiList[0].Subs[i+1:]...)
+							// Mark i for removal
+							remove = true
+							break
 						} else {
 							// Keep lowest interval
 							if config.GnmiList[0].Subs[j].Interval < config.GnmiList[0].Subs[i].Interval {
 								config.GnmiList[0].Subs[i].Interval = config.GnmiList[0].Subs[j].Interval
 							}
-							// remove longest xpath
-							config.GnmiList[0].Subs = append(config.GnmiList[0].Subs[:j], config.GnmiList[0].Subs[j+1:]...)
+							// Mark j for removal
+							config.GnmiList[0].Subs[j].Path = "" // Mark for removal later
 						}
 					}
 				}
 			}
+
+			if !remove && config.GnmiList[0].Subs[i].Path != "" {
+				newSubs = append(newSubs, config.GnmiList[0].Subs[i])
+			}
 		}
+
+		config.GnmiList[0].Subs = newSubs
 	}
 
 	return &config
