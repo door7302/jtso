@@ -175,7 +175,9 @@ const NetconfInputTemplate = `
     ]
 
     ## Interval to request the RPC
-    sample_interval = "{{.Interval}}s" {{end}}
+    sample_interval = "{{.Interval}}s" 
+  
+    {{end}}
 {{end}}
 `
 
