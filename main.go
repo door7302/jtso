@@ -48,6 +48,7 @@ func main() {
 	logger.HandlePanic()
 
 	logger.Log.Info(banner)
+	logger.Log.Infof("JTSO version: %s", config.JTSO_VERSION)
 
 	// Create New Config container
 	Cfg := config.NewConfigContainer(ConfigFile)
