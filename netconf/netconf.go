@@ -63,7 +63,7 @@ func GetFacts(r string, u string, p string, port int, timeout int) (*xml.Version
 		replyVersion, err = xml.ParseVersion(reply.Data)
 		if err != nil {
 			logger.Log.Warnf("[%s] Unable to parse version information: %v", r, err)
-			logger.Log.Warnf("[%s] Try another command", err)
+			logger.Log.Warnf("[%s] Try another command", r)
 			d := "<get-software-information><local/></get-software-information>"
 			rpc := message.NewRPC(d)
 			reply, err := session.SyncRPC(rpc, int32(timeout))
