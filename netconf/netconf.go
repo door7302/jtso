@@ -63,7 +63,21 @@ func GetFacts(r string, u string, p string, port int, timeout int) (*xml.Version
 		replyVersion, err = xml.ParseVersion(reply.Data)
 		if err != nil {
 			logger.Log.Warnf("[%s] Unable to parse version information: %v", r, err)
-			return nil, err
+			logger.Log.Warnf("[%s] Try another command", err)
+			d := "<get-software-information><local/></get-software-information>"
+			rpc := message.NewRPC(d)
+			reply, err := session.SyncRPC(rpc, int32(timeout))
+			if err != nil || reply == nil || strings.Contains(reply.Data, "<rpc-error>") {
+				logger.Log.Errorf("[%s] No Version information: %v", r, err)
+				return nil, err
+			} else {
+				// Unmarshall the reply
+				replyVersion, err = xml.ParseVersion(reply.Data)
+				if err != nil {
+					logger.Log.Errorf("[%s] Unable to parse version information: %v", r, err)
+					return nil, err
+				}
+			}
 		}
 	}
 
@@ -77,12 +91,14 @@ func GetFacts(r string, u string, p string, port int, timeout int) (*xml.Version
 		rpc = message.NewRPC(d)
 		reply, err = session.SyncRPC(rpc, int32(timeout))
 		if err != nil || reply == nil || strings.Contains(reply.Data, "<rpc-error>") {
-			logger.Log.Warnf("[%s] No Chassis HW information: %v", r, err)
+			logger.Log.Errorf("[%s] No Chassis HW information: %v", r, err)
+			return nil, err
 		} else {
 			// Unmarshall the reply
 			HwInfo, err = xml.ParseChassis(reply.Data)
 			if err != nil {
-				logger.Log.Warnf("[%s] Unable to parse chassis hardware: %v", r, err)
+				logger.Log.Errorf("[%s] Unable to parse chassis hardware: %v", r, err)
+				return nil, err
 			} else {
 				// check if chassis has PSN or not
 				isHW := false
