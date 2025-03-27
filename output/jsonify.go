@@ -134,9 +134,9 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		}
 		m.Meta[rd.Family][rd.RtrName][lgl_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(lgl_desc, " ", "", -1), "-", "_", -1))
 	}
+
 	// add HW info
 	// Chassis model + Version
-
 	// Find out the router entry to extract version already collected by the get Facts
 	var rtr *sqlite.RtrEntry
 	rtr = new(sqlite.RtrEntry)
@@ -180,6 +180,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 								sssmSlot := strings.Trim(strings.Replace(sssm.Name, " ", "", 1), "\n")
 								if strings.Contains(sssmSlot, "Xcvr") {
 									portSlot := strings.Replace(sssmSlot, "Xcvr", "", 1)
+									opticDesc := sssm.Desc
 									key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 									key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
 
@@ -202,6 +203,8 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 										if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
 											if strings.Contains(phy_name, cageSlot) {
 												found = phy_name
+												// add optic tag to the interface
+												m.Meta[rd.Family][rd.RtrName][phy_name]["optic_desc"] = opticDesc
 												break
 											}
 										}
@@ -214,6 +217,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 												portDesc = cageDesc
 											}
 										}
+
 										// is channelized port ?
 										if strings.Contains(found, ":") {
 											// Channelized port
@@ -265,6 +269,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 						ssmSlot := strings.Trim(strings.Replace(ssm.Name, " ", "", 1), "\n")
 						if strings.Contains(ssmSlot, "Xcvr") {
 							portSlot := strings.Replace(ssmSlot, "Xcvr", "", 1)
+							opticDesc := ssm.Desc
 							key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 							key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
 
@@ -286,6 +291,8 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 								if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
 									if strings.Contains(phy_name, cageSlot) {
 										found = phy_name
+										// add optic tag to the interface
+										m.Meta[rd.Family][rd.RtrName][phy_name]["optic_desc"] = opticDesc
 										break
 									}
 								}
