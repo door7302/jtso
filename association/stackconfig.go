@@ -551,8 +551,11 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	excludeDash = make([]string, 0)
 	excludeDash = append(excludeDash, "home.json")
 	for _, v := range collections {
+		logger.Log.Errorf("DEBUG: %v:", v)
 		for _, c := range v {
+			logger.Log.Errorf("DEBUG: %v:", c)
 			for _, p := range c.ProfilesName {
+				logger.Log.Errorf("DEBUG: %v:", p)
 				// bypass unknown profile
 				_, ok := ActiveProfiles[p]
 				if !ok {
