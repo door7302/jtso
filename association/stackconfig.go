@@ -275,7 +275,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// -----------------------------------------------------------------------------------------------------
 	// Create the collection - based on Routers which are associated to profiles
 	// -----------------------------------------------------------------------------------------------------
-
 	for _, rtr := range sqlite.RtrList {
 
 		// Ignore routers with Profile = 0
@@ -300,20 +299,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				logger.Log.Errorf("Collection issue - Unknown profile detected: %s - skip it", p)
 				continue
 			}
-
-			var filenameList []Config
-			var directory string
-			var err error
-			var readDirectory *os.File
-
 			profilesName[i] = p
 
-			path, exists := PathMap[rtr.Family]
-			if !exists {
-				logger.Log.Errorf("Unknown router family: %s", rtr.Family)
-				continue
-			}
-
+			var filenameList []Config
 			switch rtr.Family {
 			case "mx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.MxCfg
@@ -339,28 +327,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				filenameList = ActiveProfiles[p].Definition.TelCfg.VjunosCfg
 			case "vevo":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.VevoCfg
-			}
-
-			readDirectory, err = os.Open(path)
-			if err != nil {
-				logger.Log.Errorf("Unable to parse the folder %s: %v", path, err)
-				continue
-			}
-			directory = path
-
-			// clean the right directory only if there are files
-			allFiles, _ := readDirectory.Readdir(0)
-
-			for f := range allFiles {
-				file := allFiles[f]
-
-				fileName := file.Name()
-				filePath := directory + fileName
-
-				err := os.Remove(filePath)
-				if err != nil {
-					logger.Log.Errorf("Unable to clean the file %s: %v", filePath, err)
-				}
 			}
 
 			// Check if a profile has as specific version for the given rtr
@@ -452,12 +418,35 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// Now for each requested family - create the Telegraf optmized config
 	// -----------------------------------------------------------------------------------------------------
 	var telegrafCfgList []*maker.TelegrafConfig
+	var readDirectory *os.File
+	var err error
 	for _, f := range families {
 		path, exists := PathMap[f]
 		if !exists {
 			logger.Log.Errorf("Unknown router family: %s", f)
 			continue
 		}
+
+		readDirectory, err = os.Open(path)
+		if err != nil {
+			logger.Log.Errorf("Unable to parse the folder %s: %v", path, err)
+			continue
+		}
+		// clean the right directory only if there are files
+		allFiles, _ := readDirectory.Readdir(0)
+
+		for f := range allFiles {
+			file := allFiles[f]
+
+			fileName := file.Name()
+			filePath := path + fileName
+
+			err := os.Remove(filePath)
+			if err != nil {
+				logger.Log.Errorf("Unable to clean the file %s: %v", filePath, err)
+			}
+		}
+
 		// For each collection
 		for id, collection := range collections[f] {
 			// create a new collection of config before optimisation
@@ -580,7 +569,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	}
 
 	// Now clean grafana dashbord directory and keep only dashbords related to active profiles
-	readDirectory, _ := os.Open(PATH_GRAFANA)
+	readDirectory, _ = os.Open(PATH_GRAFANA)
 	allFiles, _ := readDirectory.Readdir(0)
 	for f := range allFiles {
 		file := allFiles[f]
