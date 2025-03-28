@@ -203,8 +203,6 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 										if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
 											if strings.Contains(phy_name, cageSlot) {
 												found = phy_name
-												// add optic tag to the interface
-												m.Meta[rd.Family][rd.RtrName][phy_name]["optic_desc"] = opticDesc
 												break
 											}
 										}
@@ -217,6 +215,10 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 												portDesc = cageDesc
 											}
 										}
+
+										// Add optic desc Tag
+										m.Meta[rd.Family][rd.RtrName][key1]["optic_desc"] = opticDesc
+										m.Meta[rd.Family][rd.RtrName][key2]["optic_desc"] = opticDesc
 
 										// is channelized port ?
 										if strings.Contains(found, ":") {
@@ -291,8 +293,6 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 								if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
 									if strings.Contains(phy_name, cageSlot) {
 										found = phy_name
-										// add optic tag to the interface
-										m.Meta[rd.Family][rd.RtrName][phy_name]["optic_desc"] = opticDesc
 										break
 									}
 								}
@@ -305,6 +305,11 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 										portDesc = cageDesc
 									}
 								}
+
+								// Add optic desc Tag
+								m.Meta[rd.Family][rd.RtrName][key1]["optic_desc"] = opticDesc
+								m.Meta[rd.Family][rd.RtrName][key2]["optic_desc"] = opticDesc
+
 								// is channelized port ?
 								if strings.Contains(found, ":") {
 									// Channelized port
