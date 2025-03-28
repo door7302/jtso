@@ -134,9 +134,9 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		}
 		m.Meta[rd.Family][rd.RtrName][lgl_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(lgl_desc, " ", "", -1), "-", "_", -1))
 	}
+
 	// add HW info
 	// Chassis model + Version
-
 	// Find out the router entry to extract version already collected by the get Facts
 	var rtr *sqlite.RtrEntry
 	rtr = new(sqlite.RtrEntry)
@@ -180,6 +180,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 								sssmSlot := strings.Trim(strings.Replace(sssm.Name, " ", "", 1), "\n")
 								if strings.Contains(sssmSlot, "Xcvr") {
 									portSlot := strings.Replace(sssmSlot, "Xcvr", "", 1)
+									opticDesc := sssm.Desc
 									key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 									key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
 
@@ -214,6 +215,11 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 												portDesc = cageDesc
 											}
 										}
+
+										// Add optic desc Tag
+										m.Meta[rd.Family][rd.RtrName][key1]["optic_desc"] = opticDesc
+										m.Meta[rd.Family][rd.RtrName][key2]["optic_desc"] = opticDesc
+
 										// is channelized port ?
 										if strings.Contains(found, ":") {
 											// Channelized port
@@ -265,6 +271,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 						ssmSlot := strings.Trim(strings.Replace(ssm.Name, " ", "", 1), "\n")
 						if strings.Contains(ssmSlot, "Xcvr") {
 							portSlot := strings.Replace(ssmSlot, "Xcvr", "", 1)
+							opticDesc := ssm.Desc
 							key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 							key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
 
@@ -298,6 +305,11 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 										portDesc = cageDesc
 									}
 								}
+
+								// Add optic desc Tag
+								m.Meta[rd.Family][rd.RtrName][key1]["optic_desc"] = opticDesc
+								m.Meta[rd.Family][rd.RtrName][key2]["optic_desc"] = opticDesc
+
 								// is channelized port ?
 								if strings.Contains(found, ":") {
 									// Channelized port

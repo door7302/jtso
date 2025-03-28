@@ -275,166 +275,127 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// -----------------------------------------------------------------------------------------------------
 	// Create the collection - based on Routers which are associated to profiles
 	// -----------------------------------------------------------------------------------------------------
-	for _, eachFam := range families {
-		for _, rtr := range sqlite.RtrList {
-			// ignore router that do not match the family
-			if rtr.Family != eachFam {
+	for _, rtr := range sqlite.RtrList {
+
+		// Ignore routers with Profile = 0
+		if rtr.Profile == 0 {
+			continue
+		}
+
+		// Get the profiles from routerProfiles map
+		profileKeys, exists := routerProfiles[rtr.Shortname]
+		if !exists {
+			continue // Skip if no profile association is found
+		}
+
+		// check if version is assigned to a profile and save file name
+		profilesFilename := make([]string, len(profileKeys))
+		profilesName := make([]string, len(profileKeys))
+		for i, p := range profileKeys {
+
+			// bypass unknown profile
+			_, ok := ActiveProfiles[p]
+			if !ok {
+				logger.Log.Errorf("Collection issue - Unknown profile detected: %s - skip it", p)
 				continue
 			}
+			profilesName[i] = p
 
-			// Ignore routers with Profile = 0
-			if rtr.Profile == 0 {
-				continue
+			var filenameList []Config
+			switch rtr.Family {
+			case "mx":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.MxCfg
+			case "ptx":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.PtxCfg
+			case "acx":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.AcxCfg
+			case "ex":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.ExCfg
+			case "qfx":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.QfxCfg
+			case "srx":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.SrxCfg
+			case "crpd":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.CrpdCfg
+			case "cptx":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.CptxCfg
+			case "vmx":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.VmxCfg
+			case "vsrx":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.VsrxCfg
+			case "vjunos":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.VjunosCfg
+			case "vevo":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.VevoCfg
 			}
 
-			// Get the profiles from routerProfiles map
-			profileKeys, exists := routerProfiles[rtr.Shortname]
-			if !exists {
-				continue // Skip if no profile association is found
-			}
+			// Check if a profile has as specific version for the given rtr
+			savedVersion := ""
+			profilesFilename[i] = ""
 
-			// check if version is assigned to a profile and save file name
-			profilesFilename := make([]string, len(profileKeys))
-			profilesName := make([]string, len(profileKeys))
-			for i, p := range profileKeys {
-
-				// bypass unknown profile
-				_, ok := ActiveProfiles[p]
-				if !ok {
-					logger.Log.Errorf("Collection issue - Unknown profile detected: %s - skip it", p)
-					continue
-				}
-
-				var filenameList []Config
-				var directory string
-				var err error
-				var readDirectory *os.File
-
-				profilesName[i] = p
-
-				path, exists := PathMap[eachFam]
-				if !exists {
-					logger.Log.Errorf("Unknown router family: %s", eachFam)
-					continue
-				}
-
-				switch eachFam {
-				case "mx":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.MxCfg
-				case "ptx":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.PtxCfg
-				case "acx":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.AcxCfg
-				case "ex":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.ExCfg
-				case "qfx":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.QfxCfg
-				case "srx":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.SrxCfg
-				case "crpd":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.CrpdCfg
-				case "cptx":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.CptxCfg
-				case "vmx":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.VmxCfg
-				case "vsrx":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.VsrxCfg
-				case "vjunos":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.VjunosCfg
-				case "vevo":
-					filenameList = ActiveProfiles[p].Definition.TelCfg.VevoCfg
-				}
-
-				readDirectory, err = os.Open(path)
-				if err != nil {
-					logger.Log.Errorf("Unable to parse the folder %s: %v", path, err)
-					continue
-				}
-				directory = path
-
-				// clean the right directory only if there are files
-				allFiles, _ := readDirectory.Readdir(0)
-
-				for f := range allFiles {
-					file := allFiles[f]
-
-					fileName := file.Name()
-					filePath := directory + fileName
-
-					err := os.Remove(filePath)
-					if err != nil {
-						logger.Log.Errorf("Unable to clean the file %s: %v", filePath, err)
-					}
-				}
-
-				// Check if a profile has as specific version for the given rtr
-				savedVersion := ""
-				profilesFilename[i] = ""
-
-				for _, c := range filenameList {
-					// Save all config if present as a fallback solution if specific version not found
-					if c.Version == "all" && savedVersion == "" {
-						profilesFilename[i] = c.Config
-						savedVersion = "all"
-					} else {
-						result := CheckVersion(c.Version, rtr.Version)
-						if result && (savedVersion == "" || savedVersion == "all") {
-							profilesFilename[i] = c.Config
-							savedVersion = c.Version
-						}
-					}
-				}
-
-				if savedVersion != "" {
-					profileKeys[i] = p + "_" + savedVersion
+			for _, c := range filenameList {
+				// Save all config if present as a fallback solution if specific version not found
+				if c.Version == "all" && savedVersion == "" {
+					profilesFilename[i] = c.Config
+					savedVersion = "all"
 				} else {
-					// Reset entry if there is no filename found
-					profileKeys[i] = ""
+					result := CheckVersion(c.Version, rtr.Version)
+					if result && (savedVersion == "" || savedVersion == "all") {
+						profilesFilename[i] = c.Config
+						savedVersion = c.Version
+					}
 				}
 			}
 
-			// Sort profiles for uniqueness
-			sort.Strings(profileKeys)
-
-			// Create a unique profile key (string format for map indexing)
-			profileKey := fmt.Sprintf("%v", profileKeys)
-
-			// Store profile slice before hashing to prevent later issues
-			if _, exists := profileSetIndex[profileKey]; !exists {
-				profileSetIndex[profileKey] = hashStringFNV(rtr.Family + profileKey)
-				profileSetToProfilesFilename[profileKey] = profilesFilename
-				profileSetToProfilesName[profileKey] = profilesName
+			if savedVersion != "" {
+				profileKeys[i] = p + "_" + savedVersion
+			} else {
+				// Reset entry if there is no filename found
+				profileKeys[i] = ""
 			}
-
-			// Store the router in the corresponding profile set
-			profileSetToRouters[profileKey] = append(profileSetToRouters[profileKey], rtr)
 		}
 
-		// Finally the construction of  the collections map
-		for profileKey, routers := range profileSetToRouters {
-			// create the unit name
-			collectionID := fmt.Sprintf("collection_%d", profileSetIndex[profileKey])
+		// Sort profiles for uniqueness
+		sort.Strings(profileKeys)
 
-			// Retrieve original profile slice
-			profilesFilename := profileSetToProfilesFilename[profileKey]
-			profilesName := profileSetToProfilesName[profileKey]
+		// Create a unique profile key (string format for map indexing)
+		profileKey := fmt.Sprintf("%v", profileKeys)
 
-			// Get the family of the first router (all in the same family)
-			family := routers[0].Family
-
-			// Ensure family exists in the collections map
-			if _, exists := collections[family]; !exists {
-				collections[family] = make(map[string]sqlite.Collection)
-			}
-
-			// Assign to the collections map
-			collections[family][collectionID] = sqlite.Collection{
-				ProfilesName: profilesName,
-				ProfilesConf: profilesFilename,
-				Routers:      routers,
-			}
-
+		// Store profile slice before hashing to prevent later issues
+		if _, exists := profileSetIndex[profileKey]; !exists {
+			profileSetIndex[profileKey] = hashStringFNV(rtr.Family + profileKey)
+			profileSetToProfilesFilename[profileKey] = profilesFilename
+			profileSetToProfilesName[profileKey] = profilesName
 		}
+
+		// Store the router in the corresponding profile set
+		profileSetToRouters[profileKey] = append(profileSetToRouters[profileKey], rtr)
+	}
+
+	// Finally the construction of  the collections map
+	for profileKey, routers := range profileSetToRouters {
+		// create the unit name
+		collectionID := fmt.Sprintf("collection_%d", profileSetIndex[profileKey])
+
+		// Retrieve original profile slice
+		profilesFilename := profileSetToProfilesFilename[profileKey]
+		profilesName := profileSetToProfilesName[profileKey]
+
+		// Get the family of the first router (all in the same family)
+		family := routers[0].Family
+
+		// Ensure family exists in the collections map
+		if _, exists := collections[family]; !exists {
+			collections[family] = make(map[string]sqlite.Collection)
+		}
+
+		// Assign to the collections map
+		collections[family][collectionID] = sqlite.Collection{
+			ProfilesName: profilesName,
+			ProfilesConf: profilesFilename,
+			Routers:      routers,
+		}
+
 	}
 
 	for family, familyCollections := range collections {
@@ -457,12 +418,35 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// Now for each requested family - create the Telegraf optmized config
 	// -----------------------------------------------------------------------------------------------------
 	var telegrafCfgList []*maker.TelegrafConfig
+	var readDirectory *os.File
+	var err error
 	for _, f := range families {
 		path, exists := PathMap[f]
 		if !exists {
 			logger.Log.Errorf("Unknown router family: %s", f)
 			continue
 		}
+
+		readDirectory, err = os.Open(path)
+		if err != nil {
+			logger.Log.Errorf("Unable to parse the folder %s: %v", path, err)
+			continue
+		}
+		// clean the right directory only if there are files
+		allFiles, _ := readDirectory.Readdir(0)
+
+		for f := range allFiles {
+			file := allFiles[f]
+
+			fileName := file.Name()
+			filePath := path + fileName
+
+			err := os.Remove(filePath)
+			if err != nil {
+				logger.Log.Errorf("Unable to clean the file %s: %v", filePath, err)
+			}
+		}
+
 		// For each collection
 		for id, collection := range collections[f] {
 			// create a new collection of config before optimisation
@@ -578,13 +562,14 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 						logger.Log.Errorf("Unable to update the dashboard %s - err: %v", d, err)
 						continue
 					}
+					logger.Log.Infof("Active dashboard %s for profile %s", d, p)
 				}
 			}
 		}
 	}
 
 	// Now clean grafana dashbord directory and keep only dashbords related to active profiles
-	readDirectory, _ := os.Open(PATH_GRAFANA)
+	readDirectory, _ = os.Open(PATH_GRAFANA)
 	allFiles, _ := readDirectory.Readdir(0)
 	for f := range allFiles {
 		file := allFiles[f]
