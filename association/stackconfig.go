@@ -359,11 +359,11 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		sort.Strings(profileKeys)
 
 		// Create a unique profile key (string format for map indexing)
-		profileKey := fmt.Sprintf("%v", profileKeys)
+		profileKey := fmt.Sprintf("%s_%v", rtr.Family, profileKeys)
 
 		// Store profile slice before hashing to prevent later issues
 		if _, exists := profileSetIndex[profileKey]; !exists {
-			profileSetIndex[profileKey] = hashStringFNV(rtr.Family + profileKey)
+			profileSetIndex[profileKey] = hashStringFNV(profileKey)
 			profileSetToProfilesFilename[profileKey] = profilesFilename
 			profileSetToProfilesName[profileKey] = profilesName
 		}
