@@ -193,7 +193,6 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 				logger.Log.Errorf("Unable to parse the ipv6Node from ISIS for %s: %v", rd.RtrName, err)
 			}
 		}
-
 		// Add the labels to the map
 		if ipv4Label != "" {
 			m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["MPLS_V4_SID"] = ipv4Node
