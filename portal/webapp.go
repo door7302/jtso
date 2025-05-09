@@ -1403,7 +1403,6 @@ func routeInfluxMgt(c echo.Context) error {
 			logger.Log.Errorf("Unable to empty the database: %v", err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to empty the database"})
 		}
-		logger.Log.Infof("InfluxDB has been successfully empty")
 		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "InfluxDB has been successfully empty"})
 	default:
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown InfluxDB action"})
