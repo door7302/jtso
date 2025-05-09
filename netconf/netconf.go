@@ -138,10 +138,11 @@ func (r *RouterTask) Work() error {
 	rawData.HwInfo = new(xml.Hw)
 	rawData.LacpInfo = new(xml.Lacp)
 	rawData.LacpDigest = new(xml.LacpDigest)
+	rawData.IsisInfo = new(xml.Isis)
 	rawData.RtrName = r.Name
 	rawData.Family = r.Family
 
-	var hasIf, hasHw, hasLacp bool
+	var hasIf, hasHw, hasLacp, hasIsis bool
 
 	session, err := netconf.DialSSH(fmt.Sprintf("%s:%d", r.Name, r.Port), sshConfig)
 
@@ -223,6 +224,21 @@ func (r *RouterTask) Work() error {
 		}
 	}
 
+	d = "<get-isis-overview-information></get-isis-overview-information>"
+	rpc = message.NewRPC(d)
+	reply, err = session.SyncRPC(rpc, int32(r.Timeout))
+	if err != nil || reply == nil || strings.Contains(reply.Data, "<rpc-error>") {
+		logger.Log.Warnf("[%s] No ISIS Overview information: %v", r.Name, err)
+	} else {
+		// Unmarshall the reply
+		rawData.IsisInfo, err = xml.ParseIsis(reply.Data)
+		if err != nil {
+			logger.Log.Warnf("[%s] Unable to parse ISIS Overview: %v", r.Name, err)
+		} else {
+			hasIsis = true
+		}
+	}
+
 	// Display detail only if verbose set
 	if logger.Verbose {
 		logger.Log.Debug("")
@@ -275,8 +291,19 @@ func (r *RouterTask) Work() error {
 
 			logger.Log.Debug("--------------------------------------------------------------------")
 		}
+		if hasIsis {
+			logger.Log.Debug("")
+			logger.Log.Debug("-------- ISIS Information -------")
+			logger.Log.Debug("")
+			for _, i := range rawData.IsisInfo.Overview {
+				logger.Log.Debugf(" ├─ Instance %s", strings.Trim(i.Instance, "\n"))
+				logger.Log.Debugf(" │  ├─ SRGB Label start %s", strings.Trim(i.Spring.SRGB.FirstLabel, "\n"))
+				logger.Log.Debugf(" │  ├─ IPv4 node SID %s", strings.Trim(i.Spring.NodeSeg.IPv4, "\n"))
+				logger.Log.Debugf(" │  ├─ IPv6 node SID %s", strings.Trim(i.Spring.NodeSeg.IPv6, "\n"))
+			}
+			logger.Log.Debug("--------------------------------------------------------------------")
+		}
 		logger.Log.Debug("")
-
 	}
 	// end debug
 

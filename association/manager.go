@@ -5,7 +5,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"jtso/config"
 	"jtso/logger"
+	"jtso/sqlite"
+	"jtso/worker"
 	"os"
 	"path/filepath"
 	"strings"
@@ -80,8 +83,10 @@ func CleanActiveDirectory() error {
 	return nil
 
 }
-func PeriodicCheck() {
+func PeriodicCheck(cfg *config.ConfigContainer) {
 	logger.Log.Debug("Start periodic update of the profile db - scanning is starting")
+
+	needRestart := make([]string, 0)
 
 	// reset current flag for Active profile
 	ProfileLock.Lock()
@@ -172,6 +177,23 @@ func PeriodicCheck() {
 					}
 
 					logger.Log.Infof("Profile %s has been updated", filename)
+					for _, rtr := range sqlite.RtrList {
+						if rtr.Profile == 0 {
+							continue
+						}
+						for _, asso := range sqlite.AssoList {
+							if asso.Shortname != rtr.Shortname {
+								continue
+							}
+							for _, p := range asso.Assos {
+								if p == filename {
+									needRestart = append(needRestart, rtr.Family)
+									goto NextRtr
+								}
+							}
+						}
+					NextRtr:
+					}
 				}
 
 				entry.Present = true
@@ -262,5 +284,14 @@ func PeriodicCheck() {
 		}
 	}
 	ProfileLock.Unlock()
+	if len(needRestart) > 0 {
+		logger.Log.Info("Need to update the metadata...")
+		go worker.Collect(cfg)
+
+		for _, family := range needRestart {
+			logger.Log.Infof("Need to restart the stack for %s family", family)
+			go ConfigueStack(cfg, family)
+		}
+	}
 	logger.Log.Debug("End of the periodic update of the profiles db")
 }

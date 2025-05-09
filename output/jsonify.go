@@ -158,6 +158,59 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["VERSION"] = strings.Trim(rtr.Version, "\n")
 	}
 
+	// Add ISIS overview
+	for _, isis := range rd.IsisInfo.Overview {
+		ipv4Label := ""
+		ipv6Label := ""
+
+		label := strings.Trim(isis.Spring.SRGB.FirstLabel, "\n")
+		if label == "" {
+			continue
+		}
+		// Parse the first label
+		numLabel, err := strconv.Atoi(label)
+		if err != nil {
+			logger.Log.Errorf("Unable to parse the first label from ISIS for %s: %v", rd.RtrName, err)
+			continue
+		}
+		// Get index for IPv4
+		ipv4Node := strings.Trim(isis.Spring.NodeSeg.IPv4, "\n")
+		if ipv4Node != "" {
+			ipv4Num, err := strconv.Atoi(ipv4Node)
+			if err == nil {
+				ipv4Label = strconv.Itoa(numLabel + ipv4Num)
+			} else {
+				logger.Log.Errorf("Unable to parse the ipv4Node from ISIS for %s: %v", rd.RtrName, err)
+			}
+		}
+		// Get index for IPv6
+		ipv6Node := strings.Trim(isis.Spring.NodeSeg.IPv6, "\n")
+		if ipv6Node != "" {
+			ipv6Num, err := strconv.Atoi(ipv6Node)
+			if err == nil {
+				ipv6Label = strconv.Itoa(numLabel + ipv6Num)
+			} else {
+				logger.Log.Errorf("Unable to parse the ipv6Node from ISIS for %s: %v", rd.RtrName, err)
+			}
+		}
+
+		// Add the labels to the map
+		if ipv4Label != "" {
+			m.Meta[rd.Family][rd.RtrName][ipv4Label] = make(map[string]string)
+			m.Meta[rd.Family][rd.RtrName][ipv4Label]["MPLS_NODE_NAME"] = rd.RtrName
+			m.Meta[rd.Family][rd.RtrName][ipv4Label]["MPLS_SID"] = ipv4Node
+			m.Meta[rd.Family][rd.RtrName][ipv4Label]["SID_FAMILY"] = "ipv4"
+			m.Meta[rd.Family][rd.RtrName][ipv4Label]["MPLS_LONG_NAME"] = "v4-SID-" + ipv4Node + " - " + rd.RtrName
+		}
+		if ipv6Label != "" {
+			m.Meta[rd.Family][rd.RtrName][ipv6Label] = make(map[string]string)
+			m.Meta[rd.Family][rd.RtrName][ipv6Label]["MPLS_NODE_NAME"] = rd.RtrName
+			m.Meta[rd.Family][rd.RtrName][ipv6Label]["MPLS_SID"] = ipv6Node
+			m.Meta[rd.Family][rd.RtrName][ipv6Label]["SID_FAMILY"] = "ipv6"
+			m.Meta[rd.Family][rd.RtrName][ipv6Label]["MPLS_LONG_NAME"] = "v6-SID-" + ipv6Node + " - " + rd.RtrName
+		}
+	}
+
 	// For each LC add a TAG
 	for _, mod := range rd.HwInfo.Chassis.Modules {
 		mSlot := strings.Trim(strings.Replace(mod.Name, " ", "", 1), "\n")
@@ -357,19 +410,6 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		}
 	}
 
-	// Derive a tag for HW optic to assign component_name to if_name
-	for _, m := range rd.HwInfo.Chassis.Modules {
-
-		for _, sm := range m.SubMods {
-			logger.Log.Debugf(" │  ├─ Sub-Module: %s - %s", strings.Trim(sm.Name, "\n"), strings.Trim(sm.Desc, "\n"))
-			for _, ssm := range sm.SubSubMods {
-				logger.Log.Debugf(" │  │  ├─ Sub-Sub-Module: %s - %s", strings.Trim(ssm.Name, "\n"), strings.Trim(ssm.Desc, "\n"))
-				for _, sssm := range ssm.SubSubSubMods {
-					logger.Log.Debugf(" │  │  │  ├─ Sub-Sub-Sub-Module: %s - %s", strings.Trim(sssm.Name, "\n"), strings.Trim(sssm.Desc, "\n"))
-				}
-			}
-		}
-	}
 	m.Mu.Unlock()
 	return nil
 }
