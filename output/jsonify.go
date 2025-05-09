@@ -197,17 +197,17 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		// Add the labels to the map
 		if ipv4Label != "" {
 			m.Meta[rd.Family][rd.RtrName][ipv4Label] = make(map[string]string)
-			m.Meta[rd.Family][rd.RtrName][ipv4Label]["MPLS_NODE_NAME"] = rd.RtrName
+			m.Meta[rd.Family][rd.RtrName][ipv4Label]["MPLS_NODE_NAME"] = rtr.Shortname
 			m.Meta[rd.Family][rd.RtrName][ipv4Label]["MPLS_SID"] = ipv4Node
 			m.Meta[rd.Family][rd.RtrName][ipv4Label]["SID_FAMILY"] = "ipv4"
-			m.Meta[rd.Family][rd.RtrName][ipv4Label]["MPLS_LONG_NAME"] = "v4-SID-" + ipv4Node + " - " + rd.RtrName
+			m.Meta[rd.Family][rd.RtrName][ipv4Label]["MPLS_LONG_NAME"] = "v4-SID-" + ipv4Node + " - " + rtr.Shortname
 		}
 		if ipv6Label != "" {
 			m.Meta[rd.Family][rd.RtrName][ipv6Label] = make(map[string]string)
-			m.Meta[rd.Family][rd.RtrName][ipv6Label]["MPLS_NODE_NAME"] = rd.RtrName
+			m.Meta[rd.Family][rd.RtrName][ipv6Label]["MPLS_NODE_NAME"] = rtr.Shortname
 			m.Meta[rd.Family][rd.RtrName][ipv6Label]["MPLS_SID"] = ipv6Node
 			m.Meta[rd.Family][rd.RtrName][ipv6Label]["SID_FAMILY"] = "ipv6"
-			m.Meta[rd.Family][rd.RtrName][ipv6Label]["MPLS_LONG_NAME"] = "v6-SID-" + ipv6Node + " - " + rd.RtrName
+			m.Meta[rd.Family][rd.RtrName][ipv6Label]["MPLS_LONG_NAME"] = "v6-SID-" + ipv6Node + " - " + rtr.Shortname
 		}
 	}
 
