@@ -196,11 +196,11 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 		// Add the labels to the map
 		if ipv4Label != "" {
 			m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["MPLS_V4_SID"] = ipv4Node
-			m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["MPLS_V4_LABEL"] = ipv6Label
+			m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["MPLS_V4_LABEL"] = ipv4Label
 		}
 		if ipv6Label != "" {
 			m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["MPLS_V6_SID"] = ipv6Node
-			m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["MPLS_V4_LABEL"] = ipv6Label
+			m.Meta[rd.Family][rd.RtrName]["LEVEL1TAGS"]["MPLS_V6_LABEL"] = ipv6Label
 		}
 	}
 
