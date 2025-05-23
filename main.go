@@ -110,7 +110,7 @@ func main() {
 		for {
 			select {
 			case <-ticker2.C:
-				association.PeriodicCheck()
+				association.PeriodicCheck(Cfg)
 			}
 		}
 	}()
@@ -119,7 +119,7 @@ func main() {
 	association.CleanActiveDirectory()
 
 	// Trigger a first run of some background processes
-	association.PeriodicCheck()
+	association.PeriodicCheck(Cfg)
 
 	go worker.Collect(Cfg)
 	go association.ConfigueStack(Cfg, "all")

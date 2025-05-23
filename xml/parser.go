@@ -13,6 +13,7 @@ type RawData struct {
 	HwInfo     *Hw
 	LacpInfo   *Lacp
 	LacpDigest *LacpDigest
+	IsisInfo   *Isis
 }
 
 // Struct for unmarshalling version
@@ -56,6 +57,35 @@ type PhyList struct {
 type LogList struct {
 	XMLName xml.Name `xml:"logical-interface"`
 	Name    string   `xml:"name"`
+}
+
+// Structs for unmarshalling isis overview
+type Isis struct {
+	XMLName  xml.Name       `xml:"isis-overview-information"`
+	Overview []IsisOverview `xml:"isis-overview"`
+}
+
+type IsisOverview struct {
+	XMLName  xml.Name   `xml:"isis-overview"`
+	Instance string     `xml:"instance-name"`
+	Spring   IsisSpring `xml:"isis-spring"`
+}
+
+type IsisSpring struct {
+	XMLName xml.Name    `xml:"isis-spring"`
+	SRGB    IsisSRGB    `xml:"isis-srgb-block"`
+	NodeSeg IsisNodeSeg `xml:"isis-node-segment"`
+}
+
+type IsisSRGB struct {
+	XMLName    xml.Name `xml:"isis-srgb-block"`
+	FirstLabel string   `xml:"isis-srgb-first-label"`
+}
+
+type IsisNodeSeg struct {
+	XMLName xml.Name `xml:"isis-node-segment"`
+	IPv4    string   `xml:"isis-node-segment-ipv4-index"`
+	IPv6    string   `xml:"isis-node-segment-ipv6-index"`
 }
 
 // structs for umarshalling chassis hw
@@ -160,6 +190,17 @@ func ParseIflist(s string) (*Iflist, error) {
 func ParseChassis(s string) (*Hw, error) {
 	logger.HandlePanic()
 	var i Hw
+	// convert in byte array
+	b := []byte(s)
+	// unmarshall xml string
+	err := xml.Unmarshal(b, &i)
+	return &i, err
+}
+
+// Parsing function for chassis hw
+func ParseIsis(s string) (*Isis, error) {
+	logger.HandlePanic()
+	var i Isis
 	// convert in byte array
 	b := []byte(s)
 	// unmarshall xml string
