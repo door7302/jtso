@@ -85,6 +85,7 @@ const GnmiInputTemplate = `
   redial = "10s"
   long_tag = true
   long_field = true
+  strip_origin = true
   check_jnpr_extension = true
   bytes2float = true
 
