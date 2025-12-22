@@ -64,6 +64,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	//configure app
 	wapp.Use(middleware.Static("html/assets"))
 	wapp.Use(middleware.Static("var/active_profiles"))
+	wapp.Use(middleware.Static("var/shared/telegraf"))
 	wapp.Use(middleware.CORS())
 
 	//Templating config
@@ -91,7 +92,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/delrouter", routeDelRouter)
 	wapp.POST("/resetrouter", routeResetRouter)
 	wapp.POST("/addprofile", routeAddProfile)
-	wapp.POST("/delprofile", routeDelProfile)
+	wapp.POST("/delprofile", routeShortNameRouter)
 	wapp.POST("/updatecred", routeUptCred)
 	wapp.POST("/updatedoc", routeUptDoc)
 	wapp.POST("/influxmgt", routeInfluxMgt)
@@ -99,6 +100,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/updatedebug", routeUpdateDebug)
 	wapp.POST("/uploadrtrcsv", routeUploadRtrCsv)
 	wapp.POST("/uploadprofilecsv", routeUploadProfileCsv)
+	wapp.POST("/getrawconfig", routeGetRawConfig)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -1004,7 +1006,7 @@ func routeAddRouter(c echo.Context) error {
 func routeDelRouter(c echo.Context) error {
 	var err error
 
-	r := new(ShortRouter)
+	r := new(ShortNameRouter)
 
 	err = c.Bind(r)
 	if err != nil {
@@ -1241,10 +1243,58 @@ func routeStream(c echo.Context) error {
 
 }
 
-func routeDelProfile(c echo.Context) error {
+func routeGetRawConfig(c echo.Context) error {
 	var err error
 
-	r := new(DelProfile)
+	r := new(ShortNameRouter)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for get raw router telegraf configuration: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to get raw router telegraf configuration"})
+	}
+
+	if association.Collections == nil {
+		logger.Log.Error("No collection available now")
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "No collection available now"})
+	}
+
+	// Get family
+	family := ""
+	for _, rtr := range sqlite.RtrList {
+		if rtr.Shortname == r.Shortname {
+			family = rtr.Family
+			break
+		}
+	}
+	if family == "" {
+		logger.Log.Errorf("Unable to find family for router %s", r.Shortname)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to find family for router"})
+	}
+
+	filename := ""
+	for id, collection := range association.Collections[family] {
+		found := false
+		for _, rtr := range collection.Routers {
+			if rtr.Shortname == r.Shortname {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			logger.Log.Errorf("Unable to find family for router %s in a collection", r.Shortname)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to find family for router in a collection"})
+		}
+		filename = family + "/" + "telegraf.d/" + family + "_" + id + ".conf"
+	}
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: filename})
+}
+
+func routeShortNameRouter(c echo.Context) error {
+	var err error
+
+	r := new(ShortNameRouter)
 
 	err = c.Bind(r)
 	if err != nil {

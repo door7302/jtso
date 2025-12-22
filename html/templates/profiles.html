@@ -8,12 +8,32 @@
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/prism.min.css">
     <link rel="stylesheet" href="css/jtsostyle.css">
     <link rel="stylesheet" href="css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="css/bootstrap-multiselect.css">
 </head>
 
 <body>
+
+
+    <div class="modal fade" style="animation-name: animatetop;" id="config" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document" style="max-width: 95%">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #13215c; color: white;">
+                    <h5 class="modal-title" id="modaltitle">Telegraf Rendering Config Viewer</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="background: none; border: none;">
+                        <i class="fas fa-times" aria-hidden="true" style="font-size: 1.5rem; color: white;"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="modalcore"
+                    style='font-family: "Courier New", Courier, monospace; max-height: 600px; text-shadow: none;'>
+    
+                </div>
+            </div>
+        </div>
+    </div>
+
         <nav class="navbar navbar-light navbar-expand-md py-3">
           <div class="container">
               <img src="img/logo-new.png" width="300" height="50">
@@ -106,6 +126,7 @@
                             <tr>
                                 <th>Router</th>
                                 <th>Profile(s)</th>
+                                <th width="5%">Config</th>
                                 <th width="5%">Delete</th>
                             </tr>
                         </thead>
@@ -114,6 +135,10 @@
                             <tr>
                                 <td>{{.Shortname}}</td>
                                 <td>{{.Profiles}}</td>
+                                <td class="d-xxl-flex justify-content-xxl-center"><button
+                                        onclick="getConfig('{{.Shortname}}', this)" class="btn btn-link"
+                                        style="margin-left: 5px;" type="submit"><i class="fa fa-file"
+                                            style="font-size: 15px;"></i></button></td>
                                 <td class="d-xxl-flex justify-content-xxl-center"><button
                                         onclick="removeAsso('{{.Shortname}}', this)" class="btn btn-danger"
                                         style="margin-left: 5px;" type="submit"><i class="fa fa-trash"
@@ -132,6 +157,8 @@
     <script src="js/bootstrap-multiselect.js"></script>
     <script src="js/alertify.min.js"></script>
     <script src="js/bootstrap-waitingfor.min.js"></script>
+    <script src="js/prism.min.js"></script>
+    <script src="js/prism-toml.min.js"></script>
     <script src="js/profiles.js"></script>
     <script src="js/dark.js"></script>
 

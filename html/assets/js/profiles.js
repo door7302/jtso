@@ -57,6 +57,13 @@ function addAsso() {
             table.row.add([
               r,
               raw_selected,
+               `
+                <div class="d-xxl-flex justify-content-xxl-center">
+                    <button class="btn btn-link" onclick="getConfig('${r}', this)">
+                        <i class="fa fa-file"></i>
+                    </button>
+                </div>
+              `,
               `
                 <div class="d-xxl-flex justify-content-xxl-center">
                     <button class="btn btn-danger" onclick="removeAsso('${r}', this)">
@@ -116,6 +123,31 @@ function removeAsso(name, td) {
   });
 }
 
+function getConfig(name, td) {
+  var dataToSend = {
+    "shortname": name
+  };
+  // send data
+  $(function () {
+    $.ajax({
+      type: 'POST',
+      url: "/getrawconfig",
+      data: JSON.stringify(dataToSend),
+      contentType: "application/json",
+      dataType: "json",
+      success: function (json) {
+        if (json.status == "OK") {
+          loadConfig(json.msg)
+        } else {
+          alertify.alert("JSTO...", json.msg);
+        }
+      },
+      error: function (xhr, ajaxOptions, thrownError) {
+        alertify.alert("JSTO...", "Unexpected error");
+      }
+    });
+  });
+}
 
 function importCSV() {
   const fileInput = document.getElementById('fileInput');
@@ -193,3 +225,12 @@ async function loadConfig(fileName) {
     document.getElementById('modalcore').textContent = 'Error loading configuration.';
   }
 }
+
+document.querySelector('#config .close').addEventListener('click', function () {
+  const modal = document.getElementById('config');
+  modal.classList.remove('show'); // Remove the `show` class
+  modal.style.display = 'none';  // Hide the modal
+  document.body.classList.remove('modal-open'); // Remove the modal-open class from body
+  const backdrop = document.querySelector('.modal-backdrop');
+  if (backdrop) backdrop.remove(); // Remove the backdrop element
+});

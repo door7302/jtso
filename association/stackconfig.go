@@ -42,6 +42,8 @@ var PathMap = map[string]string{
 	"vevo":   "/var/shared/telegraf/vevo/telegraf.d/",
 }
 
+var Collections map[string]map[string]sqlite.Collection
+
 func hashStringFNV(input string) uint32 {
 	hasher := fnv.New32a()
 	hasher.Write([]byte(input))
@@ -234,7 +236,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	profileSetIndex := make(map[string]uint32)
 
 	// Map to store collections (family → collection → Collection struct)
-	collections := make(map[string]map[string]sqlite.Collection)
+	Collections = make(map[string]map[string]sqlite.Collection)
 
 	// create the slice for which families we have to reconfigure the stack
 	if family == "all" {
@@ -385,12 +387,12 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		family := routers[0].Family
 
 		// Ensure family exists in the collections map
-		if _, exists := collections[family]; !exists {
-			collections[family] = make(map[string]sqlite.Collection)
+		if _, exists := Collections[family]; !exists {
+			Collections[family] = make(map[string]sqlite.Collection)
 		}
 
 		// Assign to the collections map
-		collections[family][collectionID] = sqlite.Collection{
+		Collections[family][collectionID] = sqlite.Collection{
 			ProfilesName: profilesName,
 			ProfilesConf: profilesFilename,
 			Routers:      routers,
@@ -398,7 +400,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	}
 
-	for family, familyCollections := range collections {
+	for family, familyCollections := range Collections {
 		logger.Log.Info("Update collections of Telegraf configs:")
 		logger.Log.Infof(" Family: %s", family)
 		for collectionID, collection := range familyCollections {
@@ -448,7 +450,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		}
 
 		// For each collection
-		for id, collection := range collections[f] {
+		for id, collection := range Collections[f] {
 			// create a new collection of config before optimisation
 			telegrafCfgList = make([]*maker.TelegrafConfig, 0)
 			for index, file := range collection.ProfilesConf {
@@ -534,7 +536,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	var excludeDash []string
 	excludeDash = make([]string, 0)
 	excludeDash = append(excludeDash, "home.json")
-	for _, v := range collections {
+	for _, v := range Collections {
 		for _, c := range v {
 			for _, p := range c.ProfilesName {
 				// bypass unknown profile
@@ -600,7 +602,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	kapaStart = make([]string, 0)
 	kapaStop = make([]string, 0)
 	kapaAll = make([]string, 0)
-	for _, v := range collections {
+	for _, v := range Collections {
 		for _, c := range v {
 			for _, p := range c.ProfilesName {
 				// bypass unknown profile
@@ -669,7 +671,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// -----------------------------------------------------------------------------------------------------
 	for _, f := range families {
 		cntr := 0
-		for _, c := range collections[f] {
+		for _, c := range Collections[f] {
 			cntr += len(c.Routers)
 		}
 

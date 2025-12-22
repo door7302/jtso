@@ -19,7 +19,7 @@ type TelegrafConfig struct {
 	MonitoringList []Monitoring   `json:"monitoring_list"`
 	FilteringList  []Filtering    `json:"filtering_list"`
 	EnumList       []Enum         `json:"enum_list"`
-	RegexList      []Regex        `json:"regrex_list"`
+	RegexList      []Regex        `json:"regex_list"`
 	StringsList    []Strings      `json:"strings_list"`
 	FileList       []FileOutput   `json:"file_outputs"`
 	InfluxList     []InfluxOutput `json:"influx_outputs"`

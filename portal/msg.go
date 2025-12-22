@@ -27,10 +27,6 @@ type (
 
 	ByShortname []RouterDetails
 
-	ShortRouter struct {
-		Shortname string `json:"shortname"`
-	}
-
 	AddProfile struct {
 		Shortname string   `json:"shortname"`
 		Profiles  []string `json:"profiles"`
@@ -40,7 +36,7 @@ type (
 		Profile string `json:"profile"`
 	}
 
-	DelProfile struct {
+	ShortNameRouter struct {
 		Shortname string `json:"shortname"`
 	}
 
