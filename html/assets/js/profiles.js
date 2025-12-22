@@ -59,11 +59,11 @@ function addAsso() {
               raw_selected,
                `
                 <div class="d-xxl-flex justify-content-xxl-center">
-                    <button class="btn btn-success" onclick="getConfig('${r}', this)">
-                        <i class="fa fa-file"></i>
+                    <button class="btn btn-success" onclick="getConfig('${r}', this)" style="margin-left: 5px;" type="button">
+                        <i class="fa fa-file" style="font-size: 15px;"></i>
                     </button>
-                    <button class="btn btn-danger" onclick="removeAsso('${r}', this)">
-                        <i class="fa fa-trash"></i>
+                    <button class="btn btn-danger" onclick="removeAsso('${r}', this)" style="margin-left: 5px;" type="submit">
+                        <i class="fa fa-trash" style="font-size: 15px;"></i>
                     </button>
                 </div>
               `

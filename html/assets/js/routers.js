@@ -49,7 +49,7 @@ function addRouter() {
                       <i class="fa fa-sync" style="font-size: 15px;"></i>
                   </button>
                   <button onclick="remove('${s}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit">
-                      <i class="fa fa-trash" style="font-size: 15px;"></i>Ò
+                      <i class="fa fa-trash" style="font-size: 15px;"></i>
                   </button>
               </div>
               `
