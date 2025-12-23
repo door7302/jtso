@@ -200,6 +200,7 @@
 #render .pill-empty {
   font-size: 12px;
   opacity: 0.7;
+  color: black;
 }
 
 #render .loading,
@@ -315,6 +316,7 @@ body.dark-mode #render .badge {
 
 body.dark-mode #render .badge-label {
   opacity: 0.7;
+  color: white;
 }
 
 body.dark-mode #render .badge-origin-native {
@@ -416,6 +418,7 @@ body.dark-mode #render .field-item:hover {
 body.dark-mode #render .pill-empty {
   font-size: 12px;
   opacity: 0.7;
+  color: white;
 }
 
 body.dark-mode #render .loading,

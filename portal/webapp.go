@@ -1381,7 +1381,7 @@ func routeGetTreeDoc(c echo.Context) error {
 	}
 
 	tree := new(TreeView)
-	tree.RootName = r.Profile + " - " + r.Family
+	tree.RootName = "Profile " + strings.ToUpper(r.Profile) + " - Platform " + strings.ToUpper(r.Family)
 	tree.Paths = make([]TreePath, 0)
 
 	// Parsing Json config to generate the tree view - first pass - extract sensors and aliases
