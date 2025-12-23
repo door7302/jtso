@@ -1,234 +1,135 @@
-const baseColors = {
-  native: "#326335",
-  openconfig: "#38168C"
-};
+let initialData = null;
 
-function shadeColor(col, percent) {
-  const num = parseInt(col.slice(1), 16);
-  let r = (num >> 16) + percent;
-  let g = (num >> 8 & 0x00FF) + percent;
-  let b = (num & 0x0000FF) + percent;
-  r = Math.max(Math.min(255, r), 0);
-  g = Math.max(Math.min(255, g), 0);
-  b = Math.max(Math.min(255, b), 0);
-  return "#" + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
+const rootTitle = document.getElementById("rootTitle");
+const summaryEl = document.getElementById("summary");
+const cardsContainer = document.getElementById("cardsContainer");
+const searchInput = document.getElementById("searchInput");
+const originFilter = document.getElementById("originFilter");
+const statusEl = document.getElementById("status");
+const toolbar = document.getElementById("toolbar");
+
+function applyFilters() {
+  if (!initialData) return;
+
+  const text = searchInput.value.trim().toLowerCase();
+  const origin = originFilter.value;
+
+  const filtered = initialData.listOfPaths.filter(p => {
+    if (origin && p.origin !== origin) return false;
+
+    if (!text) return true;
+
+    const inPath = p.name.toLowerCase().includes(text);
+    const inFields = (p.listOfFields || []).some(f =>
+      f.toLowerCase().includes(text)
+    );
+    return inPath || inFields;
+  });
+
+  renderCards(filtered);
 }
 
-// --------- Fonction principale de rendu ----------
-function renderTree(data) {
-  const svg = d3.select("#treeSvg");
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-
-  svg
-    .attr("width", width)
-    .attr("height", height);
-
-  // Nettoyer l'ancien contenu
-  svg.selectAll("*").remove();
-
-  const g = svg.append("g")
-    .attr("transform", `translate(${width / 2}, 40)`);
-
-  const minNodeWidth = 220;
-  const nodeHeight = 28;
-  const lineHeight = 18;
-  const levelGapY = 90;
-  const horizontalPadding = 16;
-
-  function buildHierarchy(data) {
-    const root = {
-      name: data.rootName,
-      type: "root",
-      color: "#000000",
-      children: []
-    };
-
-    data.listOfPaths.forEach(path => {
-      const baseColor = baseColors[path.origin] || "#888888";
-      const listColor = shadeColor(baseColor, +30);
-
-      const extraLines = [];
-      if (typeof path.interval === "number") {
-        extraLines.push(`Interval: ${path.interval} sec(s)`);
-      }
-      if (Array.isArray(path.aliases) && path.aliases.length > 0) {
-        path.aliases.forEach(a => extraLines.push(`Alias: ${a}`));
-      }
-
-      const pathNode = {
-        type: "path",
-        name: path.name || "",
-        origin: path.origin,
-        color: baseColor,
-        extraLines,
-        children: []
-      };
-
-      if (path.listOfFields && path.listOfFields.length > 0) {
-        const fieldsBox = {
-          type: "fieldsBox",
-          color: listColor,
-          items: path.listOfFields.slice(),
-          children: []
-        };
-        pathNode.children.push(fieldsBox);
-      }
-
-      root.children.push(pathNode);
-    });
-
-    return root;
+function renderCards(paths) {
+  cardsContainer.innerHTML = "";
+  if (!paths.length) {
+    cardsContainer.innerHTML = "<div style='font-size:13px;color:#aaa;'>No paths match filters.</div>";
+    return;
   }
 
-  const hierarchyData = buildHierarchy(data);
-  const root = d3.hierarchy(hierarchyData);
+  paths.forEach((p) => {
+    const card = document.createElement("div");
+    card.className = "card";
 
-  const treeLayout = d3.tree()
-    .nodeSize([minNodeWidth + 20, levelGapY])
-    .separation((a, b) => (a.parent === b.parent ? 1 : 0.9));
+    const header = document.createElement("div");
+    header.className = "card-header";
 
-  treeLayout(root);
+    const pathEl = document.createElement("div");
+    pathEl.className = "card-path";
+    pathEl.textContent = p.name;
 
-  // liens
-  const link = g.selectAll(".link")
-    .data(root.links())
-    .join("path")
-    .attr("class", "link")
-    .attr("d", d => {
-      const sx = d.source.x;
-      const sHeight = getNodeHeight(d.source.data);
-      const sy = d.source.y + sHeight / 2;
+    const meta = document.createElement("div");
+    meta.className = "card-meta";
 
-      const tx = d.target.x;
-      const tHeight = getNodeHeight(d.target.data);
-      const ty = d.target.y - tHeight / 2;
+    const intervalBadge = document.createElement("div");
+    intervalBadge.className = "badge";
+    intervalBadge.innerHTML =
+      `<span class="badge-label">Interval</span><span>${p.interval} sec(s)</span>`;
+    meta.appendChild(intervalBadge);
 
-      const cx = (sx + tx) / 2;
-      const cy1 = sy + (ty - sy) * 0.3;
-      const cy2 = sy + (ty - sy) * 0.7;
-      return `M${sx},${sy} C${sx},${cy1} ${tx},${cy2} ${tx},${ty}`;
-    });
+    const originBadge = document.createElement("div");
+    originBadge.className =
+      "badge " +
+      (p.origin === "native"
+        ? "badge-origin-native"
+        : "badge-origin-openconfig");
+    originBadge.innerHTML =
+      `<span class="badge-label">Origin</span><span>${p.origin}</span>`;
+    meta.appendChild(originBadge);
 
-  // nœuds
-  const node = g.selectAll(".node")
-    .data(root.descendants())
-    .join("g")
-    .attr("class", "node")
-    .attr("transform", d => `translate(${d.x},${d.y})`);
+    if (p.aliases && p.aliases.length) {
+      const aliasesEl = document.createElement("div");
+      aliasesEl.className = "aliases";
+      p.aliases.forEach(a => {
+        const pill = document.createElement("span");
+        pill.className = "alias-pill";
+        pill.textContent = a;
+        aliasesEl.appendChild(pill);
+      });
+      meta.appendChild(aliasesEl);
+    }
 
-  node.append("rect")
-    .attr("x", -minNodeWidth / 2)
-    .attr("y", d => -getNodeHeight(d.data) / 2)
-    .attr("width", minNodeWidth)
-    .attr("height", d => getNodeHeight(d.data))
-    .attr("rx", 8)
-    .attr("ry", 8)
-    .attr("fill", d => {
-      const t = d.data.type;
-      if (t === "root") return "#000000";
-      if (d.data.color) return d.data.color;
-      return "#444444";
-    });
+    header.appendChild(pathEl);
+    header.appendChild(meta);
+    card.appendChild(header);
 
-  node.each(function(d) {
-    const group = d3.select(this);
-    const data = d.data;
+    const fields = p.listOfFields || [];
+    const fieldsContainer = document.createElement("div");
+    fieldsContainer.className = "fields-container";
 
-    if (data.type === "path") {
-      const totalHeight = getNodeHeight(data);
+    if (fields.length) {
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "fields-toggle";
+      toggle.innerHTML =
+        `<span>Fields (${fields.length})</span><span>▼</span>`;
+      const list = document.createElement("div");
+      list.className = "fields-list";
 
-      group.append("text")
-        .attr("text-anchor", "middle")
-        .attr("font-weight", "700")
-        .attr("y", -totalHeight / 2 + lineHeight)
-        .text(data.name || "");
+      fields.forEach(f => {
+        const item = document.createElement("div");
+        item.className = "field-item";
+        item.title = f;
+        item.textContent = f;
+        list.appendChild(item);
+      });
 
-      const leftX = -minNodeWidth / 2 + 8;
-      if (Array.isArray(data.extraLines)) {
-        data.extraLines.forEach((line, i) => {
-          group.append("text")
-            .attr("text-anchor", "start")
-            .attr("x", leftX)
-            .attr("y", -totalHeight / 2 + lineHeight * (2 + i))
-            .text(line);
-        });
-      }
-    } else if (data.type === "fieldsBox") {
-      const totalHeight = getNodeHeight(data);
-      const leftX = -minNodeWidth / 2 + 8;
-      if (Array.isArray(data.items)) {
-        data.items.forEach((item, i) => {
-          group.append("text")
-            .attr("text-anchor", "start")
-            .attr("x", leftX)
-            .attr("y", -totalHeight / 2 + lineHeight * (1 + i))
-            .text(item);
-        });
-      }
+      toggle.addEventListener("click", () => {
+        const isOpen = list.classList.toggle("open");
+        toggle.querySelector("span:last-child").textContent = isOpen ? "▲" : "▼";
+      });
+
+      fieldsContainer.appendChild(toggle);
+      fieldsContainer.appendChild(list);
     } else {
-      group.append("text")
-        .attr("text-anchor", "middle")
-        .text(data.name || "");
+      const empty = document.createElement("div");
+      empty.className = "pill-empty";
+      empty.textContent = "No fields for this path.";
+      fieldsContainer.appendChild(empty);
     }
+
+    card.appendChild(fieldsContainer);
+
+    const footer = document.createElement("div");
+    footer.className = "card-footer";
+    footer.textContent = `${fields.length} field(s)`;
+    card.appendChild(footer);
+
+    cardsContainer.appendChild(card);
   });
-
-  // ajuster largeur au texte le plus long
-  node.each(function() {
-    const group = d3.select(this);
-    const rect = group.select("rect");
-    const texts = group.selectAll("text").nodes();
-
-    let maxWidth = 0;
-    texts.forEach(t => {
-      const w = t.getComputedTextLength();
-      if (w > maxWidth) maxWidth = w;
-    });
-
-    const finalWidth = Math.max(minNodeWidth, maxWidth + horizontalPadding * 2);
-    rect
-      .attr("x", -finalWidth / 2)
-      .attr("width", finalWidth);
-
-    group.selectAll("text").each(function() {
-      const txt = d3.select(this);
-      const anchor = txt.attr("text-anchor");
-      if (anchor === "middle") {
-        txt.attr("x", 0);
-      } else if (anchor === "start") {
-        txt.attr("x", -finalWidth / 2 + 8);
-      }
-    });
-  });
-
-  // zoom / pan
-  const zoom = d3.zoom()
-    .scaleExtent([0.4, 2])
-    .on("zoom", (event) => {
-      g.attr("transform", event.transform);
-    });
-
-  svg.call(zoom)
-    .call(zoom.transform, d3.zoomIdentity.translate(width / 2, 40));
-
-  // helper local
-  function getNodeHeight(data) {
-    if (data.type === "root") {
-      return nodeHeight;
-    }
-    if (data.type === "path") {
-      const n = (data.extraLines && data.extraLines.length) || 0;
-      const lines = 1 + n;
-      return Math.max(nodeHeight, lines * lineHeight + lineHeight * 0.5);
-    }
-    if (data.type === "fieldsBox") {
-      const n = (data.items && data.items.length) || 0;
-      const lines = Math.max(1, n);
-      return Math.max(nodeHeight, lines * lineHeight + lineHeight * 0.5);
-    }
-    return nodeHeight;
-  }
 }
+
+searchInput.addEventListener("input", applyFilters);
+originFilter.addEventListener("change", applyFilters);
 
 function updateDoc() {
   var p = document.getElementById("profiles").value.trim();
@@ -326,25 +227,42 @@ function showSensor(family, profile, config) {
         dataType: "json",
         success: function (json) {
           if (json.status == "OK") {
-            renderTree(json.tree);
+            initialData = json.tree;
+
+            rootTitle.textContent = initialData.rootName;
+            const totalPaths = initialData.listOfPaths.length;
+            const totalFields = initialData.listOfPaths.reduce(
+              (acc, p) => acc + (p.listOfFields ? p.listOfFields.length : 0),
+              0
+            );
+            summaryEl.textContent = `${totalPaths} paths, ${totalFields} fields`;
+
+            statusEl.textContent = "";
+            toolbar.style.display = "flex";
+
+            renderCards(initialData.listOfPaths);
             waitingDialog.hide();
           } else {
             alertify.alert("JSTO...", json.msg);
             waitingDialog.hide();
+            statusEl.className = "error";
+            statusEl.textContent = "Failed to load sensors.";
           }
         },
         error: function (xhr, ajaxOptions, thrownError) {
           alertify.alert("JSTO...", "Unexpected error");
           waitingDialog.hide();
+          statusEl.className = "error";
+          statusEl.textContent = "Failed to load sensors.";
         }
       });
     });
   } catch (error) {
-    alertify.alert("JSTO...", "Error loading tree: " + error);
-    document.getElementById('modalcore').textContent = 'Error loading tree.';
+    alertify.alert("JSTO...", "Error loading sensors: " + error);
+    statusEl.className = "error";
+    statusEl.textContent = "Failed to load data.";
   }
 }
-
 
 document.querySelector('#config .close').addEventListener('click', function () {
   const modal = document.getElementById('config');

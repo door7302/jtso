@@ -1,23 +1,209 @@
-  svg {
-    width: 100vw;
-    height: 100vh;
+#render {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #111;
+    color: #eee;
+    font-size: 15px;
+  }
+
+  #render .app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  #render h1 {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  #render .summary {
+    font-size: 14px;
+    color: #ccc;
+    margin-bottom: 16px;
+  }
+
+  #render .toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  #render .toolbar input {
+    flex: 1;
+    min-width: 200px;
+    padding: 7px 9px;
+    border-radius: 4px;
+    border: 1px solid #333;
     background: #181818;
+    color: #eee;
+    font-size: 14px;
   }
 
-  .node rect {
-    stroke: #222;
-    stroke-width: 1px;
+  #render .toolbar select {
+    padding: 7px 9px;
+    border-radius: 4px;
+    border: 1px solid #333;
+    background: #181818;
+    color: #eee;
+    font-size: 14px;
   }
 
-  .node text {
-    fill: #f5f5f5;
+  #render .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: calc(100vh - 130px);
+    overflow-y: auto;
+  }
+
+  #render .card {
+    background: #181818;
+    border-radius: 8px;
+    border: 1px solid #262626;
+    padding: 12px 14px;
+  }
+
+  #render .card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+  }
+
+  #render .card-path {
+    font-weight: 700;
+    font-size: 14px;
+    word-break: break-all;
+  }
+
+  #render .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 13px;
+    color: #ccc;
+  }
+
+  #render .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: #222;
     font-size: 12px;
-    dominant-baseline: middle;
+  }
+
+  #render .badge-label {
+    opacity: 0.7;
+  }
+
+  #render .badge-origin-native {
+    border: 1px solid #326335;
+    color: #b9f6c5;
+  }
+
+  #render .badge-origin-openconfig {
+    border: 1px solid #38168C;
+    color: #d0c4ff;
+  }
+
+  #render .aliases {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  #render .alias-pill {
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #222;
+    font-size: 12px;
+  }
+
+  #render .card-footer {
+    margin-top: 8px;
+    border-top: 1px solid #262626;
+    padding-top: 6px;
+    display: flex;
+    justify-content: flex-end;
+    font-size: 12px;
+    color: #aaa;
+  }
+
+  #render .fields-container {
+    margin-top: 8px;
+  }
+
+  #render .fields-toggle {
+    width: 100%;
+    text-align: left;
+    background: #202020;
+    border-radius: 4px;
+    border: 1px solid #303030;
+    padding: 5px 7px;
+    font-size: 12px;
+    color: #ddd;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #render .fields-toggle span {
     pointer-events: none;
   }
 
-  .link {
-    fill: none;
-    stroke: #666;
-    stroke-width: 1.5px;
+  #render .fields-toggle:hover {
+    background: #272727;
+  }
+
+  #render .fields-list {
+    margin-top: 4px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+    background: #151515;
+    border-radius: 4px;
+    border: 1px solid #262626;
+  }
+
+  #render .fields-list.open {
+    max-height: 260px;
+    overflow-y: auto;
+    transition: max-height 0.25s ease-in;
+  }
+
+  #render .field-item {
+    padding: 5px 9px;
+    border-bottom: 1px solid #222;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #render .field-item:last-child {
+    border-bottom: none;
+  }
+
+  #render .field-item:hover {
+    background: #222;
+  }
+
+  #render .pill-empty {
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  #render .loading,
+  #render .error {
+    font-size: 13px;
+    color: #aaa;
+    padding: 8px 0;
+  }
+
+  #render .error {
+    color: #ff7b7b;
   }
