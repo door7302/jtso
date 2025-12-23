@@ -259,7 +259,7 @@ function updateDoc() {
         dataType: "json",
         success: function (json) {
           if (json.status == "OK") {
-            img.setAttribute('src', "img/" + json.img);
+            //img.setAttribute('src', "img/" + json.img);
             desc.innerHTML = json.desc.trim();
             tele.innerHTML = json.tele.trim();
             graf.innerHTML = json.graf.trim();
