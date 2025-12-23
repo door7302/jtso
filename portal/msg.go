@@ -32,8 +32,14 @@ type (
 		Profiles  []string `json:"profiles"`
 	}
 
-	UpdateDoc struct {
+	DocProfile struct {
 		Profile string `json:"profile"`
+	}
+
+	DocTree struct {
+		Family  string `json:"family"`
+		Profile string `json:"profile"`
+		Config  string `json:"config"`
 	}
 
 	ShortNameRouter struct {
@@ -67,6 +73,11 @@ type (
 		Kapa   string `json:"kapa"`
 	}
 
+	ReplyTree struct {
+		Status string   `json:"status"`
+		Tree   TreeView `json:"tree"`
+	}
+
 	Credential struct {
 		NetconfUser string `json:"netuser"`
 		NetconfPwd  string `json:"netpwd"`
@@ -84,6 +95,19 @@ type (
 
 	UpdateDebug struct {
 		Instance string `json:"instance"`
+	}
+
+	TreePath struct {
+		Name     string   `json:"name"`
+		Interval int      `json:"interval"`
+		Aliases  []string `json:"aliases"`
+		Origin   string   `json:"origin"`
+		Fields   []string `json:"listOfFields"`
+	}
+
+	TreeView struct {
+		RootName string     `json:"rootName"`
+		Paths    []TreePath `json:"listOfPaths"`
 	}
 )
 

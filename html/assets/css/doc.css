@@ -1,0 +1,23 @@
+  svg {
+    width: 100vw;
+    height: 100vh;
+    background: #181818;
+  }
+
+  .node rect {
+    stroke: #222;
+    stroke-width: 1px;
+  }
+
+  .node text {
+    fill: #f5f5f5;
+    font-size: 12px;
+    dominant-baseline: middle;
+    pointer-events: none;
+  }
+
+  .link {
+    fill: none;
+    stroke: #666;
+    stroke-width: 1.5px;
+  }

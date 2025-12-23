@@ -1,3 +1,42 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>Tree with renderTree(data)</title>
+<style>
+  body {
+    margin: 0;
+    font-family: sans-serif;
+    background: #111;
+    color: #eee;
+  }
+
+  svg {
+    width: 100vw;
+    height: 100vh;
+    background: #181818;
+  }
+
+  .node rect {
+    stroke: #222;
+    stroke-width: 1px;
+  }
+
+  .node text {
+    fill: #f5f5f5;
+    font-size: 12px;
+    dominant-baseline: middle;
+    pointer-events: none;
+  }
+
+  .link {
+    fill: none;
+    stroke: #666;
+    stroke-width: 1.5px;
+  }
+</style>
+<body>
+<svg id="treeSvg"></svg>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
 const baseColors = {
   native: "#326335",
   openconfig: "#38168C"
@@ -230,126 +269,38 @@ function renderTree(data) {
   }
 }
 
-function updateDoc() {
-  var p = document.getElementById("profiles").value.trim();
-  var img = document.getElementById("profileImg");
-  var desc = document.getElementById("profileDesc");
-  var tele = document.getElementById("profileTele");
-  var graf = document.getElementById("profileGraf");
-  var kapa = document.getElementById("profileKapa");
-
-  if (p == "default") {
-    img.setAttribute('src', "img/default.png");
-    desc.innerHTML = "N/A";
-    tele.innerHTML = "N/A";
-    graf.innerHTML = "N/A";
-    kapa.innerHTML = "N/A";
-  } else {
-    var dataToSend = {
-      "profile": p
-    };
-    waitingDialog.show();
-    // send data
-    $(function () {
-      $.ajax({
-        type: 'POST',
-        url: "/updatedoc",
-        data: JSON.stringify(dataToSend),
-        contentType: "application/json",
-        dataType: "json",
-        success: function (json) {
-          if (json.status == "OK") {
-            img.setAttribute('src', "img/" + json.img);
-            desc.innerHTML = json.desc.trim();
-            tele.innerHTML = json.tele.trim();
-            graf.innerHTML = json.graf.trim();
-            kapa.innerHTML = json.kapa.trim();
-            waitingDialog.hide();
-
-          } else {
-            alertify.alert("JSTO...", json.msg);
-            waitingDialog.hide();
-          }
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-          alertify.alert("JSTO...", "Unexpected error");
-          waitingDialog.hide();
-        }
-      });
-    });
-  }
-}
-
-async function loadConfig(fileName) {
-  try {
-    const response = await fetch(fileName);
-    if (!response.ok) {
-      throw new Error(`Failed to load ${fileName}: ${response.statusText}`);
+// --------- Exemple d'appel initial ----------
+const initialData = {
+  rootName: "rootName",
+  listOfPaths: [
+    {
+      name: "path1",
+      interval: 10,
+      aliases: [ "alias1", "alias2"],
+      origin: "native",
+      listOfFields: [
+        "fieldA",
+        "fieldB"
+      ]
+    },
+    {
+      name: "path2",
+      interval: 60,
+      aliases: [],
+      origin: "openconfig",
+      listOfFields: [
+        "fieldOnly"
+      ]
     }
+  ]
+};
 
-    const jsonContent = await response.json(); // Parse JSON
+renderTree(initialData);
 
-    // Pretty-print JSON
-    const formattedJson = JSON.stringify(jsonContent, null, 2);
-
-    // Add syntax highlighting
-    const highlightedJson = Prism.highlight(formattedJson, Prism.languages.json, 'json');
-
-    // Update modal content with highlighted JSON
-    document.getElementById('modalcore').innerHTML = `<pre><code class="language-json">${highlightedJson}</code></pre>`;
-
-    // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('config'));
-    modal.show();
-  } catch (error) {
-    alertify.alert("JSTO...", "Error loading config: " + error);
-    document.getElementById('modalcore').textContent = 'Error loading configuration.';
-  }
-}
-
-function showSensor(family, profile, config) {
-  try {
-    var dataToSend = {
-      "family": family,
-      "profile": profile,
-      "config": config
-    };
-
-    waitingDialog.show();
-    // send data
-    $(function () {
-      $.ajax({
-        type: 'POST',
-        url: "/gettree",
-        data: JSON.stringify(dataToSend),
-        contentType: "application/json",
-        dataType: "json",
-        success: function (json) {
-          if (json.status == "OK") {
-            renderTree(json.tree);
-          } else {
-            alertify.alert("JSTO...", json.msg);
-            waitingDialog.hide();
-          }
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-          alertify.alert("JSTO...", "Unexpected error");
-          waitingDialog.hide();
-        }
-      });
-    });
-  } catch (error) {
-    alertify.alert("JSTO...", "Error loading tree: " + error);
-    document.getElementById('modalcore').textContent = 'Error loading tree.';
-  }
-}
-
-
-document.querySelector('#config .close').addEventListener('click', function () {
-  const modal = document.getElementById('config');
-  modal.classList.remove('show'); // Remove the `show` class
-  modal.style.display = 'none';  // Hide the modal
-  document.body.classList.remove('modal-open'); // Remove the modal-open class from body
-  const backdrop = document.querySelector('.modal-backdrop');
-  if (backdrop) backdrop.remove(); // Remove the backdrop element
-});
+// --------- Exemple d'update AJAX ---------
+// fetch('/api/my-tree-json')
+//   .then(r => r.json())
+//   .then(newData => renderTree(newData));
+</script>
+</body>
+</html>

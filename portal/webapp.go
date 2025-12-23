@@ -12,6 +12,7 @@ import (
 	"jtso/container"
 	"jtso/influx"
 	"jtso/logger"
+	"jtso/maker"
 	"jtso/netconf"
 	"jtso/parser"
 	"jtso/sqlite"
@@ -31,7 +32,14 @@ const (
 	PATH_RAW      string = "/html/assets/rawfiles/"
 	PATH_CERT     string = "/var/cert/"
 	PATH_JTS_VERS string = "/etc/jtso/openjts.version"
+	PROPERTIES    string = "/components/component/properties/property"
 )
+
+var nativePrefix = map[string]struct{}{
+	"junos": {},
+	"mpls":  {},
+	"state": {},
+}
 
 type WebApp struct {
 	listen string
@@ -101,6 +109,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/uploadrtrcsv", routeUploadRtrCsv)
 	wapp.POST("/uploadprofilecsv", routeUploadProfileCsv)
 	wapp.POST("/getrawconfig", routeGetRawConfig)
+	wapp.POST("/gettree", routeGetTreeDoc)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -1341,10 +1350,105 @@ func routeUptCred(c echo.Context) error {
 
 }
 
+func findOrigin(path string) string {
+	path = strings.TrimPrefix(path, "/")
+	first, _, ok := strings.Cut(path, "/")
+	if !ok {
+		return "openconfig"
+	}
+	if _, ok := nativePrefix[first]; ok {
+		return "native"
+	}
+	return "openconfig"
+}
+
+func routeGetTreeDoc(c echo.Context) error {
+	var err error
+
+	r := new(DocTree)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for displaying sensors tree: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to display sensors tree"})
+	}
+	fullPath := association.ACTIVE_PROFILES + r.Profile + "/" + r.Config
+
+	newCfg, err := maker.LoadConfig(fullPath)
+	if err != nil {
+		logger.Log.Errorf("Unable to load telegraf config for displaying sensors tree: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to load telegraf config to display sensors tree"})
+	}
+
+	tree := new(TreeView)
+	tree.RootName = r.Profile + " - " + r.Family
+	tree.Paths = make([]TreePath, 0)
+
+	// Parsing Json config to generate the tree view - first pass - extract sensors and aliases
+	for _, g := range newCfg.GnmiList {
+		for _, s := range g.Subs {
+			p := new(TreePath)
+			p.Name = s.Name
+			p.Origin = findOrigin(s.Name)
+			p.Interval = s.Interval
+			p.Aliases = make([]string, 0)
+			p.Fields = make([]string, 0)
+			for _, a := range g.Aliases {
+				if s.Name == a.AliasOf {
+					p.Aliases = append(p.Aliases, a.Prefixes...)
+					for _, i := range a.Prefixes {
+						// inherit Alias origin
+						p.Origin = findOrigin(i)
+					}
+				}
+			}
+			tree.Paths = append(tree.Paths, *p)
+		}
+	}
+
+	for _, p := range newCfg.RenameList {
+		for _, e := range p.Entries {
+			if e.TypeRename != 1 {
+				continue
+			}
+
+			field := e.From
+			if !strings.Contains(e.From, "/") {
+				if e.From == "value" {
+					field = PROPERTIES + "/state/value"
+				} else {
+					field = PROPERTIES + "[name=" + e.From + "]/state/value"
+				}
+			}
+
+			for i := range tree.Paths {
+				t := &tree.Paths[i]
+				if strings.HasPrefix(t.Name, field) {
+					t.Fields = append(t.Fields, field)
+					break
+				}
+				found := false
+				for _, a := range t.Aliases {
+					if strings.HasPrefix(a, field) {
+						t.Fields = append(t.Fields, field)
+						found = true
+						break
+					}
+				}
+				if found {
+					break
+				}
+			}
+		}
+	}
+
+	return c.JSON(http.StatusOK, ReplyTree{Status: "OK", Tree: *tree})
+}
+
 func routeUptDoc(c echo.Context) error {
 	var err error
 
-	r := new(UpdateDoc)
+	r := new(DocProfile)
 
 	err = c.Bind(r)
 	if err != nil {
@@ -1362,43 +1466,43 @@ func routeUptDoc(c echo.Context) error {
 	tele := ""
 
 	for _, v := range p.Definition.TelCfg.MxCfg {
-		tele += "For MX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For MX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"mx\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.PtxCfg {
-		tele += "For PTX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For PTX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"ptx\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.AcxCfg {
-		tele += "For ACX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For ACX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"acx\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.ExCfg {
-		tele += "For EX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For EX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"ex\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.QfxCfg {
-		tele += "For QFX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For QFX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"qfx\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.SrxCfg {
-		tele += "For SRX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For SRX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"srx\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.CrpdCfg {
-		tele += "For CRPD version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For CRPD version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"crpd\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.CptxCfg {
-		tele += "For CPTX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For CPTX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"cptx\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.VmxCfg {
-		tele += "For VMX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For VMX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"vmx\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.VsrxCfg {
-		tele += "For VSRX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For VSRX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"vsrx\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for _, v := range p.Definition.TelCfg.VjunosCfg {
-		tele += "For VJunos Rtr. version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+		tele += "For VJunos Rtr. version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"vjunos\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 	}
 	for i, v := range p.Definition.TelCfg.VevoCfg {
 		if i == len(p.Definition.TelCfg.VevoCfg)-1 {
-			tele += "For VJunos Evo. version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a>"
+			tele += "For VJunos Evo. version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"vevo\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a>"
 		} else {
-			tele += "For VJunos Evo. version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('" + r.Profile + "/" + v.Config + "')\">Show Sensors</a></br>"
+			tele += "For VJunos Evo. version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a><a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('\"vevo\"," + r.Profile + "," + v.Config + "')\">Show Sensors</a></br>"
 		}
 	}
 	if tele == "" {
@@ -1430,8 +1534,6 @@ func routeUptDoc(c echo.Context) error {
 	if graf == "" {
 		graf = "No Grafana Dasboards attached to this profile"
 	}
-
-	logger.Log.Infof("Documentation have been successfully updated")
 	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: tele, Graf: graf, Kapa: kapa})
 }
 

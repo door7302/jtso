@@ -40,6 +40,7 @@ type Subscription struct {
 
 type Alias struct {
 	Name     string   `json:"name"`
+	AliasOf  string   `json:"aliasof"`
 	Prefixes []string `json:"prefix_list"`
 }
 type GnmiInput struct {
