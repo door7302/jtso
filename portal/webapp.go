@@ -1423,13 +1423,13 @@ func routeGetTreeDoc(c echo.Context) error {
 
 			for i := range tree.Paths {
 				t := &tree.Paths[i]
-				if strings.HasPrefix(t.Name, field) {
+				if strings.HasPrefix(field, t.Name) {
 					t.Fields = append(t.Fields, field)
 					break
 				}
 				found := false
 				for _, a := range t.Aliases {
-					if strings.HasPrefix(a, field) {
+					if strings.HasPrefix(field, a) {
 						t.Fields = append(t.Fields, field)
 						found = true
 						break
