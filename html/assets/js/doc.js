@@ -327,6 +327,7 @@ function showSensor(family, profile, config) {
         success: function (json) {
           if (json.status == "OK") {
             renderTree(json.tree);
+            waitingDialog.hide();
           } else {
             alertify.alert("JSTO...", json.msg);
             waitingDialog.hide();

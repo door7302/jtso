@@ -1388,13 +1388,13 @@ func routeGetTreeDoc(c echo.Context) error {
 	for _, g := range newCfg.GnmiList {
 		for _, s := range g.Subs {
 			p := new(TreePath)
-			p.Name = s.Name
-			p.Origin = findOrigin(s.Name)
+			p.Name = s.Path
+			p.Origin = findOrigin(s.Path)
 			p.Interval = s.Interval
 			p.Aliases = make([]string, 0)
 			p.Fields = make([]string, 0)
 			for _, a := range g.Aliases {
-				if s.Name == a.AliasOf {
+				if s.Path == a.AliasOf {
 					p.Aliases = append(p.Aliases, a.Prefixes...)
 					for _, i := range a.Prefixes {
 						// inherit Alias origin
