@@ -71,8 +71,8 @@ function renderCards(paths) {
       aliasesEl.className = "aliases";
       p.aliases.forEach(a => {
         const pill = document.createElement("span");
-        pill.className = "alias-pill";
-        pill.textContent = a;
+        pill.className = "alias-pill badge-alias";
+        pill.textContent = "Alias: " + a;
         aliasesEl.appendChild(pill);
       });
       meta.appendChild(aliasesEl);

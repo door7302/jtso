@@ -106,6 +106,11 @@
   color: #165c1e;
 }
 
+#render .badge-alias {
+  border: 1px solid #7b3f3f;
+  color: #b23c3e;
+}
+
 #render .badge-origin-openconfig {
   border: 1px solid #5a30c0;
   color: #36108c;
@@ -323,6 +328,12 @@ body.dark-mode #render .badge-origin-native {
   border: 1px solid #326335;
   color: #b9f6c5;
 }
+
+body.dark-mode #render .badge-alias {
+  border: 1px solid #633232;
+  color: #f0b9ba;
+}
+
 
 body.dark-mode #render .badge-origin-openconfig {
   border: 1px solid #38168C;
