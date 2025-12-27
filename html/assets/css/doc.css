@@ -99,7 +99,6 @@
 }
 
 #render .badge-label {
-  border: 1px solid #3f7b41;
   opacity: 0.7;
   color: black;
 }
