@@ -53,7 +53,7 @@ function renderCards(paths) {
     const intervalBadge = document.createElement("div");
     intervalBadge.className = "badge";
     intervalBadge.innerHTML =
-      `<span class="badge-label">Interval</span><span>${p.interval} sec(s)</span>`;
+      `<span class="badge-label">Interval:</span><span>${p.interval} sec(s)</span>`;
     meta.appendChild(intervalBadge);
 
     const originBadge = document.createElement("div");
@@ -63,7 +63,7 @@ function renderCards(paths) {
         ? "badge-origin-native"
         : "badge-origin-openconfig");
     originBadge.innerHTML =
-      `<span class="badge-label">Origin</span><span>${p.origin}</span>`;
+      `<span class="badge-label">Origin:</span><span>${p.origin}</span>`;
     meta.appendChild(originBadge);
 
     if (p.aliases && p.aliases.length) {
@@ -113,7 +113,12 @@ function renderCards(paths) {
     } else {
       const empty = document.createElement("div");
       empty.className = "pill-empty";
-      empty.textContent = "No fields for this path.";
+      if (p.aliases && p.aliases.length) {
+        empty.textContent = "Check Alias instead.";
+      } else {
+        empty.textContent = "No fields for this path.";
+      }
+      
       fieldsContainer.appendChild(empty);
     }
 
