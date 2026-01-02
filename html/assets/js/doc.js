@@ -156,7 +156,12 @@ const DEFAULT_RENDER_HTML = `
 `;
 
 function resetRender() {
-  document.getElementById("render").innerHTML = DEFAULT_RENDER_HTML;
+  const render = document.getElementById("render");
+
+  const fresh = render.cloneNode(false); 
+  fresh.innerHTML = DEFAULT_RENDER_HTML;
+
+  render.replaceWith(fresh);
 }
 
 function updateDoc() {
