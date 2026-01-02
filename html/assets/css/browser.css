@@ -139,6 +139,7 @@ span.fancytree-selected span.fancytree-title {
 body.dark-mode #result .fancytree-container {
     background-color: #1e1e1e; /* dark background */
     padding: 4px;  
+    border: 0px;
 }
 
 body.dark-mode #result .fancytree-title {

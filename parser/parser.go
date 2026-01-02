@@ -65,7 +65,7 @@ func init() {
 	// init re
 	re1 = regexp.MustCompile("(\\d+)")
 	re2 = regexp.MustCompile("(.*)\\[(.*)=(.*)\\]")
-	re3 = regexp.MustCompile(`^/[^/:]+:?/`)
+	re3 = regexp.MustCompile(`/[^/:]+:`)
 
 	// init streamer
 	StreamObj = new(Streamer)
@@ -111,7 +111,7 @@ func advancedSplit(path string, merge bool, hideOrigin bool) []string {
 	// manage origin first
 	if hideOrigin {
 		// remove any origin
-		path = re3.ReplaceAllString(path, "")
+		path = re3.ReplaceAllString(path, "/")
 	}
 
 	// then attributes
