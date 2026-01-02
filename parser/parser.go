@@ -65,7 +65,7 @@ func init() {
 	// init re
 	re1 = regexp.MustCompile("(\\d+)")
 	re2 = regexp.MustCompile("(.*)\\[(.*)=(.*)\\]")
-	re3 = regexp.MustCompile(`^/[^/:]+:?(?=/)`)
+	re3 = regexp.MustCompile(`^/[^/:]+:?/`)
 
 	// init streamer
 	StreamObj = new(Streamer)
