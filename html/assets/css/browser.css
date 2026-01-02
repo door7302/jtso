@@ -58,6 +58,10 @@
 /* Fancytree Text & Node CSS */
 /* ------------------------- */
 
+#result .fancytree-childcounter {
+    display: none !important;
+}
+
 /* All tree text */
 #result .fancytree-title {
     font-family: "Arial", sans-serif;
@@ -133,7 +137,7 @@ body.dark-mode #result .fancytree-icon {
 }
 
 body.dark-mode #result .fancytree-match {
-    background-color: #ffbe00;
+    background-color: #aa8000;
     color: #000;
     font-weight: bold;
     border-radius: 10px;
