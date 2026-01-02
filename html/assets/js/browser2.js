@@ -16,8 +16,8 @@ $(document).ready(function () {
     extensions: ["filter"],
     quicksearch: true,
     filter: {
-      autoExpand: true,
-      mode: "hide"
+      autoExpand: false,
+      mode: "dimm", 
     },
     source: [],
     click: function(event, data) {
@@ -26,11 +26,16 @@ $(document).ready(function () {
   });
 
   // Search input
-  $('#searching').on('input', function () {
+    $('#searching').on('input', function () {
     const searchString = $(this).val();
     const tree = $("#result").fancytree("getTree");
-    tree.filterNodes(searchString, { autoExpand: true, leavesOnly: false });
-  });
+
+    if (searchString) {
+        tree.filterNodes(searchString, { autoExpand: true });
+    } else {
+        tree.clearFilter(); // restore normal view
+    }
+    });
 
   // Collapse all
   $('#collapse').on('click', function () {

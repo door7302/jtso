@@ -74,6 +74,14 @@
     margin-top: 5px;
 }
 
+#result .fancytree-custom-icon:hover,
+#result .fancytree-expander:hover,
+#result .fancytree-icon:hover {
+    color: #666; /* Light mode icons */
+    font-size: 16px;
+    margin-top: 5px;
+}
+
 /* Hover effect */
 #result .fancytree-node:hover > .fancytree-title {
     background-color: #53a451;
@@ -83,10 +91,10 @@
 
 /* Search match highlight */
 #result .fancytree-match {
-    background-color: yellow;
+    background-color: #ffbe00;
     color: black;
     font-weight: bold;
-    border-radius: 2px;
+    border-radius: 10px;
 }
 
 /* Light mode */
@@ -120,9 +128,13 @@ body.dark-mode #result .fancytree-custom-icon,
 body.dark-mode #result .fancytree-expander,
 body.dark-mode #result .fancytree-icon {
     color: #bbb; /* dark mode icons */
+    font-size: 16px;
+    margin-top: 5px;
 }
 
 body.dark-mode #result .fancytree-match {
-    background-color: #555;
+    background-color: #ffbe00;
     color: #fff;
+    font-weight: bold;
+    border-radius: 10px;
 }
