@@ -136,37 +136,13 @@ function renderCards(paths) {
 searchInput.addEventListener("input", applyFilters);
 originFilter.addEventListener("change", applyFilters);
 
-const DEFAULT_RENDER_HTML = `
-  <div class="app">
-    <h1 id="rootTitle"></h1>
-    <div class="summary" id="summary"></div>
-
-    <div class="toolbar" id="toolbar" style="display:none;">
-      <input id="searchInput" type="text" placeholder="Filter by path or field..." />
-      <select id="originFilter">
-        <option value="">All origins</option>
-        <option value="native">native</option>
-        <option value="openconfig">openconfig</option>
-      </select>
-    </div>
-
-    <div id="status" class="loading">Click on Show Sensors button(s)</div>
-    <div class="cards" id="cardsContainer"></div>
-  </div>
-`;
-
 function resetRender() {
-  const render = document.getElementById("render");
-  render.innerHTML = DEFAULT_RENDER_HTML;
+  rootTitle.textContent = "";
+  summaryEl.textContent = "";
+  statusEl.textContent = "";
 
-  // Reattach listeners
-  const toolbarBtn = document.getElementById("showToolbarBtn");
-  const toolbar = document.getElementById("toolbar");
-  if (toolbarBtn) {
-    toolbarBtn.onclick = () => {
-      toolbar.style.display = toolbar.style.display === "none" ? "block" : "none";
-    };
-  }
+  // Remove all current cards
+  cardsContainer.innerHTML = "";
 }
 
 function updateDoc() {
@@ -177,8 +153,8 @@ function updateDoc() {
   var graf = document.getElementById("profileGraf");
   var kapa = document.getElementById("profileKapa");
 
-  resetRender();
-  
+
+
   if (p == "default") {
     img.setAttribute('src', "img/default.png");
     desc.innerHTML = "N/A";
@@ -190,6 +166,7 @@ function updateDoc() {
       "profile": p
     };
     waitingDialog.show();
+    resetRender();
     // send data
     $(function () {
       $.ajax({
