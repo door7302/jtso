@@ -22,7 +22,7 @@ const PATH_CERT string = "/var/shared/telegraf/cert/"
 
 var root *TreeNode
 var global []string
-var re1, re2 *regexp.Regexp
+var re1, re2, re3 *regexp.Regexp
 var StreamObj *Streamer
 
 type TreeJs struct {
@@ -65,6 +65,7 @@ func init() {
 	// init re
 	re1 = regexp.MustCompile("(\\d+)")
 	re2 = regexp.MustCompile("(.*)\\[(.*)=(.*)\\]")
+	re3 = regexp.MustCompile(`^/[^/:]+:?(?=/)`)
 
 	// init streamer
 	StreamObj = new(Streamer)
@@ -105,8 +106,15 @@ func StreamData(m string, s string, payload ...string) {
 
 }
 
-func advancedSplit(path string, merge bool) []string {
+func advancedSplit(path string, merge bool, hideOrigin bool) []string {
 
+	// manage origin first
+	if hideOrigin {
+		// remove any origin
+		path = re3.ReplaceAllString(path, "")
+	}
+
+	// then attributes
 	if strings.Contains(path, "=") && strings.Contains(path, "[") {
 		var newPath string
 		escape := false
@@ -202,36 +210,6 @@ func TraverseTree(node *TreeNode, parentKey string, j *[]TreeJs) {
 	}
 }
 
-func JsTreeToFancytree(jsTree []TreeJs) []*FancytreeNode {
-	nodesMap := make(map[string]*FancytreeNode)
-	var rootNodes []*FancytreeNode
-
-	// First, create all nodes
-	for _, n := range jsTree {
-		nodesMap[n.Id] = &FancytreeNode{
-			Title:  n.Text,
-			Key:    n.Id,
-			Icon:   n.Icon,
-			Folder: false, // will update later if it has children
-		}
-	}
-
-	// Then, attach children to parents
-	for _, n := range jsTree {
-		if n.Parent == "#" || n.Parent == "" {
-			rootNodes = append(rootNodes, nodesMap[n.Id])
-		} else {
-			parentNode, ok := nodesMap[n.Parent]
-			if ok {
-				parentNode.Children = append(parentNode.Children, nodesMap[n.Id])
-				parentNode.Folder = true // mark parent as folder
-			}
-		}
-	}
-
-	return rootNodes
-}
-
 func PrintTreeFancytree(node map[string]interface{}, indent int, o map[string]interface{}, parent *FancytreeNode) {
 	for k, v := range node {
 		if reflect.TypeOf(v).Kind() == reflect.Map {
@@ -290,78 +268,7 @@ func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
 	}
 }
 
-/*
-func PrintTreeFancytree(node map[string]interface{}, parentKey string) []*FancytreeNode {
-	var nodes []*FancytreeNode
-
-	for k, v := range node {
-		newKey := genUUID()
-		if reflect.TypeOf(v).Kind() == reflect.Map {
-			// Node has children
-			children := PrintTreeFancytree(v.(map[string]interface{}), newKey)
-			n := &FancytreeNode{
-				Title:    k,
-				Key:      newKey,
-				Folder:   true,
-				Icon:     "fas fa-search-plus",
-				Expanded: true,
-				Children: children,
-			}
-			nodes = append(nodes, n)
-		} else {
-			// Leaf node
-			n := &FancytreeNode{
-				Title: fmt.Sprintf("%s = %v", k, v),
-				Key:   newKey,
-				Icon:  "fas fa-sign-out-alt",
-			}
-			nodes = append(nodes, n)
-		}
-	}
-
-	return nodes
-}
-
-func TraverseTreeFancytree(node *TreeNode) []*FancytreeNode {
-	var nodes []*FancytreeNode
-
-	// If node has children
-	if len(node.Children) > 0 {
-		for _, child := range node.Children {
-			childNodes := TraverseTreeFancytree(child)
-			n := &FancytreeNode{
-				Title:    child.Data.(string),
-				Key:      genUUID(),
-				Folder:   len(childNodes) > 0,
-				Expanded: true,
-				Children: childNodes,
-				Icon:     "fas fa-search-plus",
-			}
-			nodes = append(nodes, n)
-		}
-	} else {
-		// Leaf: create path string
-		path := node.Data.(string)
-		leaf := &FancytreeNode{
-			Title: fmt.Sprintf("%s", path),
-			Key:   genUUID(),
-			Icon:  "fas fa-search-plus",
-		}
-
-		// Also convert its value map to children nodes
-		leaf.Children = PrintTreeFancytree(node.Value, leaf.Key)
-		if len(leaf.Children) > 0 {
-			leaf.Folder = true
-			leaf.Expanded = true
-		}
-
-		nodes = append(nodes, leaf)
-	}
-
-	return nodes
-} */
-
-func parseXpath(xpath string, value string, merge bool) error {
+func parseXpath(xpath string, value string, merge bool, hideOrigin bool) error {
 
 	var parent *TreeNode
 	var key []string
@@ -369,7 +276,7 @@ func parseXpath(xpath string, value string, merge bool) error {
 
 	key = make([]string, 0)
 
-	lpath := advancedSplit(xpath, merge)
+	lpath := advancedSplit(xpath, merge, hideOrigin)
 	xpathKey := strings.Join(lpath, "/")
 	// increment counter and save the Xpath
 	_, ok := StreamObj.XpathList[xpathKey]
@@ -425,7 +332,7 @@ func parseXpath(xpath string, value string, merge bool) error {
 	return nil
 }
 
-func LaunchSearch(timeout int) {
+func LaunchSearch(timeout int, hideOrigin bool) {
 
 	logger.Log.Infof("Start subscription for router %s and xpath %s (timeout is %d)", StreamObj.Router, StreamObj.Path, timeout)
 	StreamData(fmt.Sprintf("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
@@ -554,7 +461,7 @@ func LaunchSearch(timeout int) {
 		case rsp := <-subRspChan:
 			r, _ := formatters.ResponsesFlat(rsp.Response)
 			for k, v := range r {
-				parseXpath(k, fmt.Sprint(v), StreamObj.Merger)
+				parseXpath(k, fmt.Sprint(v), StreamObj.Merger, hideOrigin)
 			}
 
 		case gnmiErr := <-subErrChan:

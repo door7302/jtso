@@ -1190,7 +1190,7 @@ func routeStream(c echo.Context) error {
 		parser.StreamObj.Ticker = time.Now()
 		parser.StreamObj.ForceFlush = true
 		// launch parser
-		go parser.LaunchSearch(collectCfg.cfg.Portal.BrowserTimeout)
+		go parser.LaunchSearch(collectCfg.cfg.Portal.BrowserTimeout, collectCfg.cfg.Portal.HideOrigin)
 		// loop until the end
 		for {
 			select {
