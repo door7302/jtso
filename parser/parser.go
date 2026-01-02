@@ -232,6 +232,65 @@ func JsTreeToFancytree(jsTree []TreeJs) []*FancytreeNode {
 	return rootNodes
 }
 
+func PrintTreeFancytree(node map[string]interface{}, indent int, o map[string]interface{}, parent *FancytreeNode) {
+	for k, v := range node {
+		if reflect.TypeOf(v).Kind() == reflect.Map {
+			// Create a folder node for nested maps
+			child := &FancytreeNode{
+				Title:    k,
+				Key:      genUUID(),
+				Folder:   true,
+				Icon:     "fas fa-search-plus",
+				Expanded: false,
+				Children: []*FancytreeNode{},
+			}
+			parent.Children = append(parent.Children, child)
+
+			o[k] = map[string]interface{}{}
+			PrintTreeFancytree(v.(map[string]interface{}), indent+1, o[k].(map[string]interface{}), child)
+		} else {
+			// Create a leaf node for values
+			o[k] = v
+			child := &FancytreeNode{
+				Title: fmt.Sprintf("%s = %s", k, fmt.Sprint(v)),
+				Key:   genUUID(),
+				Icon:  "fas fa-sign-out-alt",
+			}
+			parent.Children = append(parent.Children, child)
+		}
+	}
+}
+
+func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
+	global = append(global, node.Data.(string))
+
+	if len(node.Children) != 0 {
+		for _, child := range node.Children {
+			TraverseTreeFancytree(child, parent)
+		}
+		global = global[:len(global)-1]
+	} else {
+		path := strings.Join(global, "/")
+
+		// Create a folder node for the path
+		pathNode := &FancytreeNode{
+			Title:    path,
+			Key:      genUUID(),
+			Folder:   true,
+			Icon:     "fas fa-search-plus",
+			Expanded: false,
+			Children: []*FancytreeNode{},
+		}
+		parent.Children = append(parent.Children, pathNode)
+
+		output := make(map[string]interface{})
+		output[path] = make(map[string]interface{})
+		PrintTreeFancytree(node.Value, 1, output[path].(map[string]interface{}), pathNode)
+		global = global[:len(global)-1]
+	}
+}
+
+/*
 func PrintTreeFancytree(node map[string]interface{}, parentKey string) []*FancytreeNode {
 	var nodes []*FancytreeNode
 
@@ -300,7 +359,7 @@ func TraverseTreeFancytree(node *TreeNode) []*FancytreeNode {
 	}
 
 	return nodes
-}
+} */
 
 func parseXpath(xpath string, value string, merge bool) error {
 

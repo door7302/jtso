@@ -1196,7 +1196,7 @@ func routeStream(c echo.Context) error {
 			select {
 			case <-parser.StreamObj.StopStreaming:
 				var jsTree []parser.TreeJs
-				var fancytreeData []*parser.FancytreeNode
+				//var fancytreeData []*parser.FancytreeNode
 				var jsonData []byte
 				var err error
 
@@ -1209,9 +1209,15 @@ func routeStream(c echo.Context) error {
 					parser.StreamData("End of the subscription. Close gNMI session", "OK")
 					logger.Log.Debug("Generate payload based on the Tree")
 					if collectCfg.cfg.Portal.FancyTree {
-						fancytreeData = make([]*parser.FancytreeNode, 0)
-						fancytreeData = parser.TraverseTreeFancytree(parser.StreamObj.Result)
-						jsonData, err = json.Marshal(fancytreeData)
+						fancytreeData := &parser.FancytreeNode{
+							Title:    "Root",
+							Key:      "root",
+							Folder:   true,
+							Expanded: true,
+							Children: []*parser.FancytreeNode{},
+						}
+						parser.TraverseTreeFancytree(parser.StreamObj.Result, fancytreeData)
+						jsonData, err = json.Marshal(fancytreeData.Children)
 
 					} else {
 						jsTree = make([]parser.TreeJs, 0)

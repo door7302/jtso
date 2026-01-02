@@ -93,9 +93,23 @@
     border-radius: 2px;
 }
 
+/* Light mode */
+#result .fancytree-container {
+    background-color: #fff; /* or any light color */
+    border: 1px solid #ccc; /* optional border */
+    padding: 4px;           /* optional padding */
+}
+
 /* ------------------------- */
 /* Dark Mode Overrides       */
 /* ------------------------- */
+
+/* Dark mode */
+body.dark-mode #result .fancytree-container {
+    background-color: #1e1e1e; /* dark background */
+    border: 1px solid #444;
+}
+
 body.dark-mode #result .fancytree-title {
     color: #ddd; /* Dark mode text */
 }
