@@ -157,11 +157,16 @@ const DEFAULT_RENDER_HTML = `
 
 function resetRender() {
   const render = document.getElementById("render");
+  render.innerHTML = DEFAULT_RENDER_HTML;
 
-  const fresh = render.cloneNode(false); 
-  fresh.innerHTML = DEFAULT_RENDER_HTML;
-
-  render.replaceWith(fresh);
+  // Reattach listeners
+  const toolbarBtn = document.getElementById("showToolbarBtn");
+  const toolbar = document.getElementById("toolbar");
+  if (toolbarBtn) {
+    toolbarBtn.onclick = () => {
+      toolbar.style.display = toolbar.style.display === "none" ? "block" : "none";
+    };
+  }
 }
 
 function updateDoc() {
@@ -172,6 +177,8 @@ function updateDoc() {
   var graf = document.getElementById("profileGraf");
   var kapa = document.getElementById("profileKapa");
 
+  resetRender();
+  
   if (p == "default") {
     img.setAttribute('src', "img/default.png");
     desc.innerHTML = "N/A";
