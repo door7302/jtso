@@ -20,9 +20,9 @@ $(document).ready(function () {
       mode: "dimm", 
     },
     source: [],
-    click: function(event, data) {
-      // optional node click logic
-    }
+    strings: {
+        noData: ""
+    },
   });
 
   // Search input
@@ -56,11 +56,11 @@ $(document).ready(function () {
 });
 
 browseButton.addEventListener("click", function () {
-
+  
   const p = document.getElementById("pathName").value.trim();
   const m = document.getElementById("merge").checked;
   const r = document.getElementById("router").value.trim();
-
+  browseButton.disabled = true;
   modal.innerHTML = '';
   tick.setAttribute('data-value', 0);
 
@@ -74,7 +74,7 @@ browseButton.addEventListener("click", function () {
   })
   .then(response => response.json())
   .then(data => {
-    browseButton.disabled = true;
+    
 
     eventSource = new EventSource("/stream");
     $('#logs').modal('show');

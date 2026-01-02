@@ -62,6 +62,10 @@
     display: none !important;
 }
 
+.fancytree-no-data .fancytree-icon {
+    display: none;
+}
+
 /* Disable active / selected highlight in fancytree-plain */
 .fancytree-plain.fancytree-container.fancytree-treefocus
 span.fancytree-active span.fancytree-title,
@@ -113,7 +117,6 @@ span.fancytree-selected span.fancytree-title {
 /* Light mode */
 #result .fancytree-container {
     background-color: #fff; 
-    border: 1px solid #ccc;
     padding: 4px;           
 }
 
@@ -135,7 +138,7 @@ span.fancytree-selected span.fancytree-title {
 
 body.dark-mode #result .fancytree-container {
     background-color: #1e1e1e; /* dark background */
-    border: 1px solid #444;
+    padding: 4px;  
 }
 
 body.dark-mode #result .fancytree-title {

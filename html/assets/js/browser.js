@@ -46,7 +46,7 @@ browseButton.addEventListener("click", function () {
   var p = document.getElementById("pathName").value.trim();
   var m = document.getElementById("merge").checked;
   var r = document.getElementById("router").value.trim();
-
+  browseButton.disabled = true;
   modal.innerHTML = '';
   tick.setAttribute('data-value', 0);
   var dataToSend = {
@@ -64,7 +64,7 @@ browseButton.addEventListener("click", function () {
   })
     .then(response => response.json())
     .then(data => {
-      browseButton.disabled = true;
+      
       // Start the EventSource for streaming
       eventSource = new EventSource("/stream");
       $('#logs').modal('show');
