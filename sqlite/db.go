@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"database/sql"
+	"jtso/influx"
 	"jtso/logger"
 	"os"
 	"strings"
@@ -60,6 +61,8 @@ type Admin struct {
 	VSRXDebug   int
 	VJUNOSDebug int
 	VEVODebug   int
+	// Influx retention policy (RP) duration
+	RPDuration string
 }
 
 var db *sql.DB
@@ -142,6 +145,7 @@ func Init(f string) error {
 		vsrxdebug INTEGER,
 		vjunosdebug INTEGER,
 		vevodebug INTEGER
+		rpduration STRING
 		);`
 
 	if _, err := db.Exec(createRtr); err != nil {
@@ -372,13 +376,43 @@ func LoadAll() error {
 	i = rows.Next()
 	if !i {
 		// nothing in the DB regarding administration  - add default one
-		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); err != nil {
+		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, influx.DefaultRetention); err != nil {
 			logger.Log.Errorf("Error while adding default administration - err: %v", err)
 			dbMu.Unlock()
 			return err
 		}
 	} else {
-		err = rows.Scan(&ActiveAdmin.Id, &ActiveAdmin.MXDebug, &ActiveAdmin.PTXDebug, &ActiveAdmin.ACXDebug, &ActiveAdmin.EXDebug, &ActiveAdmin.QFXDebug, &ActiveAdmin.SRXDebug, &ActiveAdmin.CRPDDebug, &ActiveAdmin.CPTXDebug, &ActiveAdmin.VMXDebug, &ActiveAdmin.VSRXDebug, &ActiveAdmin.VJUNOSDebug, &ActiveAdmin.VEVODebug)
+		colExists := false
+		rows, err := db.Query("PRAGMA table_info(administration);")
+		if err != nil {
+			logger.Log.Errorf("Error while checking table info - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+		for rows.Next() {
+			var cid int
+			var name, ctype string
+			var notnull, pk int
+			var dfltValue interface{}
+			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
+				logger.Log.Errorf("Error scanning table_info - err: %v", err)
+				dbMu.Unlock()
+				return err
+			}
+			if name == "rpduration" {
+				colExists = true
+				break
+			}
+		}
+		if !colExists {
+			_, err := db.Exec("ALTER TABLE administration ADD COLUMN rpduration TEXT DEFAULT '90d';")
+			if err != nil {
+				logger.Log.Errorf("Error adding rpduration column - err: %v", err)
+				dbMu.Unlock()
+				return err
+			}
+		}
+		err = rows.Scan(&ActiveAdmin.Id, &ActiveAdmin.MXDebug, &ActiveAdmin.PTXDebug, &ActiveAdmin.ACXDebug, &ActiveAdmin.EXDebug, &ActiveAdmin.QFXDebug, &ActiveAdmin.SRXDebug, &ActiveAdmin.CRPDDebug, &ActiveAdmin.CPTXDebug, &ActiveAdmin.VMXDebug, &ActiveAdmin.VSRXDebug, &ActiveAdmin.VJUNOSDebug, &ActiveAdmin.VEVODebug, &ActiveAdmin.RPDuration)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing administration rows - err: %v", err)
 			dbMu.Unlock()
