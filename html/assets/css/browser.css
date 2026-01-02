@@ -61,7 +61,7 @@
 /* All tree text */
 #result .fancytree-title {
     font-family: "Arial", sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     color: #222; /* Light mode text */
 }
 
@@ -71,21 +71,13 @@
 #result .fancytree-icon {
     color: #666; /* Light mode icons */
     font-size: 16px;
-    margin-top: 8px;
+    margin-top: 5px;
 }
 
 /* Hover effect */
 #result .fancytree-node:hover > .fancytree-title {
     background-color: #53a451;
     color: black;
-    border: 0px solid #444;
-}
-
-/* Selected node */
-#result .fancytree-node.fancytree-selected > .fancytree-title {
-    background-color: #53a451;
-    color: black;
-    font-weight: bold;
     border: 0px solid #444;
 }
 
@@ -99,9 +91,9 @@
 
 /* Light mode */
 #result .fancytree-container {
-    background-color: #fff; /* or any light color */
-    border: 1px solid #ccc; /* optional border */
-    padding: 4px;           /* optional padding */
+    background-color: #fff; 
+    border: 1px solid #ccc;
+    padding: 4px;           
 }
 
 /* ------------------------- */
@@ -124,13 +116,6 @@ body.dark-mode #result .fancytree-node:hover > .fancytree-title {
     border: 0px solid #444;
 }
 
-body.dark-mode #result .fancytree-node.fancytree-selected > .fancytree-title {
-    background-color:#53a451;
-    color: #fff;
-    font-weight: bold;
-    border: 0px solid #444;
-}
-
 body.dark-mode #result .fancytree-custom-icon,
 body.dark-mode #result .fancytree-expander,
 body.dark-mode #result .fancytree-icon {
@@ -140,9 +125,4 @@ body.dark-mode #result .fancytree-icon {
 body.dark-mode #result .fancytree-match {
     background-color: #555;
     color: #fff;
-}
-
-/* Optional: spacing for readability */
-#result .fancytree-title {
-    padding: 2px 4px;
 }
