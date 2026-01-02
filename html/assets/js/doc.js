@@ -136,6 +136,29 @@ function renderCards(paths) {
 searchInput.addEventListener("input", applyFilters);
 originFilter.addEventListener("change", applyFilters);
 
+const DEFAULT_RENDER_HTML = `
+  <div class="app">
+    <h1 id="rootTitle"></h1>
+    <div class="summary" id="summary"></div>
+
+    <div class="toolbar" id="toolbar" style="display:none;">
+      <input id="searchInput" type="text" placeholder="Filter by path or field..." />
+      <select id="originFilter">
+        <option value="">All origins</option>
+        <option value="native">native</option>
+        <option value="openconfig">openconfig</option>
+      </select>
+    </div>
+
+    <div id="status" class="loading">Click on Show Sensors button(s)</div>
+    <div class="cards" id="cardsContainer"></div>
+  </div>
+`;
+
+function resetRender() {
+  document.getElementById("render").innerHTML = DEFAULT_RENDER_HTML;
+}
+
 function updateDoc() {
   var p = document.getElementById("profiles").value.trim();
   var img = document.getElementById("profileImg");
@@ -145,10 +168,7 @@ function updateDoc() {
   var kapa = document.getElementById("profileKapa");
 
   // Reset sensors
-  const container = document.getElementById("cardsContainer");
-  while (container.firstChild) {
-    container.removeChild(container.firstChild);
-  }
+  resetRender();
 
   if (p == "default") {
     img.setAttribute('src', "img/default.png");
