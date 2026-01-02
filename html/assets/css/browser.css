@@ -134,7 +134,7 @@ body.dark-mode #result .fancytree-icon {
 
 body.dark-mode #result .fancytree-match {
     background-color: #ffbe00;
-    color: #fff;
+    color: #000;
     font-weight: bold;
     border-radius: 10px;
 }
