@@ -144,6 +144,12 @@ function updateDoc() {
   var graf = document.getElementById("profileGraf");
   var kapa = document.getElementById("profileKapa");
 
+  // Reset sensors
+  const container = document.getElementById("cardsContainer");
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
   if (p == "default") {
     img.setAttribute('src', "img/default.png");
     desc.innerHTML = "N/A";
