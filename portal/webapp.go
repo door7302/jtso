@@ -673,6 +673,7 @@ func routeDoc(c echo.Context) error {
 func routeBrowse(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
+	useFancy := collectCfg.cfg.Portal.FancyTree
 
 	// Get all routers from db
 	var lr []RouterDetails
@@ -684,7 +685,7 @@ func routeBrowse(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "UseFancyTree": useFancy})
 }
 
 /// ---------------------------------------------///
@@ -1195,6 +1196,10 @@ func routeStream(c echo.Context) error {
 			select {
 			case <-parser.StreamObj.StopStreaming:
 				var jsTree []parser.TreeJs
+				var fancytreeData []*parser.FancytreeNode
+				var jsonData []byte
+				var err error
+
 				// depending on the error report:
 				errString := parser.StreamObj.Error.Error()
 
@@ -1203,9 +1208,17 @@ func routeStream(c echo.Context) error {
 
 					parser.StreamData("End of the subscription. Close gNMI session", "OK")
 					logger.Log.Debug("Generate payload based on the Tree")
-					jsTree = make([]parser.TreeJs, 0)
-					parser.TraverseTree(parser.StreamObj.Result, "#", &jsTree)
-					jsonData, err := json.Marshal(jsTree)
+					if collectCfg.cfg.Portal.FancyTree {
+						fancytreeData = make([]*parser.FancytreeNode, 0)
+						fancytreeData = parser.TraverseTreeFancytree(parser.StreamObj.Result)
+						jsonData, err = json.Marshal(fancytreeData)
+
+					} else {
+						jsTree = make([]parser.TreeJs, 0)
+						parser.TraverseTree(parser.StreamObj.Result, "#", &jsTree)
+						jsonData, err = json.Marshal(jsTree)
+					}
+
 					if err != nil {
 						logger.Log.Errorf("Unable to marshall the result: %v", err)
 						parser.StreamData(fmt.Sprintf("Unable to marshall the result: %s", err.Error()), "ERROR")

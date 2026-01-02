@@ -31,6 +31,14 @@ type TreeJs struct {
 	Text   string `json:"text"`
 	Icon   string `json:"icon"`
 }
+type FancytreeNode struct {
+	Title    string           `json:"title"`
+	Key      string           `json:"key"`
+	Folder   bool             `json:"folder,omitempty"`
+	Icon     string           `json:"icon,omitempty"`
+	Expanded bool             `json:"expanded,omitempty"`
+	Children []*FancytreeNode `json:"children,omitempty"`
+}
 
 type Streamer struct {
 	Stream        int
@@ -192,6 +200,106 @@ func TraverseTree(node *TreeNode, parentKey string, j *[]TreeJs) {
 		PrintTree(node.Value, 1, output[path].(map[string]interface{}), newkey, j)
 		global = global[:len(global)-1]
 	}
+}
+
+func JsTreeToFancytree(jsTree []TreeJs) []*FancytreeNode {
+	nodesMap := make(map[string]*FancytreeNode)
+	var rootNodes []*FancytreeNode
+
+	// First, create all nodes
+	for _, n := range jsTree {
+		nodesMap[n.Id] = &FancytreeNode{
+			Title:  n.Text,
+			Key:    n.Id,
+			Icon:   n.Icon,
+			Folder: false, // will update later if it has children
+		}
+	}
+
+	// Then, attach children to parents
+	for _, n := range jsTree {
+		if n.Parent == "#" || n.Parent == "" {
+			rootNodes = append(rootNodes, nodesMap[n.Id])
+		} else {
+			parentNode, ok := nodesMap[n.Parent]
+			if ok {
+				parentNode.Children = append(parentNode.Children, nodesMap[n.Id])
+				parentNode.Folder = true // mark parent as folder
+			}
+		}
+	}
+
+	return rootNodes
+}
+
+func PrintTreeFancytree(node map[string]interface{}, parentKey string) []*FancytreeNode {
+	var nodes []*FancytreeNode
+
+	for k, v := range node {
+		newKey := genUUID()
+		if reflect.TypeOf(v).Kind() == reflect.Map {
+			// Node has children
+			children := PrintTreeFancytree(v.(map[string]interface{}), newKey)
+			n := &FancytreeNode{
+				Title:    k,
+				Key:      newKey,
+				Folder:   true,
+				Icon:     "fas fa-search-plus",
+				Expanded: true,
+				Children: children,
+			}
+			nodes = append(nodes, n)
+		} else {
+			// Leaf node
+			n := &FancytreeNode{
+				Title: fmt.Sprintf("%s = %v", k, v),
+				Key:   newKey,
+				Icon:  "fas fa-sign-out-alt",
+			}
+			nodes = append(nodes, n)
+		}
+	}
+
+	return nodes
+}
+
+func TraverseTreeFancytree(node *TreeNode) []*FancytreeNode {
+	var nodes []*FancytreeNode
+
+	// If node has children
+	if len(node.Children) > 0 {
+		for _, child := range node.Children {
+			childNodes := TraverseTreeFancytree(child)
+			n := &FancytreeNode{
+				Title:    child.Data.(string),
+				Key:      genUUID(),
+				Folder:   len(childNodes) > 0,
+				Expanded: true,
+				Children: childNodes,
+				Icon:     "fas fa-search-plus",
+			}
+			nodes = append(nodes, n)
+		}
+	} else {
+		// Leaf: create path string
+		path := node.Data.(string)
+		leaf := &FancytreeNode{
+			Title: fmt.Sprintf("%s", path),
+			Key:   genUUID(),
+			Icon:  "fas fa-search-plus",
+		}
+
+		// Also convert its value map to children nodes
+		leaf.Children = PrintTreeFancytree(node.Value, leaf.Key)
+		if len(leaf.Children) > 0 {
+			leaf.Folder = true
+			leaf.Expanded = true
+		}
+
+		nodes = append(nodes, leaf)
+	}
+
+	return nodes
 }
 
 func parseXpath(xpath string, value string, merge bool) error {

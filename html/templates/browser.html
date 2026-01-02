@@ -8,13 +8,17 @@
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/alertify.min.css">
-    <link rel="stylesheet" href="css/jstree.css">
     <link rel="stylesheet" href="css/bootstrap-multiselect.css">
     <link rel="stylesheet" href="css/flip.min.css">
     <link rel="stylesheet" href="css/jtsostyle.css">
     <link rel="stylesheet" href="css/browser.css">
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery.fancytree/dist/skin-win8/ui.fancytree.min.css">
+    {{if .UseFancyTree}}
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery.fancytree/dist/skin-win8/ui.fancytree.min.css">
+    {{else}}
+        <link rel="stylesheet" href="css/jstree.css">
+    {{end}}
+    
 </head>
 
 <body>
@@ -162,13 +166,18 @@
     <script src="js/alertify.min.js"></script>
     <script src="js/bootstrap-waitingfor.min.js"></script>
     <script src="js/bootstrap-multiselect.js"></script>
-    <script src="js/jstree.min.js"></script>
     <script src="js/flip.min.js"></script>
-    <script src="js/browser2.js"></script>
     <script src="js/dark.js"></script>
+    {{if .UseFancyTree}}
+        <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jquery.fancytree/dist/jquery.fancytree-all-deps.min.js"></script>
+        <script src="js/browser2.js"></script>
+    {{else}}
+        <script src="js/jstree.min.js"></script>
+        <script src="js/browser.js"></script>
+    {{end}}
 
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery.fancytree/dist/jquery.fancytree-all-deps.min.js"></script>
+    
 </body>
 
 </html>
