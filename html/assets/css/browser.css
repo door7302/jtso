@@ -70,19 +70,23 @@
 #result .fancytree-expander,
 #result .fancytree-icon {
     color: #666; /* Light mode icons */
+    font-size: 16px;
+    margin-top: 8px;
 }
 
 /* Hover effect */
 #result .fancytree-node:hover > .fancytree-title {
-    background-color: #e0f0ff;
-    border-radius: 2px;
+    background-color: #53a451;
+    color: black;
+    border: 0px solid #444;
 }
 
 /* Selected node */
 #result .fancytree-node.fancytree-selected > .fancytree-title {
-    background-color: #3399ff;
-    color: white;
+    background-color: #53a451;
+    color: black;
     font-weight: bold;
+    border: 0px solid #444;
 }
 
 /* Search match highlight */
@@ -115,12 +119,16 @@ body.dark-mode #result .fancytree-title {
 }
 
 body.dark-mode #result .fancytree-node:hover > .fancytree-title {
-    background-color: #333;
+    background-color: #53a451;
+    color: #fff;
+    border: 0px solid #444;
 }
 
 body.dark-mode #result .fancytree-node.fancytree-selected > .fancytree-title {
-    background-color: #1a73e8;
+    background-color:#53a451;
     color: #fff;
+    font-weight: bold;
+    border: 0px solid #444;
 }
 
 body.dark-mode #result .fancytree-custom-icon,
