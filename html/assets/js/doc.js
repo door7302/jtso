@@ -14,7 +14,7 @@ function applyFilters() {
   const filtered = initialData.listOfPaths.filter(p => {
     if (origin && p.origin !== origin) return false;
 
-    return inPath || inFields;
+    return true;
   });
 
   renderCards(filtered);
@@ -23,7 +23,8 @@ function applyFilters() {
 function renderCards(paths) {
   cardsContainer.innerHTML = "";
   if (!paths.length) {
-    cardsContainer.innerHTML = "<div style='font-size:13px;color:#aaa;'>No paths match filters.</div>";
+    cardsContainer.innerHTML =
+      "<div style='font-size:13px;color:#aaa;'>No paths match filters.</div>";
     return;
   }
 
@@ -43,18 +44,14 @@ function renderCards(paths) {
 
     const intervalBadge = document.createElement("div");
     intervalBadge.className = "badge";
-    intervalBadge.innerHTML =
-      `<span class="badge-label">Interval:</span><span>${p.interval} sec(s)</span>`;
+    intervalBadge.innerHTML = `<span class="badge-label">Interval:</span><span>${p.interval} sec(s)</span>`;
     meta.appendChild(intervalBadge);
 
     const originBadge = document.createElement("div");
     originBadge.className =
       "badge " +
-      (p.origin === "native"
-        ? "badge-origin-native"
-        : "badge-origin-openconfig");
-    originBadge.innerHTML =
-      `<span class="badge-label">Origin:</span><span>${p.origin}</span>`;
+      (p.origin === "native" ? "badge-origin-native" : "badge-origin-openconfig");
+    originBadge.innerHTML = `<span class="badge-label">Origin:</span><span>${p.origin}</span>`;
     meta.appendChild(originBadge);
 
     if (p.aliases && p.aliases.length) {
@@ -81,8 +78,8 @@ function renderCards(paths) {
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "fields-toggle";
-      toggle.innerHTML =
-        `<span>Fields (${fields.length})</span><span>▼</span>`;
+      toggle.innerHTML = `<span>Fields (${fields.length})</span><span>▼</span>`;
+
       const list = document.createElement("div");
       list.className = "fields-list";
 
@@ -109,7 +106,6 @@ function renderCards(paths) {
       } else {
         empty.textContent = "No fields for this path.";
       }
-      
       fieldsContainer.appendChild(empty);
     }
 
@@ -131,6 +127,7 @@ function resetRender() {
   summaryEl.textContent = "";
   statusEl.textContent = "Click on a 'Show Sensors' button";
   toolbar.style.display = "none";
+
   // Remove all current cards
   cardsContainer.innerHTML = "";
 }
@@ -143,8 +140,6 @@ function updateDoc() {
   var graf = document.getElementById("profileGraf");
   var kapa = document.getElementById("profileKapa");
 
-
-
   if (p == "default") {
     img.setAttribute('src', "img/default.png");
     desc.innerHTML = "N/A";
@@ -152,11 +147,10 @@ function updateDoc() {
     graf.innerHTML = "N/A";
     kapa.innerHTML = "N/A";
   } else {
-    var dataToSend = {
-      "profile": p
-    };
+    var dataToSend = { "profile": p };
     waitingDialog.show();
     resetRender();
+
     // send data
     $(function () {
       $.ajax({
@@ -173,7 +167,6 @@ function updateDoc() {
             graf.innerHTML = json.graf.trim();
             kapa.innerHTML = json.kapa.trim();
             waitingDialog.hide();
-
           } else {
             alertify.alert("JSTO...", json.msg);
             waitingDialog.hide();
@@ -195,7 +188,7 @@ async function loadConfig(fileName) {
       throw new Error(`Failed to load ${fileName}: ${response.statusText}`);
     }
 
-    const jsonContent = await response.json(); // Parse JSON
+    const jsonContent = await response.json();
 
     // Pretty-print JSON
     const formattedJson = JSON.stringify(jsonContent, null, 2);
@@ -224,6 +217,7 @@ function showSensor(family, profile, config) {
     };
 
     waitingDialog.show();
+
     // send data
     $(function () {
       $.ajax({
@@ -274,8 +268,8 @@ function showSensor(family, profile, config) {
 document.querySelector('#config .close').addEventListener('click', function () {
   const modal = document.getElementById('config');
   modal.classList.remove('show'); // Remove the `show` class
-  modal.style.display = 'none';  // Hide the modal
-  document.body.classList.remove('modal-open'); // Remove the modal-open class from body
+  modal.style.display = 'none';   // Hide the modal
+  document.body.classList.remove('modal-open'); // Remove modal-open from body
   const backdrop = document.querySelector('.modal-backdrop');
-  if (backdrop) backdrop.remove(); // Remove the backdrop element
+  if (backdrop) backdrop.remove(); // Remove backdrop
 });
