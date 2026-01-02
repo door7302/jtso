@@ -25,12 +25,15 @@ var global []string
 var re1, re2, re3 *regexp.Regexp
 var StreamObj *Streamer
 
+// Will deprecate TreeJS in further release
 type TreeJs struct {
 	Id     string `json:"id"`
 	Parent string `json:"parent"`
 	Text   string `json:"text"`
 	Icon   string `json:"icon"`
 }
+
+// Default mode - more powerful
 type FancytreeNode struct {
 	Title    string           `json:"title"`
 	Key      string           `json:"key"`
