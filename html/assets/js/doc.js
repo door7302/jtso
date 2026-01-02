@@ -172,9 +172,6 @@ function updateDoc() {
   var graf = document.getElementById("profileGraf");
   var kapa = document.getElementById("profileKapa");
 
-  // Reset sensors
-  resetRender();
-
   if (p == "default") {
     img.setAttribute('src', "img/default.png");
     desc.innerHTML = "N/A";
