@@ -139,8 +139,8 @@ originFilter.addEventListener("change", applyFilters);
 function resetRender() {
   rootTitle.textContent = "";
   summaryEl.textContent = "";
-  statusEl.textContent = "";
-
+  statusEl.textContent = "Click on a 'Show Sensors' button";
+  toolbar.style.display = "none";
   // Remove all current cards
   cardsContainer.innerHTML = "";
 }
