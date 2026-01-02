@@ -62,6 +62,15 @@
     display: none !important;
 }
 
+/* Disable active / selected highlight in fancytree-plain */
+.fancytree-plain.fancytree-container.fancytree-treefocus
+span.fancytree-active span.fancytree-title,
+.fancytree-plain.fancytree-container.fancytree-treefocus
+span.fancytree-selected span.fancytree-title {
+    background-color: transparent !important;
+    border-color: transparent !important;
+}
+
 /* All tree text */
 #result .fancytree-title {
     font-family: "Arial", sans-serif;
@@ -113,6 +122,17 @@
 /* ------------------------- */
 
 /* Dark mode */
+
+body.dark-mode
+.fancytree-plain.fancytree-container.fancytree-treefocus
+span.fancytree-active span.fancytree-title,
+body.dark-mode
+.fancytree-plain.fancytree-container.fancytree-treefocus
+span.fancytree-selected span.fancytree-title {
+    background-color: transparent !important;
+    border-color: transparent !important;
+}
+
 body.dark-mode #result .fancytree-container {
     background-color: #1e1e1e; /* dark background */
     border: 1px solid #444;
