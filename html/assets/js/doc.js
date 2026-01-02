@@ -3,26 +3,17 @@ let initialData = null;
 const rootTitle = document.getElementById("rootTitle");
 const summaryEl = document.getElementById("summary");
 const cardsContainer = document.getElementById("cardsContainer");
-const searchInput = document.getElementById("searchInput");
 const originFilter = document.getElementById("originFilter");
 const statusEl = document.getElementById("status");
 const toolbar = document.getElementById("toolbar");
 
 function applyFilters() {
   if (!initialData) return;
-
-  const text = searchInput.value.trim().toLowerCase();
   const origin = originFilter.value;
 
   const filtered = initialData.listOfPaths.filter(p => {
     if (origin && p.origin !== origin) return false;
 
-    if (!text) return true;
-
-    const inPath = p.name.toLowerCase().includes(text);
-    const inFields = (p.listOfFields || []).some(f =>
-      f.toLowerCase().includes(text)
-    );
     return inPath || inFields;
   });
 
@@ -133,7 +124,6 @@ function renderCards(paths) {
   });
 }
 
-searchInput.addEventListener("input", applyFilters);
 originFilter.addEventListener("change", applyFilters);
 
 function resetRender() {
