@@ -7,6 +7,7 @@ import (
 	"jtso/association"
 	"jtso/config"
 	"jtso/container"
+	"jtso/influx"
 	"jtso/kapacitor"
 	"jtso/logger"
 	_ "jtso/output"
@@ -137,6 +138,16 @@ func main() {
 			}
 		}
 	}()
+
+	// Check if influxdb retention policy is equal to the default value, if not set it.
+	currentRP, _ := influx.GetRetentionPolicyDuration()
+	if currentRP != influx.DefaultRetention {
+		logger.Log.Infof("Change the influxdb retention policy duration to %s", influx.DefaultRetention)
+		err := influx.AlterRetentionPolicyDuration(influx.DefaultRetention)
+		if err != nil {
+			logger.Log.Errorf("Error while modifying influxdb retention policy duration: %v", err)
+		}
+	}
 
 	// Waiting exit
 	c := make(chan os.Signal, 1)
