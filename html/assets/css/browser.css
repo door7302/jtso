@@ -55,3 +55,79 @@
    border-radius:0.12em !important; 
 }
 
+/* ------------------------- */
+/* Fancytree General Styles  */
+/* ------------------------- */
+
+/* Container and nodes */
+#result.fancytree-container,
+#result.fancytree-container .fancytree-node {
+    font-family: "Arial", sans-serif;
+    font-size: 14px;
+    color: #222;              /* default text color */
+    background-color: #fff;   /* default background */
+}
+
+/* Node icons */
+#result.fancytree-container .fancytree-icon {
+    color: #666;
+}
+
+/* Highlighted search matches */
+.fancytree-match {
+    background-color: yellow;
+    color: black;
+    font-weight: bold;
+}
+
+/* Hover */
+.fancytree-node:hover {
+    background-color: #e0f0ff;
+}
+
+/* Selected node */
+.fancytree-node.fancytree-selected {
+    background-color: #3399ff;
+    color: white;
+    font-weight: bold;
+}
+
+/* ------------------------- */
+/* Dark Mode Overrides       */
+/* ------------------------- */
+body.dark-mode #result.fancytree-container,
+body.dark-mode #result.fancytree-container .fancytree-node {
+    font-family: "Arial", sans-serif;
+    font-size: 14px;
+    color: #ddd;               /* text color for dark mode */
+    background-color: #121212; /* tree background for dark mode */
+}
+
+/* Node icons in dark mode */
+body.dark-mode #result.fancytree-container .fancytree-icon {
+    color: #bbb;
+}
+
+/* Highlighted search matches in dark mode */
+body.dark-mode .fancytree-match {
+    background-color: #555;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Hover in dark mode */
+body.dark-mode .fancytree-node:hover {
+    background-color: #333;
+}
+
+/* Selected node in dark mode */
+body.dark-mode .fancytree-node.fancytree-selected {
+    background-color: #1a73e8;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Optional: adjust padding for better readability */
+#result.fancytree-container .fancytree-node {
+    padding: 2px 5px;
+}
