@@ -1247,7 +1247,7 @@ func routeStream(c echo.Context) error {
 							defer file.Close()
 							// Write each sorted key to a new line in the file
 							for _, key := range keys {
-								_, err := file.WriteString(key + "\n")
+								_, err := file.WriteString("/" + key + "\n")
 								if err != nil {
 									logger.Log.Errorf("Error writing the xpath raw output to file: %v", err)
 									break
