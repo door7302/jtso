@@ -284,7 +284,20 @@ func UpdateDebugMode(instance string, debug int) error {
 
 	// update the debug value for the instance
 	if _, err := db.Exec("UPDATE administration SET "+debugInst+"=? WHERE id=0;", debug); err != nil {
-		logger.Log.Errorf("Error while updating administration - err: %v", err)
+		logger.Log.Errorf("Error while updating debug mode - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	dbMu.Unlock()
+	err := LoadAll()
+	return err
+}
+
+func UpdateRpDuration(duration string) error {
+	dbMu.Lock()
+	// update the debug value for the instance
+	if _, err := db.Exec("UPDATE administration SET rpduration=? WHERE id=0;", duration); err != nil {
+		logger.Log.Errorf("Error while updating the RP duration - err: %v", err)
 		dbMu.Unlock()
 		return err
 	}

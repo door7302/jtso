@@ -1575,6 +1575,20 @@ func routeInfluxMgt(c echo.Context) error {
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to empty the database"})
 		}
 		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "InfluxDB has been successfully empty"})
+	case "changeduration":
+		duration := strings.ToLower(r.Data)
+		err = influx.AlterRetentionPolicyDuration(duration)
+		if err != nil {
+			logger.Log.Errorf("Unable to change the retention policy duration of the database: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to change the database's retention duration."})
+		}
+		// update value in db.
+		err = sqlite.UpdateRpDuration(duration)
+		if err != nil {
+			logger.Log.Errorf("Unable to change the retention policy duration in the sql DB: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to save the database's retention duration in the sql DB."})
+		}
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "InfluxDB Retention Duration has been successfully changed"})
 	default:
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown InfluxDB action"})
 	}

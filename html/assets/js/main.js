@@ -27,6 +27,52 @@ function emptydb() {
   }).setHeader('JSTO...');
 }
 
+function changeRP() {
+alertify
+  .prompt(
+    'Change the Retention Policy duration',
+    'Please enter a duration (e.g. 90d, 2m, 150h):',
+    '30d',
+    function (evt, value) {
+      // OK clicked
+
+      // validate duration
+      if (!/^[0-9]+(d|h|m|s)$/.test(value)) {
+        alertify.error('Invalid duration format (use 90d, 2m, 150h...)');
+        return false; // keep dialog open
+      }
+
+      $.ajax({
+        type: 'POST',
+        url: '/influxmgt',
+        data: JSON.stringify({
+          action: 'changeduration',
+          data: value
+        }),
+        contentType: 'application/json',
+        dataType: 'json',
+        success: function (json) {
+          if (json.status === 'OK') {
+            alertify.success(
+              'The JTS Retention Policy Duration has been successfully changed to (' + value + ')'
+            );
+          } else {
+            alertify.alert('JSTO...', json.msg);
+          }
+        },
+        error: function () {
+          alertify.alert('JSTO...', 'Unexpected error...');
+        }
+      });
+    },
+    function () {
+      // Cancel clicked
+      alertify.message('Operation cancelled');
+    }
+  ).setHeader('JSTO...');
+}
+
+
 function enableDebug(element) {
 
   const elementId = element.id;
