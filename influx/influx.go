@@ -11,7 +11,7 @@ const (
 	influxDBURL      = "http://influxdb:8086"
 	influxDBDatabase = "jtsdb"
 	influxRetention  = "autogen"
-	DefaultRetention = "90d"
+	DefaultRetention = "30d"
 )
 
 func EmptyDB() error {

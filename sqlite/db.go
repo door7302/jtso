@@ -382,6 +382,7 @@ func LoadAll() error {
 			return err
 		}
 	} else {
+		// Manage new fields
 		colExists := false
 		rows, err := db.Query("PRAGMA table_info(administration);")
 		if err != nil {
@@ -404,6 +405,7 @@ func LoadAll() error {
 				break
 			}
 		}
+		rows.Close()
 		if !colExists {
 			_, err := db.Exec("ALTER TABLE administration ADD COLUMN rpduration TEXT DEFAULT '90d';")
 			if err != nil {
@@ -412,6 +414,15 @@ func LoadAll() error {
 				return err
 			}
 		}
+		// End of the specific piece of code managing new fields
+		rows, err = db.Query("SELECT * FROM administration;")
+		if err != nil {
+			logger.Log.Errorf("Error while selecting administration - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+		defer rows.Close()
+		rows.Next()
 		err = rows.Scan(&ActiveAdmin.Id, &ActiveAdmin.MXDebug, &ActiveAdmin.PTXDebug, &ActiveAdmin.ACXDebug, &ActiveAdmin.EXDebug, &ActiveAdmin.QFXDebug, &ActiveAdmin.SRXDebug, &ActiveAdmin.CRPDDebug, &ActiveAdmin.CPTXDebug, &ActiveAdmin.VMXDebug, &ActiveAdmin.VSRXDebug, &ActiveAdmin.VJUNOSDebug, &ActiveAdmin.VEVODebug, &ActiveAdmin.RPDuration)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing administration rows - err: %v", err)
