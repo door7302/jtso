@@ -3,6 +3,9 @@ package influx
 import (
 	"fmt"
 	"jtso/logger"
+	"strconv"
+	"strings"
+	"time"
 
 	client "github.com/influxdata/influxdb1-client/v2"
 )
@@ -13,6 +16,34 @@ const (
 	influxRetention  = "autogen"
 	DefaultRetention = "30d"
 )
+
+func RetentionDurationEqual(a, b string) (bool, error) {
+	da, err := normalizeDuration(a)
+	if err != nil {
+		return false, err
+	}
+
+	db, err := normalizeDuration(b)
+	if err != nil {
+		return false, err
+	}
+
+	return da == db, nil
+}
+
+func normalizeDuration(s string) (time.Duration, error) {
+	s = strings.TrimSpace(s)
+
+	if strings.HasSuffix(s, "d") {
+		daysStr := strings.TrimSuffix(s, "d")
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return 0, fmt.Errorf("invalid day duration: %s", s)
+		}
+		return time.Duration(days) * 24 * time.Hour, nil
+	}
+	return time.ParseDuration(s)
+}
 
 func EmptyDB() error {
 	// Create a new HTTP client

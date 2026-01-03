@@ -407,7 +407,7 @@ func LoadAll() error {
 		}
 		rows.Close()
 		if !colExists {
-			_, err := db.Exec("ALTER TABLE administration ADD COLUMN rpduration TEXT DEFAULT '90d';")
+			_, err := db.Exec("ALTER TABLE administration ADD COLUMN rpduration TEXT DEFAULT '" + influx.DefaultRetention + "';")
 			if err != nil {
 				logger.Log.Errorf("Error adding rpduration column - err: %v", err)
 				dbMu.Unlock()

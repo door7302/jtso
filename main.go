@@ -141,12 +141,18 @@ func main() {
 
 	// Check if influxdb retention policy is equal to the default value, if not set it.
 	currentRP, _ := influx.GetRetentionPolicyDuration()
-	if currentRP != sqlite.ActiveAdmin.RPDuration {
-		logger.Log.Infof("Change the influxdb retention policy duration to %s", sqlite.ActiveAdmin.RPDuration)
+	equal, err := influx.RetentionDurationEqual(currentRP, sqlite.ActiveAdmin.RPDuration)
+	if err != nil {
+		logger.Log.Errorf("Error while comparing influxdb retention policy duration: %v", err)
+	}
+	if !equal {
+		logger.Log.Infof("Change the influxdb retention policy duration from %s to %s", currentRP, sqlite.ActiveAdmin.RPDuration)
 		err := influx.AlterRetentionPolicyDuration(sqlite.ActiveAdmin.RPDuration)
 		if err != nil {
 			logger.Log.Errorf("Error while modifying influxdb retention policy duration: %v", err)
 		}
+	} else {
+		logger.Log.Infof("Retention Policy of influxDB is configured well with duration set to: %s", sqlite.ActiveAdmin.RPDuration)
 	}
 
 	// Waiting exit
