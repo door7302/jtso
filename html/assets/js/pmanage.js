@@ -337,9 +337,13 @@ function openIntervalModal(data) {
         ? item["configured-interval"]
         : "";
 
-    const badges = (item.assigned || [])
-      .map(a => `<span class="badge badge-primary">${a}</span>`)
-      .join("");
+    const badges = (item.assigned && item.assigned.length)
+      ? `<div class="platform-badges">
+       ${item.assigned.map(a =>
+        `<span class="badge badge-primary">${a}</span>`
+      ).join("")}
+     </div>`
+      : '<span class="text-muted">—</span>';
 
     const row = `
   <tr>

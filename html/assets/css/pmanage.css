@@ -14,8 +14,20 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-#intervalModal .badge {
+#intervalModal .platform-badges {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+#intervalModal .platform-badges .badge {
   font-size: 0.75rem;
+  padding: 0.35em 0.55em;
+}
+
+.tooltip-inner {
+  white-space: nowrap;
+  max-width: 90vw;
 }
 
 /* Default/light mode */
