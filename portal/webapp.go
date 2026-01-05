@@ -19,6 +19,7 @@ import (
 	"jtso/worker"
 	"net/http"
 	"os"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -86,7 +87,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/routers.html", routeRouters)
 	wapp.GET("/profiles.html", routeProfiles)
 	wapp.GET("/cred.html", routeCred)
-	wapp.GET("/doc.html", routeDoc)
+	wapp.GET("/pmanagement.html", routeDoc)
 	wapp.GET("/browser.html", routeBrowse)
 	wapp.GET("/stats.html", routeStats)
 
@@ -110,6 +111,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/uploadprofilecsv", routeUploadProfileCsv)
 	wapp.POST("/getrawconfig", routeGetRawConfig)
 	wapp.POST("/gettree", routeGetTreeDoc)
+	wapp.POST("/intervalmgmt", routeIntervalMgt)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -667,7 +669,7 @@ func routeDoc(c echo.Context) error {
 	association.ProfileLock.Unlock()
 	sort.Strings(lp)
 
-	return c.Render(http.StatusOK, "doc.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "pmanagement.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
 }
 
 func routeBrowse(c echo.Context) error {
@@ -1554,6 +1556,107 @@ func routeUptDoc(c echo.Context) error {
 		graf = "No Grafana Dasboards attached to this profile"
 	}
 	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: tele, Graf: graf, Kapa: kapa})
+}
+func routeIntervalMgt(c echo.Context) error {
+	var err error
+
+	r := new(IntervalMgt)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for managing Telegraf intervals: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the data"})
+	}
+
+	switch r.Action {
+	case "reset":
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: ""})
+	case "getinterval":
+		// get all interval
+		err, ri := generateProfileInterval(r.Data)
+		if err != nil {
+			logger.Log.Errorf("Unable to collect Telegraf streaming intervals: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to collect Telegraf streaming intervals."})
+		}
+		return c.JSON(http.StatusOK, ri)
+	case "setinterval":
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: ""})
+	default:
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown action"})
+	}
+}
+
+func generateProfileInterval(p string) (error, ReplyInterval) {
+	var ri ReplyInterval
+
+	ri = ReplyInterval{
+		Status:    "OK", // init to OK
+		Intervals: []PathInterval{},
+	}
+
+	// Temp. MAP to manage path unicity
+	tMap := make(map[string]PathInterval)
+
+	// get all Telegraf config from profile definition
+	pTelegraf := association.ActiveProfiles[p].Definition.TelCfg
+
+	// iterate on all the platform config
+	// Reflect over all fields
+	val := reflect.ValueOf(pTelegraf)
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		if field.Kind() == reflect.Slice {
+			platform := strings.ToLower(strings.TrimSuffix(val.Type().Field(i).Name, "Cfg"))
+			for j := 0; j < field.Len(); j++ {
+				cfg := field.Index(j).Interface().(association.Config)
+				fullPath := association.ACTIVE_PROFILES + p + "/" + cfg.Config
+				newCfg, err := maker.LoadConfig(fullPath)
+				if err != nil {
+					logger.Log.Errorf("Unable to load telegraf config %s: %v", fullPath, err)
+					ri.Status = "NOK"
+					return err, ri
+				}
+				for _, g := range newCfg.GnmiList {
+					for _, s := range g.Subs {
+						if pi, exists := tMap[s.Path]; exists {
+							if pi.Default > s.Interval {
+								// keep the lowest default interval
+								pi.Default = s.Interval
+
+							}
+							// check if it's a new platform
+							found := false
+							for _, pl := range pi.Assigned {
+								if pl == platform {
+									found = true
+									break
+								}
+							}
+							if !found {
+								pi.Assigned = append(pi.Assigned, platform)
+							}
+							tMap[s.Path] = pi
+						} else {
+							// check if a configured value exists in the DB
+							ci, _, _ := sqlite.GetTelegrafInterval(p, s.Path)
+							pi := PathInterval{
+								Path:       s.Path,
+								Default:    s.Interval,
+								Configured: ci,
+								Assigned:   []string{platform},
+							}
+							tMap[s.Path] = pi
+						}
+					}
+				}
+			}
+		}
+	}
+	// now create the reply
+	for _, v := range tMap {
+		ri.Intervals = append(ri.Intervals, v)
+	}
+	return nil, ri
 }
 
 func routeInfluxMgt(c echo.Context) error {

@@ -238,7 +238,8 @@
   flex: 1; /* Right column takes 10% of the available space */
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: end;
+  margin-left: 10px;
 }
 
 .right-column .d-flex {

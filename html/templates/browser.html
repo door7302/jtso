@@ -13,12 +13,12 @@
     <link rel="stylesheet" href="css/jtsostyle.css">
     <link rel="stylesheet" href="css/browser.css">
     {{if .UseFancyTree}}
-        <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery.fancytree/dist/skin-win8/ui.fancytree.min.css">
+    <link rel="stylesheet" href="css/jquery-ui.css">
+    <link rel="stylesheet" href="css/ui.fancytree.min.css">
     {{else}}
         <link rel="stylesheet" href="css/jstree.css">
-    {{end}}
-    
+        {{end}}
+
 </head>
 
 <body>
@@ -34,13 +34,12 @@
                         <i class="fas fa-times" aria-hidden="true" style="font-size: 1.5rem; color: white;"></i>
                     </button>
                 </div>
-                <div class="modal-body" 
-                    style='display: flex;'>
+                <div class="modal-body" style='display: flex;'>
                     <!-- First Column (75%) -->
                     <div id="modalcore" style='flex: 3; padding: 10px; font-family: "Courier New", Courier, monospace; border-right: 1px solid #ddd;'>
-        
+
                     </div>
-    
+
                     <!-- Second Column (25%) -->
                     <div class="justify-content-center align-items-center" id="modalgauge" style="flex: 1; padding: 10px; text-align:center;">
                         <p>XPATH Received</p>
@@ -49,14 +48,13 @@
                                 <span data-view="flip" data-transform="arrive(5, .01) -> round -> split -> delay(rtl, 100, 150)"></span>
                             </div>
                         </div>
-                        <input class="btn btn-success" type="submit" value="Export XPATHs" name="export" id="export"
-                        style="margin: 50px;margin-right: 0;margin-bottom: 0;margin-left: 0;" onclick="exportXpath()">
+                        <input class="btn btn-success" type="submit" value="Export XPATHs" name="export" id="export" style="margin: 50px;margin-right: 0;margin-bottom: 0;margin-left: 0;" onclick="exportXpath()">
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
 
     <nav class="navbar navbar-light navbar-expand-md py-3">
         <div class="container">
@@ -69,10 +67,15 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="profiles.html">Profiles</a></li>
-                    <li class="nav-item"><a class="nav-link" href="doc.html">Doc</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" data-bs-toggle="dropdown">Profiles</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="profiles.html">Associations</a></li>
+                            <li><a class="dropdown-item" href="pmanagement.html">Management</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1, _blank')">Grafana</a></li>
-                    
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
                         <ul class="dropdown-menu">
@@ -90,9 +93,9 @@
                     </li>
                 </ul>
                 <div class="form-check form-switch ms-3">
-                  <input class="form-check-input" type="checkbox" id="darkModeSwitch">
-                  <label class="form-check-label" for="darkModeSwitch">Dark Mode</label>
-              </div>
+                    <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                    <label class="form-check-label" for="darkModeSwitch">Dark Mode</label>
+                </div>
             </div>
         </div>
     </nav>
@@ -103,20 +106,20 @@
                 <h4 class="card-title">Telemetry sensor Analyzer</h4>
                 <form>
 
-                   
-                            <label class="form-label">Select a Router:</label>
-             
-                            <select id="router" class="selectpicker" data-width="100%">
-                                {{range .Rtrs}}
-                                <option value="{{.Shortname}}">{{.Shortname}}</option>
-                                {{end}}
-                            </select>
-             
-                            <label class="form-label">Enter the Sensor's Xpath:</label>
-               
-                            <input id="pathName" class="form-control mb-2" type="text">
-                  
-                
+
+                    <label class="form-label">Select a Router:</label>
+
+                    <select id="router" class="selectpicker" data-width="100%">
+                        {{range .Rtrs}}
+                        <option value="{{.Shortname}}">{{.Shortname}}</option>
+                        {{end}}
+                    </select>
+
+                    <label class="form-label">Enter the Sensor's Xpath:</label>
+
+                    <input id="pathName" class="form-control mb-2" type="text">
+
+
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="merge" checked>
                         <label class="form-check-label" for="flexCheckDefault">
@@ -124,15 +127,14 @@
                         </label>
                     </div>
                 </form>
-                <br/>
+                <br />
                 <div class="d-flex justify-content-center align-items-center">
-                <input class="btn btn-success" type="submit" value="Analyze path" name="browse" id="browse"
-                    style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+                    <input class="btn btn-success" type="submit" value="Analyze path" name="browse" id="browse" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
                 </div>
             </div>
         </div>
     </div>
-    <br/>
+    <br />
     <div class="other-div">
         <div class="card other-card">
             <h4 class="card-title">Results</h4>
@@ -140,8 +142,7 @@
                 <div class="row align-items-center">
                     <div class="col">
                         <label for="inputField" class="visually-hidden">Input</label>
-                        <input type="text" class="form-control mb-2" id="searching" name="searching"
-                            placeholder="Search in Tree">
+                        <input type="text" class="form-control mb-2" id="searching" name="searching" placeholder="Search in Tree">
                     </div>
                     <div class="col-auto">
                         <button type="button" class="btn btn-success mb-2" name="collapse" id="collapse">Collapse All</button>
@@ -149,16 +150,16 @@
                     <div class="col-auto">
                         <button type="button" class="btn btn-success mb-2" name="expand" id="expand">Expand All</button>
                     </div>
-                      <div class="col-auto">
+                    <div class="col-auto">
                         <button type="button" class="btn btn-success mb-2" name="export" id="export" onclick="exportXpath()">Export last query</button>
                     </div>
                 </div>
             </form>
             </br>
-       <div id="result">
-        
-       </div>
-            
+            <div id="result">
+
+            </div>
+
         </div>
     </div>
 
@@ -170,15 +171,15 @@
     <script src="js/flip.min.js"></script>
     <script src="js/dark.js"></script>
     {{if .UseFancyTree}}
-        <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/jquery.fancytree/dist/jquery.fancytree-all-deps.min.js"></script>
-        <script src="js/browser2.js"></script>
+    <script src="js/jquery-ui.min.js"></script>
+    <script src="js/jquery.fancytree-all-deps.min.js"></script>
+    <script src="js/browser2.js"></script>
     {{else}}
         <script src="js/jstree.min.js"></script>
         <script src="js/browser.js"></script>
-    {{end}}
+        {{end}}
 
-    
+
 </body>
 
 </html>

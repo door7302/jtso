@@ -1,3 +1,23 @@
+
+#intervalModal .path-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#intervalModal .path-text {
+  max-width: 360px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+#intervalModal .badge {
+  font-size: 0.75rem;
+}
+
 /* Default/light mode */
 #render {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;

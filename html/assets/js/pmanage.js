@@ -134,14 +134,12 @@ function resetRender() {
 
 function updateDoc() {
   var p = document.getElementById("profiles").value.trim();
-  var img = document.getElementById("profileImg");
   var desc = document.getElementById("profileDesc");
   var tele = document.getElementById("profileTele");
   var graf = document.getElementById("profileGraf");
   var kapa = document.getElementById("profileKapa");
 
   if (p == "default") {
-    img.setAttribute('src', "img/default.png");
     desc.innerHTML = "N/A";
     tele.innerHTML = "N/A";
     graf.innerHTML = "N/A";
@@ -264,6 +262,133 @@ function showSensor(family, profile, config) {
     statusEl.textContent = "Failed to load data.";
   }
 }
+
+function resetIntervals() {
+  var p = document.getElementById("profiles").value.trim();
+  if (p == "default") {
+    alertify.alert("JSTO...", "Please select a profile.");
+  } else {
+    alertify.confirm("Do you want to reset the streaming interval(s) for the profile " + p + " to their default values?", function (e) {
+      if (e) {
+        $(function () {
+          $.ajax({
+            type: 'POST',
+            url: "/intervalmgmt",
+            data: JSON.stringify({
+              "action": "reset",
+              "data": p
+            }),
+            contentType: "application/json",
+            dataType: "json",
+            success: function (json) {
+              if (json["status"] == "OK") {
+                alertify.success('The streamming intervals for profile " + p + " have been successfully reset')
+              } else {
+                alertify.alert("JTSO...", json.msg);
+              }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+              alertify.alert("JSTO...", "Unexpected error...");
+            }
+          });
+        });
+      }
+    }).setHeader('JSTO...');
+  }
+}
+
+function modifyIntervals() {
+  var p = document.getElementById("profiles").value.trim();
+  if (p == "default") {
+    alertify.alert("JSTO...", "Please select a profile.");
+  } else {
+    $(function () {
+      $.ajax({
+        type: 'POST',
+        url: "/intervalmgmt",
+        data: JSON.stringify({
+          "action": "getinterval",
+          "data": p
+        }),
+        contentType: "application/json",
+        dataType: "json",
+        success: function (json) {
+          if (json["status"] == "OK") {
+            openIntervalModal(json.intervals)
+          } else {
+            alertify.alert("JTSO...", json.msg);
+          }
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+          alertify.alert("JSTO...", "Unexpected error...");
+        }
+      });
+    });
+  }
+}
+
+function openIntervalModal(data) {
+  const tbody = $("#intervalTableBody");
+  tbody.empty();
+
+  data.forEach(item => {
+    const configured =
+      item["configured-interval"] > 0
+        ? item["configured-interval"]
+        : "";
+
+    const badges = (item.assigned || [])
+      .map(a => `<span class="badge badge-primary">${a}</span>`)
+      .join("");
+
+    const row = `
+        <tr>
+          <td>
+            <div class="path-wrapper">
+              <span class="path-text" title="${item.path}">
+                ${item.path}
+              </span>
+              ${badges}
+            </div>
+          </td>
+          <td>${item["default-interval"]}</td>
+          <td>
+            <input
+              type="number"
+              class="form-control interval-input"
+              data-path="${item.path}"
+              value="${configured}"
+              min="1"
+              placeholder="leave empty"
+            />
+          </td>
+        </tr>
+      `;
+
+    tbody.append(row);
+  });
+
+  $("#intervalModal").modal("show");
+}
+
+$("#applyIntervals").on("click", function () {
+  const result = [];
+
+  $(".interval-input").each(function () {
+    const value = $(this).val();
+    const path = $(this).data("path");
+
+    if (value !== "") {
+      result.push({
+        path: path,
+        "configured-interval": parseInt(value, 10)
+      });
+    }
+  });
+
+  alert(JSON.stringify(result, null, 2));
+  $("#intervalModal").modal("hide");
+});
 
 document.querySelector('#config .close').addEventListener('click', function () {
   const modal = document.getElementById('config');

@@ -93,6 +93,23 @@ type (
 		Data   string `json:"data"`
 	}
 
+	IntervalMgt struct {
+		Action string `json:"action"`
+		Data   string `json:"data"`
+	}
+
+	ReplyInterval struct {
+		Status    string         `json:"status"`
+		Intervals []PathInterval `json:"intervals"`
+	}
+
+	PathInterval struct {
+		Path       string   `json:"path"`
+		Default    int      `json:"default-interval"`
+		Configured int      `json:"configured-interval"`
+		Assigned   []string `json:"assigned"`
+	}
+
 	UpdateDebug struct {
 		Instance string `json:"instance"`
 	}

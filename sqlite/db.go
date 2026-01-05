@@ -65,10 +65,18 @@ type Admin struct {
 	RPDuration string
 }
 
+type TelemetryInterval struct {
+	Profile  string
+	Path     string
+	Mode     string
+	Interval int
+}
+
 var db *sql.DB
 var dbMu *sync.Mutex
 var RtrList []*RtrEntry
 var AssoList []*AssoEntry
+var ActiveInterval []*TelemetryInterval
 var ActiveCred Cred
 var ActiveAdmin Admin
 
@@ -144,8 +152,17 @@ func Init(f string) error {
 		vmxdebug INTEGER,
 		vsrxdebug INTEGER,
 		vjunosdebug INTEGER,
-		vevodebug INTEGER
-		rpduration STRING
+		vevodebug INTEGER,
+		rpduration TEXT
+		);`
+
+	const createTelegraf string = `
+		CREATE TABLE IF NOT EXISTS telegraf (
+		profile TEXT NOT NULL,
+		path TEXT NOT NULL,
+		mode TEXT,
+		interval INTEGER,
+		UNIQUE(profile, path)
 		);`
 
 	if _, err := db.Exec(createRtr); err != nil {
@@ -162,6 +179,10 @@ func Init(f string) error {
 	}
 	if _, err := db.Exec(createAdmin); err != nil {
 		logger.Log.Infof("Error while init DB %s Table administration - err: %v", f, err)
+		return err
+	}
+	if _, err := db.Exec(createTelegraf); err != nil {
+		logger.Log.Infof("Error while init DB %s Table telegraf - err: %v", f, err)
 		return err
 	}
 	err = LoadAll()
@@ -182,6 +203,84 @@ func CheckAsso(n string) (bool, error) {
 	return flag, nil
 }
 
+func GetTelegrafInterval(profile, path string) (interval int, found bool, err error) {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+
+	row := db.QueryRow(`
+		SELECT interval
+		FROM telegraf
+		WHERE profile = ? AND path = ?;
+	`, profile, path)
+
+	err = row.Scan(&interval)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Row does not exist
+			return 0, false, nil
+		}
+		// Other error
+		logger.Log.Errorf(
+			"Error while querying telegraf interval (profile=%s, path=%s): %v",
+			profile, path, err,
+		)
+		return 0, false, err
+	}
+
+	return interval, true, nil
+}
+
+func UpdateInterval(profile, path, mode string, interval int) error {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+
+	_, err := db.Exec(`
+		INSERT INTO telegraf (profile, path, mode, interval)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(profile, path)
+		DO UPDATE SET
+			mode     = excluded.mode,
+			interval = excluded.interval;
+	`, profile, path, mode, interval)
+
+	if err != nil {
+		logger.Log.Errorf(
+			"Error while upserting telegraf entry (profile=%s, path=%s): %v",
+			profile, path, err,
+		)
+		return err
+	}
+
+	return LoadAll()
+}
+
+func DeleteInterval(profile, path string) error {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+
+	res, err := db.Exec(`
+		DELETE FROM telegraf
+		WHERE profile = ? AND path = ?;
+	`, profile, path)
+
+	if err != nil {
+		logger.Log.Errorf(
+			"Error while deleting telegraf entry (profile=%s, path=%s): %v",
+			profile, path, err,
+		)
+		return err
+	}
+
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		logger.Log.Debugf(
+			"No telegraf entry found to delete (profile=%s, path=%s)",
+			profile, path,
+		)
+	}
+
+	return LoadAll()
+}
+
 func AddRouter(n string, s string, f string, m string, v string) error {
 	dbMu.Lock()
 
@@ -191,8 +290,7 @@ func AddRouter(n string, s string, f string, m string, v string) error {
 		return err
 	}
 	dbMu.Unlock()
-	err := LoadAll()
-	return err
+	return LoadAll()
 }
 
 func DelAsso(n string) error {
@@ -237,8 +335,7 @@ func DelRouter(n string) error {
 		return err
 	}
 	dbMu.Unlock()
-	err := LoadAll()
-	return err
+	return LoadAll()
 }
 
 func updateRouterProfile(n string, p int) error {
@@ -249,8 +346,7 @@ func updateRouterProfile(n string, p int) error {
 		return err
 	}
 	dbMu.Unlock()
-	err := LoadAll()
-	return err
+	return LoadAll()
 }
 
 func UpdateRouter(s string, f string, m string, v string) error {
@@ -261,8 +357,7 @@ func UpdateRouter(s string, f string, m string, v string) error {
 		return err
 	}
 	dbMu.Unlock()
-	err := LoadAll()
-	return err
+	return LoadAll()
 }
 
 func UpdateCredentials(nu string, np string, gu string, gp string, t string, s string, c string) error {
@@ -273,8 +368,7 @@ func UpdateCredentials(nu string, np string, gu string, gp string, t string, s s
 		return err
 	}
 	dbMu.Unlock()
-	err := LoadAll()
-	return err
+	return LoadAll()
 }
 
 func UpdateDebugMode(instance string, debug int) error {
@@ -289,8 +383,7 @@ func UpdateDebugMode(instance string, debug int) error {
 		return err
 	}
 	dbMu.Unlock()
-	err := LoadAll()
-	return err
+	return LoadAll()
 }
 
 func UpdateRpDuration(duration string) error {
@@ -302,8 +395,7 @@ func UpdateRpDuration(duration string) error {
 		return err
 	}
 	dbMu.Unlock()
-	err := LoadAll()
-	return err
+	return LoadAll()
 }
 
 func LoadAll() error {
@@ -351,6 +443,25 @@ func LoadAll() error {
 		i.Assos = strings.Split(tmpList, "|")
 
 		AssoList = append(AssoList, &i)
+	}
+
+	ActiveInterval = make([]*TelemetryInterval, 0)
+	rows, err = db.Query("SELECT * FROM telegraf;")
+	if err != nil {
+		logger.Log.Errorf("Error while selecting telegraf - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		i := TelemetryInterval{}
+		err = rows.Scan(&i.Profile, &i.Path, &i.Mode, &i.Interval)
+		if err != nil {
+			logger.Log.Errorf("Error while parsing telegraf interval rows - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+		ActiveInterval = append(ActiveInterval, &i)
 	}
 
 	ActiveCred = Cred{Id: 0, NetconfUser: "lab", NetconfPwd: "lab123", GnmiUser: "lab", GnmiPwd: "lab123", UseTls: "no", SkipVerify: "yes", ClientTls: "no"}

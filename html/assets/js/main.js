@@ -39,7 +39,7 @@ alertify
       // validate duration
       if (!/^[0-9]+(d|h|m|s)$/.test(value)) {
         alertify.error('Invalid duration format (use 90d, 2m, 150h...)');
-        return false; // keep dialog open
+        return false; 
       }
 
       $.ajax({
