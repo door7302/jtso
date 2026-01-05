@@ -1,12 +1,13 @@
-
-#intervalModal .path-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+/* force fixed layout */
+.table-fixed {
+  table-layout: fixed;
+  width: 100%;
 }
 
+/* Path truncation */
 #intervalModal .path-text {
-  max-width: 360px;
+  display: block;
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -14,8 +15,9 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+/* Platform badges */
 #intervalModal .platform-badges {
-  display: inline-flex;
+  display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
@@ -25,9 +27,10 @@
   padding: 0.35em 0.55em;
 }
 
+/* Tooltip single line */
 .tooltip-inner {
   white-space: nowrap;
-  max-width: 90vw;
+  max-width: none;
 }
 
 /* Default/light mode */

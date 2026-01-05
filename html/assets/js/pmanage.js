@@ -337,59 +337,40 @@ function openIntervalModal(data) {
         ? item["configured-interval"]
         : "";
 
-    const badges = (item.assigned && item.assigned.length)
+    const platforms = (item.assigned && item.assigned.length)
       ? `<div class="platform-badges">
-       ${item.assigned.map(a =>
-        `<span class="badge badge-primary">${a}</span>`
-      ).join("")}
-     </div>`
-      : '<span class="text-muted">—</span>';
+           ${item.assigned.map(p =>
+             `<span class="badge badge-primary">${p}</span>`
+           ).join("")}
+         </div>`
+      : `<span class="text-muted">—</span>`;
 
     const row = `
-  <tr>
-    <!-- Path -->
-    <td>
-      <span
-        class="path-text"
-        title="${item.path}"
-        data-toggle="tooltip"
-        data-placement="top"
-      >
-        ${item.path}
-      </span>
-    </td>
-
-    <!-- Platforms -->
-    <td>
-      ${badges || '<span class="text-muted">—</span>'}
-    </td>
-
-    <!-- Default -->
-    <td>${item["default-interval"]}</td>
-
-    <!-- Configured -->
-    <td>
-      <input
-        type="number"
-        class="form-control interval-input"
-        data-path="${item.path}"
-        value="${configured}"
-        min="1"
-        placeholder=""
-      />
-    </td>
-  </tr>
-`;
+      <tr>
+        <td>
+          <span class="path-text" title="${item.path}">
+            ${item.path}
+          </span>
+        </td>
+        <td>${platforms}</td>
+        <td>${item["default-interval"]}</td>
+        <td>
+          <input
+            type="number"
+            class="form-control interval-input"
+            data-path="${item.path}"
+            value="${configured}"
+            min="1"
+            placeholder="leave empty"
+          />
+        </td>
+      </tr>
+    `;
 
     tbody.append(row);
   });
 
   $("#intervalModal").modal("show");
-  // activate tooltips
-  $('[data-toggle="tooltip"]').tooltip({
-    container: 'body'
-  });
-
 }
 
 $("#applyIntervals").on("click", function () {
