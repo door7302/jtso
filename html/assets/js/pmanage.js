@@ -371,7 +371,7 @@ function openIntervalModal(data) {
         data-path="${item.path}"
         value="${configured}"
         min="1"
-        placeholder="leave empty"
+        placeholder=""
       />
     </td>
   </tr>
