@@ -342,33 +342,50 @@ function openIntervalModal(data) {
       .join("");
 
     const row = `
-        <tr>
-          <td>
-            <div class="path-wrapper">
-              <span class="path-text" title="${item.path}">
-                ${item.path}
-              </span>
-              ${badges}
-            </div>
-          </td>
-          <td>${item["default-interval"]}</td>
-          <td>
-            <input
-              type="number"
-              class="form-control interval-input"
-              data-path="${item.path}"
-              value="${configured}"
-              min="1"
-              placeholder="leave empty"
-            />
-          </td>
-        </tr>
-      `;
+  <tr>
+    <!-- Path -->
+    <td>
+      <span
+        class="path-text"
+        title="${item.path}"
+        data-toggle="tooltip"
+        data-placement="top"
+      >
+        ${item.path}
+      </span>
+    </td>
+
+    <!-- Platforms -->
+    <td>
+      ${badges || '<span class="text-muted">—</span>'}
+    </td>
+
+    <!-- Default -->
+    <td>${item["default-interval"]}</td>
+
+    <!-- Configured -->
+    <td>
+      <input
+        type="number"
+        class="form-control interval-input"
+        data-path="${item.path}"
+        value="${configured}"
+        min="1"
+        placeholder="leave empty"
+      />
+    </td>
+  </tr>
+`;
 
     tbody.append(row);
   });
 
   $("#intervalModal").modal("show");
+  // activate tooltips
+  $('[data-toggle="tooltip"]').tooltip({
+    container: 'body'
+  });
+
 }
 
 $("#applyIntervals").on("click", function () {
@@ -397,4 +414,9 @@ document.querySelector('#config .close').addEventListener('click', function () {
   document.body.classList.remove('modal-open'); // Remove modal-open from body
   const backdrop = document.querySelector('.modal-backdrop');
   if (backdrop) backdrop.remove(); // Remove backdrop
+});
+
+// Enable Bootstrap tooltips
+$('[data-toggle="tooltip"]').tooltip({
+  container: 'body'
 });
