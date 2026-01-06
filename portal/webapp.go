@@ -1587,15 +1587,18 @@ func routeIntervalMgt(c echo.Context) error {
 	case "reset":
 		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: ""})
 	case "getinterval":
+		logger.Log.Info("get interval request start")
 		// get all interval
 		err, ri := generateProfileInterval(r.Data)
 		if err != nil {
 			logger.Log.Errorf("Unable to collect Telegraf streaming intervals: %v", err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to collect Telegraf streaming intervals."})
 		}
+		logger.Log.Info("get interval request end")
 		return c.JSON(http.StatusOK, ri)
 	case "setinterval":
 		// unMarshall the data.
+		logger.Log.Info("set interval request start")
 		var listPaths []SetInterval
 		err := json.Unmarshal([]byte(r.Data), &listPaths)
 		if err != nil {
@@ -1615,6 +1618,7 @@ func routeIntervalMgt(c echo.Context) error {
 		if oneErr {
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Some Intervals haven't been updated, check logs for more details"})
 		}
+		logger.Log.Info("set interval request end")
 		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "All streaming intervals have been updated."})
 	default:
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown action"})
