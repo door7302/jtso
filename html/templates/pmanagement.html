@@ -51,20 +51,20 @@
                     <p>
                         <strong>
                             Please modify only the interval rate(s) you want to change. Use the "Configured" field for that.
-                            Leave the others empty to keep their default values. The value is in seconds. Minimum value allowed is 2 secs. 
+                            Leave the others empty to keep their default values. The value is in seconds. Minimum value allowed is 2 secs.
                         </strong>
                     </p>
 
                     <table class="table table-bordered table-sm table-fixed">
-                    <thead class="thead-light">
-                        <tr>
-                        <th style="width:45%">Path</th>
-                        <th style="width:20%">Platform(s)</th>
-                        <th style="width:15%">Default (sec)</th>
-                        <th style="width:20%">Configured (sec)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="intervalTableBody"></tbody>
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:45%">Path</th>
+                                <th style="width:20%">Platform(s)</th>
+                                <th style="width:15%">Default (sec)</th>
+                                <th style="width:20%">Configured (sec)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="intervalTableBody"></tbody>
                     </table>
                 </div>
 
@@ -169,21 +169,54 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="card-body">
-                            <h4 class="card-title">Description</h4>
-                            <p id="profileDesc" class="card-text">N/A</p>
-                            <h4 class="card-title">Telegraf Configuration(s)</h4>
-                            <p id="profileTele" class="card-text">N/A</p>
-                            <div class="form-container mt-3">
-                            <div class="right-column d-flex gap-2 justify-content-center">
-                                    <input id="modifyI" onclick="modifyIntervals();" class="btn btn-success" type="button" value="Modify Interval(s)" style="display: none;">
-                                    <input id="resetI" onclick="resetIntervals();" class="btn btn-warning" type="button" value="Reset Intervals to default" style="display: none;">
-                                </div>
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <!-- DESCRIPTION -->
+                                <section class="mb-4">
+                                    <h6 class="text-uppercase text-muted mb-2">Description</h6>
+                                    <p id="profileDesc" class="mb-0">
+                                        This profile provides template for collecting BGP data
+                                    </p>
+                                </section>
+                                <!-- TELEGRAF CONFIGS -->
+                                <section class="mb-4">
+                                    <h6 class="text-uppercase text-muted mb-3">
+                                        Telegraf Configurations
+                                    </h6>
+
+                                    <ul id="profileTele" class="list-group list-group-flush small">
+                                    </ul>
+                                </section>
+                                <!-- INTERVAL ACTIONS -->
+                                <section class="mb-4 text-center">
+                                    <div class="btn-group">
+                                        <button id="modifyI" class="btn btn-success" onclick="modifyIntervals();" style="display: none;">
+                                            Modify Interval(s)
+                                        </button>
+                                        <button id="resetI" class="btn btn-warning" onclick="resetIntervals();" style="display: none;">
+                                            Reset to Default
+                                        </button>
+                                    </div>
+                                </section>
+                                <!-- GRAFANA -->
+                                <section class="mb-3">
+                                    <h6 class="text-uppercase text-muted mb-2">
+                                        Grafana Dashboards
+                                    </h6>
+                                    <p id="profileGraf" class="mb-0 small">
+                                        N/A
+                                    </p>
+                                </section>
+                                <!-- KAPACITOR -->
+                                <section>
+                                    <h6 class="text-uppercase text-muted mb-2">
+                                        Kapacitor Scripts
+                                    </h6>
+                                    <p id="profileKapa" class="mb-0 small text-muted">
+                                        N/A
+                                    </p>
+                                </section>
                             </div>
-                            <h4 class="card-title">Grafana Dashboard(s)</h4>
-                            <p id="profileGraf" class="card-text">N/A</p>
-                            <h4 class="card-title">Kapacitor Script(s)</h4>
-                            <p id="profileKapa" class="card-text">N/A</p>
                         </div>
                     </div>
                 </div>
@@ -203,3 +236,4 @@
 </body>
 
 </html>
+

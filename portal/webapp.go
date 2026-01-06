@@ -36,6 +36,21 @@ const (
 	PROPERTIES    string = "/components/component/properties/property"
 )
 
+const teleItemTpl = `
+<li class="list-group-item d-flex justify-content-between align-items-center">
+  <span>%s (%s)</span>
+  <div class="btn-group btn-group-sm">
+    <button class="btn btn-outline-primary"
+            onclick="loadConfig('%s/%s')">
+      Config
+    </button>
+    <button class="btn btn-outline-success"
+            onclick="showSensor('%s','%s','%s')">
+      Sensors
+    </button>
+  </div>
+</li>`
+
 var nativePrefix = map[string]struct{}{
 	"junos": {},
 	"mpls":  {},
@@ -1466,6 +1481,24 @@ func routeGetTreeDoc(c echo.Context) error {
 	return c.JSON(http.StatusOK, ReplyTree{Status: "OK", Tree: *tree})
 }
 
+func renderTele(
+	builder *strings.Builder,
+	label string,
+	platform string,
+	cfgs []association.Config,
+	profile string,
+) {
+	for _, v := range cfgs {
+		fmt.Fprintf(
+			builder,
+			teleItemTpl,
+			label, v.Version,
+			profile, v.Config,
+			platform, profile, v.Config,
+		)
+	}
+}
+
 func routeUptDoc(c echo.Context) error {
 	var err error
 
@@ -1483,51 +1516,26 @@ func routeUptDoc(c echo.Context) error {
 		logger.Log.Errorf("Unable to update documentation: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update documentation"})
 	}
+	var tele strings.Builder
 
-	tele := ""
+	renderTele(&tele, "MX", "mx", p.Definition.TelCfg.MxCfg, r.Profile)
+	renderTele(&tele, "PTX", "ptx", p.Definition.TelCfg.PtxCfg, r.Profile)
+	renderTele(&tele, "ACX", "acx", p.Definition.TelCfg.AcxCfg, r.Profile)
+	renderTele(&tele, "EX", "ex", p.Definition.TelCfg.ExCfg, r.Profile)
+	renderTele(&tele, "QFX", "qfx", p.Definition.TelCfg.QfxCfg, r.Profile)
+	renderTele(&tele, "SRX", "srx", p.Definition.TelCfg.SrxCfg, r.Profile)
+	renderTele(&tele, "CRPD", "crpd", p.Definition.TelCfg.CrpdCfg, r.Profile)
+	renderTele(&tele, "CPTX", "cptx", p.Definition.TelCfg.CptxCfg, r.Profile)
+	renderTele(&tele, "VMX", "vmx", p.Definition.TelCfg.VmxCfg, r.Profile)
+	renderTele(&tele, "VSRX", "vsrx", p.Definition.TelCfg.VsrxCfg, r.Profile)
+	renderTele(&tele, "VJUNOS", "vjunos", p.Definition.TelCfg.VjunosCfg, r.Profile)
+	renderTele(&tele, "VJUNOS-EVO", "vevo", p.Definition.TelCfg.VevoCfg, r.Profile)
 
-	for _, v := range p.Definition.TelCfg.MxCfg {
-		tele += "For MX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('mx','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for _, v := range p.Definition.TelCfg.PtxCfg {
-		tele += "For PTX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('ptx','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for _, v := range p.Definition.TelCfg.AcxCfg {
-		tele += "For ACX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('acx','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for _, v := range p.Definition.TelCfg.ExCfg {
-		tele += "For EX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('ex','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for _, v := range p.Definition.TelCfg.QfxCfg {
-		tele += "For QFX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('qfx','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for _, v := range p.Definition.TelCfg.SrxCfg {
-		tele += "For SRX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('srx','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for _, v := range p.Definition.TelCfg.CrpdCfg {
-		tele += "For CRPD version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('crpd','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for _, v := range p.Definition.TelCfg.CptxCfg {
-		tele += "For CPTX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('cptx','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for _, v := range p.Definition.TelCfg.VmxCfg {
-		tele += "For VMX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('vmx','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for _, v := range p.Definition.TelCfg.VsrxCfg {
-		tele += "For VSRX version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('vsrx','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for _, v := range p.Definition.TelCfg.VjunosCfg {
-		tele += "For VJunos Rtr. version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('vjunos','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-	}
-	for i, v := range p.Definition.TelCfg.VevoCfg {
-		if i == len(p.Definition.TelCfg.VevoCfg)-1 {
-			tele += "For VJunos Evo. version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('vevo','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a>"
-		} else {
-			tele += "For VJunos Evo. version " + v.Version + ": <a href=\"#\" class=\"badge rounded-pill bg-primary text-decoration-none\" onclick=\"loadConfig('" + r.Profile + "/" + v.Config + "')\">Show Config</a>&nbsp;<a href=\"#\" class=\"badge rounded-pill bg-success text-decoration-none\" onclick=\"showSensor('vevo','" + r.Profile + "','" + v.Config + "')\">Show Sensors</a></br>"
-		}
-	}
-	if tele == "" {
-		tele = "No Telegraf configuration attached to this profile"
+	teleHTML := tele.String()
+
+	// Fallback if empty
+	if teleHTML == "" {
+		teleHTML = "No Telegraf configuration attached to this profile"
 	}
 
 	kapa := ""
@@ -1555,7 +1563,7 @@ func routeUptDoc(c echo.Context) error {
 	if graf == "" {
 		graf = "No Grafana Dasboards attached to this profile"
 	}
-	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: tele, Graf: graf, Kapa: kapa})
+	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: teleHTML, Graf: graf, Kapa: kapa})
 }
 func routeIntervalMgt(c echo.Context) error {
 	var err error

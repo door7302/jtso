@@ -258,7 +258,90 @@
   color: #d64040;
 }
 
+/* =========================
+   Dark mode – Profile Card
+   ========================= */
 
+body.dark-mode .card {
+  background-color: #2b2b2b;
+  color: #ffffff;
+  border-color: #444;
+}
+
+/* Section headers */
+body.dark-mode .card h6 {
+  color: #b0b0b0;
+}
+
+/* Description & text */
+body.dark-mode .card p {
+  color: #e0e0e0;
+}
+
+/* Muted text */
+body.dark-mode .card .text-muted {
+  color: #9a9a9a !important;
+}
+
+/* =========================
+   List group (Telegraf configs)
+   ========================= */
+
+body.dark-mode .card .list-group-item {
+  background-color: #323232;
+  border-color: #444;
+  color: #ffffff;
+}
+
+body.dark-mode .card .list-group-item span {
+  color: #e6e6e6;
+}
+
+/* =========================
+   Buttons
+   ========================= */
+
+/* Outline primary (Config) */
+body.dark-mode .card .btn-outline-primary {
+  color: #6ea8fe;
+  border-color: #6ea8fe;
+}
+
+body.dark-mode .card .btn-outline-primary:hover {
+  background-color: #6ea8fe;
+  color: #000;
+}
+
+/* Outline success (Sensors) */
+body.dark-mode .card .btn-outline-success {
+  color: #5ecf8e;
+  border-color: #5ecf8e;
+}
+
+body.dark-mode .card .btn-outline-success:hover {
+  background-color: #5ecf8e;
+  color: #000;
+}
+
+/* Main actions */
+body.dark-mode .card .btn-success {
+  background-color: #4caf50;
+  border-color: #4caf50;
+}
+
+body.dark-mode .card .btn-warning {
+  background-color: #f0ad4e;
+  border-color: #f0ad4e;
+  color: #000;
+}
+
+/* =========================
+   Card spacing polish
+   ========================= */
+
+body.dark-mode .card section {
+  border-color: #444;
+}
 
 body.dark-mode #render {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
