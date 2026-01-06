@@ -1626,6 +1626,11 @@ func generateProfileInterval(p string) (error, ReplyInterval) {
 				}
 				for _, g := range newCfg.GnmiList {
 					for _, s := range g.Subs {
+						// skip on-change path
+						if s.Mode == "on_change" {
+							continue
+						}
+
 						if pi, exists := tMap[s.Path]; exists {
 							if pi.Default > s.Interval {
 								// keep the lowest default interval
