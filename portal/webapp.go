@@ -1610,7 +1610,11 @@ func routeIntervalMgt(c echo.Context) error {
 		}
 		oneErr := false
 		for _, v := range listPaths {
-			err := sqlite.UpdateInterval(v.Profile, v.Path, "sample", v.ConfiguredInterval)
+			ci := v.ConfiguredInterval
+			if ci < 2 {
+				ci = 2
+			}
+			err := sqlite.UpdateInterval(v.Profile, v.Path, "sample", ci)
 			if err != nil {
 				logger.Log.Errorf("Unable update interval into SQL DB for %s profile, %s path: %v", v.Profile, v.Path, err)
 				oneErr = true
