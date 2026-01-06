@@ -32,7 +32,7 @@
 /* Tooltip single line */
 .tooltip-inner {
   white-space: nowrap;
-  max-width: none;
+  max-width: 90vw;
 }
 
 /* Default/light mode */

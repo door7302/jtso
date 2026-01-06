@@ -350,8 +350,8 @@ function openIntervalModal(data) {
     const row = `
       <tr>
         <td>
-          <span class="path-text" title="${item.path}">
-            ${item.path}
+          <span class="path-text" title="${item.path}" data-toggle="tooltip" data-placement="top">
+          ${item.path}
           </span>
         </td>
         <td>${platforms}</td>
@@ -400,7 +400,7 @@ $("#applyIntervals").on("click", function () {
   $("#intervalModal").modal("hide");
 });
 
-$("#cancetIntervals").on("click", function () {
+$("#cancelIntervals").on("click", function () {
   $("#intervalModal").modal("hide");
 });
 
