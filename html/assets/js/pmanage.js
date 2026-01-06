@@ -402,6 +402,7 @@ $("#applyIntervals").on("click", function () {
   });
 
   alert(JSON.stringify(result, null, 2));
+  
   $("#intervalModal").modal("hide");
 });
 
