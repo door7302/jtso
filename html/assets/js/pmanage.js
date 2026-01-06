@@ -53,6 +53,12 @@ function renderCards(paths) {
     intervalBadge.innerHTML = mybadge;
     meta.appendChild(intervalBadge);
 
+    // Initialize Bootstrap tooltip for the new element
+    const icon = intervalBadge.querySelector('i[title]');
+    if (icon) {
+      new bootstrap.Tooltip(icon); // Bootstrap 5 syntax
+    }
+
     const originBadge = document.createElement("div");
     originBadge.className =
       "badge " +
@@ -273,10 +279,6 @@ function showSensor(family, profile, config) {
     statusEl.textContent = "Failed to load data.";
   }
 
-    // activate tooltips
-  $('[data-toggle="tooltip"]').tooltip({
-    container: 'body'
-  });
 }
 
 function resetIntervals() {
@@ -428,7 +430,7 @@ $("#applyIntervals").on("click", function () {
         if (json["status"] == "OK") {
           waitingDialog.hide();
           alertify.success('The streamming intervals for profile " + p + " have been successfully updated.')
-          
+
         } else {
           waitingDialog.hide();
           alertify.alert("JTSO...", json.msg);
