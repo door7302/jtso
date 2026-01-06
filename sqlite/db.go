@@ -205,7 +205,6 @@ func CheckAsso(n string) (bool, error) {
 
 func GetTelegrafInterval(profile, path string) (interval int, found bool, err error) {
 	dbMu.Lock()
-	defer dbMu.Unlock()
 
 	row := db.QueryRow(`
 		SELECT interval
@@ -217,6 +216,7 @@ func GetTelegrafInterval(profile, path string) (interval int, found bool, err er
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// Row does not exist
+			dbMu.Unlock()
 			return 0, false, nil
 		}
 		// Other error
@@ -224,15 +224,15 @@ func GetTelegrafInterval(profile, path string) (interval int, found bool, err er
 			"Error while querying telegraf interval (profile=%s, path=%s): %v",
 			profile, path, err,
 		)
+		dbMu.Unlock()
 		return 0, false, err
 	}
-
+	dbMu.Unlock()
 	return interval, true, nil
 }
 
 func UpdateInterval(profile, path, mode string, interval int) error {
 	dbMu.Lock()
-	defer dbMu.Unlock()
 
 	_, err := db.Exec(`
 		INSERT INTO telegraf (profile, path, mode, interval)
@@ -248,15 +248,15 @@ func UpdateInterval(profile, path, mode string, interval int) error {
 			"Error while upserting telegraf entry (profile=%s, path=%s): %v",
 			profile, path, err,
 		)
+		dbMu.Unlock()
 		return err
 	}
-
+	dbMu.Unlock()
 	return LoadAll()
 }
 
 func DeleteInterval(profile, path string) error {
 	dbMu.Lock()
-	defer dbMu.Unlock()
 
 	res, err := db.Exec(`
 		DELETE FROM telegraf
@@ -268,6 +268,7 @@ func DeleteInterval(profile, path string) error {
 			"Error while deleting telegraf entry (profile=%s, path=%s): %v",
 			profile, path, err,
 		)
+		dbMu.Unlock()
 		return err
 	}
 
@@ -277,7 +278,7 @@ func DeleteInterval(profile, path string) error {
 			profile, path,
 		)
 	}
-
+	dbMu.Unlock()
 	return LoadAll()
 }
 
@@ -400,7 +401,7 @@ func UpdateRpDuration(duration string) error {
 
 func LoadAll() error {
 	dbMu.Lock()
-
+	logger.Log.Info("DEBUG COUCOU")
 	RtrList = make([]*RtrEntry, 0)
 	rows, err := db.Query("SELECT * FROM routers;")
 	if err != nil {
