@@ -617,3 +617,8 @@ body.dark-mode .jstree {
 .token.tag {
     color: #dc3545;
 }
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
