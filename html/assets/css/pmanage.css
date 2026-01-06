@@ -96,9 +96,9 @@
 }
 
 #render .card {
-  background: #fafafa;
-  border-radius: 8px;
-  border: 1px solid #ddd;
+  background: #ffffff;
+  border-radius: 15px;
+  border: 1px solid #444;
   padding: 12px 14px;
 }
 
@@ -380,7 +380,7 @@ body.dark-mode #render .toolbar input {
   padding: 7px 9px;
   border-radius: 4px;
   border: 1px solid #333;
-  background: #181818;
+  background: #2b2b2b;
   color: #eee;
   font-size: 14px;
 }
@@ -389,7 +389,7 @@ body.dark-mode #render .toolbar select {
   padding: 7px 9px;
   border-radius: 4px;
   border: 1px solid #333;
-  background: #181818;
+  background: #2b2b2b;
   color: #eee;
   font-size: 14px;
 }
@@ -403,7 +403,10 @@ body.dark-mode #render .cards {
 }
 
 body.dark-mode #render .card {
-  background: #181818;
+  background: #2b2b2b;
+  border-radius: 8px;
+  border: 1px solid #444;
+  padding: 12px 14px;
 }
 
 body.dark-mode #render .card-header {
