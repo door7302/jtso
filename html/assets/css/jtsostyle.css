@@ -178,9 +178,18 @@ body {
 
 /* Routers pages */
 
+#intervalModal table td,
+#intervalModal table th {
+    text-align: left !important;
+    vertical-align: middle;
+    /* Ensures that all cells are left-aligned */
+}
+
+
 #ListRtrs td,
 #ListRtrs th {
     text-align: left !important;
+    vertical-align: middle;
     /* Ensures that all cells are left-aligned */
 }
 
@@ -225,6 +234,7 @@ body {
 #ListProfiles td,
 #ListProfiles th {
     text-align: left !important;
+    vertical-align: middle;
     /* Ensures that all cells are left-aligned */
 }
 
