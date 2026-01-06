@@ -1426,7 +1426,14 @@ func routeGetTreeDoc(c echo.Context) error {
 			p := new(TreePath)
 			p.Name = s.Path
 			p.Origin = findOrigin(s.Path)
-			p.Interval = s.Interval
+			// Check if there is a configured interval in DB
+			ci, found, _ := sqlite.GetTelegrafInterval(r.Profile, s.Path)
+			p.IntervalOverridden = found
+			if found {
+				p.Interval = ci
+			} else {
+				p.Interval = s.Interval
+			}
 			p.Aliases = make([]string, 0)
 			p.Fields = make([]string, 0)
 			for _, a := range g.Aliases {
@@ -1588,7 +1595,25 @@ func routeIntervalMgt(c echo.Context) error {
 		}
 		return c.JSON(http.StatusOK, ri)
 	case "setinterval":
-		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: ""})
+		// unMarshall the data.
+		var listPaths []SetInterval
+		err := json.Unmarshal([]byte(r.Data), &listPaths)
+		if err != nil {
+			logger.Log.Errorf("Unable to parse the Telegraf streaming intervals to change: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the Telegraf streaming intervals."})
+		}
+		oneErr := false
+		for _, v := range listPaths {
+			err := sqlite.UpdateInterval(v.Profile, v.Path, "sample", v.ConfiguredInterval)
+			if err != nil {
+				logger.Log.Errorf("Unable update interval into SQL DB for %s profile, %s path: %v", v.Profile, v.Path, err)
+				oneErr = true
+			}
+		}
+		if oneErr {
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Some Intervals haven't been updated, check logs for more details"})
+		}
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "All streaming intervals have been updated."})
 	default:
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown action"})
 	}

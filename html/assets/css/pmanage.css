@@ -1,3 +1,9 @@
+
+.badge i {
+    font-size: 0.85rem;
+    cursor: help;
+}
+
 /* force fixed layout */
 .table-fixed {
     table-layout: fixed;

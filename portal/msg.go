@@ -110,16 +110,23 @@ type (
 		Assigned   []string `json:"assigned"`
 	}
 
+	SetInterval struct {
+		Profile            string `json:"profile"`
+		Path               string `json:"path"`
+		ConfiguredInterval int    `json:"configured-interval"`
+	}
+
 	UpdateDebug struct {
 		Instance string `json:"instance"`
 	}
 
 	TreePath struct {
-		Name     string   `json:"name"`
-		Interval int      `json:"interval"`
-		Aliases  []string `json:"aliases"`
-		Origin   string   `json:"origin"`
-		Fields   []string `json:"listOfFields"`
+		Name               string   `json:"name"`
+		Interval           int      `json:"interval"`
+		IntervalOverridden bool     `json:"isoverridden"`
+		Aliases            []string `json:"aliases"`
+		Origin             string   `json:"origin"`
+		Fields             []string `json:"listOfFields"`
 	}
 
 	TreeView struct {
