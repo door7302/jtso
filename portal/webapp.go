@@ -1586,7 +1586,12 @@ func routeIntervalMgt(c echo.Context) error {
 
 	switch r.Action {
 	case "reset":
-		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: ""})
+		err := sqlite.DeleteAllTelegrafByProfile(r.Data)
+		if err != nil {
+			logger.Log.Errorf("Unable to reset streaming intervals: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to reset Telegraf streaming intervals."})
+		}
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Intervals have been reset well"})
 	case "getinterval":
 		// get all interval
 		err, ri := generateProfileInterval(r.Data)
@@ -1609,8 +1614,6 @@ func routeIntervalMgt(c echo.Context) error {
 			if err != nil {
 				logger.Log.Errorf("Unable update interval into SQL DB for %s profile, %s path: %v", v.Profile, v.Path, err)
 				oneErr = true
-			} else {
-				logger.Log.Infof("The interval for profile %s and path %s has been overridden with the value %d sec(s)", v.Profile, v.Path, v.ConfiguredInterval)
 			}
 		}
 		if oneErr {

@@ -300,7 +300,7 @@ function resetIntervals() {
             dataType: "json",
             success: function (json) {
               if (json["status"] == "OK") {
-                alertify.success('The streamming intervals for profile " + p + " have been successfully reset')
+                alertify.success('The streamming intervals for profile ' + p + ' have been successfully reset')
               } else {
                 alertify.alert("JTSO...", json.msg);
               }
@@ -429,7 +429,7 @@ $("#applyIntervals").on("click", function () {
       success: function (json) {
         if (json["status"] == "OK") {
           waitingDialog.hide();
-          alertify.success('The streamming intervals for profile " + p + " have been successfully updated.')
+          alertify.success('The streamming intervals for profile ' + p + ' have been successfully reset')
 
         } else {
           waitingDialog.hide();

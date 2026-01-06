@@ -231,6 +231,30 @@ func GetTelegrafInterval(profile, path string) (interval int, found bool, err er
 	return interval, true, nil
 }
 
+func DeleteAllTelegrafByProfile(profile string) error {
+	dbMu.Lock()
+
+	res, err := db.Exec(`
+		DELETE FROM telegraf
+		WHERE profile = ?;
+	`, profile)
+
+	if err != nil {
+		logger.Log.Errorf(
+			"Error while deleting telegraf entries for profile '%s': %v",
+			profile, err,
+		)
+		dbMu.Unlock()
+		return err
+	}
+
+	rowsDeleted, _ := res.RowsAffected()
+	logger.Log.Infof("Deleted %d telegraf entries for profile '%s'", rowsDeleted, profile)
+
+	dbMu.Unlock()
+	return LoadAll()
+}
+
 func UpdateInterval(profile, path, mode string, interval int) error {
 	dbMu.Lock()
 
@@ -251,6 +275,7 @@ func UpdateInterval(profile, path, mode string, interval int) error {
 		dbMu.Unlock()
 		return err
 	}
+	logger.Log.Infof("The interval for profile %s and path %s has been overridden with the value %d sec(s)", profile, path, interval)
 	dbMu.Unlock()
 	return LoadAll()
 }
