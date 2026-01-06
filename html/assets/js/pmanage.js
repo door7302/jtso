@@ -327,6 +327,8 @@ function modifyIntervals() {
   }
 }
 
+
+
 function openIntervalModal(data) {
   const tbody = $("#intervalTableBody");
   tbody.empty();
@@ -340,8 +342,8 @@ function openIntervalModal(data) {
     const platforms = (item.assigned && item.assigned.length)
       ? `<div class="platform-badges">
            ${item.assigned.map(p =>
-             `<span class="badge badge-primary">${p}</span>`
-           ).join("")}
+        `<span class="badge badge-primary">${p}</span>`
+      ).join("")}
          </div>`
       : `<span class="text-muted">—</span>`;
 
@@ -357,11 +359,11 @@ function openIntervalModal(data) {
         <td>
           <input
             type="number"
-            class="form-control interval-input"
+            class="form-control"
             data-path="${item.path}"
             value="${configured}"
-            min="1"
-            placeholder="leave empty"
+            min="2"
+            placeholder=""
           />
         </td>
       </tr>
@@ -371,6 +373,12 @@ function openIntervalModal(data) {
   });
 
   $("#intervalModal").modal("show");
+
+  // activate tooltips
+  $('[data-toggle="tooltip"]').tooltip({
+    container: 'body'
+  });
+
 }
 
 $("#applyIntervals").on("click", function () {
@@ -392,16 +400,19 @@ $("#applyIntervals").on("click", function () {
   $("#intervalModal").modal("hide");
 });
 
-document.querySelector('#config .close').addEventListener('click', function () {
-  const modal = document.getElementById('config');
-  modal.classList.remove('show'); // Remove the `show` class
-  modal.style.display = 'none';   // Hide the modal
-  document.body.classList.remove('modal-open'); // Remove modal-open from body
-  const backdrop = document.querySelector('.modal-backdrop');
-  if (backdrop) backdrop.remove(); // Remove backdrop
+$("#cancetIntervals").on("click", function () {
+  $("#intervalModal").modal("hide");
 });
 
-// Enable Bootstrap tooltips
-$('[data-toggle="tooltip"]').tooltip({
-  container: 'body'
-});
+document
+  .querySelector('#intervalModal .close')
+  .addEventListener('click', function () {
+    $('#intervalModal').modal('hide');
+  });
+
+document
+  .querySelector('#config .close')
+  .addEventListener('click', function () {
+    $('#config').modal('hide');
+  });
+

@@ -25,6 +25,8 @@
 #intervalModal .platform-badges .badge {
   font-size: 0.75rem;
   padding: 0.35em 0.55em;
+  color: white;
+  background: blue
 }
 
 /* Tooltip single line */

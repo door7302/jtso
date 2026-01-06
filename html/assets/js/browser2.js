@@ -145,13 +145,11 @@ function scrollToBottom() {
 }
 
 // Close modal
-function closeModal() {
-  const modalConfig = document.getElementById('config');
-  $('#logs').modal('hide');
-  modalConfig.style.display = 'none';
-  const backdrop = document.querySelector('.modal-backdrop');
-  if (backdrop) backdrop.remove();
-}
+document
+  .querySelector('#logs .close')
+  .addEventListener('click', function () {
+    $('#logs').modal('hide');
+  });
 
 // Export function
 function exportXpath() {

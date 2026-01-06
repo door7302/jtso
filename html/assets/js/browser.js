@@ -130,13 +130,11 @@ function scrollToBottom() {
   modal.scrollTop = modal.scrollHeight;
 }
 
-function closeModal() {
-  const modal = document.getElementById('config');
-  $('#logs').modal('hide');
-  modal.style.display = 'none';  // Hide the modal
-  const backdrop = document.querySelector('.modal-backdrop');
-  if (backdrop) backdrop.remove(); // Remove the backdrop element
-}
+document
+  .querySelector('#logs .close')
+  .addEventListener('click', function () {
+    $('#logs').modal('hide');
+  });
 
 
 function exportXpath() {
