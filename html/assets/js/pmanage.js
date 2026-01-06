@@ -411,9 +411,34 @@ $("#applyIntervals").on("click", function () {
       });
     }
   });
-
-  alert(JSON.stringify(result, null, 2));
-
+  waitingDialog.show();
+  $(function () {
+    $.ajax({
+      type: 'POST',
+      url: "/setinterval",
+      data: JSON.stringify({
+        "action": "reset",
+        "data": JSON.stringify(result)
+      }),
+      contentType: "application/json",
+      dataType: "json",
+      success: function (json) {
+        if (json["status"] == "OK") {
+          waitingDialog.hide();
+          alertify.success('The streamming intervals for profile " + p + " have been successfully updated.')
+          
+        } else {
+          waitingDialog.hide();
+          alertify.alert("JTSO...", json.msg);
+        }
+      },
+      error: function (xhr, ajaxOptions, thrownError) {
+        waitingDialog.hide();
+        alertify.alert("JSTO...", "Unexpected error...");
+      }
+    });
+  });
+  waitingDialog.hide();
   $("#intervalModal").modal("hide");
 });
 
