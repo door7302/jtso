@@ -401,7 +401,6 @@ func UpdateRpDuration(duration string) error {
 
 func LoadAll() error {
 	dbMu.Lock()
-	logger.Log.Info("DEBUG COUCOU")
 	RtrList = make([]*RtrEntry, 0)
 	rows, err := db.Query("SELECT * FROM routers;")
 	if err != nil {
