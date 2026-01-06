@@ -351,7 +351,7 @@ body.dark-mode .card section {
 
 body.dark-mode #render {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #111;
+    background: transparent;
     color: #eee;
     font-size: 15px;
 }
