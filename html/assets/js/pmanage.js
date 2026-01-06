@@ -152,12 +152,13 @@ function updateDoc() {
   var kapa = document.getElementById("profileKapa");
 
   if (p == "default") {
-    desc.innerHTML = "N/A";
-    tele.innerHTML = "N/A";
-    graf.innerHTML = "N/A";
-    kapa.innerHTML = "N/A";
+    desc.innerHTML = "Please select a profile...";
+    tele.innerHTML = "";
+    graf.innerHTML = "";
+    kapa.innerHTML = "";
     $('#modifyI').hide();
     $('#resetI').hide();
+    resetRender();
 
   } else {
     var dataToSend = { "profile": p };
