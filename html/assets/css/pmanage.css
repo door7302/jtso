@@ -394,20 +394,6 @@ body.dark-mode #render .toolbar select {
   font-size: 14px;
 }
 
-body.dark-mode #render .cards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: calc(100vh - 130px);
-  overflow-y: auto;
-}
-
-body.dark-mode #render .card {
-  background: #181818;
-  border-radius: 8px;
-  border: 1px solid #262626;
-  padding: 12px 14px;
-}
 
 body.dark-mode #render .card-header {
   display: flex;
