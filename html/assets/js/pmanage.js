@@ -47,7 +47,9 @@ function renderCards(paths) {
     var mybadge = `
     <span class="badge-label">Interval:</span>
     <span>${p.interval} sec(s)</span>`;
-   
+    if (p.isoverridden) {
+      mybadge += '<i class="fas fa-exclamation-circle text-warning ms-1" title="Interval overridden"></i>';
+    }
     intervalBadge.innerHTML = mybadge;
     meta.appendChild(intervalBadge);
 
@@ -270,6 +272,11 @@ function showSensor(family, profile, config) {
     statusEl.className = "error";
     statusEl.textContent = "Failed to load data.";
   }
+
+    // activate tooltips
+  $('[data-toggle="tooltip"]').tooltip({
+    container: 'body'
+  });
 }
 
 function resetIntervals() {
