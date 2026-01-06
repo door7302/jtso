@@ -364,7 +364,7 @@ function openIntervalModal(data) {
         <td>
           <input
             type="number"
-            class="form-control"
+            class="form-control interval-input"
             data-path="${item.path}"
             value="${configured}"
             min="2"
@@ -390,19 +390,21 @@ $("#applyIntervals").on("click", function () {
   const result = [];
 
   $(".interval-input").each(function () {
-    const value = $(this).val();
-    const path = $(this).data("path");
+    var value = $(this).val();
+    var path = $(this).data("path");
+    var p = document.getElementById("profiles").value.trim();
 
     if (value !== "") {
       result.push({
-        path: path,
+        "profile": p,
+        "path": path,
         "configured-interval": parseInt(value, 10)
       });
     }
   });
 
   alert(JSON.stringify(result, null, 2));
-  
+
   $("#intervalModal").modal("hide");
 });
 
