@@ -34,7 +34,54 @@
     </div>
 
 
-    
+    <div class="modal fade" id="intervalModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document" style="max-width: 95%">
+            <div class="modal-content">
+
+                <!-- HEADER -->
+                <div class="modal-header" style="background-color:#13215c;color:white;">
+                    <h5 class="modal-title">Interval Configuration</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="background: none; border: none;">
+                        <i class="fas fa-times" aria-hidden="true" style="font-size: 1.5rem; color: white;"></i>
+                    </button>
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body">
+                    <p>
+                        <strong>
+                            Please modify only the streaming interval rate(s) you want to change. Use the "Configured" field for that.
+                            Leave the others empty to keep their default values. The value is in seconds. Minimum value allowed is 2 secs.
+                        </br>/!\ You should re-apply the profile to see changes. 
+                        </strong>
+                    </p>
+
+                    <table class="table table-bordered table-sm table-fixed">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:45%">Path</th>
+                                <th style="width:20%">Platform(s)</th>
+                                <th style="width:15%">Default (sec)</th>
+                                <th style="width:20%">Configured (sec)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="intervalTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-success" id="applyIntervals">
+                        Change interval(s)
+                    </button>
+                    <button class="btn btn-secondary" id="cancelIntervals">
+                        Cancel
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 
     <nav class="navbar navbar-light navbar-expand-md py-3">
         <div class="container">
@@ -105,7 +152,7 @@
         <div class="card other-card">
             <div class="card-body">
                 <h4 class="card-title">Profile details</h4>
-                <div class="row g-0">
+                <div class="row">
                     <div id="render" class="col-md-8">
                         <div class="app card h-100">
                             <h1 id="rootTitle"></h1>
