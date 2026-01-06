@@ -415,9 +415,9 @@ $("#applyIntervals").on("click", function () {
   $(function () {
     $.ajax({
       type: 'POST',
-      url: "/setinterval",
+      url: "/intervalmgmt",
       data: JSON.stringify({
-        "action": "reset",
+        "action": "setinterval",
         "data": JSON.stringify(result)
       }),
       contentType: "application/json",
