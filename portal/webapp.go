@@ -1608,6 +1608,8 @@ func routeIntervalMgt(c echo.Context) error {
 			if err != nil {
 				logger.Log.Errorf("Unable update interval into SQL DB for %s profile, %s path: %v", v.Profile, v.Path, err)
 				oneErr = true
+			} else {
+				logger.Log.Infof("The interval for profile %s and path %s has been overridden with the value %d sec(s)", v.Profile, v.Path, v.ConfiguredInterval)
 			}
 		}
 		if oneErr {

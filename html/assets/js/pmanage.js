@@ -44,16 +44,11 @@ function renderCards(paths) {
 
     const intervalBadge = document.createElement("div");
     intervalBadge.className = "badge";
-    let html = `
+    var mybadge = `
     <span class="badge-label">Interval:</span>
     <span>${p.interval} sec(s)</span>`;
-    if (p.isoverridden) {
-      html += `
-        <i class="fas fa-exclamation-circle text-warning ms-1"
-           title="Interval overridden"></i>
-    `;
-    }
-    intervalBadge.innerHTML = html;
+   
+    intervalBadge.innerHTML = mybadge;
     meta.appendChild(intervalBadge);
 
     const originBadge = document.createElement("div");
