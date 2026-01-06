@@ -144,6 +144,9 @@ function updateDoc() {
     tele.innerHTML = "N/A";
     graf.innerHTML = "N/A";
     kapa.innerHTML = "N/A";
+    $('#modifyI').hide();
+    $('#resetI').hide();
+
   } else {
     var dataToSend = { "profile": p };
     waitingDialog.show();
@@ -164,6 +167,8 @@ function updateDoc() {
             tele.innerHTML = json.tele.trim();
             graf.innerHTML = json.graf.trim();
             kapa.innerHTML = json.kapa.trim();
+            $('#modifyI').show();
+            $('#resetI').show();
             waitingDialog.hide();
           } else {
             alertify.alert("JSTO...", json.msg);
