@@ -459,6 +459,22 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				if err != nil {
 					continue
 				}
+				// Override gNMI subscription intervals if user changed them in the DB
+				for k1 := range newCfg.GnmiList {
+					subs := newCfg.GnmiList[k1].Subs
+					for k2 := range subs {
+						// Just do this for "sample" subscriptions
+						if subs[k2].Mode == "sample" {
+							// if found therefore override the default interval
+							ci, found, _ := sqlite.GetTelegrafInterval(collection.ProfilesName[index], subs[k2].Path)
+							if found {
+								subs[k2].Interval = ci
+							}
+						}
+					}
+					newCfg.GnmiList[k1].Subs = subs
+				}
+
 				telegrafCfgList = append(telegrafCfgList, newCfg)
 			}
 

@@ -649,6 +649,7 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 	hasInput, hasOutput := false, false
 
 	// Manage Gnmi Input
+
 	if len(config.GnmiList) > 0 {
 		t, err := template.New("gnmiTemplate").Parse(GnmiInputTemplate)
 		if err != nil {
