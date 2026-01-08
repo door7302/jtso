@@ -28,18 +28,19 @@ const (
 )
 
 var PathMap = map[string]string{
-	"mx":     "/var/shared/telegraf/mx/telegraf.d/",
-	"ptx":    "/var/shared/telegraf/ptx/telegraf.d/",
-	"acx":    "/var/shared/telegraf/acx/telegraf.d/",
-	"ex":     "/var/shared/telegraf/ex/telegraf.d/",
-	"qfx":    "/var/shared/telegraf/qfx/telegraf.d/",
-	"srx":    "/var/shared/telegraf/srx/telegraf.d/",
-	"crpd":   "/var/shared/telegraf/crpd/telegraf.d/",
-	"cptx":   "/var/shared/telegraf/cptx/telegraf.d/",
-	"vmx":    "/var/shared/telegraf/vmx/telegraf.d/",
-	"vsrx":   "/var/shared/telegraf/vsrx/telegraf.d/",
-	"vjunos": "/var/shared/telegraf/vjunos/telegraf.d/",
-	"vevo":   "/var/shared/telegraf/vevo/telegraf.d/",
+	"mx":       "/var/shared/telegraf/mx/telegraf.d/",
+	"ptx":      "/var/shared/telegraf/ptx/telegraf.d/",
+	"acx":      "/var/shared/telegraf/acx/telegraf.d/",
+	"ex":       "/var/shared/telegraf/ex/telegraf.d/",
+	"qfx":      "/var/shared/telegraf/qfx/telegraf.d/",
+	"srx":      "/var/shared/telegraf/srx/telegraf.d/",
+	"crpd":     "/var/shared/telegraf/crpd/telegraf.d/",
+	"cptx":     "/var/shared/telegraf/cptx/telegraf.d/",
+	"vmx":      "/var/shared/telegraf/vmx/telegraf.d/",
+	"vsrx":     "/var/shared/telegraf/vsrx/telegraf.d/",
+	"vjunos":   "/var/shared/telegraf/vjunos/telegraf.d/",
+	"vevo":     "/var/shared/telegraf/vevo/telegraf.d/",
+	"ondemand": "/var/shared/telegraf/ondemand/telegraf.d/",
 }
 
 var Collections map[string]map[string]sqlite.Collection
