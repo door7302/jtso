@@ -61,6 +61,8 @@ type Admin struct {
 	VSRXDebug   int
 	VJUNOSDebug int
 	VEVODebug   int
+	// On demand instance
+	ONDEMANDDebug int
 	// Influx retention policy (RP) duration
 	RPDuration string
 }
@@ -153,6 +155,7 @@ func Init(f string) error {
 		vsrxdebug INTEGER,
 		vjunosdebug INTEGER,
 		vevodebug INTEGER,
+		ondemanddebug INTEGER
 		rpduration TEXT
 		);`
 
@@ -525,14 +528,14 @@ func LoadAll() error {
 	i = rows.Next()
 	if !i {
 		// nothing in the DB regarding administration  - add default one
-		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, influx.DefaultRetention); err != nil {
+		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, influx.DefaultRetention); err != nil {
 			logger.Log.Errorf("Error while adding default administration - err: %v", err)
 			dbMu.Unlock()
 			return err
 		}
 	} else {
-		// Manage new fields
-		colExists := false
+		// Manage new fields: rpduration and ondemanddebug
+		colExists, colExists2 := false, false
 		rows, err := db.Query("PRAGMA table_info(administration);")
 		if err != nil {
 			logger.Log.Errorf("Error while checking table info - err: %v", err)
@@ -551,14 +554,25 @@ func LoadAll() error {
 			}
 			if name == "rpduration" {
 				colExists = true
-				break
 			}
+			if name == "ondemanddebug" {
+				colExists2 = true
+			}
+
 		}
 		rows.Close()
 		if !colExists {
 			_, err := db.Exec("ALTER TABLE administration ADD COLUMN rpduration TEXT DEFAULT '" + influx.DefaultRetention + "';")
 			if err != nil {
 				logger.Log.Errorf("Error adding rpduration column - err: %v", err)
+				dbMu.Unlock()
+				return err
+			}
+		}
+		if !colExists2 {
+			_, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemanddebug INTEGER DEFAULT 0;")
+			if err != nil {
+				logger.Log.Errorf("Error adding ondemanddebug column - err: %v", err)
 				dbMu.Unlock()
 				return err
 			}
@@ -572,7 +586,7 @@ func LoadAll() error {
 		}
 		defer rows.Close()
 		rows.Next()
-		err = rows.Scan(&ActiveAdmin.Id, &ActiveAdmin.MXDebug, &ActiveAdmin.PTXDebug, &ActiveAdmin.ACXDebug, &ActiveAdmin.EXDebug, &ActiveAdmin.QFXDebug, &ActiveAdmin.SRXDebug, &ActiveAdmin.CRPDDebug, &ActiveAdmin.CPTXDebug, &ActiveAdmin.VMXDebug, &ActiveAdmin.VSRXDebug, &ActiveAdmin.VJUNOSDebug, &ActiveAdmin.VEVODebug, &ActiveAdmin.RPDuration)
+		err = rows.Scan(&ActiveAdmin.Id, &ActiveAdmin.MXDebug, &ActiveAdmin.PTXDebug, &ActiveAdmin.ACXDebug, &ActiveAdmin.EXDebug, &ActiveAdmin.QFXDebug, &ActiveAdmin.SRXDebug, &ActiveAdmin.CRPDDebug, &ActiveAdmin.CPTXDebug, &ActiveAdmin.VMXDebug, &ActiveAdmin.VSRXDebug, &ActiveAdmin.VJUNOSDebug, &ActiveAdmin.VEVODebug, &ActiveAdmin.ONDEMANDDebug, &ActiveAdmin.RPDuration)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing administration rows - err: %v", err)
 			dbMu.Unlock()

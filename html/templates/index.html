@@ -37,6 +37,7 @@
                         <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="browser.html">gNMI browser</a></li>
+                            <li><a class="dropdown-item" href="ondemand.html">On-demand Graph</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -138,6 +139,11 @@
                         VJunos Evolved Instance
                         <div class="kpi-box kpi-blue">{{.NumVEVO}}</div>
                         <div class="kpi-box kpi-grey" style="background-color: {{.VEVODebug}};" id="VEVO" onclick="enableDebug(this)">D</div>
+                    </div>
+                    <div class="telegraf-sub-box" style="background: linear-gradient(to bottom, white, #{{.TeleOnDemand}});">
+                        On-demand Instance
+                        <div class="kpi-box kpi-blue">{{.NumONDEMAND}}</div>
+                        <div class="kpi-box kpi-grey" style="background-color: {{.ONDEMANDDebug}};" id="ONDEMAND" onclick="enableDebug(this)">D</div>
                     </div>
                 </div>
             </div>

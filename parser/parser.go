@@ -22,7 +22,7 @@ const PATH_CERT string = "/var/shared/telegraf/cert/"
 
 var root *TreeNode
 var global []string
-var re1, re2, re3 *regexp.Regexp
+var re1, re2, re3, re4 *regexp.Regexp
 var StreamObj *Streamer
 
 // Will deprecate TreeJS in further release
@@ -60,6 +60,24 @@ type Streamer struct {
 	StopStreaming chan struct{}
 }
 
+type OnceRequest struct {
+	Path    string
+	Router  string
+	Port    int
+	Timeout int
+}
+
+type XPathInfo struct {
+	Keys []string
+	Leaf string
+}
+
+type OnceReply struct {
+	Path   string   `json:"path"`
+	Fields []string `json:"fields"`
+	Tags   []string `json:"tags"`
+}
+
 func genUUID() string {
 	return uuid.New().String()
 }
@@ -69,6 +87,7 @@ func init() {
 	re1 = regexp.MustCompile("(\\d+)")
 	re2 = regexp.MustCompile("(.*)\\[(.*)=(.*)\\]")
 	re3 = regexp.MustCompile("^[^/:]+:")
+	re4 = regexp.MustCompile(`\[(\w+)=`)
 
 	// init streamer
 	StreamObj = new(Streamer)
@@ -270,6 +289,36 @@ func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
 	}
 }
 
+func extractFieldTag(xpath string, hideOrigin bool) XPathInfo {
+
+	var info XPathInfo
+
+	if hideOrigin {
+		// remove any origin
+		xpath = re3.ReplaceAllString(xpath, "")
+	}
+
+	// Normalize & split path
+	parts := strings.Split(strings.Trim(xpath, "/"), "/")
+
+	// Leaf is the last element without predicates
+	last := parts[len(parts)-1]
+	if idx := strings.Index(last, "["); idx != -1 {
+		last = last[:idx]
+	}
+	info.Leaf = last
+
+	// Extract all key names
+	for _, part := range parts {
+		matches := re4.FindAllStringSubmatch(part, -1)
+		for _, m := range matches {
+			info.Keys = append(info.Keys, m[1])
+		}
+	}
+
+	return info
+}
+
 func parseXpath(xpath string, value string, merge bool, hideOrigin bool) error {
 
 	var parent *TreeNode
@@ -334,10 +383,10 @@ func parseXpath(xpath string, value string, merge bool, hideOrigin bool) error {
 	return nil
 }
 
-func LaunchSearch(timeout int, hideOrigin bool) {
+func GnmiSample(timeout int, hideOrigin bool) {
 
-	logger.Log.Infof("Start subscription for router %s and xpath %s (timeout is %d)", StreamObj.Router, StreamObj.Path, timeout)
-	StreamData(fmt.Sprintf("Start subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
+	logger.Log.Infof("Start gNMI SAMPLE subscription for router %s and xpath %s (timeout is %d)", StreamObj.Router, StreamObj.Path, timeout)
+	StreamData(fmt.Sprintf("Start gNMI subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
 
 	// Init global variable
 	root = NewTree("", map[string]interface{}{})
@@ -478,4 +527,144 @@ func LaunchSearch(timeout int, hideOrigin bool) {
 		}
 	}
 
+}
+
+func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
+	var tg *target.Target
+	var err error
+	r := OnceReply{
+		Path:   o.Path,
+		Fields: make([]string, 0),
+		Tags:   make([]string, 0),
+	}
+
+	logger.Log.Infof("Start gNMI ONCE subscription for router %s and xpath %s (timeout is %d)", o.Router, o.Path, o.Timeout)
+
+	// Retrieve cred info
+	tls := false
+	skip := false
+	clienttls := false
+	if sqlite.ActiveCred.UseTls == "yes" {
+		tls = true
+	}
+	if sqlite.ActiveCred.SkipVerify == "yes" {
+		skip = true
+	}
+	if sqlite.ActiveCred.ClientTls == "yes" {
+		clienttls = true
+	}
+
+	if tls {
+		if clienttls {
+			// create a target
+			tg, err = api.NewTarget(
+				api.Name("jtso"),
+				api.Address(o.Router+":"+fmt.Sprint(o.Port)),
+				api.Username(sqlite.ActiveCred.GnmiUser),
+				api.Password(sqlite.ActiveCred.GnmiPwd),
+				api.SkipVerify(skip),
+				api.Insecure(false),
+				api.TLSCA(PATH_CERT+"RootCA.crt"),
+				api.TLSCert(PATH_CERT+"client.crt"),
+				api.TLSKey(PATH_CERT+"client.key"),
+			)
+
+		} else {
+			// create a target
+			tg, err = api.NewTarget(
+				api.Name("jtso"),
+				api.Address(o.Router+":"+fmt.Sprint(o.Port)),
+				api.Username(sqlite.ActiveCred.GnmiUser),
+				api.Password(sqlite.ActiveCred.GnmiPwd),
+				api.SkipVerify(skip),
+				api.Insecure(false),
+				api.TLSCA(PATH_CERT+"RootCA.crt"),
+			)
+
+		}
+	} else {
+		// create a target
+		tg, err = api.NewTarget(
+			api.Name("jtso"),
+			api.Address(o.Router+":"+fmt.Sprint(o.Port)),
+			api.Username(sqlite.ActiveCred.GnmiUser),
+			api.Password(sqlite.ActiveCred.GnmiPwd),
+			api.SkipVerify(skip),
+			api.Insecure(true),
+		)
+	}
+
+	if err != nil {
+		logger.Log.Errorf("Unable to create gNMI ONCE target: %v", err)
+		return err, r
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Wrap the existing ctx with a timeout
+	ctxWithTimeout, timeoutCancel := context.WithTimeout(ctx, time.Duration(o.Timeout)*time.Second)
+	defer timeoutCancel()
+
+	err = tg.CreateGNMIClient(ctx)
+	if err != nil {
+		logger.Log.Errorf("Unable to create gNMI ONCE client: %v", err)
+		return err, r
+	}
+	defer tg.Close()
+	// create a gNMI ONCE mode
+	subReq, err := api.NewSubscribeRequest(
+		api.Encoding("proto"),
+		api.SubscriptionListModeONCE(),
+		api.Subscription(
+			api.Path(o.Path),
+		))
+	if err != nil {
+		logger.Log.Errorf("Unable to create gNMI ONCE subscription: %v", err)
+		return err, r
+	}
+
+	onceResps, err := tg.SubscribeOnce(ctxWithTimeout, subReq)
+	if err != nil {
+		if strings.Contains(err.Error(), "deadline exceeded") {
+			logger.Log.Errorf("Subscription gNMI ONCE timed out: %v", err)
+		} else {
+			logger.Log.Errorf("Subscription gNMI ONCE failed: %v", err)
+		}
+		tg.Close()
+		return err, r
+	}
+
+	// Parse the response
+	tagMap := make(map[string]struct{})
+	fieldMap := make(map[string]struct{})
+
+	for _, r := range onceResps {
+		f, err := formatters.ResponsesFlat(r)
+		if err != nil {
+			logger.Log.Errorf("Unable to parse the gNMI ONCE response: %v", err)
+			continue
+		}
+		for k, _ := range f {
+			info := extractFieldTag(k, hideOrigin)
+			// Add tags and field in the 2 "set" - to keep unicity
+			if info.Leaf != "" {
+				fieldMap[info.Leaf] = struct{}{}
+			}
+			if len(info.Keys) != 0 {
+				for _, tag := range info.Keys {
+					tagMap[tag] = struct{}{}
+				}
+			}
+		}
+	}
+
+	// fill the reply
+	for k := range tagMap {
+		r.Tags = append(r.Tags, k)
+	}
+	for k := range fieldMap {
+		r.Fields = append(r.Fields, k)
+	}
+	return nil, r
 }

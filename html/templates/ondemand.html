@@ -9,49 +9,95 @@
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/alertify.min.css">
     <link rel="stylesheet" href="css/bootstrap-multiselect.css">
-    <link rel="stylesheet" href="css/flip.min.css">
     <link rel="stylesheet" href="css/jtsostyle.css">
-    <link rel="stylesheet" href="css/browser.css">
-    {{if .UseFancyTree}}
-    <link rel="stylesheet" href="css/jquery-ui.css">
-    <link rel="stylesheet" href="css/ui.fancytree.min.css">
-    {{else}}
-        <link rel="stylesheet" href="css/jstree.css">
-        {{end}}
-
+    <link rel="stylesheet" href="css/ondemand.css">
 </head>
 
 <body>
 
-    <div class="modal fade" style="animation-name: animatetop;" id="logs" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document" style="max-width: 47.5%;">
+    <div class="modal fade" style="animation-name: animatetop;" id="monitor" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document" style="max-width: 75%;">
             <div class="modal-content">
                 <div class="modal-header" style="background-color: #13215c; color: white;">
-                    <h5 class="modal-title" id="modaltitle">Sensor collection, please wait...
-                        <i>This may take 2 minutes</i>
+                    <h5 class="modal-title" id="modaltitle">Sensor Fields and Tags extraction
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="background: none; border: none;">
                         <i class="fas fa-times" aria-hidden="true" style="font-size: 1.5rem; color: white;"></i>
                     </button>
                 </div>
-                <div class="modal-body" style='display: flex;'>
-                    <!-- First Column (75%) -->
-                    <div id="modalcore" style='flex: 3; padding: 10px; font-family: "Courier New", Courier, monospace; border-right: 1px solid #ddd;'>
+                <div class="modal-body d-flex gap-3" id="modal-body">
 
+                    <!-- ===== LEFT TABLE : GroupBy Tags ===== -->
+                    <div class="flex-fill">
+                        <h6 class="mb-2">GroupBy Tag(s)</h6>
+                        <table class="table table-sm table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>GroupBy Tag(s)</th>
+                                    <th class="text-center" style="width: 90px;">Enable</th>
+                                </tr>
+                            </thead>
+                            <tbody id="groupby-table">
+                                <tr>
+                                    <td>host</td>
+                                    <td class="text-center">
+                                        <input type="checkbox">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>interface</td>
+                                    <td class="text-center">
+                                        <input type="checkbox">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
-                    <!-- Second Column (25%) -->
-                    <div class="justify-content-center align-items-center" id="modalgauge" style="flex: 1; padding: 10px; text-align:center;">
-                        <p>XPATH Received</p>
-                        <div id="tick" class="tick" data-value="0">
-                            <div data-layout="horizontal center" data-repeat="true">
-                                <span data-view="flip" data-transform="arrive(5, .01) -> round -> split -> delay(rtl, 100, 150)"></span>
-                            </div>
-                        </div>
+                    <!-- ===== RIGHT TABLE : Fields to Monitor ===== -->
+                    <div class="flex-fill">
+                        <h6 class="mb-2">Fields to Monitor</h6>
+                        <table class="table table-sm table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Fields to monitor</th>
+                                    <th class="text-center" style="width: 90px;">Enable</th>
+                                    <th class="text-center" style="width: 170px;">
+                                        Force Decimal<br>conversion
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="fields-table">
+                                <tr>
+                                    <td>in-octets</td>
+                                    <td class="text-center">
+                                        <input type="checkbox">
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="checkbox">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>out-octets</td>
+                                    <td class="text-center">
+                                        <input type="checkbox">
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="checkbox">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
+
                 </div>
                 <div class="modal-footer">
-                    <input class="btn btn-success" type="submit" value="Export XPATHs" name="export" id="export" style="margin: 50px;margin-right: 0;margin-bottom: 0;margin-left: 0;" onclick="exportXpath()">
+                    <button class="btn btn-success" id="applyMonitor">
+                        Monitor
+                    </button>
+                    <button class="btn btn-secondary" id="cancelMonitor">
+                        Cancel
+                    </button>
                 </div>
             </div>
         </div>
@@ -106,11 +152,10 @@
     <div class="other-div">
         <div class="card other-card">
             <div class="card-body">
-                <h4 class="card-title">Telemetry sensor Analyzer</h4>
+                <h4 class="card-title">Check a Path to monitor</h4>
                 <form>
 
-
-                    <label class="form-label">Select a Router:</label>
+                    <label class="form-label">Select a Router on which you want to perform a test:</label>
 
                     <select id="router" class="selectpicker" data-width="100%">
                         {{range .Rtrs}}
@@ -118,21 +163,14 @@
                         {{end}}
                     </select>
 
-                    <label class="form-label">Enter the Sensor's Xpath:</label>
+                    <label class="form-label">Enter a Sensor's Xpath you want to monitor:</label>
 
                     <input id="pathName" class="form-control mb-2" type="text">
 
-
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="merge" checked>
-                        <label class="form-check-label" for="flexCheckDefault">
-                            Merge data for cleaner view (recommended)?
-                        </label>
-                    </div>
                 </form>
                 <br />
                 <div class="d-flex justify-content-center align-items-center">
-                    <input class="btn btn-success" type="submit" value="Analyze path" name="browse" id="browse" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+                    <input class="btn btn-success" type="submit" value="Analyze path" name="analyse" id="analyse" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
                 </div>
             </div>
         </div>
@@ -140,26 +178,32 @@
     <br />
     <div class="other-div">
         <div class="card other-card">
-            <h4 class="card-title">Results</h4>
+            <h4 class="card-title">Current On-demand Monitoring</h4>
             <form>
                 <div class="row align-items-center">
                     <div class="col">
-                        <label for="inputField" class="visually-hidden">Input</label>
-                        <input type="text" class="form-control mb-2" id="searching" name="searching" placeholder="Search in Tree">
+                        <select id="ondemand-config" class="selectpicker" data-width="100%">
+                        </select>
                     </div>
                     <div class="col-auto">
-                        <button type="button" class="btn btn-success mb-2" name="collapse" id="collapse">Collapse All</button>
+                        <button type="button" class="btn btn-secondary mb-2" name="load" id="collapse">Load a config</button>
                     </div>
                     <div class="col-auto">
-                        <button type="button" class="btn btn-success mb-2" name="expand" id="expand">Expand All</button>
+                        <button type="button" class="btn btn-secondary mb-2" name="save" id="expand">Save current config</button>
                     </div>
                     <div class="col-auto">
-                        <button type="button" class="btn btn-success mb-2" name="export" id="export" onclick="exportXpath()">Export last query</button>
+                        <button type="button" class="btn btn-success mb-2" name="apply" id="export">Apply changes</button>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-warning mb-2" name="apply" id="export">Clear OnDemand DB</button>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-danger mb-2" name="apply" id="export">Reset All</button>
                     </div>
                 </div>
             </form>
             </br>
-            <div id="result">
+            <div id="monitor-state">
 
             </div>
 
@@ -171,16 +215,8 @@
     <script src="js/alertify.min.js"></script>
     <script src="js/bootstrap-waitingfor.min.js"></script>
     <script src="js/bootstrap-multiselect.js"></script>
-    <script src="js/flip.min.js"></script>
     <script src="js/dark.js"></script>
-    {{if .UseFancyTree}}
-    <script src="js/jquery-ui.min.js"></script>
-    <script src="js/jquery.fancytree-all-deps.min.js"></script>
-    <script src="js/browser2.js"></script>
-    {{else}}
-        <script src="js/jstree.min.js"></script>
-        <script src="js/browser.js"></script>
-        {{end}}
+    <script src="js/ondemand.js"></script>
 
 
 </body>

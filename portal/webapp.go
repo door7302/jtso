@@ -105,6 +105,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/pmanagement.html", routeDoc)
 	wapp.GET("/browser.html", routeBrowse)
 	wapp.GET("/stats.html", routeStats)
+	wapp.GET("/ondemand.html", routeOndemand)
 
 	// GET API routes
 	wapp.GET("/stream", routeStream)
@@ -393,6 +394,11 @@ func routeIndex(c echo.Context) error {
 	numVMX, numVSRX, numVJUNOS, numVEVO := 0, 0, 0, 0
 	VMXDebug, VSRXDebug, VJUNOSDebug, VEVODebug := "grey", "grey", "grey", "grey"
 
+	// Ondemand Instance
+	teleOnDemand := "f8cecc"
+	numONDEMAND := 0
+	ONDEMANDDebug := "grey"
+
 	// Update Debug flag
 	if sqlite.ActiveAdmin.MXDebug == 1 {
 		MXDebug = "red"
@@ -429,6 +435,9 @@ func routeIndex(c echo.Context) error {
 	}
 	if sqlite.ActiveAdmin.VEVODebug == 1 {
 		VEVODebug = "red"
+	}
+	if sqlite.ActiveAdmin.ONDEMANDDebug == 1 {
+		ONDEMANDDebug = "red"
 	}
 
 	// check containers state
@@ -484,6 +493,10 @@ func routeIndex(c echo.Context) error {
 			if container.State == "running" {
 				teleVevo = "ccffcc"
 			}
+		case "/telegraf_ondemand":
+			if container.State == "running" {
+				teleOnDemand = "ccffcc"
+			}
 		case "/grafana":
 			if container.State == "running" {
 				grafana = "ccffcc"
@@ -509,6 +522,7 @@ func routeIndex(c echo.Context) error {
 
 	// Retrive number of active routers per Telegraf
 	for _, r := range sqlite.RtrList {
+		// TODO_ONDEMAND - CONCATENATE FAMILY with :ONDEMAND for routers with ONDEMAND Subs.
 		switch r.Family {
 		case "mx":
 			if r.Profile == 1 {
@@ -558,6 +572,10 @@ func routeIndex(c echo.Context) error {
 			if r.Profile == 1 {
 				numVEVO++
 			}
+		case "ondemand":
+			if r.Profile == 1 {
+				numONDEMAND++
+			}
 		}
 	}
 
@@ -585,11 +603,11 @@ func routeIndex(c echo.Context) error {
 	teleVersion := container.GetVersionLabel("jts_telegraf")
 
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "TeleEx": teleEx, "TeleQfx": teleQfx, "TeleSrx": teleSrx,
-		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVevo": teleVevo,
+		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVevo": teleVevo, "TeleOnDemand": teleOnDemand,
 		"Grafana": grafana, "Kapacitor": kapacitor, "Chronograf": chronograf, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
-		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVEVO": numVEVO,
+		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVEVO": numVEVO, "NumONDEMAND": numONDEMAND,
 		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
-		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VEVODebug": VEVODebug,
+		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VEVODebug": VEVODebug, "ONDEMANDDebug": ONDEMANDDebug,
 		"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
 }
 
@@ -685,6 +703,23 @@ func routeDoc(c echo.Context) error {
 	sort.Strings(lp)
 
 	return c.Render(http.StatusOK, "pmanagement.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+}
+
+func routeOndemand(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
+
+	// Get all routers from db
+	var lr []RouterDetails
+	lr = make([]RouterDetails, 0)
+
+	for _, r := range sqlite.RtrList {
+		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
+	}
+	// sort it
+	sort.Sort(ByShortname(lr))
+
+	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
 }
 
 func routeBrowse(c echo.Context) error {
@@ -1207,7 +1242,7 @@ func routeStream(c echo.Context) error {
 		parser.StreamObj.Ticker = time.Now()
 		parser.StreamObj.ForceFlush = true
 		// launch parser
-		go parser.LaunchSearch(collectCfg.cfg.Portal.BrowserTimeout, collectCfg.cfg.Portal.HideOrigin)
+		go parser.GnmiSample(collectCfg.cfg.Portal.BrowserTimeout, collectCfg.cfg.Portal.HideOrigin)
 		// loop until the end
 		for {
 			select {
