@@ -528,7 +528,7 @@ func LoadAll() error {
 	i = rows.Next()
 	if !i {
 		// nothing in the DB regarding administration  - add default one
-		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, influx.DefaultRetention); err != nil {
+		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, influx.DefaultRetention); err != nil {
 			logger.Log.Errorf("Error while adding default administration - err: %v", err)
 			dbMu.Unlock()
 			return err
