@@ -185,31 +185,32 @@
                     <!-- BLOCK 1: Configuration -->
                     <div class="col-lg-6">
                         <div class="border rounded p-3 h-100">
-                        
+
                             <div class="row align-items-center g-2">
                                 <!-- Select -->
                                 <div class="col">
                                     <select id="ondemand-config" class="selectpicker" data-width="100%">
+                                        <option value="default">Select a config</option>
                                     </select>
                                 </div>
 
                                 <!-- Load -->
                                 <div class="col-auto">
-                                    <button type="button" class="btn btn-secondary">
+                                    <button type="button" id="load" class="btn btn-secondary">
                                         Load
                                     </button>
                                 </div>
 
                                 <!-- Save -->
                                 <div class="col-auto">
-                                    <button type="button" class="btn btn-secondary">
+                                    <button type="button" id="save" class="btn btn-secondary">
                                         Save
                                     </button>
                                 </div>
 
                                 <!-- Save as -->
                                 <div class="col-auto">
-                                    <button type="button" class="btn btn-secondary">
+                                    <button type="button" id="saveas" class="btn btn-secondary">
                                         Save as
                                     </button>
                                 </div>
@@ -221,16 +222,17 @@
                     <div class="col-lg-6">
                         <div class="border rounded p-3 h-100">
                             <div class="d-flex flex-wrap justify-content-center  gap-2">
-                                <button type="button" class="btn btn-success">
-                                    Apply Changes & Restart Collector
+                                <button type="button" id="start" class="btn btn-success">
+                                    Start Collector
                                 </button>
-
-                                <button type="button" class="btn btn-warning">
-                                    Clear On-Demand Data 
+                                <button type="button" id="stop" class="btn btn-success">
+                                    Stop Collector
                                 </button>
-
-                                <button type="button" class="btn btn-danger">
-                                    Reset All & Stop Collector
+                                <button type="button" id="clear" class="btn btn-warning">
+                                    Clear On-Demand DB
+                                </button>
+                                <button type="button" id="reset" class="btn btn-danger">
+                                    Reset Config
                                 </button>
                             </div>
                         </div>
