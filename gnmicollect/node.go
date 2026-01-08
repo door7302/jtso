@@ -1,4 +1,4 @@
-package parser
+package gnmicollect
 
 // TreeNode represents a node in the tree structure.
 type TreeNode struct {

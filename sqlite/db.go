@@ -578,20 +578,20 @@ func LoadAll() error {
 			}
 		}
 		// End of the specific piece of code managing new fields
-		rows, err = db.Query("SELECT * FROM administration;")
-		if err != nil {
-			logger.Log.Errorf("Error while selecting administration - err: %v", err)
-			dbMu.Unlock()
-			return err
-		}
-		defer rows.Close()
-		rows.Next()
-		err = rows.Scan(&ActiveAdmin.Id, &ActiveAdmin.MXDebug, &ActiveAdmin.PTXDebug, &ActiveAdmin.ACXDebug, &ActiveAdmin.EXDebug, &ActiveAdmin.QFXDebug, &ActiveAdmin.SRXDebug, &ActiveAdmin.CRPDDebug, &ActiveAdmin.CPTXDebug, &ActiveAdmin.VMXDebug, &ActiveAdmin.VSRXDebug, &ActiveAdmin.VJUNOSDebug, &ActiveAdmin.VEVODebug, &ActiveAdmin.ONDEMANDDebug, &ActiveAdmin.RPDuration)
-		if err != nil {
-			logger.Log.Errorf("Error while parsing administration rows - err: %v", err)
-			dbMu.Unlock()
-			return err
-		}
+	}
+	rows, err = db.Query("SELECT * FROM administration;")
+	if err != nil {
+		logger.Log.Errorf("Error while selecting administration - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	defer rows.Close()
+	rows.Next()
+	err = rows.Scan(&ActiveAdmin.Id, &ActiveAdmin.MXDebug, &ActiveAdmin.PTXDebug, &ActiveAdmin.ACXDebug, &ActiveAdmin.EXDebug, &ActiveAdmin.QFXDebug, &ActiveAdmin.SRXDebug, &ActiveAdmin.CRPDDebug, &ActiveAdmin.CPTXDebug, &ActiveAdmin.VMXDebug, &ActiveAdmin.VSRXDebug, &ActiveAdmin.VJUNOSDebug, &ActiveAdmin.VEVODebug, &ActiveAdmin.ONDEMANDDebug, &ActiveAdmin.RPDuration)
+	if err != nil {
+		logger.Log.Errorf("Error while parsing administration rows - err: %v", err)
+		dbMu.Unlock()
+		return err
 	}
 
 	dbMu.Unlock()

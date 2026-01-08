@@ -7,11 +7,11 @@ import (
 	"jtso/association"
 	"jtso/config"
 	"jtso/container"
+	_ "jtso/gnmicollect"
 	"jtso/influx"
 	"jtso/kapacitor"
 	"jtso/logger"
 	_ "jtso/output"
-	_ "jtso/parser"
 	"jtso/portal"
 	"jtso/sqlite"
 	"jtso/worker"
@@ -80,6 +80,7 @@ func main() {
 		logger.Log.Errorf("unable to open DB... panic...: %v", err)
 		panic(err)
 	}
+	logger.Log.Info("Sqlite DB file loade.")
 
 	// init the webapp
 	webapp := portal.New(Cfg)

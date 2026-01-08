@@ -14,7 +14,6 @@ import (
 	"jtso/logger"
 	"jtso/maker"
 	"jtso/netconf"
-	"jtso/parser"
 	"jtso/sqlite"
 	"jtso/worker"
 	"net/http"
@@ -1165,15 +1164,15 @@ func routeSearchPath(c echo.Context) error {
 	var err error
 
 	// check if other instance is already running
-	if parser.StreamObj.Stream != 0 {
-		logger.Log.Errorf("Streaming already running for path %s", parser.StreamObj.Path)
+	if gnmicollect.StreamObj.Stream != 0 {
+		logger.Log.Errorf("Streaming already running for path %s", gnmicollect.StreamObj.Path)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Another instance is currently requesting XPATH search. Retry later..."})
 	}
 	// change the streamer state to pending stream API request
-	parser.StreamObj.Stream = 1
+	gnmicollect.StreamObj.Stream = 1
 	// reinit counter and xpath bucket
-	parser.StreamObj.XpathCpt = 0
-	parser.StreamObj.XpathList = make(map[string]struct{})
+	gnmicollect.StreamObj.XpathCpt = 0
+	gnmicollect.StreamObj.XpathList = make(map[string]struct{})
 
 	r := new(SearchPath)
 	err = c.Bind(r)
@@ -1189,11 +1188,11 @@ func routeSearchPath(c echo.Context) error {
 			break
 		}
 	}
-	parser.StreamObj.Router = h
-	parser.StreamObj.Port = collectCfg.cfg.Gnmi.Port
-	parser.StreamObj.Path = r.Xpath
-	parser.StreamObj.Merger = r.Merge
-	parser.StreamObj.StopStreaming = make(chan struct{})
+	gnmicollect.StreamObj.Router = h
+	gnmicollect.StreamObj.Port = collectCfg.cfg.Gnmi.Port
+	gnmicollect.StreamObj.Path = r.Xpath
+	gnmicollect.StreamObj.Merger = r.Merge
+	gnmicollect.StreamObj.StopStreaming = make(chan struct{})
 
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Streaming well started."})
 }
@@ -1227,67 +1226,67 @@ func routeStream(c echo.Context) error {
 	// Flush the response buffer
 	c.Response().Flush()
 
-	if parser.StreamObj.Stream == 0 {
+	if gnmicollect.StreamObj.Stream == 0 {
 		logger.Log.Errorf("Bad request - direct access of /stream is not allowed")
 		c.JSON(http.StatusBadRequest, Reply{Status: "NOK", Msg: "Bad request - direct access of /stream is not allowed"})
 		c.Response().Flush()
 		return nil
-	} else if parser.StreamObj.Stream == 1 {
+	} else if gnmicollect.StreamObj.Stream == 1 {
 
 		// change the state of the stream to streaming
-		parser.StreamObj.Stream = 2
+		gnmicollect.StreamObj.Stream = 2
 		// Pass the context to parser
-		parser.StreamObj.Flusher, _ = c.Response().Writer.(http.Flusher)
-		parser.StreamObj.Writer = c.Response().Writer
-		parser.StreamObj.Ticker = time.Now()
-		parser.StreamObj.ForceFlush = true
+		gnmicollect.StreamObj.Flusher, _ = c.Response().Writer.(http.Flusher)
+		gnmicollect.StreamObj.Writer = c.Response().Writer
+		gnmicollect.StreamObj.Ticker = time.Now()
+		gnmicollect.StreamObj.ForceFlush = true
 		// launch parser
-		go parser.GnmiSample(collectCfg.cfg.Portal.BrowserTimeout, collectCfg.cfg.Portal.HideOrigin)
+		go gnmicollect.GnmiSample(collectCfg.cfg.Portal.BrowserTimeout, collectCfg.cfg.Portal.HideOrigin)
 		// loop until the end
 		for {
 			select {
-			case <-parser.StreamObj.StopStreaming:
-				var jsTree []parser.TreeJs
-				//var fancytreeData []*parser.FancytreeNode
+			case <-gnmicollect.StreamObj.StopStreaming:
+				var jsTree []gnmicollect.TreeJs
+				//var fancytreeData []*gnmicollect.FancytreeNode
 				var jsonData []byte
 				var err error
 
 				// depending on the error report:
-				errString := parser.StreamObj.Error.Error()
+				errString := gnmicollect.StreamObj.Error.Error()
 
 				// Normal end
 				if strings.Contains(errString, "context canceled") {
 
-					parser.StreamData("End of the subscription. Close gNMI session", "OK")
+					gnmicollect.StreamData("End of the subscription. Close gNMI session", "OK")
 					logger.Log.Debug("Generate payload based on the Tree")
 					if collectCfg.cfg.Portal.FancyTree {
-						fancytreeData := &parser.FancytreeNode{
+						fancytreeData := &gnmicollect.FancytreeNode{
 							Title:    "Root",
 							Key:      "root",
 							Folder:   true,
 							Expanded: true,
-							Children: []*parser.FancytreeNode{},
+							Children: []*gnmicollect.FancytreeNode{},
 						}
-						parser.TraverseTreeFancytree(parser.StreamObj.Result, fancytreeData)
+						gnmicollect.TraverseTreeFancytree(gnmicollect.StreamObj.Result, fancytreeData)
 						jsonData, err = json.Marshal(fancytreeData.Children)
 
 					} else {
-						jsTree = make([]parser.TreeJs, 0)
-						parser.TraverseTree(parser.StreamObj.Result, "#", &jsTree)
+						jsTree = make([]gnmicollect.TreeJs, 0)
+						gnmicollect.TraverseTree(gnmicollect.StreamObj.Result, "#", &jsTree)
 						jsonData, err = json.Marshal(jsTree)
 					}
 
 					if err != nil {
 						logger.Log.Errorf("Unable to marshall the result: %v", err)
-						parser.StreamData(fmt.Sprintf("Unable to marshall the result: %s", err.Error()), "ERROR")
+						gnmicollect.StreamData(fmt.Sprintf("Unable to marshall the result: %s", err.Error()), "ERROR")
 					} else {
 						logger.Log.Debug("Marshall the result: success")
 						// Convert the JSON data to a string
 						jsonString := string(jsonData)
-						parser.StreamData("End of the collection.", "END", jsonString)
+						gnmicollect.StreamData("End of the collection.", "END", jsonString)
 						// saved the XPATH raw list in a static file
-						keys := make([]string, 0, len(parser.StreamObj.XpathList))
-						for key := range parser.StreamObj.XpathList {
+						keys := make([]string, 0, len(gnmicollect.StreamObj.XpathList))
+						for key := range gnmicollect.StreamObj.XpathList {
 							keys = append(keys, key)
 						}
 						sort.Strings(keys)
@@ -1309,10 +1308,10 @@ func routeStream(c echo.Context) error {
 					}
 				} else {
 					logger.Log.Errorf("Unexpected gnmi error: %v", errString)
-					parser.StreamData(fmt.Sprintf("Unexpected gnmi error: %s", errString), "ERROR")
+					gnmicollect.StreamData(fmt.Sprintf("Unexpected gnmi error: %s", errString), "ERROR")
 				}
 
-				parser.StreamObj.Stream = 0
+				gnmicollect.StreamObj.Stream = 0
 				logger.Log.Info("Streaming has been now stopped properly...")
 				time.Sleep(500 * time.Millisecond)
 				return nil
