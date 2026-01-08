@@ -256,7 +256,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		families[9] = "vsrx"
 		families[10] = "vjunos"
 		families[11] = "vevo"
-		families[12] = "vevo"
+		families[12] = "ondemand"
 
 	} else {
 		families = make([]string, 1)
