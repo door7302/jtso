@@ -10,6 +10,7 @@ import (
 	"jtso/association"
 	"jtso/config"
 	"jtso/container"
+	"jtso/gnmicollect"
 	"jtso/influx"
 	"jtso/logger"
 	"jtso/maker"
