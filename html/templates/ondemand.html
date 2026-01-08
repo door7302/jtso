@@ -181,47 +181,51 @@
             <h4 class="card-title">Current On-demand Monitoring</h4>
 
             <form>
-                <!-- BLOCK 1: Config selection + Load / Save -->
-                <div class="border rounded p-3 mb-3">
-                    <div class="row align-items-center g-2">
-                        <div class="col-md-6">
-                            <select id="ondemand-config" class="selectpicker" data-width="100%">
-                            </select>
-                        </div>
+                <div class="row g-3">
+                    <!-- BLOCK 1: Config -->
+                    <div class="col-lg-6">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="text-muted mb-3">Configuration</h6>
 
-                        <div class="col-auto">
-                            <button type="button" class="btn btn-secondary" name="load" id="collapse">
-                                Load config
-                            </button>
-                        </div>
+                            <div class="row align-items-center g-2">
+                                <div class="col-12">
+                                    <select id="ondemand-config" class="selectpicker" data-width="100%">
+                                    </select>
+                                </div>
 
-                        <div class="col-auto">
-                            <button type="button" class="btn btn-secondary" name="save" id="expand">
-                                Save config
-                            </button>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-secondary" id="collapse">
+                                        Load config
+                                    </button>
+                                </div>
+
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-secondary" id="expand">
+                                        Save config
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- BLOCK 2: Actions -->
-                <div class="border rounded p-3">
-                    <div class="row align-items-center g-2">
-                        <div class="col-auto">
-                            <button type="button" class="btn btn-success" name="apply">
-                                Apply changes
-                            </button>
-                        </div>
+                    <!-- BLOCK 2: Actions -->
+                    <div class="col-lg-6">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="text-muted mb-3">Actions</h6>
 
-                        <div class="col-auto">
-                            <button type="button" class="btn btn-warning" name="clear">
-                                Clear OnDemand DB
-                            </button>
-                        </div>
+                            <div class="d-flex flex-wrap gap-2 align-items-start">
+                                <button type="button" class="btn btn-success">
+                                    Apply changes
+                                </button>
 
-                        <div class="col-auto">
-                            <button type="button" class="btn btn-danger" name="reset">
-                                Reset All
-                            </button>
+                                <button type="button" class="btn btn-warning">
+                                    Clear OnDemand DB
+                                </button>
+
+                                <button type="button" class="btn btn-danger">
+                                    Reset All
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
