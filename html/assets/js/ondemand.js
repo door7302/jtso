@@ -232,7 +232,6 @@ btnReset.onclick = function () {
     }).setHeader('JSTO...');
 };
 
-
 function renderResultTable(data) {
     const tbody = document.getElementById("result-table-body");
     tbody.innerHTML = "";
@@ -259,7 +258,7 @@ function renderResultTable(data) {
 
             if (field.processor !== 0 && field.processor !== "0") {
                 badge.innerHTML +=
-                    ' <i class="fa-solid fa-circle-info ms-1" title="Processor enabled"></i>';
+                    ' <i class="fa fa-info-circle ms-1" title="Processor enabled"></i>';
             }
 
             fieldsWrap.appendChild(badge);
@@ -288,19 +287,18 @@ function renderResultTable(data) {
         actionsTd.className = "text-center align-middle";
 
         actionsTd.innerHTML = `
-            <i class="fa-solid fa-pen-to-square text-primary me-3 action-edit"
+            <i class="fa fa-pencil-alt text-primary me-3 action-edit"
                role="button"
                title="Edit"
                data-index="${index}"></i>
 
-            <i class="fa-solid fa-trash text-danger action-delete"
+            <i class="fa fa-trash text-danger action-delete"
                role="button"
                title="Delete"
                data-index="${index}"></i>
         `;
 
         tr.appendChild(actionsTd);
-
         tbody.appendChild(tr);
     });
 }
