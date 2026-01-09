@@ -232,6 +232,7 @@ btnReset.onclick = function () {
     }).setHeader('JSTO...');
 };
 
+
 function renderResultTable(data) {
     const tbody = document.getElementById("result-table-body");
     tbody.innerHTML = "";
@@ -241,13 +242,14 @@ function renderResultTable(data) {
 
         /* PATH */
         const pathTd = document.createElement("td");
-        pathTd.classList.add("text-break");
+        pathTd.classList.add("align-middle", "text-break");
         pathTd.textContent = entry.path;
         tr.appendChild(pathTd);
 
         /* FIELDS */
         const fieldsTd = document.createElement("td");
-        fieldsTd.classList.add("d-flex", "flex-wrap", "gap-1");
+        const fieldsWrap = document.createElement("div");
+        fieldsWrap.className = "d-flex flex-wrap gap-1";
 
         entry.fields.forEach(field => {
             const badge = document.createElement("span");
@@ -257,38 +259,41 @@ function renderResultTable(data) {
 
             if (field.processor !== 0 && field.processor !== "0") {
                 badge.innerHTML +=
-                    ' <i class="bi bi-info-circle ms-1" title="Processor enabled"></i>';
+                    ' <i class="fa-solid fa-circle-info ms-1" title="Processor enabled"></i>';
             }
 
-            fieldsTd.appendChild(badge);
+            fieldsWrap.appendChild(badge);
         });
 
+        fieldsTd.appendChild(fieldsWrap);
         tr.appendChild(fieldsTd);
 
         /* TAGS */
         const tagsTd = document.createElement("td");
-        tagsTd.classList.add("d-flex", "flex-wrap", "gap-1");
+        const tagsWrap = document.createElement("div");
+        tagsWrap.className = "d-flex flex-wrap gap-1";
 
         entry.tags.forEach(tag => {
             const badge = document.createElement("span");
             badge.className = "badge bg-primary";
             badge.textContent = tag;
-            tagsTd.appendChild(badge);
+            tagsWrap.appendChild(badge);
         });
 
+        tagsTd.appendChild(tagsWrap);
         tr.appendChild(tagsTd);
 
         /* ACTIONS */
         const actionsTd = document.createElement("td");
-        actionsTd.className = "text-center";
+        actionsTd.className = "text-center align-middle";
 
         actionsTd.innerHTML = `
-            <i class="bi bi-pencil-square text-primary me-2 action-edit"
+            <i class="fa-solid fa-pen-to-square text-primary me-3 action-edit"
                role="button"
                title="Edit"
                data-index="${index}"></i>
 
-            <i class="bi bi-trash text-danger action-delete"
+            <i class="fa-solid fa-trash text-danger action-delete"
                role="button"
                title="Delete"
                data-index="${index}"></i>
@@ -299,6 +304,7 @@ function renderResultTable(data) {
         tbody.appendChild(tr);
     });
 }
+
 
 
 /* Example usage */
