@@ -231,3 +231,90 @@ btnReset.onclick = function () {
         }
     }).setHeader('JSTO...');
 };
+
+function renderResultTable(data) {
+    const tbody = document.getElementById("result-table-body");
+    tbody.innerHTML = "";
+
+    data.entries.forEach((entry, index) => {
+        const tr = document.createElement("tr");
+
+        /* PATH */
+        const pathTd = document.createElement("td");
+        pathTd.classList.add("text-break");
+        pathTd.textContent = entry.path;
+        tr.appendChild(pathTd);
+
+        /* FIELDS */
+        const fieldsTd = document.createElement("td");
+        fieldsTd.classList.add("d-flex", "flex-wrap", "gap-1");
+
+        entry.fields.forEach(field => {
+            const badge = document.createElement("span");
+            badge.className = "badge bg-warning text-dark";
+
+            badge.innerHTML = field.name;
+
+            if (field.processor !== 0 && field.processor !== "0") {
+                badge.innerHTML +=
+                    ' <i class="bi bi-info-circle ms-1" title="Processor enabled"></i>';
+            }
+
+            fieldsTd.appendChild(badge);
+        });
+
+        tr.appendChild(fieldsTd);
+
+        /* TAGS */
+        const tagsTd = document.createElement("td");
+        tagsTd.classList.add("d-flex", "flex-wrap", "gap-1");
+
+        entry.tags.forEach(tag => {
+            const badge = document.createElement("span");
+            badge.className = "badge bg-primary";
+            badge.textContent = tag;
+            tagsTd.appendChild(badge);
+        });
+
+        tr.appendChild(tagsTd);
+
+        /* ACTIONS */
+        const actionsTd = document.createElement("td");
+        actionsTd.className = "text-center";
+
+        actionsTd.innerHTML = `
+            <i class="bi bi-pencil-square text-primary me-2 action-edit"
+               role="button"
+               title="Edit"
+               data-index="${index}"></i>
+
+            <i class="bi bi-trash text-danger action-delete"
+               role="button"
+               title="Delete"
+               data-index="${index}"></i>
+        `;
+
+        tr.appendChild(actionsTd);
+
+        tbody.appendChild(tr);
+    });
+}
+
+
+/* Example usage */
+const exampleJson = {
+    "name": "profilex",
+    "routers": ["rtr1", "rtr2"],
+    "entries": [
+        {
+            "path": "/node1/node2",
+            "fields": [
+                { "name": "field1", "processor": 1 },
+                { "name": "field2", "processor": "0" }
+            ],
+            "tags": ["tag1", "tag2"]
+        }
+    ]
+};
+
+renderResultTable(exampleJson);

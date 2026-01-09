@@ -181,7 +181,7 @@
             <h4 class="card-title">Current On-demand Monitoring</h4>
 
             <form>
-                <div class="row g-3">
+                <div id="monitor" class="row g-3">
                     <!-- BLOCK 1: Configuration -->
                     <div class="col-lg-6">
                         <div class="border rounded p-3 h-100">
@@ -242,7 +242,31 @@
 
             <br>
 
-            <div id="monitor-state"></div>
+            <div id="result" class="mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <strong>Monitoring Entries</strong>
+                    </div>
+
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width:35%">Path</th>
+                                        <th style="width:30%">Fields</th>
+                                        <th style="width:25%">Tags</th>
+                                        <th style="width:10%" class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="result-table-body">
+                                    <!-- Filled dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <script src="js/jquery-3.6.4.min.js"></script>
