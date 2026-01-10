@@ -103,6 +103,54 @@
         </div>
     </div>
 
+    <div class="modal fade" id="fieldModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Field</h5>
+                </div>
+
+                <div class="modal-body">
+                    <input id="fieldName" class="form-control mb-2" placeholder="Field name">
+
+                    <div class="form-check">
+                        <input id="convertCheck" class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Convert</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input id="rateCheck" class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Compute rate</label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-warning" onclick="addField()">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>|
+
+    <div class="modal fade" id="tagModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Tag</h5>
+                </div>
+
+                <div class="modal-body">
+                    <input id="tagName" class="form-control" placeholder="Tag name">
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" onclick="addTag()">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <nav class="navbar navbar-light navbar-expand-md py-3">
         <div class="container">
@@ -152,29 +200,40 @@
     <div class="other-div">
         <div class="card other-card">
             <div class="card-body">
-                <h4 class="card-title">Check a Path to monitor</h4>
-                <form>
+                <!-- Path + Analyse -->
+                <div class="d-flex gap-2 align-items-center mb-3">
+                    <input id="pathName" class="form-control" type="text" placeholder="/node1/node2">
 
-                    <label class="form-label">Select a Router on which you want to perform a test:</label>
+                    <button class="btn btn-success flex-shrink-0">
+                        Analyse path instead?
+                    </button>
+                </div>
 
-                    <select id="router" class="selectpicker" data-width="100%">
-                        {{range .Rtrs}}
-                        <option value="{{.Shortname}}">{{.Shortname}}</option>
-                        {{end}}
-                    </select>
+                <!-- Add buttons -->
+                <div class="mb-3">
+                    <button class="btn btn-sm btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#fieldModal">
+                        + Field
+                    </button>
 
-                    <label class="form-label">Enter a Sensor's Xpath you want to monitor:</label>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#tagModal">
+                        + Tag
+                    </button>
+                </div>
 
-                    <input id="pathName" class="form-control mb-2" type="text">
+                <!-- Preview -->
+                <div class="mb-2">
+                    <strong>Fields: </strong>
+                    <div id="fieldsPreview" class="d-flex flex-wrap gap-1 mt-1"></div>
+                </div>
 
-                </form>
-                <br />
-                <div class="d-flex justify-content-center align-items-center">
-                    <input class="btn btn-success" type="submit" value="Analyze path" name="analyse" id="analyse" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+                <div>
+                    <strong>Tags: </strong>
+                    <div id="tagsPreview" class="d-flex flex-wrap gap-1 mt-1"></div>
                 </div>
             </div>
         </div>
     </div>
+
     <br />
     <div class="other-div">
         <div class="card other-card">
@@ -244,10 +303,6 @@
 
             <div id="result" class="mt-4">
                 <div class="card">
-                    <div class="card-header">
-                        <strong>Monitoring Entries</strong>
-                    </div>
-
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-striped table-hover mb-0">

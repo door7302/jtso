@@ -322,3 +322,90 @@ const exampleJson = {
 };
 
 renderResultTable(exampleJson);
+
+
+const toAdd = {
+    path: "",
+    fields: [],
+    tags: []
+};
+
+/* PATH */
+document.getElementById("pathName").addEventListener("input", e => {
+    toAdd.path = e.target.value;
+});
+
+/* ADD FIELD */
+function addField() {
+    const name = fieldName.value.trim();
+    if (!name) return;
+
+    const processor =
+        convertCheck.checked || rateCheck.checked ? 1 : 0;
+
+    toAdd.fields.push({ name, processor });
+
+    fieldName.value = "";
+    convertCheck.checked = false;
+    rateCheck.checked = false;
+
+    bootstrap.Modal.getInstance(fieldModal).hide();
+    renderPreview();
+}
+
+/* ADD TAG */
+function addTag() {
+    const name = tagName.value.trim();
+    if (!name) return;
+
+    toAdd.tags.push(name);
+
+    tagName.value = "";
+    bootstrap.Modal.getInstance(tagModal).hide();
+    renderPreview();
+}
+
+/* REMOVE */
+function removeField(idx) {
+    toAdd.fields.splice(idx, 1);
+    renderPreview();
+}
+
+function removeTag(idx) {
+    toAdd.tags.splice(idx, 1);
+    renderPreview();
+}
+
+/* RENDER */
+function renderPreview() {
+    const fieldsDiv = document.getElementById("fieldsPreview");
+    const tagsDiv = document.getElementById("tagsPreview");
+
+    fieldsDiv.innerHTML = "";
+    tagsDiv.innerHTML = "";
+
+    toAdd.fields.forEach((f, i) => {
+        fieldsDiv.innerHTML += `
+            <span class="badge bg-warning text-dark">
+                ${f.name}
+                ${f.processor != 0 ? '<i class="fa fa-info-circle ms-1"></i>' : ''}
+                <i class="fa fa-times ms-1 text-danger"
+                   role="button"
+                   onclick="removeField(${i})"></i>
+            </span>
+        `;
+    });
+
+    toAdd.tags.forEach((t, i) => {
+        tagsDiv.innerHTML += `
+            <span class="badge bg-primary">
+                ${t}
+                <i class="fa fa-times ms-1 text-light"
+                   role="button"
+                   onclick="removeTag(${i})"></i>
+            </span>
+        `;
+    });
+
+    console.log("toAdd =", JSON.stringify(toAdd, null, 2));
+}
