@@ -14,11 +14,29 @@ const selectConfig = document.getElementById('ondemand-config');
 const monitorState = document.getElementById('monitor-state');
 const pathInput = document.getElementById("pathName");
 const r = document.getElementById('router')
+const toAdd = {
+    path: "",
+    fields: [],
+    tags: []
+};
+
+const tmpGnmi = {};
 
 // BUTTON CLICK HANDLERS
 
 btnAnalyze.onclick = function () {
+    groupbyTable.innerHTML = "";
+    fieldsTable.innerHTML = "";
     $('#monitor').modal('show');
+}
+
+btnCancel.onclick = function () {
+    $('#monitor').modal('hide');
+}
+
+btnApply.onclick = function () {
+    processGnmiData(tmpGnmi)
+    $('#monitor').modal('hide');
 }
 
 function sanityCheckXPath(xpath) {
@@ -115,7 +133,7 @@ function provisionMonitorTables(data) {
 }
 
 btnGnmi.onclick = function () {
-    var check = sanityCheckXPath(toAdd.path) 
+    var check = sanityCheckXPath(toAdd.path)
     if (check.valid == false) {
         alertify.alert("JSTO...", check.reason);
         $('#monitor').modal('hide');
@@ -152,7 +170,10 @@ btnGnmi.onclick = function () {
                             { name: "out-octets", monitor: false, rate: false, convert: false }
                         ]
                     }; */
-                    provisionMonitorTables(json.data)
+                    // save the reply from JTSO 
+                    tmpGnmi = json.data;
+
+                    provisionMonitorTables(tmpGnmi);
                 } else {
                     btnGnmi.disabled = false;
                     waitingDialog.hide();
@@ -478,16 +499,35 @@ const exampleJson = {
 renderResultTable(exampleJson);
 */
 
-const toAdd = {
-    path: "",
-    fields: [],
-    tags: []
-};
 
 /* UPdate current path */
 pathInput.addEventListener("input", (e) => {
     toAdd.path = e.target.value;
 });
+
+function processGnmiData(tmpGnmi) {
+    // Process fields from tmpGnmi
+    tmpGnmi.fields.forEach(field => {
+        // Check if rate = true OR convert = true
+        if (field.rate === true || field.convert === true) {
+            toAdd.fields.push({
+                name: field.name,
+                processor: 1
+            });
+        } else {
+            toAdd.fields.push({
+                name: field.name,
+                processor: 0
+            });
+        }
+    });
+
+    // Process tags from tmpGnmi
+    tmpGnmi.tags.forEach(tag => {
+        toAdd.tags.push(tag.name);
+    });
+    renderPreview();
+}
 
 
 /* ADD FIELD */
