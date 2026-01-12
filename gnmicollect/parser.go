@@ -310,6 +310,8 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
+	logger.Log.Infof("%s", xpath)
+
 	trimmedXPath := strings.Trim(xpath, "/")
 
 	// ---------- 1) Prepare a predicate-free version ONCE
@@ -679,7 +681,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 			logger.Log.Errorf("Unable to parse the gNMI ONCE response: %v", err)
 			continue
 		}
-		for k, _ := range f {
+		for k := range f {
 			info := extractFieldTag(o.Path, k, hideOrigin)
 			// Add tags and field in the 2 "set" - to keep unicity
 			if info.Leaf != "" {
@@ -692,7 +694,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 			}
 		}
 	}
-
+	logger.Log.Infof("gNMI ONCE subscription for router %s and xpath %s succefully done", o.Router, o.Path)
 	// fill the reply
 	for k := range tagMap {
 		t := Tag{
@@ -709,7 +711,5 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		}
 		r.Fields = append(r.Fields, f)
 	}
-	logger.Log.Infof("gNMI ONCE subscription for router %s and xpath %s succefully done", o.Router, o.Path)
-
 	return nil, r
 }
