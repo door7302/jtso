@@ -98,7 +98,7 @@ func init() {
 	re2 = regexp.MustCompile("(.*)\\[(.*)=(.*)\\]")
 	re3 = regexp.MustCompile("^[^/:]+:")
 	re4 = regexp.MustCompile(`\[(\w+)=`)   // matches key name
-	re5 = regexp.MustCompile(`\[[^\]]*\]`) // remove predicates
+	re5 = regexp.MustCompile(`\[[^\]]*\]`) // full predicate removal
 
 	// init streamer
 	StreamObj = new(Streamer)
@@ -308,17 +308,18 @@ func removePredicates(s string) string {
 func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	var info XPathInfo
 
+	// remove origin if requested
 	if hideOrigin {
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
-	trimmedXPath := strings.Trim(xpath, "/")
-	baseClean := strings.Trim(base, "/")
+	trimmed := strings.Trim(xpath, "/")
+	cleanBase := strings.Trim(base, "/")
 
-	// --- Leaf computation (predicate-free)
-	cleanXPath := removePredicates(trimmedXPath)
+	// ---------- 1) compute Leaf (safe)
+	cleanXPath := removePredicates(trimmed)
 	xpathParts := strings.Split(cleanXPath, "/")
-	baseParts := strings.Split(removePredicates(baseClean), "/")
+	baseParts := strings.Split(removePredicates(cleanBase), "/")
 
 	start := 0
 	found := false
@@ -339,17 +340,25 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	if !found || start < 0 || start > len(xpathParts) {
 		start = len(xpathParts)
 	}
-	info.Leaf = strings.Join(xpathParts[start:], "/")
+	if start < len(xpathParts) {
+		info.Leaf = strings.Join(xpathParts[start:], "/")
+	} else {
+		info.Leaf = ""
+	}
 
-	// --- Keys extraction (root-to-key, slash-safe)
-	rawParts := strings.Split(trimmedXPath, "/")
-	prefixPath := []string{}
-	for _, part := range rawParts {
-		prefixPath = append(prefixPath, removePredicates(part))
-		matches := re4.FindAllStringSubmatch(part, -1)
+	// ---------- 2) extract Keys (fully slash-safe)
+	segments := strings.Split(trimmed, "/")
+	prefix := []string{}
+	for _, seg := range segments {
+		// Add segment without predicates to prefix
+		nameOnly := removePredicates(seg)
+		prefix = append(prefix, nameOnly)
+
+		// find all keys in this segment
+		matches := re4.FindAllStringSubmatch(seg, -1)
 		for _, m := range matches {
-			key := m[1]
-			keyPath := strings.Join(prefixPath, "/") + "/" + key
+			keyName := m[1] // only the key name
+			keyPath := strings.Join(prefix, "/") + "/" + keyName
 			info.Keys = append(info.Keys, keyPath)
 		}
 	}
