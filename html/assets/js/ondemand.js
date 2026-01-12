@@ -115,7 +115,7 @@ function provisionMonitorTables(data) {
 }
 
 btnGnmi.onclick = function () {
-    var check = sanityCheckXPath(toAdd) 
+    var check = sanityCheckXPath(toAdd.path) 
     if (check.valid == false) {
         alertify.alert("JSTO...", check.reason);
         $('#monitor').modal('hide');
