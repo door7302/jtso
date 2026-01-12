@@ -16,13 +16,13 @@ const selectConfig = document.getElementById('ondemand-config');
 const monitorState = document.getElementById('monitor-state');
 const pathInput = document.getElementById("pathName");
 const r = document.getElementById('router')
-const toAdd = {
+var toAdd = {
     path: "",
     fields: [],
     tags: []
 };
 
-const tmpGnmi = {};
+var tmpGnmi = {};
 
 // BUTTON CLICK HANDLERS
 
@@ -173,7 +173,6 @@ btnGnmi.onclick = function () {
                     }; */
                     // save the reply from JTSO 
                     tmpGnmi = json.data;
-
                     provisionMonitorTables(tmpGnmi);
                 } else {
                     btnGnmi.disabled = false;
