@@ -300,12 +300,10 @@ func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
 	}
 }
 
-// removePredicates removes everything inside [...] safely
 func removePredicates(s string) string {
 	return re5.ReplaceAllString(s, "")
 }
 
-// extractFieldTag extracts Leaf and Keys safely, slash-safe
 func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	var info XPathInfo
 
@@ -316,24 +314,28 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	trimmed := strings.Trim(xpath, "/")
 	baseClean := strings.Trim(base, "/")
 
+	// ---------- 1) Split segments safely (keep / in key values)
 	segments := splitSegmentsSlashSafe(trimmed)
+	baseSegments := splitSegmentsSlashSafe(baseClean)
 
-	// ---------- 1) Leaf computation
-	cleanBase := splitSegmentsSlashSafe(baseClean)
-	start := findBaseIndex(segments, cleanBase)
+	// ---------- 2) Leaf computation (predicate-free)
+	start := findBaseIndex(segments, baseSegments)
 	if start < 0 || start > len(segments) {
 		start = len(segments)
 	}
-	info.Leaf = strings.Join(segments[start:], "/")
 
-	// ---------- 2) Keys extraction
+	leafParts := []string{}
+	for _, seg := range segments[start:] {
+		leafParts = append(leafParts, removePredicates(seg))
+	}
+	info.Leaf = strings.Join(leafParts, "/")
+
+	// ---------- 3) Keys extraction
 	prefix := []string{}
 	for _, seg := range segments {
-		// add segment name without predicate
 		nameOnly := removePredicates(seg)
 		prefix = append(prefix, nameOnly)
 
-		// find keys
 		matches := re4.FindAllStringSubmatch(seg, -1)
 		for _, m := range matches {
 			keyName := m[1]
@@ -345,7 +347,7 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	return info
 }
 
-// splitSegmentsSlashSafe splits an xpath into segments but keeps slashes inside predicates intact
+// splitSegmentsSlashSafe keeps slashes inside predicates intact
 func splitSegmentsSlashSafe(xpath string) []string {
 	var segments []string
 	var buf strings.Builder
@@ -375,7 +377,7 @@ func splitSegmentsSlashSafe(xpath string) []string {
 	return segments
 }
 
-// findBaseIndex finds the index after base in segments
+// findBaseIndex finds index after base
 func findBaseIndex(segments, base []string) int {
 	for i := 0; i <= len(segments)-len(base); i++ {
 		match := true
