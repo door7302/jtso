@@ -97,8 +97,8 @@ func init() {
 	re1 = regexp.MustCompile("(\\d+)")
 	re2 = regexp.MustCompile("(.*)\\[(.*)=(.*)\\]")
 	re3 = regexp.MustCompile("^[^/:]+:")
-	re4 = regexp.MustCompile(`\[(\w+)=`)
-	re5 = regexp.MustCompile(`\[[^\]]*\]`)
+	re4 = regexp.MustCompile(`\[(\w+)=`)   // matches key name
+	re5 = regexp.MustCompile(`\[[^\]]*\]`) // remove predicates
 
 	// init streamer
 	StreamObj = new(Streamer)
@@ -299,44 +299,26 @@ func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
 		global = global[:len(global)-1]
 	}
 }
+
 func removePredicates(s string) string {
 	return re5.ReplaceAllString(s, "")
 }
 
+// extractFieldTag parses xpath relative to base
 func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	var info XPathInfo
 
 	if hideOrigin {
-		// remove origin info if needed (your existing regex)
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
 	trimmedXPath := strings.Trim(xpath, "/")
+	baseClean := strings.Trim(base, "/")
 
-	// ---------- 1) prepare a predicate-free version for splitting
+	// --- Leaf computation (predicate-free)
 	cleanXPath := removePredicates(trimmedXPath)
 	xpathParts := strings.Split(cleanXPath, "/")
-
-	// ---------- 2) extract KEYS (use raw xpath to get key names)
-	rawParts := strings.Split(trimmedXPath, "/")
-
-	for i, rawPart := range rawParts {
-		matches := re4.FindAllStringSubmatch(rawPart, -1)
-		for _, m := range matches {
-			key := m[1]
-
-			// build full root path to key (predicate-free)
-			path := []string{}
-			for _, p := range rawParts[:i+1] {
-				path = append(path, removePredicates(p))
-			}
-			info.Keys = append(info.Keys, strings.Join(path, "/")+"/"+key)
-		}
-	}
-
-	// ---------- 3) compute Leaf relative to base
-	cleanBase := removePredicates(strings.Trim(base, "/"))
-	baseParts := strings.Split(cleanBase, "/")
+	baseParts := strings.Split(removePredicates(baseClean), "/")
 
 	start := 0
 	found := false
@@ -354,18 +336,23 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 			break
 		}
 	}
-
-	// safety: if base not found or indices out of range, return full path
 	if !found || start < 0 || start > len(xpathParts) {
 		start = len(xpathParts)
 	}
+	info.Leaf = strings.Join(xpathParts[start:], "/")
 
-	leafParts := []string{}
-	if start < len(xpathParts) {
-		leafParts = xpathParts[start:]
+	// --- Keys extraction (root-to-key, slash-safe)
+	rawParts := strings.Split(trimmedXPath, "/")
+	prefixPath := []string{}
+	for _, part := range rawParts {
+		prefixPath = append(prefixPath, removePredicates(part))
+		matches := re4.FindAllStringSubmatch(part, -1)
+		for _, m := range matches {
+			key := m[1]
+			keyPath := strings.Join(prefixPath, "/") + "/" + key
+			info.Keys = append(info.Keys, keyPath)
+		}
 	}
-
-	info.Leaf = strings.Join(leafParts, "/")
 
 	return info
 }
