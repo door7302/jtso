@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -733,15 +734,29 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		}
 	}
 
+	// Extract keys for tagMap to sort them
+	tagKeys := make([]string, 0, len(tagMap))
+	for key := range tagMap {
+		tagKeys = append(tagKeys, key)
+	}
+	sort.Strings(tagKeys)
+
+	// Extract keys for fieldMap to sort them
+	fieldKeys := make([]string, 0, len(fieldMap))
+	for key := range fieldMap {
+		fieldKeys = append(fieldKeys, key)
+	}
+	sort.Strings(fieldKeys)
+
 	// fill the reply
-	for k := range tagMap {
+	for _, k := range tagKeys {
 		t := Tag{
 			Name:    k,
 			GroupBy: false,
 		}
 		r.Tags = append(r.Tags, t)
 	}
-	for k := range fieldMap {
+	for _, k := range fieldKeys {
 		f := Field{
 			Name:    k,
 			Monitor: false,
