@@ -300,70 +300,96 @@ func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
 	}
 }
 
+// removePredicates removes everything inside [...] safely
 func removePredicates(s string) string {
 	return re5.ReplaceAllString(s, "")
 }
 
-// extractFieldTag parses xpath relative to base
+// extractFieldTag extracts Leaf and Keys safely, slash-safe
 func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	var info XPathInfo
 
-	// remove origin if requested
 	if hideOrigin {
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
 	trimmed := strings.Trim(xpath, "/")
-	cleanBase := strings.Trim(base, "/")
+	baseClean := strings.Trim(base, "/")
 
-	// ---------- 1) compute Leaf (safe)
-	cleanXPath := removePredicates(trimmed)
-	xpathParts := strings.Split(cleanXPath, "/")
-	baseParts := strings.Split(removePredicates(cleanBase), "/")
+	segments := splitSegmentsSlashSafe(trimmed)
 
-	start := 0
-	found := false
-	for i := 0; i <= len(xpathParts)-len(baseParts); i++ {
-		match := true
-		for j := range baseParts {
-			if xpathParts[i+j] != baseParts[j] {
-				match = false
-				break
-			}
-		}
-		if match {
-			start = i + len(baseParts)
-			found = true
-			break
-		}
+	// ---------- 1) Leaf computation
+	cleanBase := splitSegmentsSlashSafe(baseClean)
+	start := findBaseIndex(segments, cleanBase)
+	if start < 0 || start > len(segments) {
+		start = len(segments)
 	}
-	if !found || start < 0 || start > len(xpathParts) {
-		start = len(xpathParts)
-	}
-	if start < len(xpathParts) {
-		info.Leaf = strings.Join(xpathParts[start:], "/")
-	} else {
-		info.Leaf = ""
-	}
+	info.Leaf = strings.Join(segments[start:], "/")
 
-	// ---------- 2) extract Keys (fully slash-safe)
-	segments := strings.Split(trimmed, "/")
+	// ---------- 2) Keys extraction
 	prefix := []string{}
 	for _, seg := range segments {
-		// Add segment without predicates to prefix
+		// add segment name without predicate
 		nameOnly := removePredicates(seg)
 		prefix = append(prefix, nameOnly)
 
-		// find all keys in this segment
+		// find keys
 		matches := re4.FindAllStringSubmatch(seg, -1)
 		for _, m := range matches {
-			keyName := m[1] // only the key name
+			keyName := m[1]
 			keyPath := strings.Join(prefix, "/") + "/" + keyName
 			info.Keys = append(info.Keys, keyPath)
 		}
 	}
 
 	return info
+}
+
+// splitSegmentsSlashSafe splits an xpath into segments but keeps slashes inside predicates intact
+func splitSegmentsSlashSafe(xpath string) []string {
+	var segments []string
+	var buf strings.Builder
+	depth := 0
+	for _, r := range xpath {
+		switch r {
+		case '/':
+			if depth == 0 {
+				if buf.Len() > 0 {
+					segments = append(segments, buf.String())
+					buf.Reset()
+				}
+				continue
+			}
+		case '[':
+			depth++
+		case ']':
+			if depth > 0 {
+				depth--
+			}
+		}
+		buf.WriteRune(r)
+	}
+	if buf.Len() > 0 {
+		segments = append(segments, buf.String())
+	}
+	return segments
+}
+
+// findBaseIndex finds the index after base in segments
+func findBaseIndex(segments, base []string) int {
+	for i := 0; i <= len(segments)-len(base); i++ {
+		match := true
+		for j := range base {
+			if segments[i+j] != base[j] {
+				match = false
+				break
+			}
+		}
+		if match {
+			return i + len(base)
+		}
+	}
+	return 0
 }
 
 func parseXpath(xpath string, value string, merge bool, hideOrigin bool) error {
