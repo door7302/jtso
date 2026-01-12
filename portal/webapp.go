@@ -1640,6 +1640,7 @@ func routeOnDemandMgt(c echo.Context) error {
 
 		// call gnmi once api
 		err, onceRep := gnmicollect.GnmiOnce(onceReq, collectCfg.cfg.Portal.HideOrigin)
+		logger.Log.Info("END OF PROCESSING")
 		if err != nil {
 			logger.Log.Errorf("Unable to analyse the path %s on router %s: %v", r.Path, r.Shortname, err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to collect path"})

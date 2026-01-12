@@ -352,7 +352,7 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	}
 
 	info.Leaf = strings.Join(xpathParts[start:], "/")
-
+	logger.Log.Info("RETURN PARSE")
 	return info
 }
 
@@ -670,7 +670,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		tg.Close()
 		return err, r
 	}
-
+	logger.Log.Info("PARSING START")
 	// Parse the response
 	tagMap := make(map[string]struct{})
 	fieldMap := make(map[string]struct{})
