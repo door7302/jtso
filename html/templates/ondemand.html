@@ -15,6 +15,8 @@
 
 <body>
 
+    ript src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <div class="modal fade" style="animation-name: animatetop;" id="monitor" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document" style="max-width: 75%;">
             <div class="modal-content">
@@ -25,71 +27,80 @@
                         <i class="fas fa-times" aria-hidden="true" style="font-size: 1.5rem; color: white;"></i>
                     </button>
                 </div>
-                <div class="modal-body d-flex gap-3" id="modal-body">
+                <div class="modal-body d-flex flex-column gap-3" id="modal-body">
 
-                    <!-- ===== LEFT TABLE : GroupBy Tags ===== -->
-                    <div class="flex-fill">
-                        <h6 class="mb-2">GroupBy Tag(s)</h6>
-                        <table class="table table-sm table-bordered table-hover">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>GroupBy Tag(s)</th>
-                                    <th class="text-center" style="width: 90px;">Enable</th>
-                                </tr>
-                            </thead>
-                            <tbody id="groupby-table">
-                                <tr>
-                                    <td>host</td>
-                                    <td class="text-center">
-                                        <input type="checkbox">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>interface</td>
-                                    <td class="text-center">
-                                        <input type="checkbox">
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- ===== ROUTER SELECT (FULL WIDTH) ===== -->
+                    <div>
+                        <label for="routerSelect" class="form-label">
+                            Test on one router:
+                        </label>
+                               <select id="router" class="selectpicker" data-width="100%">
+                                {{range .Rtrs}}
+                                <option value="{{.Shortname}}">{{.Shortname}}</option>
+                                {{end}}
+                            </select>
                     </div>
+                    <hr class="my-3">
+                    <!-- ===== TABLES ROW ===== -->
+                    <div class="d-flex gap-3">
 
-                    <!-- ===== RIGHT TABLE : Fields to Monitor ===== -->
-                    <div class="flex-fill">
-                        <h6 class="mb-2">Fields to Monitor</h6>
-                        <table class="table table-sm table-bordered table-hover">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Fields to monitor</th>
-                                    <th class="text-center" style="width: 90px;">Enable</th>
-                                    <th class="text-center" style="width: 170px;">
-                                        Force Decimal<br>conversion
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody id="fields-table">
-                                <tr>
-                                    <td>in-octets</td>
-                                    <td class="text-center">
-                                        <input type="checkbox">
-                                    </td>
-                                    <td class="text-center">
-                                        <input type="checkbox">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>out-octets</td>
-                                    <td class="text-center">
-                                        <input type="checkbox">
-                                    </td>
-                                    <td class="text-center">
-                                        <input type="checkbox">
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <!-- ===== LEFT TABLE : GroupBy Tags ===== -->
+                        <div class="flex-fill">
+                            <h6 class="mb-2">Tags found out:</h6>
+                            <table class="table table-sm table-bordered table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Tag name</th>
+                                        <th class="text-center" style="width: 90px;">Group By</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="groupby-table">
+                                    <tr>
+                                        <td>host</td>
+                                        <td class="text-center">
+                                            <input type="checkbox">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>interface</td>
+                                        <td class="text-center">
+                                            <input type="checkbox">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- ===== RIGHT TABLE : Fields to Monitor ===== -->
+                        <div class="flex-fill">
+                            <h6 class="mb-2">Fields found out:</h6>
+                            <table class="table table-sm table-bordered table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Field name</th>
+                                        <th class="text-center" style="width: 90px;">Monitor</th>
+                                        <th class="text-center" style="width: 90px;">Rate</th>
+                                        <th class="text-center" style="width: 90px;">Convert</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fields-table">
+                                    <tr>
+                                        <td>in-octets</td>
+                                        <td class="text-center"><input type="checkbox"></td>
+                                        <td class="text-center"><input type="checkbox"></td>
+                                        <td class="text-center"><input type="checkbox"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>out-octets</td>
+                                        <td class="text-center"><input type="checkbox"></td>
+                                        <td class="text-center"><input type="checkbox"></td>
+                                        <td class="text-center"><input type="checkbox"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
                     </div>
-
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-success" id="applyMonitor">
@@ -199,15 +210,20 @@
 
     <div class="other-div">
         <div class="card other-card">
+            <h4 class="card-title">Add A Path To Monitor</h4>
             <div class="card-body text-start">
                 <!-- Path + Analyse -->
                 <div class="d-flex gap-2 align-items-center mb-3">
                     <input id="pathName" class="form-control" type="text" placeholder="/node1/node2">
+
+                    <button id="analyze" class="btn btn-success flex-shrink-0">
+                        Analyse path instead?
+                    </button>
                 </div>
 
                 <!-- Add buttons -->
                 <div class="mb-3">
-                    <strong>Add Fields, Tags manually: </strong>
+                    <strong>Add Fields, Tags manually:&nbsp;</strong>
                     <button class="btn btn-sm btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#fieldModal">
                         + Field
                     </button>
@@ -216,9 +232,6 @@
                         + Tag
                     </button>
 
-                    <button class="btn btn-success flex-shrink-0">
-                        Analyse path instead?
-                    </button>
                 </div>
 
                 <!-- Preview -->

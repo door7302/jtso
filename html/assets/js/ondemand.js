@@ -1,4 +1,5 @@
 
+const btnAnalyze = document.getElementById('analyze');
 const btnLoad = document.getElementById('load');
 const btnSave = document.getElementById('save');
 const btnSaveAs = document.getElementById('saveas');
@@ -10,6 +11,13 @@ const selectConfig = document.getElementById('ondemand-config');
 const monitorState = document.getElementById('monitor-state');
 
 // BUTTON CLICK HANDLERS
+
+btnAnalyse.onclick = function () {
+    const modal = new 
+    bootstrap.Modal(document.getElementById('monitor'));
+    modal.show();
+}
+
 btnLoad.onclick = function () {
     const selectedConfig = selectConfig.value;
     if (selectedConfig != "default") {
