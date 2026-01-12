@@ -1,4 +1,6 @@
 
+const groupbyTable = document.getElementById("groupby-table");
+const fieldsTable = document.getElementById("fields-table");
 const btnAnalyze = document.getElementById('analyze');
 const btnLoad = document.getElementById('load');
 const btnSave = document.getElementById('save');
@@ -85,8 +87,7 @@ function sanityCheckXPath(xpath) {
 }
 
 function provisionMonitorTables(data) {
-    const groupbyTable = document.getElementById("groupby-table");
-    const fieldsTable = document.getElementById("fields-table");
+
 
     if (!groupbyTable || !fieldsTable) {
         console.warn("Tables not found in DOM");
