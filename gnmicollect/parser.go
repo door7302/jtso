@@ -306,6 +306,8 @@ func extractFieldTag(base string, xpath string, hideOrigin bool) XPathInfo {
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
+	logger.Log.Infof("%s | %s", base, xpath)
+
 	// Normalize paths
 	xpathParts := strings.Split(strings.Trim(xpath, "/"), "/")
 	baseParts := strings.Split(strings.Trim(base, "/"), "/")
