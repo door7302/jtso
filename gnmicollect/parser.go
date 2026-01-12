@@ -684,7 +684,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		tg.Close()
 		return err, r
 	}
-	logger.Log.Info("PARSING START")
+
 	// Parse the response
 	tagMap := make(map[string]struct{})
 	fieldMap := make(map[string]struct{})
@@ -708,7 +708,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 			}
 		}
 	}
-	logger.Log.Infof("gNMI ONCE subscription for router %s and xpath %s succefully done", o.Router, o.Path)
+
 	// fill the reply
 	for k := range tagMap {
 		t := Tag{
@@ -725,5 +725,6 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		}
 		r.Fields = append(r.Fields, f)
 	}
+	logger.Log.Infof("gNMI ONCE subscription for router %s and xpath %s succefully done", o.Router, o.Path)
 	return nil, r
 }
