@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/alertify.min.css">
     <link rel="stylesheet" href="css/bootstrap-multiselect.css">
     <link rel="stylesheet" href="css/jtsmain.css">
-     <!-- <link rel="stylesheet" href="css/ondemand.css"> -->
+    <!-- <link rel="stylesheet" href="css/ondemand.css"> -->
 </head>
 
 <body>
@@ -27,17 +27,24 @@
                 </div>
                 <div class="modal-body d-flex flex-column gap-3" id="modal-body">
 
-                    <!-- ===== ROUTER SELECT (FULL WIDTH) ===== -->
-                    <div>
-                        <label for="routerSelect" class="form-label">
-                            Test on one router:
-                        </label>
-                               <select id="router" class="selectpicker" data-width="100%" size="5">
+                    <!-- ===== ROUTER SELECT + BUTTON ===== -->
+                    <div class="d-flex align-items-end gap-2">
+                        <div class="flex-fill">
+                            <label for="router" class="form-label">
+                                Test on one router:
+                            </label>
+                            <select id="router" class="selectpicker" data-width="100%" data-size="5">
                                 {{range .Rtrs}}
                                 <option value="{{.Shortname}}">{{.Shortname}}</option>
                                 {{end}}
                             </select>
+                        </div>
+
+                        <button class="btn btn-success mb-1" id="gnmiconce">
+                            gNMI once
+                        </button>
                     </div>
+
                     <hr class="my-3">
                     <!-- ===== TABLES ROW ===== -->
                     <div class="d-flex gap-3">
@@ -243,10 +250,10 @@
                     <div id="tagsPreview" class="d-flex flex-wrap gap-1 mt-1"></div>
                 </div>
             </div>
-             <br />
-                <div class="d-flex justify-content-center align-items-center">
-                    <input class="btn btn-success" type="button" value="Add Path/Fields/Tags" id="addentry">
-                </div>
+            <br />
+            <div class="d-flex justify-content-center align-items-center">
+                <input class="btn btn-success" type="button" value="Add Path/Fields/Tags" id="addentry">
+            </div>
         </div>
     </div>
 
