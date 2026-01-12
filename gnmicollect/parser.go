@@ -299,30 +299,63 @@ func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
 	}
 }
 
-func extractFieldTag(xpath string, hideOrigin bool) XPathInfo {
-
+func extractFieldTag(base string, xpath string, hideOrigin bool) XPathInfo {
 	var info XPathInfo
 
 	if hideOrigin {
-		// remove any origin
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
-	// Normalize & split path
-	parts := strings.Split(strings.Trim(xpath, "/"), "/")
+	// Normalize paths
+	xpathParts := strings.Split(strings.Trim(xpath, "/"), "/")
+	baseParts := strings.Split(strings.Trim(base, "/"), "/")
 
-	// Leaf is the last element without predicates
-	last := parts[len(parts)-1]
-	if idx := strings.Index(last, "["); idx != -1 {
-		last = last[:idx]
+	// Remove base prefix
+	i := 0
+	for i < len(xpathParts) && i < len(baseParts) {
+		// Compare node name without predicates
+		xNode := xpathParts[i]
+		if idx := strings.Index(xNode, "["); idx != -1 {
+			xNode = xNode[:idx]
+		}
+		if xNode != baseParts[i] {
+			break
+		}
+		i++
 	}
-	info.Leaf = last
+	relativeParts := xpathParts[i:]
 
-	// Extract all key names
-	for _, part := range parts {
+	// Build Leaf (full relative path, predicates removed)
+	var leafParts []string
+	for _, p := range relativeParts {
+		if idx := strings.Index(p, "["); idx != -1 {
+			p = p[:idx]
+		}
+		leafParts = append(leafParts, p)
+	}
+	info.Leaf = strings.Join(leafParts, "/")
+
+	// Extract keys with correct scoping
+	for idx, part := range relativeParts {
 		matches := re4.FindAllStringSubmatch(part, -1)
 		for _, m := range matches {
-			info.Keys = append(info.Keys, m[1])
+			key := m[1]
+
+			// Root-level key → just name
+			if idx == 0 {
+				info.Keys = append(info.Keys, key)
+				continue
+			}
+
+			// Nested key → relative path + key
+			var path []string
+			for _, p := range relativeParts[:idx+1] {
+				if cut := strings.Index(p, "["); cut != -1 {
+					p = p[:cut]
+				}
+				path = append(path, p)
+			}
+			info.Keys = append(info.Keys, strings.Join(path, "/")+"/"+key)
 		}
 	}
 
@@ -655,7 +688,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 			continue
 		}
 		for k, _ := range f {
-			info := extractFieldTag(k, hideOrigin)
+			info := extractFieldTag(o.Path, k, hideOrigin)
 			// Add tags and field in the 2 "set" - to keep unicity
 			if info.Leaf != "" {
 				fieldMap[info.Leaf] = struct{}{}
