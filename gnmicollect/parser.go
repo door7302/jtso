@@ -299,6 +299,9 @@ func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
 		global = global[:len(global)-1]
 	}
 }
+func removePredicates(s string) string {
+	return re5.ReplaceAllString(s, "")
+}
 
 func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	var info XPathInfo
@@ -307,30 +310,30 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
-	// ---------- 1) Extract KEYS from ORIGINAL xpath
-	partsWithPred := strings.Split(strings.Trim(xpath, "/"), "/")
+	trimmedXPath := strings.Trim(xpath, "/")
 
-	for i, part := range partsWithPred {
-		matches := re4.FindAllStringSubmatch(part, -1)
+	// ---------- 1) Prepare a predicate-free version ONCE
+	cleanXPath := removePredicates(trimmedXPath)
+	xpathParts := strings.Split(cleanXPath, "/")
+
+	// ---------- 2) Extract KEYS (use raw xpath ONLY to find key names)
+	rawParts := strings.Split(trimmedXPath, "/")
+
+	for i, rawPart := range rawParts {
+		matches := re4.FindAllStringSubmatch(rawPart, -1)
 		for _, m := range matches {
 			key := m[1]
 
-			var path []string
-			for _, p := range partsWithPred[:i+1] {
-				path = append(path, re5.ReplaceAllString(p, ""))
-			}
-			info.Keys = append(info.Keys, strings.Join(path, "/")+"/"+key)
+			// build full root path (predicate-free)
+			path := strings.Join(xpathParts[:i+1], "/")
+			info.Keys = append(info.Keys, path+"/"+key)
 		}
 	}
 
-	// ---------- 2) Remove predicates BEFORE splitting for Leaf logic
-	cleanXPath := re5.ReplaceAllString(strings.Trim(xpath, "/"), "")
-	cleanBase := re5.ReplaceAllString(strings.Trim(base, "/"), "")
-
-	xpathParts := strings.Split(cleanXPath, "/")
+	// ---------- 3) Compute Leaf relative to base
+	cleanBase := removePredicates(strings.Trim(base, "/"))
 	baseParts := strings.Split(cleanBase, "/")
 
-	// ---------- 3) Remove base (as contiguous sequence)
 	start := 0
 	for i := 0; i <= len(xpathParts)-len(baseParts); i++ {
 		match := true
