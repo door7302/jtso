@@ -72,10 +72,20 @@ type XPathInfo struct {
 	Leaf string
 }
 
+type Field struct {
+	Name    string `json:"name"`
+	Monitor bool   `json:"monitor"`
+	Convert bool   `json:"convert"`
+}
+
+type Tag struct {
+	Name    string `json:"name"`
+	GroupBy bool   `json:"groupBy"`
+}
+
 type OnceReply struct {
-	Path   string   `json:"path"`
-	Fields []string `json:"fields"`
-	Tags   []string `json:"tags"`
+	Fields []Field `json:"fields"`
+	Tags   []Tag   `json:"tags"`
 }
 
 func genUUID() string {
@@ -533,9 +543,8 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 	var tg *target.Target
 	var err error
 	r := OnceReply{
-		Path:   o.Path,
-		Fields: make([]string, 0),
-		Tags:   make([]string, 0),
+		Fields: make([]Field, 0),
+		Tags:   make([]Tag, 0),
 	}
 
 	logger.Log.Infof("Start gNMI ONCE subscription for router %s and xpath %s (timeout is %d)", o.Router, o.Path, o.Timeout)
@@ -661,10 +670,19 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 
 	// fill the reply
 	for k := range tagMap {
-		r.Tags = append(r.Tags, k)
+		t := Tag{
+			Name:    k,
+			GroupBy: false,
+		}
+		r.Tags = append(r.Tags, t)
 	}
 	for k := range fieldMap {
-		r.Fields = append(r.Fields, k)
+		f := Field{
+			Name:    k,
+			Monitor: false,
+			Convert: false,
+		}
+		r.Fields = append(r.Fields, f)
 	}
 	return nil, r
 }

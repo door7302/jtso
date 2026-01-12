@@ -1,5 +1,7 @@
 package portal
 
+import "jtso/gnmicollect"
+
 type (
 	TabAsso struct {
 		Shortname string `json:"shortname"`
@@ -73,6 +75,11 @@ type (
 		Kapa   string `json:"kapa"`
 	}
 
+	ReplyGnmiOnce struct {
+		Status string                `json:"status"`
+		Data   gnmicollect.OnceReply `json:"data"`
+	}
+
 	ReplyTree struct {
 		Status string   `json:"status"`
 		Tree   TreeView `json:"tree"`
@@ -96,6 +103,13 @@ type (
 	IntervalMgt struct {
 		Action string `json:"action"`
 		Data   string `json:"data"`
+	}
+
+	OnDemandMgt struct {
+		Action    string `json:"action"`
+		Shortname string `json:"router"`
+		Path      string `json:"path"`
+		Data      string `json:"data"`
 	}
 
 	ReplyInterval struct {

@@ -7,16 +7,168 @@ const btnStart = document.getElementById('start');
 const btnStop = document.getElementById('stop');
 const btnClear = document.getElementById('clear');
 const btnReset = document.getElementById('reset');
+const btnGnmi = document.getElementById("gnmiconce");
+const btnApply = document.getElementById('applyMonitor');
+const btnCancel = document.getElementById('cancelMonitor');
 const selectConfig = document.getElementById('ondemand-config');
 const monitorState = document.getElementById('monitor-state');
+const pathInput = document.getElementById("pathName");
+const r = document.getElementById('router')
 
 // BUTTON CLICK HANDLERS
 
 btnAnalyze.onclick = function () {
-    const modal = new 
-    bootstrap.Modal(document.getElementById('monitor'));
-    modal.show();
+    $('#monitor').modal('show');
 }
+
+function sanityCheckXPath(xpath) {
+    if (typeof xpath !== "string") {
+        return { valid: false, reason: "XPath must be a string" };
+    }
+
+    const trimmed = xpath.trim();
+
+    // Rule 1 & 2: not empty and not "/"
+    if (!trimmed || trimmed === "/") {
+        return { valid: false, reason: "XPath is empty or root only" };
+    }
+
+    // Rule 3: must start with "/"
+    if (!trimmed.startsWith("/")) {
+        return { valid: false, reason: "XPath must start with '/'" };
+    }
+
+    // Rule 4: must not end with "/"
+    if (trimmed.endsWith("/")) {
+        return { valid: false, reason: "XPath must not end with '/'" };
+    }
+
+    // Remove leading "/" and split nodes
+    const nodes = trimmed.slice(1).split("/");
+
+    // Rule 5: must have at least 2 nodes
+    if (nodes.length < 2) {
+        return { valid: false, reason: "XPath must contain at least 2 nodes" };
+    }
+
+    // Rule 6: validate each node (with or without attributes)
+    const nodeRegex = /^[a-zA-Z_][a-zA-Z0-9_-]*(\[[^\]]+\])?$/;
+
+    for (const node of nodes) {
+        if (!nodeRegex.test(node)) {
+            return {
+                valid: false,
+                reason: `Invalid node syntax: '${node}'`
+            };
+        }
+    }
+
+    return { valid: true };
+}
+
+function provisionMonitorTables(data) {
+    const groupbyTable = document.getElementById("groupby-table");
+    const fieldsTable = document.getElementById("fields-table");
+
+    if (!groupbyTable || !fieldsTable) {
+        console.warn("Tables not found in DOM");
+        return;
+    }
+
+    // ===== Clear existing rows =====
+    groupbyTable.innerHTML = "";
+    fieldsTable.innerHTML = "";
+
+    // ===== Populate GroupBy Tags table =====
+    data.tags.forEach(tag => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${tag.name}</td>
+            <td class="text-center">
+                <input type="checkbox" ${tag.groupBy ? "checked" : ""}>
+            </td>
+        `;
+
+        groupbyTable.appendChild(tr);
+    });
+
+    // ===== Populate Fields table =====
+    data.fields.forEach(field => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${field.name}</td>
+            <td class="text-center">
+                <input type="checkbox" ${field.monitor ? "checked" : ""}>
+            </td>
+            <td class="text-center">
+                <input type="checkbox" ${field.rate ? "checked" : ""}>
+            </td>
+            <td class="text-center">
+                <input type="checkbox" ${field.convert ? "checked" : ""}>
+            </td>
+        `;
+
+        fieldsTable.appendChild(tr);
+    });
+}
+
+btnGnmi.onclick = function () {
+    var check = sanityCheckXPath(toAdd) 
+    if (check.valid == false) {
+        alertify.alert("JSTO...", check.reason);
+        $('#monitor').modal('hide');
+        return
+    }
+    var selectedRouter = r.value.trim();
+    btnGnmi.disabled = true;
+    waitingDialog.show();
+    // send data
+    $(function () {
+        $.ajax({
+            type: 'POST',
+            url: "/ondemandmgt",
+            data: JSON.stringify({
+                "action": "gnmionce",
+                "path": toAdd.path,
+                "router": selectedRouter,
+                "data": ""
+            }),
+            contentType: "application/json",
+            dataType: "json",
+            success: function (json) {
+                if (json.status == "OK") {
+                    btnGnmi.disabled = false;
+                    waitingDialog.hide();
+                    /* received payload 
+                    Data = {
+                        tags: [
+                            { name: "host", groupBy: true },
+                            { name: "interface", groupBy: false }
+                        ],
+                        fields: [
+                            { name: "in-octets", monitor: true, rate: true, convert: false },
+                            { name: "out-octets", monitor: false, rate: false, convert: false }
+                        ]
+                    }; */
+                    provisionMonitorTables(json.data)
+                } else {
+                    btnGnmi.disabled = false;
+                    waitingDialog.hide();
+                    alertify.alert("JSTO...", json.msg);
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                btnGnmi.disabled = false;
+                waitingDialog.hide();
+                alertify.alert("JSTO...", "Unexpected error");
+            }
+        });
+    });
+}
+
+
 
 btnLoad.onclick = function () {
     const selectedConfig = selectConfig.value;
@@ -87,10 +239,6 @@ btnSave.onclick = function () {
 };
 
 btnSaveAs.onclick = function () {
-
-}
-
-function changeRP() {
     alertify
         .prompt(
             'Please enter a name for your config: ',
@@ -311,9 +459,7 @@ function renderResultTable(data) {
     });
 }
 
-
-
-/* Example usage */
+/* Example usage 
 const exampleJson = {
     "name": "profilex",
     "routers": ["rtr1", "rtr2"],
@@ -327,10 +473,10 @@ const exampleJson = {
             "tags": ["tag1", "tag2"]
         }
     ]
-};
+}; 
 
 renderResultTable(exampleJson);
-
+*/
 
 const toAdd = {
     path: "",
@@ -338,10 +484,11 @@ const toAdd = {
     tags: []
 };
 
-/* PATH */
-document.getElementById("pathName").addEventListener("input", e => {
+/* UPdate current path */
+pathInput.addEventListener("input", (e) => {
     toAdd.path = e.target.value;
 });
+
 
 /* ADD FIELD */
 function addField() {
@@ -415,5 +562,12 @@ function renderPreview() {
         `;
     });
 
-    console.log("toAdd =", JSON.stringify(toAdd, null, 2));
+    /* console.log("toAdd =", JSON.stringify(toAdd, null, 2)); */
 }
+
+// Close modal
+document
+    .querySelector('#monitor .close')
+    .addEventListener('click', function () {
+        $('#monitor').modal('hide');
+    });

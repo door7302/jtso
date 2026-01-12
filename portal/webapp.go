@@ -128,6 +128,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/getrawconfig", routeGetRawConfig)
 	wapp.POST("/gettree", routeGetTreeDoc)
 	wapp.POST("/intervalmgmt", routeIntervalMgt)
+	wapp.POST("/ondemandmgt", routeOnDemandMgt)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -1606,6 +1607,50 @@ func routeUptDoc(c echo.Context) error {
 		graf = "No Grafana Dasboards attached to this profile"
 	}
 	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: teleHTML, Graf: graf, Kapa: kapa})
+}
+
+func routeOnDemandMgt(c echo.Context) error {
+	var err error
+
+	r := new(OnDemandMgt)
+
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse ondemand post request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the data"})
+	}
+
+	h := ""
+	for _, i := range sqlite.RtrList {
+		if i.Shortname == r.Shortname {
+			h = i.Hostname
+			break
+		}
+	}
+
+	switch r.Action {
+	case "gnmionce":
+		// create once request (or)
+		onceReq := gnmicollect.OnceRequest{
+			Path:    r.Path,
+			Router:  h,
+			Port:    collectCfg.cfg.Gnmi.Port,
+			Timeout: collectCfg.cfg.Portal.BrowserTimeout,
+		}
+
+		// call gnmi once api
+		err, onceRep := gnmicollect.GnmiOnce(onceReq, collectCfg.cfg.Portal.HideOrigin)
+		if err != nil {
+			logger.Log.Errorf("Unable to analyse the path %s on router %s: %v", r.Path, r.Shortname, err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to collect path"})
+		}
+
+		return c.JSON(http.StatusOK, ReplyGnmiOnce{Status: "OK", Data: onceRep})
+
+	default:
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown action"})
+	}
+
 }
 
 func routeIntervalMgt(c echo.Context) error {
