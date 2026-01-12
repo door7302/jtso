@@ -307,18 +307,17 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	var info XPathInfo
 
 	if hideOrigin {
+		// remove origin info if needed (your existing regex)
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
-	logger.Log.Infof("%s", xpath)
-
 	trimmedXPath := strings.Trim(xpath, "/")
 
-	// ---------- 1) Prepare a predicate-free version ONCE
+	// ---------- 1) prepare a predicate-free version for splitting
 	cleanXPath := removePredicates(trimmedXPath)
 	xpathParts := strings.Split(cleanXPath, "/")
 
-	// ---------- 2) Extract KEYS (use raw xpath ONLY to find key names)
+	// ---------- 2) extract KEYS (use raw xpath to get key names)
 	rawParts := strings.Split(trimmedXPath, "/")
 
 	for i, rawPart := range rawParts {
@@ -326,17 +325,21 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 		for _, m := range matches {
 			key := m[1]
 
-			// build full root path (predicate-free)
-			path := strings.Join(xpathParts[:i+1], "/")
-			info.Keys = append(info.Keys, path+"/"+key)
+			// build full root path to key (predicate-free)
+			path := []string{}
+			for _, p := range rawParts[:i+1] {
+				path = append(path, removePredicates(p))
+			}
+			info.Keys = append(info.Keys, strings.Join(path, "/")+"/"+key)
 		}
 	}
 
-	// ---------- 3) Compute Leaf relative to base
+	// ---------- 3) compute Leaf relative to base
 	cleanBase := removePredicates(strings.Trim(base, "/"))
 	baseParts := strings.Split(cleanBase, "/")
 
 	start := 0
+	found := false
 	for i := 0; i <= len(xpathParts)-len(baseParts); i++ {
 		match := true
 		for j := range baseParts {
@@ -347,12 +350,23 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 		}
 		if match {
 			start = i + len(baseParts)
+			found = true
 			break
 		}
 	}
 
-	info.Leaf = strings.Join(xpathParts[start:], "/")
-	logger.Log.Info("RETURN PARSE")
+	// safety: if base not found or indices out of range, return full path
+	if !found || start < 0 || start > len(xpathParts) {
+		start = len(xpathParts)
+	}
+
+	leafParts := []string{}
+	if start < len(xpathParts) {
+		leafParts = xpathParts[start:]
+	}
+
+	info.Leaf = strings.Join(leafParts, "/")
+
 	return info
 }
 
