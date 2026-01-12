@@ -22,7 +22,7 @@ const PATH_CERT string = "/var/shared/telegraf/cert/"
 
 var root *TreeNode
 var global []string
-var re1, re2, re3, re4 *regexp.Regexp
+var re1, re2, re3, re4, re5 *regexp.Regexp
 var StreamObj *Streamer
 
 // Will deprecate TreeJS in further release
@@ -98,6 +98,7 @@ func init() {
 	re2 = regexp.MustCompile("(.*)\\[(.*)=(.*)\\]")
 	re3 = regexp.MustCompile("^[^/:]+:")
 	re4 = regexp.MustCompile(`\[(\w+)=`)
+	re5 = regexp.MustCompile(`\[[^\]]*\]`)
 
 	// init streamer
 	StreamObj = new(Streamer)
@@ -298,12 +299,6 @@ func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
 		global = global[:len(global)-1]
 	}
 }
-func stripPredicates(s string) string {
-	if i := strings.Index(s, "["); i != -1 {
-		return s[:i]
-	}
-	return s
-}
 
 func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	var info XPathInfo
@@ -312,37 +307,35 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
-	// Normalize xpath
-	xpathParts := strings.Split(strings.Trim(xpath, "/"), "/")
+	// ---------- 1) Extract KEYS from ORIGINAL xpath
+	partsWithPred := strings.Split(strings.Trim(xpath, "/"), "/")
 
-	// ---- 1) Extract KEYS (full root path)
-	for i, part := range xpathParts {
+	for i, part := range partsWithPred {
 		matches := re4.FindAllStringSubmatch(part, -1)
 		for _, m := range matches {
 			key := m[1]
 
 			var path []string
-			for _, p := range xpathParts[:i+1] {
-				path = append(path, stripPredicates(p))
+			for _, p := range partsWithPred[:i+1] {
+				path = append(path, re5.ReplaceAllString(p, ""))
 			}
 			info.Keys = append(info.Keys, strings.Join(path, "/")+"/"+key)
 		}
 	}
 
-	// ---- 2) Compute Leaf (relative to base)
-	baseParts := strings.Split(strings.Trim(base, "/"), "/")
+	// ---------- 2) Remove predicates BEFORE splitting for Leaf logic
+	cleanXPath := re5.ReplaceAllString(strings.Trim(xpath, "/"), "")
+	cleanBase := re5.ReplaceAllString(strings.Trim(base, "/"), "")
 
-	// Strip predicates for path comparison
-	var cleanXPath []string
-	for _, p := range xpathParts {
-		cleanXPath = append(cleanXPath, stripPredicates(p))
-	}
+	xpathParts := strings.Split(cleanXPath, "/")
+	baseParts := strings.Split(cleanBase, "/")
 
+	// ---------- 3) Remove base (as contiguous sequence)
 	start := 0
-	for i := 0; i <= len(cleanXPath)-len(baseParts); i++ {
+	for i := 0; i <= len(xpathParts)-len(baseParts); i++ {
 		match := true
 		for j := range baseParts {
-			if cleanXPath[i+j] != baseParts[j] {
+			if xpathParts[i+j] != baseParts[j] {
 				match = false
 				break
 			}
@@ -353,7 +346,7 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 		}
 	}
 
-	info.Leaf = strings.Join(cleanXPath[start:], "/")
+	info.Leaf = strings.Join(xpathParts[start:], "/")
 
 	return info
 }
