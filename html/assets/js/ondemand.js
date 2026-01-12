@@ -12,7 +12,7 @@ const monitorState = document.getElementById('monitor-state');
 
 // BUTTON CLICK HANDLERS
 
-btnAnalyse.onclick = function () {
+btnAnalyze.onclick = function () {
     const modal = new 
     bootstrap.Modal(document.getElementById('monitor'));
     modal.show();
