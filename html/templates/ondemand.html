@@ -9,13 +9,11 @@
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/alertify.min.css">
     <link rel="stylesheet" href="css/bootstrap-multiselect.css">
-    <link rel="stylesheet" href="css/jtsostyle.css">
-    <link rel="stylesheet" href="css/ondemand.css">
+    <link rel="stylesheet" href="css/jtsmain.css">
+     <!-- <link rel="stylesheet" href="css/ondemand.css"> -->
 </head>
 
 <body>
-
-    ript src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <div class="modal fade" style="animation-name: animatetop;" id="monitor" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document" style="max-width: 75%;">
@@ -34,7 +32,7 @@
                         <label for="routerSelect" class="form-label">
                             Test on one router:
                         </label>
-                               <select id="router" class="selectpicker" data-width="100%">
+                               <select id="router" class="selectpicker" data-width="100%" size="5">
                                 {{range .Rtrs}}
                                 <option value="{{.Shortname}}">{{.Shortname}}</option>
                                 {{end}}
