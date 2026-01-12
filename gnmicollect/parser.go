@@ -298,7 +298,6 @@ func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
 		global = global[:len(global)-1]
 	}
 }
-
 func stripPredicates(s string) string {
 	if i := strings.Index(s, "["); i != -1 {
 		return s[:i]
@@ -306,30 +305,22 @@ func stripPredicates(s string) string {
 	return s
 }
 
-func extractFieldTag(base string, xpath string, hideOrigin bool) XPathInfo {
+func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	var info XPathInfo
 
 	if hideOrigin {
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
-	// Normalize
+	// Normalize xpath
 	xpathParts := strings.Split(strings.Trim(xpath, "/"), "/")
-	baseParts := strings.Split(strings.Trim(base, "/"), "/")
 
-	// ---- 1) Extract keys FIRST (from full xpath)
+	// ---- 1) Extract KEYS (full root path)
 	for i, part := range xpathParts {
 		matches := re4.FindAllStringSubmatch(part, -1)
 		for _, m := range matches {
 			key := m[1]
 
-			// root-level key
-			if i == 0 {
-				info.Keys = append(info.Keys, key)
-				continue
-			}
-
-			// nested key: build clean path up to node
 			var path []string
 			for _, p := range xpathParts[:i+1] {
 				path = append(path, stripPredicates(p))
@@ -338,13 +329,15 @@ func extractFieldTag(base string, xpath string, hideOrigin bool) XPathInfo {
 		}
 	}
 
-	// ---- 2) Strip predicates from xpath for path comparison
+	// ---- 2) Compute Leaf (relative to base)
+	baseParts := strings.Split(strings.Trim(base, "/"), "/")
+
+	// Strip predicates for path comparison
 	var cleanXPath []string
 	for _, p := range xpathParts {
 		cleanXPath = append(cleanXPath, stripPredicates(p))
 	}
 
-	// ---- 3) Remove base *suffix*
 	start := 0
 	for i := 0; i <= len(cleanXPath)-len(baseParts); i++ {
 		match := true
@@ -360,9 +353,9 @@ func extractFieldTag(base string, xpath string, hideOrigin bool) XPathInfo {
 		}
 	}
 
-	relative := cleanXPath[start:]
-	info.Leaf = strings.Join(relative, "/")
+	info.Leaf = strings.Join(cleanXPath[start:], "/")
 
+	return info
 }
 
 func parseXpath(xpath string, value string, merge bool, hideOrigin bool) error {
