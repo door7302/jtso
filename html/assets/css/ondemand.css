@@ -11,3 +11,11 @@ body.dark-mode #monitor .card {
     border-radius: 15px;
     padding: 12px 14px;
 }
+
+strong {
+    color: #000000;
+}
+
+body.dark-mode strong {
+    color: #ffffff;
+}

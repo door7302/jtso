@@ -199,24 +199,25 @@
 
     <div class="other-div">
         <div class="card other-card">
-            <div class="card-body">
+            <div class="card-body text-start">
                 <!-- Path + Analyse -->
                 <div class="d-flex gap-2 align-items-center mb-3">
                     <input id="pathName" class="form-control" type="text" placeholder="/node1/node2">
-
-                    <button class="btn btn-success flex-shrink-0">
-                        Analyse path instead?
-                    </button>
                 </div>
 
                 <!-- Add buttons -->
                 <div class="mb-3">
+                    <strong>Add Fields, Tags manually: </strong>
                     <button class="btn btn-sm btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#fieldModal">
                         + Field
                     </button>
 
                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#tagModal">
                         + Tag
+                    </button>
+
+                    <button class="btn btn-success flex-shrink-0">
+                        Analyse path instead?
                     </button>
                 </div>
 
