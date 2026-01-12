@@ -717,5 +717,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		}
 		r.Fields = append(r.Fields, f)
 	}
+	logger.Log.Infof("gNMI ONCE subscription for router %s and xpath %s succefully done", o.Router, o.Path)
+
 	return nil, r
 }
