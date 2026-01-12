@@ -299,6 +299,13 @@ func TraverseTreeFancytree(node *TreeNode, parent *FancytreeNode) {
 	}
 }
 
+func stripPredicates(s string) string {
+	if i := strings.Index(s, "["); i != -1 {
+		return s[:i]
+	}
+	return s
+}
+
 func extractFieldTag(base string, xpath string, hideOrigin bool) XPathInfo {
 	var info XPathInfo
 
@@ -306,62 +313,56 @@ func extractFieldTag(base string, xpath string, hideOrigin bool) XPathInfo {
 		xpath = re3.ReplaceAllString(xpath, "")
 	}
 
-	logger.Log.Infof("%s | %s", base, xpath)
-
-	// Normalize paths
+	// Normalize
 	xpathParts := strings.Split(strings.Trim(xpath, "/"), "/")
 	baseParts := strings.Split(strings.Trim(base, "/"), "/")
 
-	// Remove base prefix
-	i := 0
-	for i < len(xpathParts) && i < len(baseParts) {
-		// Compare node name without predicates
-		xNode := xpathParts[i]
-		if idx := strings.Index(xNode, "["); idx != -1 {
-			xNode = xNode[:idx]
-		}
-		if xNode != baseParts[i] {
-			break
-		}
-		i++
-	}
-	relativeParts := xpathParts[i:]
-
-	// Build Leaf (full relative path, predicates removed)
-	var leafParts []string
-	for _, p := range relativeParts {
-		if idx := strings.Index(p, "["); idx != -1 {
-			p = p[:idx]
-		}
-		leafParts = append(leafParts, p)
-	}
-	info.Leaf = strings.Join(leafParts, "/")
-
-	// Extract keys with correct scoping
-	for idx, part := range relativeParts {
+	// ---- 1) Extract keys FIRST (from full xpath)
+	for i, part := range xpathParts {
 		matches := re4.FindAllStringSubmatch(part, -1)
 		for _, m := range matches {
 			key := m[1]
 
-			// Root-level key → just name
-			if idx == 0 {
+			// root-level key
+			if i == 0 {
 				info.Keys = append(info.Keys, key)
 				continue
 			}
 
-			// Nested key → relative path + key
+			// nested key: build clean path up to node
 			var path []string
-			for _, p := range relativeParts[:idx+1] {
-				if cut := strings.Index(p, "["); cut != -1 {
-					p = p[:cut]
-				}
-				path = append(path, p)
+			for _, p := range xpathParts[:i+1] {
+				path = append(path, stripPredicates(p))
 			}
 			info.Keys = append(info.Keys, strings.Join(path, "/")+"/"+key)
 		}
 	}
 
-	return info
+	// ---- 2) Strip predicates from xpath for path comparison
+	var cleanXPath []string
+	for _, p := range xpathParts {
+		cleanXPath = append(cleanXPath, stripPredicates(p))
+	}
+
+	// ---- 3) Remove base *suffix*
+	start := 0
+	for i := 0; i <= len(cleanXPath)-len(baseParts); i++ {
+		match := true
+		for j := range baseParts {
+			if cleanXPath[i+j] != baseParts[j] {
+				match = false
+				break
+			}
+		}
+		if match {
+			start = i + len(baseParts)
+			break
+		}
+	}
+
+	relative := cleanXPath[start:]
+	info.Leaf = strings.Join(relative, "/")
+
 }
 
 func parseXpath(xpath string, value string, merge bool, hideOrigin bool) error {
