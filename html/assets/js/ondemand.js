@@ -566,6 +566,23 @@ function renderResultTable(data) {
         const pathTd = document.createElement("td");
         pathTd.classList.add("align-middle", "text-break");
         pathTd.textContent = entry.path;
+
+        if (entry.aliases.length !== 0) {
+            const badge = document.createElement("span");
+            badge.classList.add("badge", "bg-secondary", "ms-2");
+
+            const tooltipText = entry.aliases.join("\n");
+
+            badge.innerHTML = `
+        Alias
+        <i class="fa fa-info-circle ms-1"
+           data-bs-toggle="tooltip"
+           title="${tooltipText}"></i>
+        `;
+
+            pathTd.appendChild(badge);
+        }
+
         tr.appendChild(pathTd);
 
         /* FIELDS */
