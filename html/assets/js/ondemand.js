@@ -118,7 +118,7 @@ btnAddEntry.onclick = function () {
 
             // check unicity 
             var exists = false;
-            for (let i = 0; i < currentProfile.entries; i++) {
+            for (let i = 0; i < currentProfile.entries.length; i++) {
                 if (currentProfile.entries[i].path == toAdd.path) {
                     exists = true;
                     break;
@@ -255,7 +255,6 @@ function provisionMonitorTables(data) {
             <input type="checkbox" data-role="convert" ${field.convert ? "checked" : ""}>
         </td>
     `;
-
         fieldsTable.appendChild(tr);
     });
 
@@ -685,12 +684,10 @@ function buildTmpGnmi() {
             }
         });
 
-    alert(JSON.stringify(tmpGnmi));
     return tmpGnmi;
 }
 
 function processGnmiData(tmpGnmi) {
-    alert(JSON.stringify(tmpGnmi));
     /* ==========================
        FIELDS
        ========================== */
@@ -733,7 +730,6 @@ function processGnmiData(tmpGnmi) {
         }
     });
 
-    alert(JSON.stringify(tmpGnmi));
     renderPreview();
 }
 

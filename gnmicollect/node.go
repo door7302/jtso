@@ -126,7 +126,14 @@ func (n *TreeNode) Traverse(f func(node *TreeNode)) {
 
 /// For gnmi once only - to auto detect aliasing
 
-func Insert(root *TrieNode, xpath string) {
+func Insert(root *TrieNode, base string, xpath string) {
+
+	// Normalize xpath starting with "./" -> concatenate with the base path
+	if strings.HasPrefix(xpath, "./") {
+		xpath = "/" + strings.TrimPrefix(xpath, "./")
+		xpath = strings.TrimRight(base, "/") + xpath
+	}
+
 	parts := strings.Split(strings.Trim(xpath, "/"), "/")
 	node := root
 

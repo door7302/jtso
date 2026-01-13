@@ -778,7 +778,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		r.Fields = append(r.Fields, f)
 
 		// to detect alias then
-		Insert(rootAlias, k)
+		Insert(rootAlias, o.Path, k)
 	}
 
 	// Provision Alias if found out.
