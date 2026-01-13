@@ -320,11 +320,16 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	segments := splitSegmentsSlashSafe(trimmed)
 	baseSegments := splitSegmentsSlashSafe(baseClean)
 
+	logger.Log.Infof("seg: %v", segments)
+	logger.Log.Infof("base: %v", baseSegments)
+
 	// ---------- 2) Leaf computation (predicate-free)
 	start := findBaseIndex(segments, baseSegments)
 	if start < 0 || start > len(segments) {
 		start = len(segments)
 	}
+
+	logger.Log.Infof("Start: %v", start)
 
 	leafParts := []string{}
 	for _, seg := range segments[start:] {

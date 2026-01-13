@@ -105,7 +105,7 @@ btnAddEntry.onclick = function () {
     alertify.confirm("Are you sure you want to append this path in the monitoring list of the current On-demand profile?", function (e) {
         if (e) {
             // first check unicity 
-            const exists = exampleJson.entries.some(e => e.path === mypath);
+            const exists = currentProfile.entries.some(e => e.path === mypath);
             if (!exists) {
                 // append the enties: 
                 currentProfile.entries.push({
