@@ -44,7 +44,7 @@
                             Launch gNMI Once collect
                         </button>
                     </div>
-                     <hr class="my-3">
+                    <hr class="my-3">
                     <!-- ===== ALIASES ROW ===== -->
                     <div class="d-flex flex-column gap-2" id="aliases-info">
                         <h6 class="mb-1">Aliases identified:</h6>
@@ -92,7 +92,7 @@
                             </table>
                         </div>
                     </div>
-                   
+
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-success" id="applyMonitor">
@@ -361,6 +361,11 @@
             </div>
         </div>
     </div>
+    <script>
+        // load current context from server side
+        window.dynamicData = {{ .CurrentContext }};
+    </script>
+
     <script src="js/jquery-3.6.4.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="js/alertify.min.js"></script>

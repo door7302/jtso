@@ -76,12 +76,13 @@ type XPathInfo struct {
 type Field struct {
 	Name    string `json:"name"`
 	Monitor bool   `json:"monitor"`
+	Rate    bool   `json:"rate"`
 	Convert bool   `json:"convert"`
 }
 
 type Tag struct {
 	Name    string `json:"name"`
-	GroupBy bool   `json:"groupBy"`
+	GroupBy bool   `json:"groupby"`
 }
 
 type OnceReply struct {
@@ -773,6 +774,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		f := Field{
 			Name:    k,
 			Monitor: false,
+			Rate:    false,
 			Convert: false,
 		}
 		r.Fields = append(r.Fields, f)

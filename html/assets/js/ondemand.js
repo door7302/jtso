@@ -57,12 +57,6 @@ var tmpGnmi = {
     tags: []
 };
 
-var currentProfile = {
-    name: "no-name",
-    routers: [],
-    entries: []
-}
-
 /* UPdate current path */
 pathInput.addEventListener("input", (e) => {
     toAdd.path = e.target.value;
@@ -118,8 +112,8 @@ btnAddEntry.onclick = function () {
 
             // check unicity 
             var exists = false;
-            for (let i = 0; i < currentProfile.entries.length; i++) {
-                if (currentProfile.entries[i].path == toAdd.path) {
+            for (let i = 0; i < window.dynamicData.currentProfile.entries.length; i++) {
+                if (window.dynamicData.currentProfile.entries[i].path == toAdd.path) {
                     exists = true;
                     break;
                 }
@@ -133,13 +127,13 @@ btnAddEntry.onclick = function () {
                 }
 
                 // append the entry
-                currentProfile.entries.push({
+                window.dynamicData.currentProfile.entries.push({
                     path: toAdd.path,
                     aliases: toAdd.aliases,
                     fields: toAdd.fields,
                     tags: toAdd.tags
                 });
-                renderResultTable(currentProfile)
+                renderResultTable(window.dynamicData.currentProfile)
                 resetEntry()
                 alertify.success('Sensor path added well...')
             } else {
@@ -232,7 +226,7 @@ function provisionMonitorTables(data) {
         tr.innerHTML = `
             <td>${tag.name}</td>
             <td class="text-center">
-                <input type="checkbox" ${tag.groupBy ? "checked" : ""}>
+                <input type="checkbox" ${tag.groupby ? "checked" : ""}>
             </td>
         `;
 
@@ -307,8 +301,8 @@ btnGnmi.onclick = function () {
                     Data = {
                         aliases: [],
                         tags: [
-                            { name: "host", groupBy: true },
-                            { name: "interface", groupBy: false }
+                            { name: "host", groupby: true },
+                            { name: "interface", groupby: false }
                         ],
                         fields: [
                             { name: "in-octets", monitor: true, rate: true, convert: false },
@@ -536,7 +530,7 @@ btnReset.onclick = function () {
                     dataType: "json",
                     success: function (json) {
                         if (json["status"] == "OK") {
-                            currentProfile = {
+                            window.dynamicData.currentProfile = {
                                 name: "no-name",
                                 routers: [],
                                 entries: []
@@ -615,7 +609,7 @@ function renderResultTable(data) {
         entry.tags.forEach(tag => {
             const badge = document.createElement("span");
             badge.className = "badge bg-primary";
-            badge.textContent = tag;
+            badge.textContent = tag.name;
             tagsWrap.appendChild(badge);
         });
 
@@ -667,7 +661,10 @@ function buildTmpGnmi() {
             const checkbox = row.querySelector("input[type='checkbox']");
 
             if (checkbox && checkbox.checked && tagName) {
-                tmpGnmi.tags.push(tagName);
+                tmpGnmi.tags.push({
+                    name: tagName,
+                    groupby: true
+                });
             }
         });
 
@@ -735,7 +732,10 @@ function processGnmiData(tmpGnmi) {
        ========================== */
     tmpGnmi.tags.forEach(tag => {
         if (!toAdd.tags.includes(tag)) {
-            toAdd.tags.push(tag);
+            toAdd.tags.push({
+                name: tag.name,
+                groupby: tag.groupby
+            });
         }
     });
 
@@ -773,7 +773,7 @@ function addTag() {
     if (!name) return;
 
     name = normalizePath(name);
-    toAdd.tags.push(name);
+    toAdd.tags.push({ "name": name, "groupby": true });
 
     tagName.value = "";
     bootstrap.Modal.getInstance(tagModal).hide();
@@ -848,7 +848,7 @@ function renderPreview() {
     toAdd.tags.forEach((t, i) => {
         tagsDiv.innerHTML += `
             <span class="badge bg-primary">
-                ${t}
+                ${t.name}
                 <i class="fa fa-times ms-1 text-light"
                    role="button"
                    onclick="removeTag(${i})"></i>
@@ -903,16 +903,16 @@ document
 
 
                 /* ==========================
-                   Remove entry from currentProfile
+                   Remove entry from window.dynamicData.currentProfile
                    ========================== */
-                currentProfile.entries = currentProfile.entries.filter(
+                window.dynamicData.currentProfile.entries = window.dynamicData.currentProfile.entries.filter(
                     entry => entry.path !== pathName
                 );
 
                 /* ==========================
                    Re-render table
                    ========================== */
-                renderResultTable(currentProfile);
+                renderResultTable(window.dynamicData.currentProfile);
             }
         }).setHeader('JSTO...');
 

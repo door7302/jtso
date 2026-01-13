@@ -147,6 +147,35 @@ type (
 		RootName string     `json:"rootName"`
 		Paths    []TreePath `json:"listOfPaths"`
 	}
+
+	FieldEntry struct {
+		Name    string `json:"name"`
+		Monitor bool   `json:"monitor"`
+		Rate    bool   `json:"rate"`
+		Convert bool   `json:"convert"`
+	}
+
+	TagEntry struct {
+		Name    string `json:"name"`
+		GroupBy bool   `json:"groupby"`
+	}
+
+	Entry struct {
+		Path    string       `json:"path"`
+		Aliases []string     `json:"aliases"`
+		Fields  []FieldEntry `json:"fields"`
+		Tags    []TagEntry   `json:"tags"`
+	}
+
+	RunningProfile struct {
+		Name    string   `json:"name"`
+		RtrList []string `json:"routers"`
+		Entries []Entry  `json:"entried"`
+	}
+	CurrentContext struct {
+		Run            bool           `json:"run"`
+		CurrentProfile RunningProfile `json:"currentProfile"`
+	}
 )
 
 func (a ByShortname) Len() int           { return len(a) }

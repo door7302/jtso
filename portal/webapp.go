@@ -709,6 +709,14 @@ func routeDoc(c echo.Context) error {
 func routeOndemand(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
+	currentContext := CurrentContext{
+		Run: false,
+		CurrentProfile: RunningProfile{
+			Name:    "no-name",
+			RtrList: make([]string, 0),
+			Entries: make([]Entry, 0),
+		},
+	}
 
 	// Get all routers from db
 	var lr []RouterDetails
@@ -720,7 +728,7 @@ func routeOndemand(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": currentContext})
 }
 
 func routeBrowse(c echo.Context) error {
