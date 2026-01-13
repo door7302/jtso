@@ -42,6 +42,8 @@ pathInput.addEventListener("input", (e) => {
 btnAnalyze.onclick = function () {
     groupbyTable.innerHTML = "";
     fieldsTable.innerHTML = "";
+    aliasesList.innerHTML = "";
+    aliasesInfo.classList.add("d-none");
     $('#monitor').modal('show');
 }
 
@@ -111,6 +113,7 @@ function provisionMonitorTables(data) {
     groupbyTable.innerHTML = "";
     fieldsTable.innerHTML = "";
     aliasesList.innerHTML = "";
+    aliasesInfo.classList.add("d-none");
 
     // ===== Populate GroupBy Tags table =====
     data.tags.forEach(tag => {
@@ -160,8 +163,6 @@ function provisionMonitorTables(data) {
 
     if (Array.isArray(data.aliases) && data.aliases.length > 0) {
         aliasesInfo.classList.remove("d-none");
-    } else {
-        aliasesInfo.classList.add("d-none");
     }
 
 }
@@ -587,7 +588,7 @@ function addTag() {
 }
 
 /* ADD Alias */
-function addTag() {
+function addAlias() {
     const name = aliasName.value.trim();
     if (!name) return;
 
