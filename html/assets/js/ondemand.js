@@ -717,6 +717,7 @@ function addField() {
     const name = fieldName.value.trim();
     if (!name) return;
 
+    name = normalizeFieldPath(name);
     toAdd.fields.push({ "name": name, "monitor": true, "convert": convertCheck.checked, "rate": rateCheck.checked });
 
     fieldName.value = "";
@@ -732,6 +733,7 @@ function addTag() {
     const name = tagName.value.trim();
     if (!name) return;
 
+    name = normalizePath(name);
     toAdd.tags.push(name);
 
     tagName.value = "";
@@ -744,11 +746,23 @@ function addAlias() {
     const name = aliasName.value.trim();
     if (!name) return;
 
+    name = normalizePath(name);
     toAdd.aliases.push(name);
 
     aliasName.value = "";
     bootstrap.Modal.getInstance(aliasModal).hide();
     renderPreview();
+}
+
+function normalizePath(name) {
+    return name.startsWith("/") ? name : "/" + name;
+}
+
+function normalizeFieldPath(name) {
+    if (name.startsWith(".") || name.startsWith("/")) {
+        return name;
+    }
+    return "/" + name;
 }
 
 /* REMOVE */
