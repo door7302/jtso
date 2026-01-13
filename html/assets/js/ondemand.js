@@ -626,12 +626,13 @@ function renderResultTable(data) {
         const actionsTd = document.createElement("td");
         actionsTd.className = "text-center align-middle";
 
-        actionsTd.innerHTML = `
-            <i class="fa fa-pencil-alt text-primary me-3 action-edit"
+        /* Don't support edit as of now 
+               <i class="fa fa-pencil-alt text-primary me-3 action-edit"
                role="button"
                title="Edit"
                data-index="${index}"></i>
-
+        */
+        actionsTd.innerHTML = `
             <i class="fa fa-trash text-danger action-delete"
                role="button"
                title="Delete"
@@ -878,4 +879,42 @@ document
     .querySelector('#monitor .close')
     .addEventListener('click', function () {
         $('#monitor').modal('hide');
+    });
+
+document
+    .getElementById("result-table-body")
+    .addEventListener("click", function (e) {
+
+        alertify.confirm("Are you sure you want to remove this path from the monitoring list?", function (f) {
+            if (f) {
+                const deleteBtn = e.target.closest(".action-delete");
+                if (!deleteBtn) return;
+
+                const row = deleteBtn.closest("tr");
+                if (!row) return;
+
+                /* ==========================
+                   Extract PATH (first column)
+                   ========================== */
+                const pathCell = row.cells[0];
+
+                // Get only the text node (exclude alias badge)
+                const pathName = pathCell.childNodes[0].textContent.trim();
+
+
+                /* ==========================
+                   Remove entry from currentProfile
+                   ========================== */
+                currentProfile.entries = currentProfile.entries.filter(
+                    entry => entry.path !== pathName
+                );
+
+                /* ==========================
+                   Re-render table
+                   ========================== */
+                renderResultTable(currentProfile);
+            }
+        }).setHeader('JSTO...');
+
+
     });
