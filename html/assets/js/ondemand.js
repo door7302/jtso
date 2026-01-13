@@ -633,12 +633,16 @@ function processGnmiData(tmpGnmi) {
 
         if (existing) {
             // update existing entry
-            existing.processor = processor;
+            existing.monitor = field.monitor;
+            existing.convert = field.convert;
+            existing.rate = field.rate;
         } else {
             // add new entry
             toAdd.fields.push({
                 name: field.name,
-                processor: processor
+                monitor: field.monitor,
+                convert: field.convert,
+                rate: field.rate
             });
         }
     });
@@ -669,10 +673,7 @@ function addField() {
     const name = fieldName.value.trim();
     if (!name) return;
 
-    const processor =
-        convertCheck.checked || rateCheck.checked ? 1 : 0;
-
-    toAdd.fields.push({ name, processor });
+    toAdd.fields.push({ "name": name, "monitor": true, "convert": convertCheck.checked, "rate": rateCheck.checked  });
 
     fieldName.value = "";
     convertCheck.checked = false;
