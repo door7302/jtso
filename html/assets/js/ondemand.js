@@ -240,8 +240,7 @@ btnGnmi.onclick = function () {
                         ]
                     }; */
                     // save the reply from JTSO 
-                    tmpGnmi = json.data;
-                    provisionMonitorTables(tmpGnmi);
+                    provisionMonitorTables(json.data);
                 } else {
                     btnGnmi.disabled = false;
                     waitingDialog.hide();
@@ -618,11 +617,12 @@ function buildTmpGnmi() {
             }
         });
 
+    alert(JSON.stringify(tmpGnmi));
     return tmpGnmi;
 }
 
 function processGnmiData(tmpGnmi) {
-
+    alert(JSON.stringify(tmpGnmi));
     /* ==========================
        FIELDS
        ========================== */
@@ -665,6 +665,7 @@ function processGnmiData(tmpGnmi) {
         }
     });
 
+    alert(JSON.stringify(tmpGnmi));
     renderPreview();
 }
 
@@ -673,7 +674,7 @@ function addField() {
     const name = fieldName.value.trim();
     if (!name) return;
 
-    toAdd.fields.push({ "name": name, "monitor": true, "convert": convertCheck.checked, "rate": rateCheck.checked  });
+    toAdd.fields.push({ "name": name, "monitor": true, "convert": convertCheck.checked, "rate": rateCheck.checked });
 
     fieldName.value = "";
     convertCheck.checked = false;
