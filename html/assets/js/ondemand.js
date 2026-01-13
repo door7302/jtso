@@ -714,7 +714,7 @@ function processGnmiData(tmpGnmi) {
 
 /* ADD FIELD */
 function addField() {
-    const name = fieldName.value.trim();
+    var name = fieldName.value.trim();
     if (!name) return;
 
     name = normalizeFieldPath(name);
@@ -730,7 +730,7 @@ function addField() {
 
 /* ADD TAG */
 function addTag() {
-    const name = tagName.value.trim();
+    var name = tagName.value.trim();
     if (!name) return;
 
     name = normalizePath(name);
@@ -743,7 +743,7 @@ function addTag() {
 
 /* ADD Alias */
 function addAlias() {
-    const name = aliasName.value.trim();
+    var name = aliasName.value.trim();
     if (!name) return;
 
     name = normalizePath(name);
