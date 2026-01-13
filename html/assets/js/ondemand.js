@@ -755,7 +755,13 @@ function addAlias() {
 }
 
 function normalizePath(name) {
-    return name.startsWith("/") ? name : "/" + name;
+    if (name.startsWith("./")) {
+        return "/" + name.slice(2);
+    }
+    if (name.startsWith(".") || name.startsWith("/")) {
+        return name;
+    }
+    return "/" + name;
 }
 
 function normalizeFieldPath(name) {
