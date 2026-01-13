@@ -124,10 +124,10 @@ btnAddEntry.onclick = function () {
                     break;
                 }
             }
-            
+
             if (!exists) {
                 // do some additionnal checks 
-                if (toAdd.fields.length() == 0) {
+                if (toAdd.fields.length == 0) {
                     alertify.alert("JSTO...", "You should add at least one field to monitor!");
                     return;
                 }
