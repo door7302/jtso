@@ -915,6 +915,12 @@ document
                 renderResultTable(window.dynamicData.currentProfile);
             }
         }).setHeader('JSTO...');
-
-
     });
+
+document.addEventListener("DOMContentLoaded", function () {
+    initApp();
+});
+
+function initApp() {
+    renderResultTable(window.dynamicData.currentProfile)
+}
