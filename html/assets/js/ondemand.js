@@ -104,10 +104,35 @@ btnResetEntry.onclick = function () {
 btnAddEntry.onclick = function () {
     alertify.confirm("Are you sure you want to append this path in the monitoring list of the current On-demand profile?", function (e) {
         if (e) {
-            // first check unicity 
-            const exists = currentProfile.entries.some(e => e.path === mypath);
+            // check path format
+            if (toAdd.path == "") {
+                alertify.alert("JSTO...", "Path could not be empty!");
+                return;
+            }
+
+            var check = sanityCheckXPath(toAdd.path)
+            if (check.valid == false) {
+                alertify.alert("JSTO...", check.reason);
+                return;
+            }
+
+            // check unicity 
+            var exists = false;
+            for (let i = 0; i < currentProfile.entries; i++) {
+                if (currentProfile.entries[i].path == toAdd.path) {
+                    exists = true;
+                    break;
+                }
+            }
+            
             if (!exists) {
-                // append the enties: 
+                // do some additionnal checks 
+                if (toAdd.fields.length() == 0) {
+                    alertify.alert("JSTO...", "You should add at least one field to monitor!");
+                    return;
+                }
+
+                // append the entry
                 currentProfile.entries.push({
                     path: toAdd.path,
                     aliases: toAdd.aliases,
