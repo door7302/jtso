@@ -2,6 +2,8 @@
 const groupbyTable = document.getElementById("groupby-table");
 const fieldsTable = document.getElementById("fields-table");
 const btnAnalyze = document.getElementById('analyze');
+const btnAddEntry = document.getElementById('addentry');
+const btnResetEntry = document.getElementById('resetentry');
 const btnLoad = document.getElementById('load');
 const btnSave = document.getElementById('save');
 const btnSaveAs = document.getElementById('saveas');
@@ -29,15 +31,46 @@ var toAdd = {
     tags: []
 };
 
-var tmpGnmi = {};
+var tmpGnmi = {
+    aliases: [],
+    fields: [],
+    tags: []
+};
 
 /* UPdate current path */
 pathInput.addEventListener("input", (e) => {
     toAdd.path = e.target.value;
 });
 
-
 // BUTTON CLICK HANDLERS
+btnAnalyze.onclick = function () {
+    groupbyTable.innerHTML = "";
+    fieldsTable.innerHTML = "";
+    aliasesList.innerHTML = "";
+    aliasesInfo.classList.add("d-none");
+    $('#monitor').modal('show');
+}
+
+btnResetEntry.onclick = function () {
+    alertify.confirm("Are you sure you want to clear the current path search?", function (e) {
+        if (e) {
+            toAdd = {
+                path: "",
+                aliases: [],
+                fields: [],
+                tags: []
+            };
+            renderPreview();
+            var tmpGnmi = {
+                aliases: [],
+                fields: [],
+                tags: []
+            };
+            pathInput.value = "";
+
+        }
+    }).setHeader('JSTO...');
+}
 
 btnAnalyze.onclick = function () {
     groupbyTable.innerHTML = "";
@@ -52,6 +85,7 @@ btnCancel.onclick = function () {
 }
 
 btnApply.onclick = function () {
+    tmpGnmi = buildTmpGnmi()
     processGnmiData(tmpGnmi)
     $('#monitor').modal('hide');
 }
@@ -102,7 +136,6 @@ function sanityCheckXPath(xpath) {
 }
 
 function provisionMonitorTables(data) {
-
 
     if (!groupbyTable || !fieldsTable) {
         console.warn("Tables not found in DOM");
@@ -533,27 +566,101 @@ const exampleJson = {
 renderResultTable(exampleJson);
 */
 
+function buildTmpGnmi() {
+    const tmpGnmi = {
+        aliases: [],
+        fields: [],
+        tags: []
+    };
+
+    /* ==========================
+       TAGS (groupby-table)
+       ========================== */
+    document
+        .querySelectorAll("#groupby-table tr")
+        .forEach(row => {
+            const tagName = row.cells[0]?.textContent.trim();
+            const checkbox = row.querySelector("input[type='checkbox']");
+
+            if (checkbox && checkbox.checked && tagName) {
+                tmpGnmi.tags.push(tagName);
+            }
+        });
+
+    /* ==========================
+       ALIASES (aliases-list)
+       ========================== */
+    document
+        .querySelectorAll("#aliases-list input[type='checkbox']:checked")
+        .forEach(cb => {
+            tmpGnmi.aliases.push(cb.value);
+        });
+
+    /* ==========================
+       FIELDS (fields-table)
+       ========================== */
+    document
+        .querySelectorAll("#fields-table tr")
+        .forEach(row => {
+            const name = row.cells[0]?.textContent.trim();
+
+            const monitorCb = row.querySelector("input[data-role='monitor']");
+            const rateCb = row.querySelector("input[data-role='rate']");
+            const convertCb = row.querySelector("input[data-role='convert']");
+
+            if (monitorCb && monitorCb.checked && name) {
+                tmpGnmi.fields.push({
+                    name: name,
+                    monitor: true,
+                    rate: !!rateCb?.checked,
+                    convert: !!convertCb?.checked
+                });
+            }
+        });
+
+    return tmpGnmi;
+}
+
 function processGnmiData(tmpGnmi) {
-    // Process fields from tmpGnmi
+
+    /* ==========================
+       FIELDS
+       ========================== */
     tmpGnmi.fields.forEach(field => {
-        // Check if rate = true OR convert = true
-        if (field.rate === true || field.convert === true) {
-            toAdd.fields.push({
-                name: field.name,
-                processor: 1
-            });
+        const processor = (field.rate === true || field.convert === true) ? 1 : 0;
+
+        const existing = toAdd.fields.find(f => f.name === field.name);
+
+        if (existing) {
+            // update existing entry
+            existing.processor = processor;
         } else {
+            // add new entry
             toAdd.fields.push({
                 name: field.name,
-                processor: 0
+                processor: processor
             });
         }
     });
 
-    // Process tags from tmpGnmi
+    /* ==========================
+       TAGS
+       ========================== */
     tmpGnmi.tags.forEach(tag => {
-        toAdd.tags.push(tag.name);
+        if (!toAdd.tags.includes(tag)) {
+            toAdd.tags.push(tag);
+        }
     });
+
+    /* ==========================
+   Aliases
+   ========================== */
+    tmpGnmi.aliases.forEach(alias => {
+        if (!toAdd.aliases.includes(alias)) {
+            toAdd.aliases.push(alias);
+        }
+    });
+
     renderPreview();
 }
 
@@ -614,7 +721,6 @@ function removeAlias(idx) {
     toAdd.aliases.splice(idx, 1);
     renderPreview();
 }
-
 
 /* RENDER */
 function renderPreview() {

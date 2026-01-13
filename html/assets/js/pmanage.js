@@ -137,7 +137,7 @@ originFilter.addEventListener("change", applyFilters);
 function resetRender() {
   rootTitle.textContent = "";
   summaryEl.textContent = "";
-  statusEl.textContent = "Click on a 'Show Sensors' button";
+  statusEl.textContent = "Click on a green 'Sensors' button under Telegraf configurations";
   toolbar.style.display = "none";
 
   // Remove all current cards
@@ -150,12 +150,16 @@ function updateDoc() {
   var tele = document.getElementById("profileTele");
   var graf = document.getElementById("profileGraf");
   var kapa = document.getElementById("profileKapa");
+  var descpanel = document.getElementById("descpanel");
+
+  
 
   if (p == "default") {
     desc.innerHTML = "Please select a profile...";
     tele.innerHTML = "";
     graf.innerHTML = "";
     kapa.innerHTML = "";
+    descpanel.classList.add("d-none");
     $('#modifyI').hide();
     $('#resetI').hide();
     resetRender();
@@ -180,6 +184,7 @@ function updateDoc() {
             tele.innerHTML = json.tele.trim();
             graf.innerHTML = json.graf.trim();
             kapa.innerHTML = json.kapa.trim();
+            descpanel.classList.remove("d-none");
             $('#modifyI').show();
             $('#resetI').show();
             waitingDialog.hide();

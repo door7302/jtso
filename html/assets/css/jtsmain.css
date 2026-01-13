@@ -757,7 +757,7 @@ body.dark-mode label {
 }
 
 body.dark-mode input.form-control {
-    color: #ffffff !important;
+    color: #000000 !important;
     background-color: #bdbbbb !important;
     border-color: #555555 !important;
     border-radius: 10px;
