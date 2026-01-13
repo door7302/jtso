@@ -1,5 +1,12 @@
 package gnmicollect
 
+import "strings"
+
+type TrieNode struct {
+	children map[string]*TrieNode
+	count    int
+}
+
 // TreeNode represents a node in the tree structure.
 type TreeNode struct {
 	Data     interface{}
@@ -114,5 +121,45 @@ func (n *TreeNode) Traverse(f func(node *TreeNode)) {
 	f(n)
 	for _, child := range n.Children {
 		child.Traverse(f)
+	}
+}
+
+/// For gnmi once only - to auto detect aliasing
+
+func Insert(root *TrieNode, xpath string) {
+	parts := strings.Split(strings.Trim(xpath, "/"), "/")
+	node := root
+
+	for _, p := range parts {
+		if node.children == nil {
+			node.children = make(map[string]*TrieNode)
+		}
+		if _, ok := node.children[p]; !ok {
+			node.children[p] = &TrieNode{}
+		}
+		node = node.children[p]
+		node.count++
+	}
+}
+
+func CollectPrefixes(node *TrieNode, path []string, result *[]string) {
+	for seg, child := range node.children {
+		if child.count >= 2 {
+			newPath := append(path, seg)
+
+			stop := false
+			for _, gc := range child.children {
+				if gc.count < 2 {
+					stop = true
+					break
+				}
+			}
+
+			if stop || len(child.children) == 0 {
+				*result = append(*result, "/"+strings.Join(newPath, "/"))
+			} else {
+				CollectPrefixes(child, newPath, result)
+			}
+		}
 	}
 }

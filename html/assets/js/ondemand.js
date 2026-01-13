@@ -15,14 +15,27 @@ const btnCancel = document.getElementById('cancelMonitor');
 const selectConfig = document.getElementById('ondemand-config');
 const monitorState = document.getElementById('monitor-state');
 const pathInput = document.getElementById("pathName");
-const r = document.getElementById('router')
+const fieldsDiv = document.getElementById("fieldsPreview");
+const tagsDiv = document.getElementById("tagsPreview");
+const aliasesDiv = document.getElementById("aliasesPreview");
+const aliasesList = document.getElementById("aliases-list");
+const aliasesInfo = document.getElementById("aliases-info");
+const r = document.getElementById('router');
+
 var toAdd = {
     path: "",
+    aliases: [],
     fields: [],
     tags: []
 };
 
 var tmpGnmi = {};
+
+/* UPdate current path */
+pathInput.addEventListener("input", (e) => {
+    toAdd.path = e.target.value;
+});
+
 
 // BUTTON CLICK HANDLERS
 
@@ -97,6 +110,7 @@ function provisionMonitorTables(data) {
     // ===== Clear existing rows =====
     groupbyTable.innerHTML = "";
     fieldsTable.innerHTML = "";
+    aliasesList.innerHTML = "";
 
     // ===== Populate GroupBy Tags table =====
     data.tags.forEach(tag => {
@@ -131,6 +145,25 @@ function provisionMonitorTables(data) {
 
         fieldsTable.appendChild(tr);
     });
+
+    // ===== Populate Aliases =====
+    data.aliases.forEach((alias, i) => {
+        aliasesList.insertAdjacentHTML("beforeend", `
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="alias${i}" value="${alias}">
+            <label class="form-check-label" for="alias${i}">
+                ${alias}
+            </label>
+        </div>
+    `);
+    });
+
+    if (Array.isArray(data.aliases) && data.aliases.length > 0) {
+        aliasesInfo.classList.remove("d-none");
+    } else {
+        aliasesInfo.classList.add("d-none");
+    }
+
 }
 
 btnGnmi.onclick = function () {
@@ -162,6 +195,7 @@ btnGnmi.onclick = function () {
                     waitingDialog.hide();
                     /* received payload 
                     Data = {
+                        aliases: [],
                         tags: [
                             { name: "host", groupBy: true },
                             { name: "interface", groupBy: false }
@@ -188,8 +222,6 @@ btnGnmi.onclick = function () {
         });
     });
 }
-
-
 
 btnLoad.onclick = function () {
     const selectedConfig = selectConfig.value;
@@ -433,7 +465,7 @@ function renderResultTable(data) {
 
             badge.innerHTML = field.name;
 
-            if (field.processor !== 0 && field.processor !== "0") {
+            if (field.rate || field.converter) {
                 badge.innerHTML +=
                     ' <i class="fa fa-info-circle ms-1" title="Processor enabled"></i>';
             }
@@ -487,9 +519,10 @@ const exampleJson = {
     "entries": [
         {
             "path": "/node1/node2",
+            "aliases": [], 
             "fields": [
-                { "name": "field1", "processor": 1 },
-                { "name": "field2", "processor": "0" }
+                { "name": "field1", "monitor": true, "rate": true, "convert": false },
+                { "name": "field2", "monitor": true, "rate": false, "convert": false }
             ],
             "tags": ["tag1", "tag2"]
         }
@@ -498,12 +531,6 @@ const exampleJson = {
 
 renderResultTable(exampleJson);
 */
-
-
-/* UPdate current path */
-pathInput.addEventListener("input", (e) => {
-    toAdd.path = e.target.value;
-});
 
 function processGnmiData(tmpGnmi) {
     // Process fields from tmpGnmi
@@ -528,7 +555,6 @@ function processGnmiData(tmpGnmi) {
     });
     renderPreview();
 }
-
 
 /* ADD FIELD */
 function addField() {
@@ -560,6 +586,18 @@ function addTag() {
     renderPreview();
 }
 
+/* ADD Alias */
+function addTag() {
+    const name = aliasName.value.trim();
+    if (!name) return;
+
+    toAdd.aliases.push(name);
+
+    aliasName.value = "";
+    bootstrap.Modal.getInstance(aliasModal).hide();
+    renderPreview();
+}
+
 /* REMOVE */
 function removeField(idx) {
     toAdd.fields.splice(idx, 1);
@@ -571,13 +609,18 @@ function removeTag(idx) {
     renderPreview();
 }
 
+function removeAlias(idx) {
+    toAdd.aliases.splice(idx, 1);
+    renderPreview();
+}
+
+
 /* RENDER */
 function renderPreview() {
-    const fieldsDiv = document.getElementById("fieldsPreview");
-    const tagsDiv = document.getElementById("tagsPreview");
 
     fieldsDiv.innerHTML = "";
     tagsDiv.innerHTML = "";
+    aliasesDiv.innerHTML = "";
 
     toAdd.fields.forEach((f, i) => {
         fieldsDiv.innerHTML += `
@@ -602,8 +645,20 @@ function renderPreview() {
         `;
     });
 
+    toAdd.aliases.forEach((t, i) => {
+        aliasesDiv.innerHTML += `
+            <span class="badge bg-secondary">
+                ${t}
+                <i class="fa fa-times ms-1 text-light"
+                   role="button"
+                   onclick="removeAlias(${i})"></i>
+            </span>
+        `;
+    });
+
     /* console.log("toAdd =", JSON.stringify(toAdd, null, 2)); */
 }
+
 
 // Close modal
 document

@@ -80,8 +80,19 @@
                                 </tbody>
                             </table>
                         </div>
-
                     </div>
+                    <hr class="my-3">
+                    <!-- ===== ALIASES ROW ===== -->
+                    <div class="d-flex flex-column gap-2" id="aliases-info">
+                        <h6 class="mb-1">Aliases:</h6>
+
+                        <div class="d-flex flex-wrap gap-3" id="aliases-list">
+                            
+
+                            <!-- dynamically add more aliases here -->
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-success" id="applyMonitor">
@@ -138,6 +149,25 @@
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button class="btn btn-primary" onclick="addTag()">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="aliasModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Alias</h5>
+                </div>
+
+                <div class="modal-body">
+                    <input id="aliasName" class="form-control" placeholder="Alias path">
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" onclick="addAlias()">Add</button>
                 </div>
             </div>
         </div>
@@ -213,6 +243,10 @@
                         + Tag
                     </button>
 
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#aliasModal">
+                        + Alias
+                    </button>
+
                 </div>
 
                 <!-- Preview -->
@@ -224,6 +258,11 @@
                 <div>
                     <strong>Tags: </strong>
                     <div id="tagsPreview" class="d-flex flex-wrap gap-1 mt-1"></div>
+                </div>
+
+                <div>
+                    <strong>Aliases: </strong>
+                    <div id="aliasesPreview" class="d-flex flex-wrap gap-1 mt-1"></div>
                 </div>
             </div>
             <br />

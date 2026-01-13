@@ -85,8 +85,9 @@ type Tag struct {
 }
 
 type OnceReply struct {
-	Fields []Field `json:"fields"`
-	Tags   []Tag   `json:"tags"`
+	Aliases []string `json:"aliases"`
+	Fields  []Field  `json:"fields"`
+	Tags    []Tag    `json:"tags"`
 }
 
 func genUUID() string {
@@ -609,8 +610,9 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 	var tg *target.Target
 	var err error
 	r := OnceReply{
-		Fields: make([]Field, 0),
-		Tags:   make([]Tag, 0),
+		Fields:  make([]Field, 0),
+		Tags:    make([]Tag, 0),
+		Aliases: make([]string, 0),
 	}
 
 	logger.Log.Infof("Start gNMI ONCE subscription for router %s and xpath %s (timeout is %d)", o.Router, o.Path, o.Timeout)
@@ -756,6 +758,8 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		}
 		r.Tags = append(r.Tags, t)
 	}
+
+	rootAlias := &TrieNode{}
 	for _, k := range fieldKeys {
 		f := Field{
 			Name:    k,
@@ -763,7 +767,14 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 			Convert: false,
 		}
 		r.Fields = append(r.Fields, f)
+
+		// to detect alias then
+		Insert(rootAlias, k)
 	}
+
+	// Provision Alias if found out.
+	CollectPrefixes(rootAlias, nil, &r.Aliases)
+
 	logger.Log.Infof("gNMI ONCE subscription for router %s and xpath %s succefully done", o.Router, o.Path)
 	return nil, r
 }
