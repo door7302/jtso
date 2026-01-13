@@ -320,18 +320,21 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	segments := splitSegmentsSlashSafe(trimmed)
 	baseSegments := splitSegmentsSlashSafe(baseClean)
 
-	logger.Log.Infof("seg: %v", segments)
-	logger.Log.Infof("base: %v", baseSegments)
-
 	// ---------- 2) Leaf computation (predicate-free)
 	start := findBaseIndex(segments, baseSegments)
 	if start < 0 || start > len(segments) {
 		start = len(segments)
 	}
 
-	logger.Log.Infof("Start: %v", start)
-
 	leafParts := []string{}
+	if start == 0 {
+		// add empty root node
+		leafParts = append(leafParts, "")
+	} else {
+		// otherwise add relative position
+		leafParts = append(leafParts, ".")
+	}
+
 	for _, seg := range segments[start:] {
 		leafParts = append(leafParts, removePredicates(seg))
 	}
@@ -346,7 +349,7 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 		matches := re4.FindAllStringSubmatch(seg, -1)
 		for _, m := range matches {
 			keyName := m[1]
-			keyPath := strings.Join(prefix, "/") + "/" + keyName
+			keyPath := "/" + strings.Join(prefix, "/") + "/" + keyName
 			info.Keys = append(info.Keys, keyPath)
 		}
 	}
@@ -389,7 +392,8 @@ func findBaseIndex(segments, base []string) int {
 	for i := 0; i <= len(segments)-len(base); i++ {
 		match := true
 		for j := range base {
-			if segments[i+j] != base[j] {
+			noAttribSeg := removePredicates(segments[i+j])
+			if noAttribSeg != base[j] {
 				match = false
 				break
 			}
