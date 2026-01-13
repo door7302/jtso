@@ -332,6 +332,9 @@ body {
     max-width: 90vw;
 }
 
+.badge i[title] {
+    cursor: pointer; /* or default */
+}
 
 /* ========================================
    PAGE-SPECIFIC STYLES

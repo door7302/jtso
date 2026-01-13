@@ -1,3 +1,23 @@
+/* Example usage - what is an ondemand profile? 
+
+const exampleJson = {
+    "name": "profilex",
+    "routers": ["rtr1", "rtr2"],
+    "entries": [
+        {
+            "path": "/node1/node2",
+            "aliases": [], 
+            "fields": [
+                { "name": "field1", "monitor": true, "rate": true, "convert": false },
+                { "name": "field2", "monitor": true, "rate": false, "convert": false }
+            ],
+            "tags": ["tag1", "tag2"]
+        }
+    ]
+}; 
+
+renderResultTable(exampleJson);
+*/
 
 const groupbyTable = document.getElementById("groupby-table");
 const fieldsTable = document.getElementById("fields-table");
@@ -37,6 +57,12 @@ var tmpGnmi = {
     tags: []
 };
 
+var currentProfile = {
+    name: "no-name",
+    routers: [],
+    entries: []
+}
+
 /* UPdate current path */
 pathInput.addEventListener("input", (e) => {
     toAdd.path = e.target.value;
@@ -51,23 +77,49 @@ btnAnalyze.onclick = function () {
     $('#monitor').modal('show');
 }
 
+function resetEntry() {
+    toAdd = {
+        path: "",
+        aliases: [],
+        fields: [],
+        tags: []
+    };
+    renderPreview();
+    var tmpGnmi = {
+        aliases: [],
+        fields: [],
+        tags: []
+    };
+    pathInput.value = "";
+}
+
 btnResetEntry.onclick = function () {
     alertify.confirm("Are you sure you want to clear the current path search?", function (e) {
         if (e) {
-            toAdd = {
-                path: "",
-                aliases: [],
-                fields: [],
-                tags: []
-            };
-            renderPreview();
-            var tmpGnmi = {
-                aliases: [],
-                fields: [],
-                tags: []
-            };
-            pathInput.value = "";
+            resetEntry()
+        }
+    }).setHeader('JSTO...');
+}
 
+btnAddEntry.onclick = function () {
+    alertify.confirm("Are you sure you want to append this path in the monitoring list of the current On-demand profile?", function (e) {
+        if (e) {
+            // first check unicity 
+            const exists = exampleJson.entries.some(e => e.path === mypath);
+            if (!exists) {
+                // append the enties: 
+                currentProfile.entries.push({
+                    path: toAdd.path,
+                    aliases: toAdd.aliases,
+                    fields: toAdd.fields,
+                    tags: toAdd.tags
+                });
+                renderResultTable(currentProfile)
+                resetEntry()
+                alertify.success('Sensor path added well...')
+            } else {
+                alertify.alert("JSTO...", "This path is already present in the monitoring list...");
+            }
         }
     }).setHeader('JSTO...');
 }
@@ -167,17 +219,17 @@ function provisionMonitorTables(data) {
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-            <td>${field.name}</td>
-            <td class="text-center">
-                <input type="checkbox" ${field.monitor ? "checked" : ""}>
-            </td>
-            <td class="text-center">
-                <input type="checkbox" ${field.rate ? "checked" : ""}>
-            </td>
-            <td class="text-center">
-                <input type="checkbox" ${field.convert ? "checked" : ""}>
-            </td>
-        `;
+        <td>${field.name}</td>
+        <td class="text-center">
+            <input type="checkbox" data-role="monitor" ${field.monitor ? "checked" : ""}>
+        </td>
+        <td class="text-center">
+            <input type="checkbox" data-role="rate" ${field.rate ? "checked" : ""}>
+        </td>
+        <td class="text-center">
+            <input type="checkbox" data-role="convert" ${field.convert ? "checked" : ""}>
+        </td>
+    `;
 
         fieldsTable.appendChild(tr);
     });
@@ -460,6 +512,11 @@ btnReset.onclick = function () {
                     dataType: "json",
                     success: function (json) {
                         if (json["status"] == "OK") {
+                            currentProfile = {
+                                name: "no-name",
+                                routers: [],
+                                entries: []
+                            }
                             alertify.success('On-demand tool has been reset.')
                         } else {
                             alertify.alert("JTSO...", json.msg);
@@ -500,7 +557,7 @@ function renderResultTable(data) {
 
             if (field.rate || field.converter) {
                 badge.innerHTML +=
-                    ' <i class="fa fa-info-circle ms-1" title="Processor enabled"></i>';
+                    ' <i class="fa fa-info-circle ms-1" data-bs-toggle="tooltip" title="Processor enabled"></i>';
             }
 
             fieldsWrap.appendChild(badge);
@@ -543,27 +600,13 @@ function renderResultTable(data) {
         tr.appendChild(actionsTd);
         tbody.appendChild(tr);
     });
+
+    // update tooltip
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
 }
-
-/* Example usage 
-const exampleJson = {
-    "name": "profilex",
-    "routers": ["rtr1", "rtr2"],
-    "entries": [
-        {
-            "path": "/node1/node2",
-            "aliases": [], 
-            "fields": [
-                { "name": "field1", "monitor": true, "rate": true, "convert": false },
-                { "name": "field2", "monitor": true, "rate": false, "convert": false }
-            ],
-            "tags": ["tag1", "tag2"]
-        }
-    ]
-}; 
-
-renderResultTable(exampleJson);
-*/
 
 function buildTmpGnmi() {
     const tmpGnmi = {
@@ -735,7 +778,7 @@ function renderPreview() {
         fieldsDiv.innerHTML += `
             <span class="badge bg-warning text-dark">
                 ${f.name}
-                ${f.processor != 0 ? '<i class="fa fa-info-circle ms-1"></i>' : ''}
+                ${f.rate != 0 || f.convert ? '<i class="fa fa-info-circle ms-1" data-bs-toggle="tooltip" title="Processor enabled"></i>' : ''}
                 <i class="fa fa-times ms-1 text-danger"
                    role="button"
                    onclick="removeField(${i})"></i>
@@ -765,9 +808,12 @@ function renderPreview() {
         `;
     });
 
-    /* console.log("toAdd =", JSON.stringify(toAdd, null, 2)); */
+    // update tooltip
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
 }
-
 
 // Close modal
 document
