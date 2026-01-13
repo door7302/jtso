@@ -170,7 +170,7 @@ type (
 	RunningProfile struct {
 		Name    string   `json:"name"`
 		RtrList []string `json:"routers"`
-		Entries []Entry  `json:"entried"`
+		Entries []Entry  `json:"entries"`
 	}
 	CurrentContext struct {
 		Run            bool           `json:"run"`
