@@ -47,7 +47,7 @@ const r = document.getElementById('router');
 
 var toAdd = {
     path: "",
-    interval: 60,
+    interval: 0,
     aliases: [],
     fields: [],
     tags: []
@@ -82,7 +82,7 @@ btnAnalyze.onclick = function () {
 function resetEntry() {
     toAdd = {
         path: "",
-        interval: 60,
+        interval: 0,
         aliases: [],
         fields: [],
         tags: []
@@ -137,8 +137,8 @@ btnAddEntry.onclick = function () {
                 }
 
                 // do some additionnal checks 
-                if (toAdd.interval < 2) {
-                    alertify.alert("JSTO...", "Inverval must be greater than 2 secs!");
+                if (toAdd.interval < 10) {
+                    alertify.alert("JSTO...", "Inverval must be greater than 10 secs!");
                     return;
                 }
 
