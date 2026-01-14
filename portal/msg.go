@@ -161,10 +161,11 @@ type (
 	}
 
 	Entry struct {
-		Path    string       `json:"path"`
-		Aliases []string     `json:"aliases"`
-		Fields  []FieldEntry `json:"fields"`
-		Tags    []TagEntry   `json:"tags"`
+		Path     string       `json:"path"`
+		Interval int          `json:"interval"`
+		Aliases  []string     `json:"aliases"`
+		Fields   []FieldEntry `json:"fields"`
+		Tags     []TagEntry   `json:"tags"`
 	}
 
 	RunningProfile struct {

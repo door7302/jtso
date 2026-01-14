@@ -226,7 +226,7 @@
                 <!-- Path + Analyse -->
                 <div class="d-flex gap-2 align-items-center mb-3">
                     <input id="pathName" class="form-control" type="text" placeholder="Enter an sensor path (i.e /interfaces/interface/state/counters)">
-
+                    <input id="interval" class="form-control" type="number" min="2" placeholder="Enter the streaming interval in secs (min. 2s) ">
                     <button id="analyze" class="btn btn-secondary flex-shrink-0">
                         Analyse path instead?
                     </button>
@@ -363,8 +363,11 @@
     </div>
     <script>
         // load current context from server side
-        window.dynamicData = {{ .CurrentContext }};
-
+        window.dynamicData = {
+            {
+                .CurrentContext
+            }
+        };
     </script>
 
     <script src="js/jquery-3.6.4.min.js"></script>

@@ -1,11 +1,12 @@
 /* Example usage - what is an ondemand profile? 
 
-const exampleJson = {
+{
     "name": "profilex",
     "routers": ["rtr1", "rtr2"],
     "entries": [
         {
             "path": "/node1/node2",
+            "interval": 10,
             "aliases": [], 
             "fields": [
                 { "name": "field1", "monitor": true, "rate": true, "convert": false },
@@ -16,7 +17,6 @@ const exampleJson = {
     ]
 }; 
 
-renderResultTable(exampleJson);
 */
 
 const groupbyTable = document.getElementById("groupby-table");
@@ -37,6 +37,7 @@ const btnCancel = document.getElementById('cancelMonitor');
 const selectConfig = document.getElementById('ondemand-config');
 const monitorState = document.getElementById('monitor-state');
 const pathInput = document.getElementById("pathName");
+const pathInterval = document.getElementById("interval");
 const fieldsDiv = document.getElementById("fieldsPreview");
 const tagsDiv = document.getElementById("tagsPreview");
 const aliasesDiv = document.getElementById("aliasesPreview");
@@ -46,6 +47,7 @@ const r = document.getElementById('router');
 
 var toAdd = {
     path: "",
+    interval: 60,
     aliases: [],
     fields: [],
     tags: []
@@ -62,6 +64,12 @@ pathInput.addEventListener("input", (e) => {
     toAdd.path = e.target.value;
 });
 
+/* UPdate current path interval */
+pathInterval.addEventListener("input", (e) => {
+     toAdd.interval = parseInt(e.target.value, 10); 
+});
+
+
 // BUTTON CLICK HANDLERS
 btnAnalyze.onclick = function () {
     groupbyTable.innerHTML = "";
@@ -74,6 +82,7 @@ btnAnalyze.onclick = function () {
 function resetEntry() {
     toAdd = {
         path: "",
+        interval: 60,
         aliases: [],
         fields: [],
         tags: []
@@ -85,6 +94,7 @@ function resetEntry() {
         tags: []
     };
     pathInput.value = "";
+    pathInterval.value = ""
 }
 
 btnResetEntry.onclick = function () {
@@ -126,9 +136,16 @@ btnAddEntry.onclick = function () {
                     return;
                 }
 
+                // do some additionnal checks 
+                if (toAdd.interval < 2) {
+                    alertify.alert("JSTO...", "Inverval must be greater than 2 secs!");
+                    return;
+                }
+
                 // append the entry
                 window.dynamicData.currentProfile.entries.push({
                     path: toAdd.path,
+                    interval: toAdd.interval,
                     aliases: toAdd.aliases,
                     fields: toAdd.fields,
                     tags: toAdd.tags
@@ -555,11 +572,16 @@ function renderResultTable(data) {
 
     data.entries.forEach((entry, index) => {
         const tr = document.createElement("tr");
+        
 
         /* PATH */
         const pathTd = document.createElement("td");
         pathTd.classList.add("align-middle", "text-break");
         pathTd.textContent = entry.path;
+        const badge = document.createElement("span");
+        badge.classList.add("badge", "bg-info", "ms-2");
+        badge.innerHTML = entry.interval + " secs";
+        pathTd.appendChild(badge);
 
         if (entry.aliases.length !== 0) {
             const badge = document.createElement("span");
