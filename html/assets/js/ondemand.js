@@ -27,8 +27,7 @@ const btnResetEntry = document.getElementById('resetentry');
 const btnLoad = document.getElementById('load');
 const btnSave = document.getElementById('save');
 const btnSaveAs = document.getElementById('saveas');
-const btnStart = document.getElementById('start');
-const btnStop = document.getElementById('stop');
+const btnStart = document.getElementById('startstop');
 const btnClear = document.getElementById('clear');
 const btnReset = document.getElementById('reset');
 const btnGnmi = document.getElementById("gnmiconce");
@@ -461,35 +460,6 @@ btnStart.onclick = function () {
                     success: function (json) {
                         if (json["status"] == "OK") {
                             alertify.success('On-demand configuration has been applied and data-collection started')
-                        } else {
-                            alertify.alert("JTSO...", json.msg);
-                        }
-                    },
-                    error: function (xhr, ajaxOptions, thrownError) {
-                        alertify.alert("JSTO...", "Unexpected error...");
-                    }
-                });
-            });
-        }
-    }).setHeader('JSTO...');
-};
-
-btnStop.onclick = function () {
-    alertify.confirm("Are you sure you want to stop the current on-demand data collection?", function (e) {
-        if (e) {
-            $(function () {
-                $.ajax({
-                    type: 'POST',
-                    url: "/ondemandmgt",
-                    data: JSON.stringify({
-                        "action": "stop",
-                        "data": ""
-                    }),
-                    contentType: "application/json",
-                    dataType: "json",
-                    success: function (json) {
-                        if (json["status"] == "OK") {
-                            alertify.success('On-demand collector has been stopped')
                         } else {
                             alertify.alert("JTSO...", json.msg);
                         }

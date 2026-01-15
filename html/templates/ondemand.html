@@ -279,7 +279,7 @@
             <form>
                 <div id="monitor" class="row g-3">
                     <!-- BLOCK 1: Configuration -->
-                    <div class="col-lg-6">
+                    <div class="col-lg-4">
                         <div class="border rounded p-3 h-100">
 
                             <div class="row align-items-center g-2">
@@ -313,22 +313,41 @@
                             </div>
                         </div>
                     </div>
+                    <!-- BLOCK 2: Configuration -->
+                    <div class="col-lg-4">
+                        <div class="border rounded p-3 h-100">
 
-                    <!-- BLOCK 2: Actions -->
-                    <div class="col-lg-6">
+                            <div class="row align-items-center g-2">
+                                <!-- Select -->
+                                <div class="col">
+                                    <select id="profiles" class="selectpicker" data-width="100%" data-actions-box="true" multiple>
+                                        {{range .Rtrs}}
+                                        <option value="{{.Shortname}}">{{.Shortname}}e</option>
+                                        {{end}}
+                                    </select>
+                                </div>
+
+                                <!-- Save as -->
+                                <div class="col-auto">
+                                    <button type="button" id="updatertr" class="btn btn-green">
+                                        Update Devices
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- BLOCK 3: Actions -->
+                    <div class="col-lg-4">
                         <div class="border rounded p-3 h-100">
                             <div class="d-flex flex-wrap justify-content-center  gap-2">
-                                <button type="button" id="start" class="btn btn-success">
+                                <button type="button" id="startstop" class="btn btn-success">
                                     Start Collector
-                                </button>
-                                <button type="button" id="stop" class="btn btn-success">
-                                    Stop Collector
                                 </button>
                                 <button type="button" id="clear" class="btn btn-warning">
                                     Clear On-Demand DB
                                 </button>
                                 <button type="button" id="reset" class="btn btn-danger">
-                                    Reset Config
+                                    Reset All
                                 </button>
                             </div>
                         </div>
@@ -363,7 +382,11 @@
     </div>
     <script>
         // load current context from server side
-        window.dynamicData = {{.CurrentContext}};
+        window.dynamicData = {
+            {
+                .CurrentContext
+            }
+        };
     </script>
 
     <script src="js/jquery-3.6.4.min.js"></script>
