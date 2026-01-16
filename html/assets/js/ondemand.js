@@ -110,6 +110,7 @@ btnRouter.onclick = function () {
             window.dynamicData.currentProfile.routers.push(option.value);
         }
     }
+    alertify.success('Router list successfully updated!')
 
 }
 
