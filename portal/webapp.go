@@ -711,7 +711,8 @@ func routeOndemand(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
 	currentContext := ondemand.CurrentContext{
-		Run: false,
+		Run:           false,
+		CurrentConfig: "Unknown",
 		CurrentProfile: ondemand.RunningProfile{
 			Name:    "no-name",
 			RtrList: make([]string, 0),

@@ -44,6 +44,7 @@ const tagsDiv = document.getElementById("tagsPreview");
 const aliasesDiv = document.getElementById("aliasesPreview");
 const aliasesList = document.getElementById("aliases-list");
 const aliasesInfo = document.getElementById("aliases-info");
+const configName = document.getElementById("configName");
 const r = document.getElementById('router');
 
 var toAdd = {
@@ -59,6 +60,8 @@ var tmpGnmi = {
     fields: [],
     tags: []
 };
+
+var profileSaved = true;
 
 /* UPdate current path */
 pathInput.addEventListener("input", (e) => {
@@ -122,6 +125,8 @@ btnRouter.onclick = function () {
 btnAddEntry.onclick = function () {
     alertify.confirm("Are you sure you want to append this path in the monitoring list of the current On-demand profile?", function (e) {
         if (e) {
+
+
             // check path format
             if (toAdd.path == "") {
                 alertify.alert("JSTO...", "Path could not be empty!");
@@ -155,6 +160,8 @@ btnAddEntry.onclick = function () {
                     alertify.alert("JSTO...", "Inverval must be greater than 10 secs!");
                     return;
                 }
+                // A change occured
+                changeProfileState(false);
 
                 // append the entry
                 window.dynamicData.currentProfile.entries.push({
@@ -385,8 +392,12 @@ btnLoad.onclick = function () {
                         success: function (json) {
                             if (json["status"] == "OK") {
                                 waitingDialog.hide();
-                                alertify.success('File ' + config + ' has been loaded.')
+
                                 renderResultTable(json.profile);
+                                window.dynamicData.currentProfile = json.profile;
+                                window.dynamicData.CurrentConfig = config;
+                                changeProfileState(true);
+                                alertify.success('File ' + config + ' has been loaded.');
                             } else {
                                 waitingDialog.hide();
                                 alertify.alert("JTSO...", json.msg);
@@ -429,7 +440,7 @@ btnSave.onclick = function () {
                             "action": "save",
                             "path": "",
                             "router": "",
-                            "data": selectConfig,
+                            "data": config,
                             "profile": {}
                         }),
                         contentType: "application/json",
@@ -437,6 +448,9 @@ btnSave.onclick = function () {
                         success: function (json) {
                             if (json["status"] == "OK") {
                                 waitingDialog.hide();
+                                // A change occured
+                                window.dynamicData.CurrentConfig = config;
+                                changeProfileState(true);
                                 alertify.success('File ' + config + ' has been saved.')
                             } else {
                                 waitingDialog.hide();
@@ -471,7 +485,7 @@ function save() {
         alertify.alert("JSTO...", "Please add at least one path into the monitor list!");
         return;
     }
-  
+
     alertify
         .prompt(
             'Please enter a name for your config: ',
@@ -494,6 +508,9 @@ function save() {
                     success: function (json) {
                         if (json.status === 'OK') {
                             waitingDialog.hide();
+                            // A change occured
+                            window.dynamicData.CurrentConfig = value;
+                            changeProfileState(true);
                             alertify.success('File ' + value + ' has been saved.');
                         } else {
                             waitingDialog.hide();
@@ -515,35 +532,55 @@ function save() {
 }
 
 btnStart.onclick = function () {
-    alertify.confirm("Are you sure you want to apply the current on-demand configuration and start data collection?", function (e) {
-        if (e) {
-            $(function () {
-                $.ajax({
-                    type: 'POST',
-                    url: "/ondemandmgt",
-                    data: JSON.stringify({
-                        "action": "start",
-                        "path": "",
-                        "router": "",
-                        "data": "",
-                        "profile": {}
-                    }),
-                    contentType: "application/json",
-                    dataType: "json",
-                    success: function (json) {
-                        if (json["status"] == "OK") {
-                            alertify.success('On-demand configuration has been applied and data-collection started')
-                        } else {
-                            alertify.alert("JTSO...", json.msg);
-                        }
-                    },
-                    error: function (xhr, ajaxOptions, thrownError) {
-                        alertify.alert("JSTO...", "Unexpected error...");
-                    }
-                });
-            });
+    if (window.dynamicData.run) {
+        // Here we should stop 
+    } else {
+        // Here we should start
+
+        // check if at lease there is one path in monitoring list 
+        if (window.dynamicData.currentProfile.entries.length == 0) {
+            alertify.alert("JSTO...", "Please add at least one path into the monitor list before starting data collection!");
+            return;
         }
-    }).setHeader('JSTO...');
+
+        // check if there are selected router
+        if (window.dynamicData.currentProfile.routers.length == 0) {
+            alertify.alert("JSTO...", "Please select at least one router before starting data collection!");
+            return;
+        }
+
+
+
+        alertify.confirm("Are you sure you want to apply the current on-demand configuration and start data collection?", function (e) {
+            if (e) {
+                $(function () {
+                    $.ajax({
+                        type: 'POST',
+                        url: "/ondemandmgt",
+                        data: JSON.stringify({
+                            "action": "start",
+                            "path": "",
+                            "router": "",
+                            "data": "",
+                            "profile": {}
+                        }),
+                        contentType: "application/json",
+                        dataType: "json",
+                        success: function (json) {
+                            if (json["status"] == "OK") {
+                                alertify.success('On-demand configuration has been applied and data-collection started')
+                            } else {
+                                alertify.alert("JTSO...", json.msg);
+                            }
+                        },
+                        error: function (xhr, ajaxOptions, thrownError) {
+                            alertify.alert("JSTO...", "Unexpected error...");
+                        }
+                    });
+                });
+            }
+        }).setHeader('JSTO...');
+    }
 };
 
 btnClear.onclick = function () {
@@ -581,36 +618,20 @@ btnClear.onclick = function () {
 btnReset.onclick = function () {
     alertify.confirm("Are you sure you want to clear the on-demand config and stop data collection? Make sure you have saved your on-demand config before resetting. Unsaved config will be lost.", function (e) {
         if (e) {
-            $(function () {
-                $.ajax({
-                    type: 'POST',
-                    url: "/ondemandmgt",
-                    data: JSON.stringify({
-                        "action": "reset",
-                        "path": "",
-                        "router": "",
-                        "data": "",
-                        "profile": {}
-                    }),
-                    contentType: "application/json",
-                    dataType: "json",
-                    success: function (json) {
-                        if (json["status"] == "OK") {
-                            window.dynamicData.currentProfile = {
-                                name: "no-name",
-                                routers: [],
-                                entries: []
-                            }
-                            alertify.success('On-demand tool has been reset.')
-                        } else {
-                            alertify.alert("JTSO...", json.msg);
-                        }
-                    },
-                    error: function (xhr, ajaxOptions, thrownError) {
-                        alertify.alert("JSTO...", "Unexpected error...");
-                    }
-                });
-            });
+
+            window.dynamicData.currentProfile = {
+                name: "no-name",
+                routers: [],
+                entries: []
+            }
+            // A change occured
+            window.dynamicData.CurrentConfig = "Unknown";
+            changeProfileState(true);
+            resetEntry()
+
+            renderResultTable(window.dynamicData.currentProfile);
+            alertify.success('On-demand tool has been reset.');
+
         }
     }).setHeader('JSTO...');
 };
@@ -955,11 +976,11 @@ document
 document
     .getElementById("result-table-body")
     .addEventListener("click", function (e) {
+        const deleteBtn = e.target.closest(".action-delete");
+        if (!deleteBtn) return; // exit if not delete button
 
         alertify.confirm("Are you sure you want to remove this path from the monitoring list?", function (f) {
             if (f) {
-                const deleteBtn = e.target.closest(".action-delete");
-                if (!deleteBtn) return;
 
                 const row = deleteBtn.closest("tr");
                 if (!row) return;
@@ -980,6 +1001,9 @@ document
                     entry => entry.path !== pathName
                 );
 
+                // A change occured
+                changeProfileState(false);
+
                 /* ==========================
                    Re-render table
                    ========================== */
@@ -992,6 +1016,24 @@ document.addEventListener("DOMContentLoaded", function () {
     initApp();
 });
 
+function changeProfileState(action) {
+    if (action) {
+        profileSaved = true;
+        configName.innerHTML = `
+        <label><b>Current config:</b> ${window.dynamicData.CurrentConfig}</label>
+        `;
+    } else {
+        profileSaved = false;
+        configName.innerHTML = `
+        <label><b>Current config:</b> ${window.dynamicData.CurrentConfig}</label>
+        <i class="fa fa-save text-danger ms-2"
+            style="font-size: 1rem;"
+            title="Unsaved changes"></i>
+        `;
+
+    }
+}
+
 function initApp() {
-    renderResultTable(window.dynamicData.currentProfile)
+    renderResultTable(window.dynamicData.currentProfile);
 }
