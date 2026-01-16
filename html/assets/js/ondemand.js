@@ -471,13 +471,14 @@ function save() {
         alertify.alert("JSTO...", "Please add at least one path into the monitor list!");
         return;
     }
-    waitingDialog.show();
+  
     alertify
         .prompt(
             'Please enter a name for your config: ',
             'filename',
             function (evt, value) {
                 // OK click
+                waitingDialog.show();
                 $.ajax({
                     type: 'POST',
                     url: '/ondemandmgt',
