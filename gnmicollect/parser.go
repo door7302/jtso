@@ -690,7 +690,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 	defer cancel()
 
 	// Wrap the existing ctx with a timeout
-	ctxWithTimeout, timeoutCancel := context.WithTimeout(ctx, time.Duration(o.Timeout)*time.Second)
+	ctxWithTimeout, timeoutCancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
 	defer timeoutCancel()
 
 	err = tg.CreateGNMIClient(ctx)
@@ -705,8 +705,6 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		api.SubscriptionListModeONCE(),
 		api.Subscription(
 			api.Path(o.Path),
-			api.SampleInterval(2*time.Second),
-			api.SubscriptionMode("sample"),
 		))
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI ONCE subscription: %v", err)
