@@ -302,7 +302,7 @@
 
                                 <!-- Select -->
                                 <div class="col-lg-6">
-                                    <select id="ondemand-config" class="selectpicker" data-width="100%">
+                                    <select id="ondemand-config" class="selectpicker" data-width="100%" data-container="parent">
                                         <option value="default">Select a config</option>
                                         {{range .ConfigList}}
                                         <option value="{{.}}">{{.}}</option>
@@ -324,7 +324,7 @@
                                 </div>
                                 <!-- Select -->
                                 <div class="col-lg-8">
-                                    <select id="routerlist" class="selectpicker" data-width="100%" data-actions-box="true" multiple>
+                                    <select id="routerlist" class="selectpicker" data-width="100%" data-actions-box="true" data-container="parent" multiple>
                                         {{range .Rtrs}}
                                         <option value="{{.Shortname}}">{{.Shortname}}e</option>
                                         {{end}}
