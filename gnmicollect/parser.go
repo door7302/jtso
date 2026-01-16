@@ -316,7 +316,6 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 
 	trimmed := strings.Trim(xpath, "/")
 	baseClean := strings.Trim(base, "/")
-	logger.Log.Infof("DEBUG %s:", trimmed)
 
 	// ---------- 1) Split segments safely (keep / in key values)
 	segments := splitSegmentsSlashSafe(trimmed)
@@ -724,7 +723,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		tg.Close()
 		return err, r
 	}
-
+	logger.Log.Infof("DEBUG: %v", onceResps)
 	// Parse the response
 	tagMap := make(map[string]struct{})
 	fieldMap := make(map[string]struct{})
