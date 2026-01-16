@@ -347,11 +347,11 @@
                             <div class="d-flex flex-wrap justify-content-center  gap-2">
                                 <button type="button" id="startstop" class="btn btn-success d-flex align-items-center justify-content-center">
                                 {{if .CurrentContext.Run}}
-                                <span id="btn-text">Start Collector</span>
-                                <i id="collecting-icon" class="fa fa-circle text-danger ms-2" style="display: none;"></i>
+                                <span id="btn-text">Stop Collector</span>
+                                <i id="collecting-icon" class="fa fa-circle text-danger ms-2 blink" style="display: inline-block;"></i>
                                 {{else}}
                                 <span id="btn-text">Start Collector</span>
-                                <i id="collecting-icon" class="fa fa-circle text-danger ms-2 blink" style="display: inline-block;"></i>
+                                <i id="collecting-icon" class="fa fa-circle text-danger ms-2" style="display: none;"></i>
                                 {{end}}
                                 </button>
                                 <button type="button" id="clear" class="btn btn-warning">
