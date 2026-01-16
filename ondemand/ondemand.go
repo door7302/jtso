@@ -54,7 +54,7 @@ func Load(f string) (error, RunningProfile) {
 
 	filePath := filepath.Join(PATH_ONDEMAND, f)
 
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(filePath + ".json")
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %w", filePath, err), RunningProfile{}
 	}
@@ -78,7 +78,7 @@ func Save(f string, profile RunningProfile) error {
 		return fmt.Errorf("failed to marshal JSON: %w", err)
 	}
 
-	err = os.WriteFile(filePath, data, 0644)
+	err = os.WriteFile(filePath+".json", data, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write file %s: %w", filePath, err)
 	}

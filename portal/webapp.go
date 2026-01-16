@@ -720,16 +720,24 @@ func routeOndemand(c echo.Context) error {
 	}
 
 	// Get all routers from db
-	var lr []RouterDetails
-	lr = make([]RouterDetails, 0)
-
+	lr := make([]RouterDetails, 0)
 	for _, r := range sqlite.RtrList {
 		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
 	}
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": currentContext})
+	// Get the list of available ondemand configs
+	var lc []string
+	lc, err := ondemand.ListConfigs()
+	if err != nil {
+		logger.Log.Errorf("Unable to load ondemand config list: %v", err)
+		lc = make([]string, 0)
+	}
+	// sort it
+	sort.Strings(lc)
+
+	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": currentContext, "ConfigList": lc})
 }
 
 func routeBrowse(c echo.Context) error {

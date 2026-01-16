@@ -305,10 +305,13 @@
                                         Save as
                                     </button>
                                 </div>
-                                             <!-- Select -->
+
+                                <!-- Select -->
                                 <div class="col">
                                     <select id="ondemand-config" class="selectpicker" data-width="100%">
-                                        <option value="default">Select a config</option>
+                                        {{range .ConfigList}}
+                                        <option value="{{.}}">{{.}}</option>
+                                        {{end}}
                                     </select>
                                 </div>
                             </div>
