@@ -437,7 +437,7 @@ btnSave.onclick = function () {
                             "path": "",
                             "router": "",
                             "data": config,
-                            "profile": {}
+                            "profile": window.dynamicData.currentProfile
                         }),
                         contentType: "application/json",
                         dataType: "json",
@@ -1103,12 +1103,12 @@ function changeProfileState(action) {
     if (action) {
         profileSaved = true;
         configName.innerHTML = `
-        <label><b>Current config:</b> ${window.dynamicData.currentConfig}</label>
+        <label><b>Current config:&nbsp;</b>${window.dynamicData.currentConfig}</label>
         `;
     } else {
         profileSaved = false;
         configName.innerHTML = `
-        <label><b>Current config:</b> ${window.dynamicData.currentConfig}</label>
+        <label><b>Current config:&nbsp;</b>${window.dynamicData.currentConfig}</label>
         <i class="fa fa-save text-danger ms-2"
             style="font-size: 1rem;"
             title="Unsaved changes"></i>
