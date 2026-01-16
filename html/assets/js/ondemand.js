@@ -30,6 +30,7 @@ const rtrList = document.getElementById('routerlist')
 const btnSave = document.getElementById('save');
 const btnSaveAs = document.getElementById('saveas');
 const btnStart = document.getElementById('startstop');
+const bntStartText = document.getElementById('btn-text');
 const btnClear = document.getElementById('clear');
 const btnReset = document.getElementById('reset');
 const btnGnmi = document.getElementById("gnmiconce");
@@ -46,6 +47,7 @@ const aliasesList = document.getElementById("aliases-list");
 const aliasesInfo = document.getElementById("aliases-info");
 const configName = document.getElementById("configName");
 const r = document.getElementById('router');
+const collectingIcon = document.getElementById("collecting-icon");
 
 var toAdd = {
     path: "",
@@ -110,6 +112,13 @@ btnResetEntry.onclick = function () {
 }
 
 btnRouter.onclick = function () {
+
+    // check if collector runs
+    if (window.dynamicData.run) {
+        alertify.alert("JSTO...", "Please Stop Collector before updating the on-demand router list!");
+        return;
+    }
+
     var all_selected = rtrList.options
 
     window.dynamicData.currentProfile.routers.length = 0
@@ -126,6 +135,11 @@ btnAddEntry.onclick = function () {
     alertify.confirm("Are you sure you want to append this path in the monitoring list of the current On-demand profile?", function (e) {
         if (e) {
 
+            // Can't add entry if collection is running
+            if (window.dynamicData.run) {
+                alertify.alert("JSTO...", "Please Stop Collector before modifying the on-demand profile!");
+                return;
+            }
 
             // check path format
             if (toAdd.path == "") {
@@ -533,7 +547,41 @@ function save() {
 
 btnStart.onclick = function () {
     if (window.dynamicData.run) {
-        // Here we should stop 
+        // Here we should stop
+
+        alertify.confirm("Are you sure you want to stop data collection?", function (e) {
+            if (e) {
+                $(function () {
+                    $.ajax({
+                        type: 'POST',
+                        url: "/ondemandmgt",
+                        data: JSON.stringify({
+                            "action": "start",
+                            "path": "",
+                            "router": "",
+                            "data": "",
+                            "profile": window.dynamicData.currentProfile
+                        }),
+                        contentType: "application/json",
+                        dataType: "json",
+                        success: function (json) {
+                            if (json["status"] == "OK") {
+                                window.dynamicData.run = false;
+                                bntStartText.textContent = "Start Collector";
+                                collectingIcon.style.display = "none";
+                                collectingIcon.classList.remove("blink");
+                                alertify.success('On-demand configuration has been applied and data-collection started')
+                            } else {
+                                alertify.alert("JTSO...", json.msg);
+                            }
+                        },
+                        error: function (xhr, ajaxOptions, thrownError) {
+                            alertify.alert("JSTO...", "Unexpected error...");
+                        }
+                    });
+                });
+            }
+        }).setHeader('JSTO...');
     } else {
         // Here we should start
 
@@ -543,13 +591,17 @@ btnStart.onclick = function () {
             return;
         }
 
+        // check if config as been saved
+        if (profileSaved == false) {
+            alertify.alert("JSTO...", "Please save your config before starting data collection!");
+            return;
+        }
+
         // check if there are selected router
         if (window.dynamicData.currentProfile.routers.length == 0) {
             alertify.alert("JSTO...", "Please select at least one router before starting data collection!");
             return;
         }
-
-
 
         alertify.confirm("Are you sure you want to apply the current on-demand configuration and start data collection?", function (e) {
             if (e) {
@@ -562,12 +614,16 @@ btnStart.onclick = function () {
                             "path": "",
                             "router": "",
                             "data": "",
-                            "profile": {}
+                            "profile": window.dynamicData.currentProfile
                         }),
                         contentType: "application/json",
                         dataType: "json",
                         success: function (json) {
                             if (json["status"] == "OK") {
+                                window.dynamicData.run = true;
+                                bntStartText.textContent = "Stop Collector"
+                                collectingIcon.style.display = "inline-block";
+                                collectingIcon.classList.add("blink");
                                 alertify.success('On-demand configuration has been applied and data-collection started')
                             } else {
                                 alertify.alert("JTSO...", json.msg);
@@ -978,6 +1034,11 @@ document
     .addEventListener("click", function (e) {
         const deleteBtn = e.target.closest(".action-delete");
         if (!deleteBtn) return; // exit if not delete button
+        // Can't add entry if collection is running
+        if (window.dynamicData.run) {
+            alertify.alert("JSTO...", "Please Stop Collector before resetting the on-demand profile!");
+            return;
+        }
 
         alertify.confirm("Are you sure you want to remove this path from the monitoring list?", function (f) {
             if (f) {
