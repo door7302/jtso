@@ -85,24 +85,6 @@ btnAnalyze.onclick = function () {
     $('#monitor').modal('show');
 }
 
-function resetEntry() {
-    toAdd = {
-        path: "",
-        interval: 0,
-        aliases: [],
-        fields: [],
-        tags: []
-    };
-    renderPreview();
-    var tmpGnmi = {
-        aliases: [],
-        fields: [],
-        tags: []
-    };
-    pathInput.value = "";
-    pathInterval.value = ""
-}
-
 btnResetEntry.onclick = function () {
     alertify.confirm("Are you sure you want to clear the current path search?", function (e) {
         if (e) {
@@ -409,7 +391,7 @@ btnLoad.onclick = function () {
 
                                 renderResultTable(json.profile);
                                 window.dynamicData.currentProfile = json.profile;
-                                window.dynamicData.CurrentConfig = config;
+                                window.dynamicData.currentConfig = config;
                                 changeProfileState(true);
                                 alertify.success('File ' + config + ' has been loaded.');
                             } else {
@@ -463,7 +445,7 @@ btnSave.onclick = function () {
                             if (json["status"] == "OK") {
                                 waitingDialog.hide();
                                 // A change occured
-                                window.dynamicData.CurrentConfig = config;
+                                window.dynamicData.currentConfig = config;
                                 changeProfileState(true);
                                 alertify.success('File ' + config + ' has been saved.')
                             } else {
@@ -523,7 +505,7 @@ function save() {
                         if (json.status === 'OK') {
                             waitingDialog.hide();
                             // A change occured
-                            window.dynamicData.CurrentConfig = value;
+                            window.dynamicData.currentConfig = value;
                             changeProfileState(true);
                             alertify.success('File ' + value + ' has been saved.');
                         } else {
@@ -567,9 +549,7 @@ btnStart.onclick = function () {
                         success: function (json) {
                             if (json["status"] == "OK") {
                                 window.dynamicData.run = false;
-                                bntStartText.textContent = "Start Collector";
-                                collectingIcon.style.display = "none";
-                                collectingIcon.classList.remove("blink");
+                                changeBtnState(window.dynamicData.run);
                                 alertify.success('On-demand configuration has been applied and data-collection started')
                             } else {
                                 alertify.alert("JTSO...", json.msg);
@@ -621,9 +601,7 @@ btnStart.onclick = function () {
                         success: function (json) {
                             if (json["status"] == "OK") {
                                 window.dynamicData.run = true;
-                                bntStartText.textContent = "Stop Collector"
-                                collectingIcon.style.display = "inline-block";
-                                collectingIcon.classList.add("blink");
+                                changeBtnState(window.dynamicData.run);
                                 alertify.success('On-demand configuration has been applied and data-collection started')
                             } else {
                                 alertify.alert("JTSO...", json.msg);
@@ -681,7 +659,7 @@ btnReset.onclick = function () {
                 entries: []
             }
             // A change occured
-            window.dynamicData.CurrentConfig = "Unknown";
+            window.dynamicData.currentConfig = "Unknown";
             changeProfileState(true);
             resetEntry()
 
@@ -1022,6 +1000,50 @@ function renderPreview() {
     });
 }
 
+
+function changeBtnState(collectstate) {
+    if (collectstate) {
+        btnSave.disabled = true;
+        btnSaveAs.disabled = true;
+        btnLoad.disabled = true;
+        btnRouter.disable = true;
+        btnAddEntry.disabled = true;
+        btnReset.disabled = true;
+        bntStartText.textContent = "Stop Collector"
+        collectingIcon.style.display = "inline-block";
+        collectingIcon.classList.add("blink");
+
+    } else {
+        btnSave.disabled = false;
+        btnSaveAs.disabled = false;
+        btnLoad.disabled = false;
+        btnRouter.disable = false;
+        btnAddEntry.disabled = false;
+        btnReset.disabled = false;
+        bntStartText.textContent = "Start Collector";
+        collectingIcon.style.display = "none";
+        collectingIcon.classList.remove("blink");
+    }
+}
+
+function resetEntry() {
+    toAdd = {
+        path: "",
+        interval: 0,
+        aliases: [],
+        fields: [],
+        tags: []
+    };
+    renderPreview();
+    var tmpGnmi = {
+        aliases: [],
+        fields: [],
+        tags: []
+    };
+    pathInput.value = "";
+    pathInterval.value = ""
+}
+
 // Close modal
 document
     .querySelector('#monitor .close')
@@ -1081,12 +1103,12 @@ function changeProfileState(action) {
     if (action) {
         profileSaved = true;
         configName.innerHTML = `
-        <label><b>Current config:</b> ${window.dynamicData.CurrentConfig}</label>
+        <label><b>Current config:</b> ${window.dynamicData.currentConfig}</label>
         `;
     } else {
         profileSaved = false;
         configName.innerHTML = `
-        <label><b>Current config:</b> ${window.dynamicData.CurrentConfig}</label>
+        <label><b>Current config:</b> ${window.dynamicData.currentConfig}</label>
         <i class="fa fa-save text-danger ms-2"
             style="font-size: 1rem;"
             title="Unsaved changes"></i>
@@ -1096,5 +1118,6 @@ function changeProfileState(action) {
 }
 
 function initApp() {
+    changeBtnState(window.dynamicData.run);
     renderResultTable(window.dynamicData.currentProfile);
 }

@@ -38,7 +38,7 @@ type (
 
 	CurrentContext struct {
 		Run            bool           `json:"run"`
-		CurrentConfig  string         `json:"config"`
+		CurrentConfig  string         `json:"currentConfig"`
 		CurrentProfile RunningProfile `json:"currentProfile"`
 	}
 )
