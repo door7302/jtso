@@ -316,6 +316,7 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 
 	trimmed := strings.Trim(xpath, "/")
 	baseClean := strings.Trim(base, "/")
+	logger.Log.Infof("DEBUG %s:", trimmed)
 
 	// ---------- 1) Split segments safely (keep / in key values)
 	segments := splitSegmentsSlashSafe(trimmed)
@@ -706,6 +707,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		api.Subscription(
 			api.Path(o.Path),
 			api.SampleInterval(2*time.Second),
+			api.SubscriptionMode("sample"),
 		))
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI ONCE subscription: %v", err)
