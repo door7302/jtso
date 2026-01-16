@@ -1,6 +1,9 @@
 package portal
 
-import "jtso/gnmicollect"
+import (
+	"jtso/gnmicollect"
+	"jtso/ondemand"
+)
 
 type (
 	TabAsso struct {
@@ -75,6 +78,11 @@ type (
 		Kapa   string `json:"kapa"`
 	}
 
+	ReplyOnDemandProfile struct {
+		Status  string                  `json:"status"`
+		Profile ondemand.RunningProfile `json:"profile"`
+	}
+
 	ReplyGnmiOnce struct {
 		Status string                `json:"status"`
 		Data   gnmicollect.OnceReply `json:"data"`
@@ -106,10 +114,11 @@ type (
 	}
 
 	OnDemandMgt struct {
-		Action    string `json:"action"`
-		Shortname string `json:"router"`
-		Path      string `json:"path"`
-		Data      string `json:"data"`
+		Action    string                  `json:"action"`
+		Shortname string                  `json:"router"`
+		Path      string                  `json:"path"`
+		Data      string                  `json:"data"`
+		Profile   ondemand.RunningProfile `json:"profile"`
 	}
 
 	ReplyInterval struct {
@@ -146,36 +155,6 @@ type (
 	TreeView struct {
 		RootName string     `json:"rootName"`
 		Paths    []TreePath `json:"listOfPaths"`
-	}
-
-	FieldEntry struct {
-		Name    string `json:"name"`
-		Monitor bool   `json:"monitor"`
-		Rate    bool   `json:"rate"`
-		Convert bool   `json:"convert"`
-	}
-
-	TagEntry struct {
-		Name    string `json:"name"`
-		GroupBy bool   `json:"groupby"`
-	}
-
-	Entry struct {
-		Path     string       `json:"path"`
-		Interval int          `json:"interval"`
-		Aliases  []string     `json:"aliases"`
-		Fields   []FieldEntry `json:"fields"`
-		Tags     []TagEntry   `json:"tags"`
-	}
-
-	RunningProfile struct {
-		Name    string   `json:"name"`
-		RtrList []string `json:"routers"`
-		Entries []Entry  `json:"entries"`
-	}
-	CurrentContext struct {
-		Run            bool           `json:"run"`
-		CurrentProfile RunningProfile `json:"currentProfile"`
 	}
 )
 

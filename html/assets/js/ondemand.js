@@ -25,6 +25,8 @@ const btnAnalyze = document.getElementById('analyze');
 const btnAddEntry = document.getElementById('addentry');
 const btnResetEntry = document.getElementById('resetentry');
 const btnLoad = document.getElementById('load');
+const btnRouter = document.getElementById('updatertr')
+const rtrList = document.getElementById('routerlist')
 const btnSave = document.getElementById('save');
 const btnSaveAs = document.getElementById('saveas');
 const btnStart = document.getElementById('startstop');
@@ -65,7 +67,7 @@ pathInput.addEventListener("input", (e) => {
 
 /* UPdate current path interval */
 pathInterval.addEventListener("input", (e) => {
-     toAdd.interval = parseInt(e.target.value, 10); 
+    toAdd.interval = parseInt(e.target.value, 10);
 });
 
 
@@ -102,6 +104,19 @@ btnResetEntry.onclick = function () {
             resetEntry()
         }
     }).setHeader('JSTO...');
+}
+
+btnRouter.onclick = function () {
+    var all_selected = rtrList.options
+
+    window.dynamicData.currentProfile.routers.length = 0
+
+    for (var option of all_selected) {
+        if (option.selected) {
+            window.dynamicData.currentProfile.routers.push(option.value);
+        }
+    }
+
 }
 
 btnAddEntry.onclick = function () {
@@ -305,7 +320,8 @@ btnGnmi.onclick = function () {
                 "action": "gnmionce",
                 "path": toAdd.path,
                 "router": selectedRouter,
-                "data": ""
+                "data": "",
+                "profile": {}
             }),
             contentType: "application/json",
             dataType: "json",
@@ -343,28 +359,41 @@ btnGnmi.onclick = function () {
 }
 
 btnLoad.onclick = function () {
-    const selectedConfig = selectConfig.value;
-    if (selectedConfig != "default") {
-        alertify.confirm("Are you sure you want to load the " + selectedConfig + " config file?", function (e) {
+    const config = selectConfig.value;
+    if (config != "default") {
+        // manage execption
+        if (window.dynamicData.run) {
+            alertify.alert("JSTO...", "Please stop the on-demand monitoring before loading a new config!");
+            return;
+        }
+        alertify.confirm("Are you sure you want to load the " + config + " config file? Current config will be lost if not saved!", function (e) {
             if (e) {
+                waitingDialog.show();
                 $(function () {
                     $.ajax({
                         type: 'POST',
                         url: "/ondemandmgt",
                         data: JSON.stringify({
                             "action": "load",
-                            "data": selectConfig
+                            "path": "",
+                            "router": "",
+                            "data": config,
+                            "profile": {}
                         }),
                         contentType: "application/json",
                         dataType: "json",
                         success: function (json) {
                             if (json["status"] == "OK") {
-                                alertify.success('File ' + selectedConfig + ' has been loaded.')
+                                waitingDialog.hide();
+                                alertify.success('File ' + config + ' has been loaded.')
+                                renderResultTable(json.profile);
                             } else {
+                                waitingDialog.hide();
                                 alertify.alert("JTSO...", json.msg);
                             }
                         },
                         error: function (xhr, ajaxOptions, thrownError) {
+                            waitingDialog.hide();
                             alertify.alert("JSTO...", "Unexpected error...");
                         }
                     });
@@ -377,28 +406,45 @@ btnLoad.onclick = function () {
 };
 
 btnSave.onclick = function () {
-    const selectedConfig = selectConfig.value;
-    if (selectedConfig != "default") {
-        alertify.confirm("Are you sure you want to override the " + selectedConfig + " config file?", function (e) {
+    const config = selectConfig.value;
+    if (config != "default") {
+        // manage execption
+        if (window.dynamicData.run) {
+            alertify.alert("JSTO...", "Please stop the on-demand monitoring before saving config!");
+            return;
+        }
+
+        if (window.dynamicData.currentProfile.entries.length == 0) {
+            alertify.alert("JSTO...", "Please add at least one path into the monitor list!");
+            return;
+        }
+        alertify.confirm("Are you sure you want to override the " + config + " config file?", function (e) {
             if (e) {
+                waitingDialog.show();
                 $(function () {
                     $.ajax({
                         type: 'POST',
                         url: "/ondemandmgt",
                         data: JSON.stringify({
                             "action": "save",
-                            "data": selectConfig
+                            "path": "",
+                            "router": "",
+                            "data": selectConfig,
+                            "profile": {}
                         }),
                         contentType: "application/json",
                         dataType: "json",
                         success: function (json) {
                             if (json["status"] == "OK") {
-                                alertify.success('File ' + selectedConfig + ' has been saved.')
+                                waitingDialog.hide();
+                                alertify.success('File ' + config + ' has been saved.')
                             } else {
+                                waitingDialog.hide();
                                 alertify.alert("JTSO...", json.msg);
                             }
                         },
                         error: function (xhr, ajaxOptions, thrownError) {
+                            waitingDialog.hide();
                             alertify.alert("JSTO...", "Unexpected error...");
                         }
                     });
@@ -406,43 +452,66 @@ btnSave.onclick = function () {
             }
         }).setHeader('JSTO...');
     } else {
-
+        save()
     }
 };
 
 btnSaveAs.onclick = function () {
+    save()
+};
+
+function save() {
+    // manage execption
+    if (window.dynamicData.run) {
+        alertify.alert("JSTO...", "Please stop the on-demand monitoring before saving config!");
+        return;
+    }
+
+    if (window.dynamicData.currentProfile.entries.length == 0) {
+        alertify.alert("JSTO...", "Please add at least one path into the monitor list!");
+        return;
+    }
+    waitingDialog.show();
     alertify
         .prompt(
             'Please enter a name for your config: ',
+            'filename',
             function (evt, value) {
                 // OK click
                 $.ajax({
                     type: 'POST',
                     url: '/ondemandmgt',
                     data: JSON.stringify({
-                        action: 'saveas',
-                        data: value
+                        "action": "save",
+                        "path": "",
+                        "router": "",
+                        "data": value,
+                        "profile": window.dynamicData.currentProfile
                     }),
                     contentType: 'application/json',
                     dataType: 'json',
                     success: function (json) {
                         if (json.status === 'OK') {
-                            alertify.success('File ' + value + ' has been saved.')
+                            waitingDialog.hide();
+                            alertify.success('File ' + value + ' has been saved.');
                         } else {
+                            waitingDialog.hide();
                             alertify.alert('JSTO...', json.msg);
                         }
                     },
                     error: function () {
+                        waitingDialog.hide();
                         alertify.alert('JSTO...', 'Unexpected error...');
                     }
                 });
             },
             function () {
                 // Cancel clicked
+                waitingDialog.hide();
                 alertify.message('Operation cancelled');
             }
         ).setHeader('JSTO...');
-};
+}
 
 btnStart.onclick = function () {
     alertify.confirm("Are you sure you want to apply the current on-demand configuration and start data collection?", function (e) {
@@ -453,7 +522,10 @@ btnStart.onclick = function () {
                     url: "/ondemandmgt",
                     data: JSON.stringify({
                         "action": "start",
-                        "data": ""
+                        "path": "",
+                        "router": "",
+                        "data": "",
+                        "profile": {}
                     }),
                     contentType: "application/json",
                     dataType: "json",
@@ -482,7 +554,10 @@ btnClear.onclick = function () {
                     url: "/ondemandmgt",
                     data: JSON.stringify({
                         "action": "clear",
-                        "data": ""
+                        "path": "",
+                        "router": "",
+                        "data": "",
+                        "profile": {}
                     }),
                     contentType: "application/json",
                     dataType: "json",
@@ -511,7 +586,10 @@ btnReset.onclick = function () {
                     url: "/ondemandmgt",
                     data: JSON.stringify({
                         "action": "reset",
-                        "data": ""
+                        "path": "",
+                        "router": "",
+                        "data": "",
+                        "profile": {}
                     }),
                     contentType: "application/json",
                     dataType: "json",
@@ -542,7 +620,7 @@ function renderResultTable(data) {
 
     data.entries.forEach((entry, index) => {
         const tr = document.createElement("tr");
-        
+
 
         /* PATH */
         const pathTd = document.createElement("td");

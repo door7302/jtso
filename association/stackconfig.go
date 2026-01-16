@@ -125,6 +125,8 @@ func ManageDebug(instance string) error {
 		currentState = sqlite.ActiveAdmin.VJUNOSDebug
 	case "vevo":
 		currentState = sqlite.ActiveAdmin.VEVODebug
+	case "ondemand":
+		currentState = sqlite.ActiveAdmin.ONDEMANDDebug
 	default:
 		logger.Log.Errorf("Unsupported instance %s", instance)
 		return errors.New("ManageDebug error: unsupported instance")

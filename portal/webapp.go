@@ -15,6 +15,7 @@ import (
 	"jtso/logger"
 	"jtso/maker"
 	"jtso/netconf"
+	"jtso/ondemand"
 	"jtso/sqlite"
 	"jtso/worker"
 	"net/http"
@@ -709,12 +710,12 @@ func routeDoc(c echo.Context) error {
 func routeOndemand(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
-	currentContext := CurrentContext{
+	currentContext := ondemand.CurrentContext{
 		Run: false,
-		CurrentProfile: RunningProfile{
+		CurrentProfile: ondemand.RunningProfile{
 			Name:    "no-name",
 			RtrList: make([]string, 0),
-			Entries: make([]Entry, 0),
+			Entries: make([]ondemand.Entry, 0),
 		},
 	}
 
@@ -1653,6 +1654,20 @@ func routeOnDemandMgt(c echo.Context) error {
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to collect path"})
 		}
 		return c.JSON(http.StatusOK, ReplyGnmiOnce{Status: "OK", Data: onceRep})
+	case "load":
+		err, profile := ondemand.Load(r.Data)
+		if err != nil {
+			logger.Log.Errorf("Unable to load the profile %s: %v", r.Data, err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to open the on-demand profile"})
+		}
+		return c.JSON(http.StatusOK, ReplyOnDemandProfile{Status: "OK", Profile: profile})
+	case "save":
+		err = ondemand.Save(r.Data, r.Profile)
+		if err != nil {
+			logger.Log.Errorf("Unable to save the profile %s: %v", r.Data, err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to save the on-demand profile"})
+		}
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Profile saved"})
 
 	default:
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown action"})
