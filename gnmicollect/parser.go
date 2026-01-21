@@ -733,6 +733,7 @@ Loop:
 	for {
 		select {
 		case rsp := <-subRspChan:
+			logger.Log.Info("DEBUG: hello")
 			f, _ := formatters.ResponsesFlat(rsp.Response)
 			maps.Copy(allReply, f)
 
