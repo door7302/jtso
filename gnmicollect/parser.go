@@ -737,16 +737,10 @@ Loop:
 			maps.Copy(allReply, f)
 
 		case <-subErrChan:
-			//traverseTree(root)
-			logger.Log.Infof("End of the gNMI ONDEMAND subscription")
 			time.Sleep(1 * time.Second)
-			close(StreamObj.StopStreaming)
-			logger.Log.Infof("About to break Loop") // ADD THIS
 			break Loop
 		}
 	}
-	logger.Log.Infof("Successfully exited loop") // ADD THIS
-	logger.Log.Infof("exit: loop: %v", allReply)
 	// Parse the response
 	tagMap := make(map[string]struct{})
 	fieldMap := make(map[string]struct{})
