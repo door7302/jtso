@@ -303,6 +303,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	gnmi.UseTls = tls
 	gnmi.UseTlsClient = clienttls
 	gnmi.SkipVerify = skip
+	gnmi.Subs = make([]maker.Subscription, 0)
 
 	influx.Retention = "autogen"
 	influx.Fieldpass = make([]string, 0)
@@ -352,11 +353,12 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			}
 			influx.Fieldpass = append(influx.Fieldpass, getLeaf(field))
 		}
-		telegrafOnDemand.GnmiList = append(telegrafOnDemand.GnmiList, *gnmi)
-		telegrafOnDemand.ConverterList = append(telegrafOnDemand.ConverterList, *converter)
-		telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
-		telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
 	}
+
+	telegrafOnDemand.GnmiList = append(telegrafOnDemand.GnmiList, *gnmi)
+	telegrafOnDemand.ConverterList = append(telegrafOnDemand.ConverterList, *converter)
+	telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
+	telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
 
 	// render file
 	payload, err := maker.RenderConf(&telegrafOnDemand)
