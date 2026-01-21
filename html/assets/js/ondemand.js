@@ -426,8 +426,10 @@ btnSave.onclick = function () {
             alertify.alert("JSTO...", "Please add at least one path into the monitor list!");
             return;
         }
+
         alertify.confirm("Are you sure you want to override the " + config + " config file?", function (e) {
             if (e) {
+                window.dynamicData.currentProfile.name = config;
                 waitingDialog.show();
                 $(function () {
                     $.ajax({
@@ -482,13 +484,14 @@ function save() {
         alertify.alert("JSTO...", "Please add at least one path into the monitor list!");
         return;
     }
-
+        
     alertify
         .prompt(
             'Please enter a name for your config: ',
             'filename',
             function (evt, value) {
                 // OK click
+                window.dynamicData.currentProfile.name = value;
                 waitingDialog.show();
                 $.ajax({
                     type: 'POST',

@@ -327,7 +327,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			field := f.Name
 			if strings.HasPrefix(field, "./") {
 				// need to concatenate with PATH
-				field = strings.TrimSuffix(e.Path, "/")
+				field = strings.TrimSuffix(e.Path, "/") + strings.TrimSuffix(field, "./")
 			}
 			if f.Convert || f.Rate {
 				// Force float convertion
@@ -384,7 +384,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	//
 
 	// Restart telegraf ondemand instance
-	container.StopContainer("telegraf_ondemand")
+	container.RestartContainer("telegraf_ondemand")
 
 	logger.Log.Info("All JTS components reconfigured for ondemand profile")
 

@@ -315,8 +315,7 @@ const XreducerTemplate = `
   [[processors.xreducer.tags]] {{range .Tags}}
     key = "{{.}}" {{end}}
   {{end}} {{if .Fields}} 
-  [[processors.xreducer.fields]]
-    {{range .Fields}}
+  [[processors.xreducer.fields]] {{range .Fields}}
     key = "{{.}}" {{end}} {{end}}
 {{end}}
 `
