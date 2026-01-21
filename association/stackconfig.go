@@ -328,7 +328,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			field := f.Name
 			if strings.HasPrefix(field, "./") {
 				// need to concatenate with PATH
-				field = strings.TrimSuffix(e.Path, "/") + strings.TrimSuffix(field, "./")
+				field = strings.TrimSuffix(e.Path, "/") + strings.TrimPrefix(field, "./")
 			}
 			if f.Convert || f.Rate {
 				// Force float convertion
