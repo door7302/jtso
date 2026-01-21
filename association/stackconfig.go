@@ -11,6 +11,7 @@ import (
 	"jtso/kapacitor"
 	"jtso/logger"
 	"jtso/maker"
+	"jtso/ondemand"
 	"jtso/sqlite"
 	"os"
 	"regexp"
@@ -224,6 +225,170 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 	}
 	return false
 
+}
+
+func getLeaf(path string) string {
+	if strings.Contains(path, "/") {
+		parts := strings.Split(path, "/")
+		return parts[len(parts)-1]
+	}
+	return path
+}
+
+func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProfile) error {
+	logger.Log.Infof("Time to reconfigure JTS components for the Ondemand profile %s", profile.Name)
+
+	//ondemand telegraf config
+	telegrafOnDemand := maker.TelegrafConfig{
+		GnmiList:       make([]maker.GnmiInput, 0),
+		ConverterList:  make([]maker.Converter, 0),  //Order = 200
+		EnrichmentList: make([]maker.Enrichment, 0), //Order = 300
+		RateList:       make([]maker.Rate, 0),       //Order = 400
+		XreducerList:   make([]maker.Xreducer, 0),   //Order = 500
+		InfluxList:     make([]maker.InfluxOutput, 0),
+	}
+
+	// parse router and retrieve the family to create the EnrichmentList and fill the routers list in gNMI
+	rendRtrs := make([]string, 0)
+	familyHandled := make(map[string]struct{})
+	index := 0
+	for _, r := range profile.RtrList {
+		family, hostname, err := sqlite.GetRouterByShort(r)
+		if err != nil {
+			logger.Log.Errorf("Unable to add router %s: %v", r, err)
+			continue
+		}
+		rendRtrs = append(rendRtrs, hostname+":"+strconv.Itoa(cfg.Gnmi.Port))
+		if _, exists := familyHandled[family]; !exists {
+			// Family not yet handled
+			familyHandled[family] = struct{}{}
+			el := maker.Enrichment{
+				Order:     300 + index,
+				Namepass:  []string{"ONDEMAND"},
+				Family:    family,
+				TwoLevels: false,
+				Level1:    "device",
+			}
+			telegrafOnDemand.EnrichmentList = append(telegrafOnDemand.EnrichmentList, el)
+			index += 1
+		}
+	}
+
+	//Init Xreducer
+	telegrafOnDemand.XreducerList = append(telegrafOnDemand.XreducerList, maker.Xreducer{Order: 500, Namepass: []string{"ONDEMAND"}, Tags: []string{"all"}, Fields: []string{"all"}})
+
+	// now parse entries and fill the other fields of the telegrafOnDemand
+	gnmi := new(maker.GnmiInput)
+	converter := new(maker.Converter)
+	rate := new(maker.Rate)
+	influx := new(maker.InfluxOutput)
+
+	// Retrieve some common flags
+	tls := false
+	skip := false
+	clienttls := false
+	if sqlite.ActiveCred.UseTls == "yes" {
+		tls = true
+	}
+	if sqlite.ActiveCred.SkipVerify == "yes" {
+		skip = true
+	}
+	if sqlite.ActiveCred.ClientTls == "yes" {
+		clienttls = true
+	}
+
+	gnmi.Rtrs = rendRtrs
+	gnmi.Username = sqlite.ActiveCred.GnmiUser
+	gnmi.Password = sqlite.ActiveCred.GnmiPwd
+	gnmi.UseTls = tls
+	gnmi.UseTlsClient = clienttls
+	gnmi.SkipVerify = skip
+
+	influx.Retention = "autogen"
+	influx.Fieldpass = make([]string, 0)
+
+	for _, e := range profile.Entries {
+		if len(e.Aliases) > 0 {
+			a := maker.Alias{
+				Name:     "ONDEMAND",
+				AliasOf:  strings.TrimSuffix(e.Path, "/"),
+				Prefixes: e.Aliases,
+			}
+			gnmi.Aliases = append(gnmi.Aliases, a)
+		}
+		sub := maker.Subscription{
+			Name:     "ONDEMAND",
+			Path:     strings.TrimSuffix(e.Path, "/"),
+			Mode:     "sample",
+			Interval: e.Interval,
+		}
+		gnmi.Subs = append(gnmi.Subs, sub)
+		for _, f := range e.Fields {
+			field := f.Name
+			if strings.HasPrefix(field, "./") {
+				// need to concatenate with PATH
+				field = strings.TrimSuffix(e.Path, "/")
+			}
+			if f.Convert || f.Rate {
+				// Force float convertion
+				if f.Convert {
+					if converter.Order == 0 {
+						converter.Order = 200
+						converter.Namepass = []string{"ONDEMAND"}
+						converter.FloatType = make([]string, 0)
+
+					}
+					converter.FloatType = append(converter.FloatType, field)
+				}
+				// force rate computing
+				if f.Rate {
+					if rate.Order == 0 {
+						rate.Order = 400
+						rate.Namepass = []string{"ONDEMAND"}
+						rate.Fields = make([]string, 0)
+					}
+					rate.Fields = append(rate.Fields, field)
+				}
+			}
+			influx.Fieldpass = append(influx.Fieldpass, getLeaf(field))
+		}
+		telegrafOnDemand.GnmiList = append(telegrafOnDemand.GnmiList, *gnmi)
+		telegrafOnDemand.ConverterList = append(telegrafOnDemand.ConverterList, *converter)
+		telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
+		telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
+	}
+
+	// render file
+	payload, err := maker.RenderConf(&telegrafOnDemand)
+	if err != nil {
+		logger.Log.Errorf("Unable to render the Ondemand telegraf config from profile %s: %v", profile.Name, err)
+		return err
+	}
+	savedName := PathMap["ondemand"] + "ondemand_" + profile.Name + ".conf"
+	file, err := os.Create(savedName)
+	if err != nil {
+		logger.Log.Errorf("Unable to open the Ondemand telegraf config %s: %v", savedName, err)
+		return err
+	}
+	defer file.Close()
+
+	// Write text to the file
+	_, err = file.WriteString(*payload)
+	if err != nil {
+		logger.Log.Errorf("Unable to write the Ondemand telegraf config %s: %v", savedName, err)
+		return err
+	}
+
+	// Grafana to DO
+	//
+	//
+
+	// Restart telegraf ondemand instance
+	container.StopContainer("telegraf_ondemand")
+
+	logger.Log.Info("All JTS components reconfigured for ondemand profile")
+
+	return nil
 }
 
 func ConfigueStack(cfg *config.ConfigContainer, family string) error {

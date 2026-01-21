@@ -746,7 +746,6 @@ Loop:
 	fieldMap := make(map[string]struct{})
 
 	for k := range allReply {
-		logger.Log.Infof("DEBUG: %v", k)
 		info := extractFieldTag(o.Path, k, hideOrigin)
 		// Add tags and field in the 2 "set" - to keep unicity
 		if info.Leaf != "" {

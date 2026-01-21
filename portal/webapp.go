@@ -1677,6 +1677,13 @@ func routeOnDemandMgt(c echo.Context) error {
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to save the on-demand profile"})
 		}
 		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Profile saved"})
+	case "start":
+		err = association.ConfigureOndemand(collectCfg.cfg, r.Profile)
+		if err != nil {
+			logger.Log.Errorf("Unable to start the profile %s: %v", r.Data, err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to start the on-demand profile"})
+		}
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Profile started"})
 
 	default:
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown action"})

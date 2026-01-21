@@ -195,6 +195,24 @@ func Init(f string) error {
 	return err
 }
 
+func GetRouterByShort(shortName string) (family string, name string, err error) {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+
+	row := db.QueryRow("SELECT family, name FROM routers WHERE short=?", shortName)
+	err = row.Scan(&family, &name)
+
+	if err == sql.ErrNoRows {
+		return "", "", err
+	}
+	if err != nil {
+		logger.Log.Errorf("Error while querying router - err: %v", err)
+		return "", "", err
+	}
+
+	return family, name, nil
+}
+
 func CheckAsso(n string) (bool, error) {
 	dbMu.Lock()
 	rows, err := db.Query("SELECT * FROM associations where name=?;", n)
