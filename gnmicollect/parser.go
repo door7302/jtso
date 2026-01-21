@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"maps"
+
 	"github.com/google/uuid"
 	"github.com/openconfig/gnmic/pkg/api"
 	"github.com/openconfig/gnmic/pkg/api/target"
@@ -616,6 +618,196 @@ func GnmiSample(timeout int, hideOrigin bool) {
 
 }
 
+func GnmiOnDemand(o OnceRequest, hideOrigin bool) (error, OnceReply) {
+	var tg *target.Target
+	var err error
+	r := OnceReply{
+		Fields:  make([]Field, 0),
+		Tags:    make([]Tag, 0),
+		Aliases: make([]string, 0),
+	}
+
+	logger.Log.Infof("Start gNMI SAMPLE ONDEMAND subscription for router %s and xpath %s (timeout is %d)", o.Router, o.Path, o.Timeout)
+
+	// Retrieve cred info
+	tls := false
+	skip := false
+	clienttls := false
+	if sqlite.ActiveCred.UseTls == "yes" {
+		tls = true
+	}
+	if sqlite.ActiveCred.SkipVerify == "yes" {
+		skip = true
+	}
+	if sqlite.ActiveCred.ClientTls == "yes" {
+		clienttls = true
+	}
+
+	if tls {
+		if clienttls {
+			// create a target
+			tg, err = api.NewTarget(
+				api.Name("jtso"),
+				api.Address(o.Router+":"+fmt.Sprint(o.Port)),
+				api.Username(sqlite.ActiveCred.GnmiUser),
+				api.Password(sqlite.ActiveCred.GnmiPwd),
+				api.SkipVerify(skip),
+				api.Insecure(false),
+				api.TLSCA(PATH_CERT+"RootCA.crt"),
+				api.TLSCert(PATH_CERT+"client.crt"),
+				api.TLSKey(PATH_CERT+"client.key"),
+			)
+
+		} else {
+			// create a target
+			tg, err = api.NewTarget(
+				api.Name("jtso"),
+				api.Address(o.Router+":"+fmt.Sprint(o.Port)),
+				api.Username(sqlite.ActiveCred.GnmiUser),
+				api.Password(sqlite.ActiveCred.GnmiPwd),
+				api.SkipVerify(skip),
+				api.Insecure(false),
+				api.TLSCA(PATH_CERT+"RootCA.crt"),
+			)
+
+		}
+	} else {
+		// create a target
+		tg, err = api.NewTarget(
+			api.Name("jtso"),
+			api.Address(o.Router+":"+fmt.Sprint(o.Port)),
+			api.Username(sqlite.ActiveCred.GnmiUser),
+			api.Password(sqlite.ActiveCred.GnmiPwd),
+			api.SkipVerify(skip),
+			api.Insecure(true),
+		)
+	}
+
+	if err != nil {
+		logger.Log.Errorf("Unable to create gNMI ONDEMAND target: %v", err)
+		return err, r
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Wrap the existing ctx with a timeout
+	ctxWithTimeout, timeoutCancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
+	defer timeoutCancel()
+
+	err = tg.CreateGNMIClient(ctx)
+	if err != nil {
+		logger.Log.Errorf("Unable to create gNMI ONDEMAND client: %v", err)
+		return err, r
+	}
+	defer tg.Close()
+	// create a gNMI
+	subReq, err := api.NewSubscribeRequest(
+		api.Encoding("proto"),
+		api.SubscriptionListMode("stream"),
+		api.Subscription(
+			api.Path(o.Path),
+			api.SubscriptionMode("sample"),
+			api.SampleInterval(15*time.Second),
+		))
+	if err != nil {
+		logger.Log.Errorf("Unable to create gNMI ONDEMAND subscription: %v", err)
+		return err, r
+	}
+
+	go tg.Subscribe(ctxWithTimeout, subReq, "subOndemand")
+	go func() {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Duration(o.Timeout) * time.Second):
+			logger.Log.Infof("End of the subscription timer")
+			tg.StopSubscription("subOndemand")
+		}
+	}()
+
+	subRspChan, subErrChan := tg.ReadSubscriptions()
+	StreamObj.ForceFlush = false
+	allReply := make(map[string]interface{})
+Loop:
+	for {
+		select {
+		case rsp := <-subRspChan:
+			f, _ := formatters.ResponsesFlat(rsp.Response)
+			maps.Copy(allReply, f)
+
+		case <-subErrChan:
+			//traverseTree(root)
+			logger.Log.Infof("End of the gNMI ONDEMAND subscription")
+			time.Sleep(1 * time.Second)
+			close(StreamObj.StopStreaming)
+			break Loop
+		}
+	}
+
+	// Parse the response
+	tagMap := make(map[string]struct{})
+	fieldMap := make(map[string]struct{})
+
+	for k := range allReply {
+		info := extractFieldTag(o.Path, k, hideOrigin)
+		// Add tags and field in the 2 "set" - to keep unicity
+		if info.Leaf != "" {
+			fieldMap[info.Leaf] = struct{}{}
+		}
+		if len(info.Keys) != 0 {
+			for _, tag := range info.Keys {
+				tagMap[tag] = struct{}{}
+			}
+		}
+	}
+
+	// Extract keys for tagMap to sort them
+	tagKeys := make([]string, 0, len(tagMap))
+	for key := range tagMap {
+		tagKeys = append(tagKeys, key)
+	}
+	sort.Strings(tagKeys)
+
+	// Extract keys for fieldMap to sort them
+	fieldKeys := make([]string, 0, len(fieldMap))
+	for key := range fieldMap {
+		fieldKeys = append(fieldKeys, key)
+	}
+	sort.Strings(fieldKeys)
+
+	// fill the reply
+	for _, k := range tagKeys {
+		t := Tag{
+			Name:    k,
+			GroupBy: false,
+		}
+		r.Tags = append(r.Tags, t)
+	}
+
+	rootAlias := &TrieNode{}
+	for _, k := range fieldKeys {
+		f := Field{
+			Name:    k,
+			Monitor: false,
+			Rate:    false,
+			Convert: false,
+		}
+		r.Fields = append(r.Fields, f)
+
+		// to detect alias then
+		Insert(rootAlias, o.Path, k)
+	}
+
+	// Provision Alias if found out.
+	CollectPrefixes(rootAlias, nil, &r.Aliases)
+
+	logger.Log.Infof("gNMI ONDEMAND subscription for router %s and xpath %s succefully done", o.Router, o.Path)
+	return nil, r
+}
+
+// Can't use this one yet due to some limitations with ONCE API on some PF
+/*
 func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 	var tg *target.Target
 	var err error
@@ -789,3 +981,4 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 	logger.Log.Infof("gNMI ONCE subscription for router %s and xpath %s succefully done", o.Router, o.Path)
 	return nil, r
 }
+*/
