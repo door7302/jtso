@@ -359,6 +359,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		gnmi.Subs = append(gnmi.Subs, sub)
 
 		tagsToAlias := ""
+		tagCode := ""
 		for _, t := range e.Tags {
 			tag := t.Name
 			if rename.Order == 0 {
@@ -380,6 +381,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			}
 			rename.Entries = append(rename.Entries, er)
 			tagsToAlias += "$tag_" + finalTag + " - "
+			tagCode += `AND \"` + finalTag + `\"=~/^.*${` + finalTag + `:regex}.*$/`
 
 			gfnaV := ondemand.Variable{
 				VariableName: finalTag,
@@ -387,6 +389,9 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			}
 			// Update Grafana Profile
 			grafanaDash.Variables = append(grafanaDash.Variables, gfnaV)
+		}
+		if len(tagsToAlias) >= 3 {
+			tagsToAlias = tagsToAlias[:len(tagsToAlias)-3]
 		}
 
 		for _, f := range e.Fields {
@@ -443,9 +448,10 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			}
 			influx.Fieldpass = append(influx.Fieldpass, finalField)
 			gfnaV := ondemand.Panel{
-				Alias: tagsToAlias,
-				Field: finalField,
-				Info:  e.Path,
+				Alias:   tagsToAlias,
+				Field:   finalField,
+				TagCode: tagCode,
+				Info:    e.Path,
 			}
 			// Update Grafana Panels
 			grafanaDash.Panels = append(grafanaDash.Panels, gfnaV)

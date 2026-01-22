@@ -13,9 +13,10 @@ type Variable struct {
 }
 
 type Panel struct {
-	Alias string
-	Field string
-	Info  string
+	Alias   string
+	Field   string
+	TagCode string
+	Info    string
 }
 
 type Dashboard struct {
@@ -39,10 +40,10 @@ const GrafanaVariable = `
 				"name": "{{$element.VariableName}}",
 				"options": [],
 				"query": "show tag values from ONDEMAND with key=\"{{$element.VariableName}}\" where \"device\" = '$device'",
-				"refresh": 1,
+				"refresh": 2,
 				"regex": "",
 				"skipUrlSync": false,
-				"sort": 0,
+				"sort": 1,
 				"type": "query"
 			}
 {{end}}
@@ -145,7 +146,7 @@ const GrafanaPanel = `
                     "measurement": "ONDEMAND",
                     "orderByTime": "ASC",
                     "policy": "default",
-                    "query": "SELECT \"{{$element.Field}}\" FROM \"ONDEMAND\" WHERE \"device\"=~ /^$device$/ AND $timeFilter GROUP BY  \"*\"",
+                    "query": "SELECT \"{{$element.Field}}\" FROM \"ONDEMAND\" WHERE \"device\"=~ /^$device$/ AND $timeFilter {{$element.TagCode}} GROUP BY *",
                     "rawQuery": true,
                     "refId": "A",
                     "resultFormat": "time_series",
@@ -153,7 +154,7 @@ const GrafanaPanel = `
                     "tags": []
                 }
             ],
-            "title": "$device - Path: {{$element.Info}} - Field: {{$element.Field}}",
+            "title": "Router: $device - Path: {{$element.Info}} - Field: {{$element.Field}}",
             "type": "timeseries"
         }
 {{end}}
@@ -207,10 +208,10 @@ const GrafanaSection2 = `
                 "name": "device",
                 "options": [],
                 "query": "show tag values from ONDEMAND with key=\"device\"",
-                "refresh": 1,
+                "refresh": 2,
                 "regex": "",
                 "skipUrlSync": false,
-                "sort": 0,
+                "sort": 1,
                 "type": "query"
             },
 
