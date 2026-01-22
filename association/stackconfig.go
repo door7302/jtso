@@ -275,7 +275,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	// Prepare variables for ondemand grafana dashboard
 	grafanaDash := ondemand.Dashboard{
 		Variables: make([]ondemand.Variable, 0),
-		Panels:    make([]ondemand.Panel, 0),
+		Paths:     make([]ondemand.PathPanel, 0),
 	}
 
 	// parse router and retrieve the family to create the EnrichmentList and fill the routers list in gNMI
@@ -341,6 +341,10 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	uniqueField := make(map[string]struct{})
 
 	for _, e := range profile.Entries {
+		row := ondemand.PathPanel{
+			Name:   e.Path,
+			Panels: make([]ondemand.Panel, 0),
+		}
 
 		if len(e.Aliases) > 0 {
 			a := maker.Alias{
@@ -454,8 +458,9 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 				Info:    e.Path,
 			}
 			// Update Grafana Panels
-			grafanaDash.Panels = append(grafanaDash.Panels, gfnaV)
+			row.Panels = append(row.Panels, gfnaV)
 		}
+		grafanaDash.Paths = append(grafanaDash.Paths, row)
 	}
 
 	telegrafOnDemand.GnmiList = append(telegrafOnDemand.GnmiList, *gnmi)
