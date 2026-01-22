@@ -153,7 +153,7 @@ const GrafanaPanel = `
                     "tags": []
                 }
             ],
-            "title": "$device - {{$element.Info}}",
+            "title": "$device - Path: {{$element.Info}} - Field: {{$element.Field}}",
             "type": "timeseries"
         }
 {{end}}
