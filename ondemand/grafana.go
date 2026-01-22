@@ -271,7 +271,7 @@ func RenderDashboard(dash Dashboard) (string, error) {
 	allFine = false
 
 	if len(dash.Variables) > 0 {
-		t, err := template.New("variableTemplate").Parse(GrafanaPanel)
+		t, err := template.New("variableTemplate").Parse(GrafanaVariable)
 		if err != nil {
 			logger.Log.Errorf("Error parsing Grafana Variable template: %v", err)
 		} else {
