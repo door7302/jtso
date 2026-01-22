@@ -163,7 +163,7 @@ const GrafanaTemplate = `
               "measurement": "ONDEMAND",
               "orderByTime": "ASC",
               "policy": "default",
-              "query": "SELECT \"{{$element3.Field}}\" FROM \"ONDEMAND\" WHERE \"device\"=~ /^$device$/ AND $timeFilter {{$element3.TagCode}} GROUP BY *",
+              "query": "SELECT \"{{$element2.Field}}\" FROM \"ONDEMAND\" WHERE \"device\"=~ /^$device$/ AND $timeFilter {{$element2.TagCode}} GROUP BY *",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
@@ -171,7 +171,7 @@ const GrafanaTemplate = `
               "tags": []
             }
           ],
-          "title": "Router: $device - Path: {{$element3.Info}} - Field: {{$element3.Field}}"
+          "title": "Router: $device - Path: {{$element2.Info}} - Field: {{$element2.Field}}"
           "type": "timeseries"
         }
     {{end}}
