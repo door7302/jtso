@@ -63,9 +63,7 @@ const GrafanaTemplate = `
         "x": 0,
         "y": 0
       },
-      "id": 6,
-	  "title": "MONITORED PATH: {{$element.Name}}",
-      "type": "row"
+      "id": {{$index}},
       "panels": [
         {
 	  {{range $index2, $element2 := $element.Panels}}{{if $index2}},{{end}}
@@ -132,7 +130,7 @@ const GrafanaTemplate = `
             "x": 0,
             "y": 2
           },
-          "id": 2,
+          "id": {{$index2}},
           "maxPerRow": 2,
           "options": {
             "legend": {
@@ -175,7 +173,9 @@ const GrafanaTemplate = `
           "type": "timeseries"
         }
     {{end}}
-      ]
+      ],
+      "title": "MONITORED PATH: {{$element.Name}}",
+      "type": "row"
     }
   {{end}} 
   ],
