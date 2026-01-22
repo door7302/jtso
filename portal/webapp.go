@@ -1622,7 +1622,7 @@ func routeUptDoc(c echo.Context) error {
 
 	}
 	if graf == "" {
-		graf = "No Grafana Dasboards attached to this profile"
+		graf = "No Grafana Dashboards attached to this profile"
 	}
 	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: teleHTML, Graf: graf, Kapa: kapa})
 }

@@ -26,6 +26,7 @@ const (
 	PATH_GRAFANA       string = "/var/shared/grafana/dashboards/"
 	PROFILES           string = "/var/profiles/"
 	ACTIVE_PROFILES    string = "/var/active_profiles/"
+	ONDEMAND_DASH      string = "/var/shared/grafana/dashboards/ondemand.json"
 )
 
 var PathMap = map[string]string{
@@ -230,9 +231,32 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 func getLeaf(path string) string {
 	if strings.Contains(path, "/") {
 		parts := strings.Split(path, "/")
-		return parts[len(parts)-1]
+		return strings.ReplaceAll(parts[len(parts)-1], "-", "_")
 	}
-	return path
+	return strings.ReplaceAll(path, "-", "_")
+}
+
+func getLastTwoNodes(path string) string {
+	if !strings.Contains(path, "/") {
+		return strings.ReplaceAll(path, "-", "_")
+	}
+
+	parts := strings.Split(path, "/")
+
+	// If only one node after split, return it
+	if len(parts) == 1 {
+		return strings.ReplaceAll(parts[0], "-", "_")
+	}
+
+	// Get the last two nodes
+	secondLast := parts[len(parts)-2]
+	last := parts[len(parts)-1]
+
+	// Replace hyphens with underscores in both parts
+	secondLast = strings.ReplaceAll(secondLast, "-", "_")
+	last = strings.ReplaceAll(last, "-", "_")
+
+	return secondLast + "_" + last
 }
 
 func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProfile) error {
@@ -241,11 +265,17 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	//ondemand telegraf config
 	telegrafOnDemand := maker.TelegrafConfig{
 		GnmiList:       make([]maker.GnmiInput, 0),
+		RenameList:     make([]maker.Rename, 0),     //Order = 100
 		ConverterList:  make([]maker.Converter, 0),  //Order = 200
 		EnrichmentList: make([]maker.Enrichment, 0), //Order = 300
 		RateList:       make([]maker.Rate, 0),       //Order = 400
-		XreducerList:   make([]maker.Xreducer, 0),   //Order = 500
 		InfluxList:     make([]maker.InfluxOutput, 0),
+	}
+
+	// Prepare variables for ondemand grafana dashboard
+	grafanaDash := ondemand.Dashboard{
+		Variables: make([]ondemand.Variable, 0),
+		Panels:    make([]ondemand.Panel, 0),
 	}
 
 	// parse router and retrieve the family to create the EnrichmentList and fill the routers list in gNMI
@@ -274,14 +304,12 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		}
 	}
 
-	//Init Xreducer
-	telegrafOnDemand.XreducerList = append(telegrafOnDemand.XreducerList, maker.Xreducer{Order: 500, Namepass: []string{"ONDEMAND"}, Tags: []string{"all"}, Fields: []string{"all"}})
-
 	// now parse entries and fill the other fields of the telegrafOnDemand
 	gnmi := new(maker.GnmiInput)
 	converter := new(maker.Converter)
 	rate := new(maker.Rate)
 	influx := new(maker.InfluxOutput)
+	rename := new(maker.Rename)
 
 	// Retrieve some common flags
 	tls := false
@@ -308,7 +336,12 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	influx.Retention = "autogen"
 	influx.Fieldpass = make([]string, 0)
 
+	// Simple set to track duplicated tags / fields
+	uniqueTags := make(map[string]struct{})
+	uniqueField := make(map[string]struct{})
+
 	for _, e := range profile.Entries {
+
 		if len(e.Aliases) > 0 {
 			a := maker.Alias{
 				Name:     "ONDEMAND",
@@ -324,6 +357,38 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			Interval: e.Interval,
 		}
 		gnmi.Subs = append(gnmi.Subs, sub)
+
+		tagsToAlias := ""
+		for _, t := range e.Tags {
+			tag := t.Name
+			if rename.Order == 0 {
+				rename.Order = 100
+				rename.Namepass = []string{"ONDEMAND"}
+				rename.Entries = make([]maker.EntryRename, 0)
+			}
+			finalTag := tag
+			if _, exists := uniqueTags[getLeaf(tag)]; !exists {
+				uniqueTags[getLeaf(tag)] = struct{}{}
+				finalTag = getLeaf(tag)
+			} else {
+				finalTag = getLastTwoNodes(tag)
+			}
+			er := maker.EntryRename{
+				TypeRename: 0,
+				From:       tag,
+				To:         finalTag,
+			}
+			rename.Entries = append(rename.Entries, er)
+			tagsToAlias += "$tag_" + finalTag + " - "
+
+			gfnaV := ondemand.Variable{
+				VariableName: finalTag,
+				LabelName:    finalTag,
+			}
+			// Update Grafana Profile
+			grafanaDash.Variables = append(grafanaDash.Variables, gfnaV)
+		}
+
 		for _, f := range e.Fields {
 			field := f.Name
 			if strings.HasPrefix(field, "./") {
@@ -351,7 +416,39 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 					rate.Fields = append(rate.Fields, field)
 				}
 			}
-			influx.Fieldpass = append(influx.Fieldpass, getLeaf(field))
+			if rename.Order == 0 {
+				rename.Order = 100
+				rename.Namepass = []string{"ONDEMAND"}
+				rename.Entries = make([]maker.EntryRename, 0)
+			}
+
+			finalField := field
+			if _, exists := uniqueField[getLeaf(field)]; !exists {
+				uniqueField[getLeaf(field)] = struct{}{}
+				er := maker.EntryRename{
+					TypeRename: 1,
+					From:       field,
+					To:         getLeaf(field),
+				}
+				rename.Entries = append(rename.Entries, er)
+				finalField = getLeaf(field)
+			} else {
+				er := maker.EntryRename{
+					TypeRename: 1,
+					From:       field,
+					To:         getLastTwoNodes(field),
+				}
+				rename.Entries = append(rename.Entries, er)
+				finalField = getLastTwoNodes(field)
+			}
+			influx.Fieldpass = append(influx.Fieldpass, finalField)
+			gfnaV := ondemand.Panel{
+				Alias: tagsToAlias,
+				Field: finalField,
+				Info:  e.Path,
+			}
+			// Update Grafana Panels
+			grafanaDash.Panels = append(grafanaDash.Panels, gfnaV)
 		}
 	}
 
@@ -360,7 +457,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
 	telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
 
-	// render file
+	// render telegraf file
 	payload, err := maker.RenderConf(&telegrafOnDemand)
 	if err != nil {
 		logger.Log.Errorf("Unable to render the Ondemand telegraf config from profile %s: %v", profile.Name, err)
@@ -372,24 +469,42 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		logger.Log.Errorf("Unable to open the Ondemand telegraf config %s: %v", savedName, err)
 		return err
 	}
-	defer file.Close()
-
 	// Write text to the file
 	_, err = file.WriteString(*payload)
 	if err != nil {
 		logger.Log.Errorf("Unable to write the Ondemand telegraf config %s: %v", savedName, err)
+		file.Close()
+		return err
+	}
+	file.Close()
+
+	// Grafana Dashboard config generation
+	grafanaConfig, err := ondemand.RenderDashboard(grafanaDash)
+	if err != nil {
+		logger.Log.Errorf("Unable to render the grafana ondemand dashboard from profile %s: %v", profile.Name, err)
+		return err
+	}
+	file, err = os.Create(ONDEMAND_DASH)
+	if err != nil {
+		logger.Log.Errorf("Unable to open the grafana ondemand dashboard file %s: %v", ONDEMAND_DASH, err)
+		return err
+	}
+	defer file.Close()
+
+	// Write text to the file
+	_, err = file.WriteString(grafanaConfig)
+	if err != nil {
+		logger.Log.Errorf("Unable to write the grafana ondemand dashboard file %s: %v", ONDEMAND_DASH, err)
 		return err
 	}
 
-	// Grafana to DO
-	//
-	//
+	// Restart grafana
+	container.RestartContainer("grafana")
 
 	// Restart telegraf ondemand instance
 	container.RestartContainer("telegraf_ondemand")
 
 	logger.Log.Info("All JTS components reconfigured for ondemand profile")
-
 	return nil
 }
 
@@ -723,6 +838,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	var excludeDash []string
 	excludeDash = make([]string, 0)
 	excludeDash = append(excludeDash, "home.json")
+	excludeDash = append(excludeDash, "ondemand.json")
 	for _, v := range Collections {
 		for _, c := range v {
 			for _, p := range c.ProfilesName {
