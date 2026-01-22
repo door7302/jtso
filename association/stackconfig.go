@@ -453,6 +453,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	}
 
 	telegrafOnDemand.GnmiList = append(telegrafOnDemand.GnmiList, *gnmi)
+	telegrafOnDemand.RenameList = append(telegrafOnDemand.RenameList, *rename)
 	telegrafOnDemand.ConverterList = append(telegrafOnDemand.ConverterList, *converter)
 	telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
 	telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
