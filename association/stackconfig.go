@@ -403,26 +403,6 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 				field = strings.TrimSuffix(e.Path, "/") + "/" + strings.TrimPrefix(field, "./")
 			}
 
-			// Handle conversions
-			if f.Convert || f.Rate {
-				if f.Convert {
-					if converter.Order == 0 {
-						converter.Order = 200
-						converter.Namepass = []string{"ONDEMAND"}
-						converter.FloatType = make([]string, 0)
-					}
-					converter.FloatType = append(converter.FloatType, field)
-				}
-				if f.Rate {
-					if rate.Order == 0 {
-						rate.Order = 400
-						rate.Namepass = []string{"ONDEMAND"}
-						rate.Fields = make([]string, 0)
-					}
-					rate.Fields = append(rate.Fields, field)
-				}
-			}
-
 			// Initialize rename once
 			if rename.Order == 0 {
 				rename.Order = 100
@@ -445,6 +425,26 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 
 			// Register the final field name
 			uniqueField[finalField] = struct{}{}
+
+			// Handle conversions
+			if f.Convert || f.Rate {
+				if f.Convert {
+					if converter.Order == 0 {
+						converter.Order = 200
+						converter.Namepass = []string{"ONDEMAND"}
+						converter.FloatType = make([]string, 0)
+					}
+					converter.FloatType = append(converter.FloatType, finalField)
+				}
+				if f.Rate {
+					if rate.Order == 0 {
+						rate.Order = 400
+						rate.Namepass = []string{"ONDEMAND"}
+						rate.Fields = make([]string, 0)
+					}
+					rate.Fields = append(rate.Fields, finalField)
+				}
+			}
 
 			// Create single rename entry
 			er := maker.EntryRename{
@@ -475,15 +475,15 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 					// Register the mapping
 					uniqueTagsShort[finalTag] = struct{}{}
 					uniqueTagsGlobal[t] = finalTag
-				}
 
-				// Tag rename entry (from first loop)
-				er := maker.EntryRename{
-					TypeRename: 0,
-					From:       t,
-					To:         finalTag,
+					// Tag rename entry (from first loop)
+					er := maker.EntryRename{
+						TypeRename: 0,
+						From:       t,
+						To:         finalTag,
+					}
+					rename.Entries = append(rename.Entries, er)
 				}
-				rename.Entries = append(rename.Entries, er)
 
 				// Build tag strings for panel (from second loop)
 				tagsToAlias += "$tag_" + finalTag + " - "
@@ -529,9 +529,15 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	}
 	gnmi.Aliases = append(gnmi.Aliases, a)
 	telegrafOnDemand.GnmiList = append(telegrafOnDemand.GnmiList, *gnmi)
-	telegrafOnDemand.RenameList = append(telegrafOnDemand.RenameList, *rename)
-	telegrafOnDemand.ConverterList = append(telegrafOnDemand.ConverterList, *converter)
-	telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
+	if rename.Order != 0 {
+		telegrafOnDemand.RenameList = append(telegrafOnDemand.RenameList, *rename)
+	}
+	if converter.Order != 0 {
+		telegrafOnDemand.ConverterList = append(telegrafOnDemand.ConverterList, *converter)
+	}
+	if rate.Order != 0 {
+		telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
+	}
 	telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
 
 	// render telegraf file
