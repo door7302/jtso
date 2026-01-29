@@ -337,7 +337,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	influx.Fieldpass = make([]string, 0)
 
 	// Simple set to track duplicated tags / fields
-	uniqueTags := make(map[string]struct{})
+	uniqueTagsGlobal := make(map[string]struct{})
 	uniqueField := make(map[string]struct{})
 
 	for _, e := range profile.Entries {
@@ -401,24 +401,27 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 
 			// Process field rename
 			finalField := field
+			// Determine finalField based on uniqueness
 			if _, exists := uniqueField[getLeaf(field)]; !exists {
-				uniqueField[getLeaf(field)] = struct{}{}
-				er := maker.EntryRename{
-					TypeRename: 1,
-					From:       field,
-					To:         getLeaf(field),
-				}
-				rename.Entries = append(rename.Entries, er)
 				finalField = getLeaf(field)
 			} else {
-				er := maker.EntryRename{
-					TypeRename: 1,
-					From:       field,
-					To:         getLastTwoNodes(field),
-				}
-				rename.Entries = append(rename.Entries, er)
 				finalField = getLastTwoNodes(field)
+				if _, exists := uniqueField[finalField]; exists {
+					// Last resort - full path with slashes replaced
+					finalField = strings.ReplaceAll(field, "/", "_")
+				}
 			}
+
+			// Register the final field name
+			uniqueField[finalField] = struct{}{}
+
+			// Create single rename entry
+			er := maker.EntryRename{
+				TypeRename: 1,
+				From:       field,
+				To:         finalField,
+			}
+			rename.Entries = append(rename.Entries, er)
 			influx.Fieldpass = append(influx.Fieldpass, finalField)
 
 			// Process InheritTags (merged from both loops)
@@ -426,12 +429,17 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 				tag := t
 				finalTag := tag
 
-				if _, exists := uniqueTags[getLeaf(tag)]; !exists {
-					uniqueTags[getLeaf(tag)] = struct{}{}
+				if _, exists := uniqueTagsGlobal[getLeaf(tag)]; !exists {
 					finalTag = getLeaf(tag)
 				} else {
 					finalTag = getLastTwoNodes(tag)
+					if _, exists := uniqueTagsGlobal[finalTag]; exists {
+						finalTag = strings.ReplaceAll(tag, "/", "_")
+					}
 				}
+
+				// Update both maps with the same finalTag
+				uniqueTagsGlobal[finalTag] = struct{}{}
 
 				// Tag rename entry (from first loop)
 				er := maker.EntryRename{
@@ -440,13 +448,6 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 					To:         finalTag,
 				}
 				rename.Entries = append(rename.Entries, er)
-
-				// Grafana variable (from first loop)
-				gfnaV := ondemand.Variable{
-					VariableName: finalTag,
-					LabelName:    finalTag,
-				}
-				grafanaDash.Variables = append(grafanaDash.Variables, gfnaV)
 
 				// Build tag strings for panel (from second loop)
 				tagsToAlias += "$tag_" + finalTag + " - "
@@ -468,6 +469,15 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			row.Panels = append(row.Panels, gfnaV)
 		}
 		grafanaDash.Paths = append(grafanaDash.Paths, row)
+	}
+
+	for k := range uniqueTagsGlobal {
+		// Grafana variable
+		gfnaV := ondemand.Variable{
+			VariableName: k,
+			LabelName:    k,
+		}
+		grafanaDash.Variables = append(grafanaDash.Variables, gfnaV)
 	}
 
 	telegrafOnDemand.GnmiList = append(telegrafOnDemand.GnmiList, *gnmi)
