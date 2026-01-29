@@ -321,6 +321,7 @@ function provisionMonitorTables(data) {
     data.aliases.forEach((alias, i) => {
         aliasesList.insertAdjacentHTML("beforeend", `
         <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="alias${i}" value="${alias}">
             <label class="form-check-label" for="alias${i}">
                 ${alias}
             </label>
