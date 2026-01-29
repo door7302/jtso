@@ -337,7 +337,8 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	influx.Fieldpass = make([]string, 0)
 
 	// Simple set to track duplicated tags / fields
-	uniqueTagsGlobal := make(map[string]struct{})
+	uniqueTagsGlobal := make(map[string]string)
+	uniqueTagsShort := make(map[string]struct{})
 	uniqueField := make(map[string]struct{})
 
 	for _, e := range profile.Entries {
@@ -426,25 +427,31 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 
 			// Process InheritTags (merged from both loops)
 			for _, t := range f.InheritTags {
-				tag := t
-				finalTag := tag
+				var finalTag string
 
-				if _, exists := uniqueTagsGlobal[getLeaf(tag)]; !exists {
-					finalTag = getLeaf(tag)
+				// Check if we've already processed this long tag
+				if cached, exists := uniqueTagsGlobal[t]; exists {
+					finalTag = cached
 				} else {
-					finalTag = getLastTwoNodes(tag)
-					if _, exists := uniqueTagsGlobal[finalTag]; exists {
-						finalTag = strings.ReplaceAll(tag, "/", "_")
+					// Compute the shortest unique version
+					finalTag = getLeaf(t)
+					if _, exists := uniqueTagsShort[finalTag]; exists {
+						finalTag = getLastTwoNodes(t)
+						if _, exists := uniqueTagsShort[finalTag]; exists {
+							// Last resort - replace slashes
+							finalTag = strings.ReplaceAll(t, "/", "_")
+						}
 					}
-				}
 
-				// Update both maps with the same finalTag
-				uniqueTagsGlobal[finalTag] = struct{}{}
+					// Register the mapping
+					uniqueTagsShort[finalTag] = struct{}{}
+					uniqueTagsGlobal[t] = finalTag
+				}
 
 				// Tag rename entry (from first loop)
 				er := maker.EntryRename{
 					TypeRename: 0,
-					From:       tag,
+					From:       t,
 					To:         finalTag,
 				}
 				rename.Entries = append(rename.Entries, er)
@@ -471,8 +478,9 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		grafanaDash.Paths = append(grafanaDash.Paths, row)
 	}
 
-	for k := range uniqueTagsGlobal {
-		// Grafana variable
+	for k := range uniqueTagsShort {
+
+		// Grafana variable (from first loop)
 		gfnaV := ondemand.Variable{
 			VariableName: k,
 			LabelName:    k,
