@@ -409,7 +409,6 @@ btnLoad.onclick = function () {
 
                                 renderResultTable(json.profile);
                                 window.dynamicData.currentProfile = json.profile;
-                                window.dynamicData.currentConfig = config;
                                 changeProfileState(true);
                                 alertify.success('File ' + config + ' has been loaded.');
                             } else {
@@ -464,8 +463,6 @@ btnSave.onclick = function () {
                         success: function (json) {
                             if (json["status"] == "OK") {
                                 waitingDialog.hide();
-                                // A change occured
-                                window.dynamicData.currentConfig = config;
                                 changeProfileState(true);
                                 alertify.success('File ' + config + ' has been saved.')
                             } else {
@@ -525,8 +522,6 @@ function save() {
                     success: function (json) {
                         if (json.status === 'OK') {
                             waitingDialog.hide();
-                            // A change occured
-                            window.dynamicData.currentConfig = value;
                             changeProfileState(true);
                             alertify.success('File ' + value + ' has been saved.');
                         } else {
@@ -550,7 +545,6 @@ function save() {
 
 btnStart.onclick = function () {
     if (window.dynamicData.run) {
-        const config = selectConfig.value;
         // Here we should stop
         alertify.confirm("Are you sure you want to stop data collection?", function (e) {
             if (e) {
@@ -562,7 +556,7 @@ btnStart.onclick = function () {
                             "action": "stop",
                             "path": "",
                             "router": "",
-                            "data": config,
+                            "data": window.dynamicData.currentProfile.name,
                             "profile": ""
                         }),
                         contentType: "application/json",
@@ -680,7 +674,7 @@ btnReset.onclick = function () {
                 entries: []
             }
             // A change occured
-            window.dynamicData.currentConfig = "Unknown";
+            window.dynamicData.run = false;
             changeProfileState(true);
             resetEntry()
 
@@ -1098,12 +1092,12 @@ function changeProfileState(action) {
     if (action) {
         profileSaved = true;
         configName.innerHTML = `
-        <label><b>Current config:&nbsp;</b>${window.dynamicData.currentConfig}</label>
+        <label><b>Current config:&nbsp;</b>${window.dynamicData.currentProfile.name}</label>
         `;
     } else {
         profileSaved = false;
         configName.innerHTML = `
-        <label><b>Current config:&nbsp;</b>${window.dynamicData.currentConfig}</label>
+        <label><b>Current config:&nbsp;</b>${window.dynamicData.currentProfile.name}</label>
         <i class="fa fa-save text-danger ms-2"
             style="font-size: 1rem;"
             title="Unsaved changes"></i>

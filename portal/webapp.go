@@ -1686,7 +1686,7 @@ func routeOnDemandMgt(c echo.Context) error {
 		err = association.StopOndemand(r.Data)
 		if err != nil {
 			logger.Log.Errorf("Unable to stop the profile %s: %v", r.Data, err)
-			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to save the on-demand profile"})
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to stop the on-demand profile"})
 		}
 		ondemand.CC.Run = false
 		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Profile stopped"})
