@@ -362,60 +362,26 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		}
 		gnmi.Subs = append(gnmi.Subs, sub)
 
-		tagsToAlias := ""
-		tagCode := ""
-		for _, t := range e.Tags {
-			tag := t
-			if rename.Order == 0 {
-				rename.Order = 100
-				rename.Namepass = []string{"ONDEMAND"}
-				rename.Entries = make([]maker.EntryRename, 0)
-			}
-			finalTag := tag
-			if _, exists := uniqueTags[getLeaf(tag)]; !exists {
-				uniqueTags[getLeaf(tag)] = struct{}{}
-				finalTag = getLeaf(tag)
-			} else {
-				finalTag = getLastTwoNodes(tag)
-			}
-			er := maker.EntryRename{
-				TypeRename: 0,
-				From:       tag,
-				To:         finalTag,
-			}
-			rename.Entries = append(rename.Entries, er)
-			tagsToAlias += "$tag_" + finalTag + " - "
-			tagCode += `AND \"` + finalTag + `\"=~/^.*${` + finalTag + `:regex}.*$/`
-
-			gfnaV := ondemand.Variable{
-				VariableName: finalTag,
-				LabelName:    finalTag,
-			}
-			// Update Grafana Profile
-			grafanaDash.Variables = append(grafanaDash.Variables, gfnaV)
-		}
-		if len(tagsToAlias) >= 3 {
-			tagsToAlias = tagsToAlias[:len(tagsToAlias)-3]
-		}
-
 		for _, f := range e.Fields {
 			field := f.Name
+			tagsToAlias := ""
+			tagCode := ""
+
+			// Process field name
 			if strings.HasPrefix(field, "./") {
-				// need to concatenate with PATH
 				field = strings.TrimSuffix(e.Path, "/") + "/" + strings.TrimPrefix(field, "./")
 			}
+
+			// Handle conversions
 			if f.Convert || f.Rate {
-				// Force float convertion
 				if f.Convert {
 					if converter.Order == 0 {
 						converter.Order = 200
 						converter.Namepass = []string{"ONDEMAND"}
 						converter.FloatType = make([]string, 0)
-
 					}
 					converter.FloatType = append(converter.FloatType, field)
 				}
-				// force rate computing
 				if f.Rate {
 					if rate.Order == 0 {
 						rate.Order = 400
@@ -425,12 +391,15 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 					rate.Fields = append(rate.Fields, field)
 				}
 			}
+
+			// Initialize rename once
 			if rename.Order == 0 {
 				rename.Order = 100
 				rename.Namepass = []string{"ONDEMAND"}
 				rename.Entries = make([]maker.EntryRename, 0)
 			}
 
+			// Process field rename
 			finalField := field
 			if _, exists := uniqueField[getLeaf(field)]; !exists {
 				uniqueField[getLeaf(field)] = struct{}{}
@@ -451,13 +420,51 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 				finalField = getLastTwoNodes(field)
 			}
 			influx.Fieldpass = append(influx.Fieldpass, finalField)
+
+			// Process InheritTags (merged from both loops)
+			for _, t := range f.InheritTags {
+				tag := t
+				finalTag := tag
+
+				if _, exists := uniqueTags[getLeaf(tag)]; !exists {
+					uniqueTags[getLeaf(tag)] = struct{}{}
+					finalTag = getLeaf(tag)
+				} else {
+					finalTag = getLastTwoNodes(tag)
+				}
+
+				// Tag rename entry (from first loop)
+				er := maker.EntryRename{
+					TypeRename: 0,
+					From:       tag,
+					To:         finalTag,
+				}
+				rename.Entries = append(rename.Entries, er)
+
+				// Grafana variable (from first loop)
+				gfnaV := ondemand.Variable{
+					VariableName: finalTag,
+					LabelName:    finalTag,
+				}
+				grafanaDash.Variables = append(grafanaDash.Variables, gfnaV)
+
+				// Build tag strings for panel (from second loop)
+				tagsToAlias += "$tag_" + finalTag + " - "
+				tagCode += `AND \"` + finalTag + `\"=~/^.*${` + finalTag + `:regex}.*$/`
+			}
+
+			// Finalize tags string
+			if len(tagsToAlias) >= 3 {
+				tagsToAlias = tagsToAlias[:len(tagsToAlias)-3]
+			}
+
+			// Create panel
 			gfnaV := ondemand.Panel{
 				Alias:   tagsToAlias,
 				Field:   finalField,
 				TagCode: tagCode,
 				Info:    e.Path,
 			}
-			// Update Grafana Panels
 			row.Panels = append(row.Panels, gfnaV)
 		}
 		grafanaDash.Paths = append(grafanaDash.Paths, row)
