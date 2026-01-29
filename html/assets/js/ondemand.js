@@ -557,7 +557,7 @@ btnStart.onclick = function () {
                             "path": "",
                             "router": "",
                             "data": window.dynamicData.currentProfile.name,
-                            "profile": ""
+                            "profile": {}
                         }),
                         contentType: "application/json",
                         dataType: "json",
