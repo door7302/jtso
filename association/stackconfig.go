@@ -365,7 +365,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		tagsToAlias := ""
 		tagCode := ""
 		for _, t := range e.Tags {
-			tag := t.Name
+			tag := t
 			if rename.Order == 0 {
 				rename.Order = 100
 				rename.Namepass = []string{"ONDEMAND"}
