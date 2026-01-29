@@ -886,11 +886,6 @@ function addField() {
     var tagN = tagName.value.trim();
     if (tagN) {
         tags = tagN.split(";").map(item => normalizePath(item.trim()));
-        tags.forEach(item => {
-            if (!toAdd.tags.includes(item)) {
-                toAdd.tags.push(item);
-            }
-        });
     }
 
     name = normalizeFieldPath(name);
