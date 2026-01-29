@@ -259,6 +259,33 @@ func getLastTwoNodes(path string) string {
 	return secondLast + "_" + last
 }
 
+func StopOndemand(p string) error {
+	savedName := PathMap["ondemand"] + "ondemand_" + p + ".conf"
+	oneError := false
+
+	err := os.Remove(savedName)
+	if err != nil {
+		logger.Log.Errorf("Unable to delete telegraf ondemand config %s: %v", savedName, err)
+		oneError = true
+	}
+
+	err = os.Remove(ONDEMAND_DASH)
+	if err != nil {
+		logger.Log.Errorf("Unable to delete grafana ondemand dashboard %s: %v", ONDEMAND_DASH, err)
+		oneError = true
+	}
+
+	// stop container
+	container.StopContainer("telegraf_ondemand")
+	container.StopContainer("grafana")
+
+	if oneError {
+		return fmt.Errorf("One task failed while stopping ondemand collection - check logs for more info")
+	}
+
+	return nil
+}
+
 func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProfile) error {
 	logger.Log.Infof("Time to reconfigure JTS components for the Ondemand profile %s", profile.Name)
 
@@ -423,7 +450,6 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 				To:         finalField,
 			}
 			rename.Entries = append(rename.Entries, er)
-			influx.Fieldpass = append(influx.Fieldpass, finalField)
 
 			// Process InheritTags (merged from both loops)
 			for _, t := range f.InheritTags {
@@ -472,6 +498,12 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 				Field:   finalField,
 				TagCode: tagCode,
 				Info:    e.Path,
+			}
+			if f.Rate {
+				gfnaV.Field = finalField + "_rate"
+				influx.Fieldpass = append(influx.Fieldpass, finalField+"_rate")
+			} else {
+				influx.Fieldpass = append(influx.Fieldpass, finalField)
 			}
 			row.Panels = append(row.Panels, gfnaV)
 		}

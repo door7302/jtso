@@ -399,6 +399,9 @@ func routeIndex(c echo.Context) error {
 	// Ondemand Instance
 	teleOnDemand := "f8cecc"
 	numONDEMAND := 0
+	if ondemand.CC.Run {
+		numONDEMAND = len(ondemand.CC.CurrentProfile.RtrList)
+	}
 	ONDEMANDDebug := "grey"
 
 	// Update Debug flag
@@ -574,10 +577,6 @@ func routeIndex(c echo.Context) error {
 			if r.Profile == 1 {
 				numVEVO++
 			}
-		case "ondemand":
-			if r.Profile == 1 {
-				numONDEMAND++
-			}
 		}
 	}
 
@@ -710,15 +709,6 @@ func routeDoc(c echo.Context) error {
 func routeOndemand(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
-	currentContext := ondemand.CurrentContext{
-		Run:           false,
-		CurrentConfig: "Unknown",
-		CurrentProfile: ondemand.RunningProfile{
-			Name:    "no-name",
-			RtrList: make([]string, 0),
-			Entries: make([]ondemand.Entry, 0),
-		},
-	}
 
 	// Get all routers from db
 	lr := make([]RouterDetails, 0)
@@ -738,7 +728,7 @@ func routeOndemand(c echo.Context) error {
 	// sort it
 	sort.Strings(lc)
 
-	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": currentContext, "ConfigList": lc})
+	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": ondemand.CC, "ConfigList": lc})
 }
 
 func routeBrowse(c echo.Context) error {
@@ -1673,6 +1663,7 @@ func routeOnDemandMgt(c echo.Context) error {
 			logger.Log.Errorf("Unable to load the profile %s: %v", r.Data, err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to open the on-demand profile"})
 		}
+		ondemand.CC.CurrentProfile = profile
 		return c.JSON(http.StatusOK, ReplyOnDemandProfile{Status: "OK", Profile: profile})
 	case "save":
 		err = ondemand.Save(r.Data, r.Profile)
@@ -1680,15 +1671,25 @@ func routeOnDemandMgt(c echo.Context) error {
 			logger.Log.Errorf("Unable to save the profile %s: %v", r.Data, err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to save the on-demand profile"})
 		}
+		ondemand.CC.CurrentProfile = r.Profile
 		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Profile saved"})
 	case "start":
 		err = association.ConfigureOndemand(collectCfg.cfg, r.Profile)
 		if err != nil {
-			logger.Log.Errorf("Unable to start the profile %s: %v", r.Data, err)
+			logger.Log.Errorf("Unable to start the profile %s: %v", r.Profile.Name, err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to start the on-demand profile"})
 		}
+		ondemand.CC.CurrentProfile = r.Profile
+		ondemand.CC.Run = true
 		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Profile started"})
-
+	case "stop":
+		err = association.StopOndemand(r.Data)
+		if err != nil {
+			logger.Log.Errorf("Unable to stop the profile %s: %v", r.Data, err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to save the on-demand profile"})
+		}
+		ondemand.CC.Run = false
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Profile stopped"})
 	default:
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown action"})
 	}

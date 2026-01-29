@@ -33,14 +33,26 @@ type (
 
 	CurrentContext struct {
 		Run            bool           `json:"run"`
-		CurrentConfig  string         `json:"currentConfig"`
 		CurrentProfile RunningProfile `json:"currentProfile"`
 	}
 )
 
+var CC CurrentContext
+
 const (
 	PATH_ONDEMAND string = "/var/ondemand/"
 )
+
+func init() {
+	CC = CurrentContext{
+		Run: false,
+		CurrentProfile: RunningProfile{
+			Name:    "no-name",
+			RtrList: make([]string, 0),
+			Entries: make([]Entry, 0),
+		},
+	}
+}
 
 func Load(f string) (error, RunningProfile) {
 	var profile RunningProfile

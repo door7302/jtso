@@ -550,6 +550,7 @@ function save() {
 
 btnStart.onclick = function () {
     if (window.dynamicData.run) {
+        const config = selectConfig.value;
         // Here we should stop
         alertify.confirm("Are you sure you want to stop data collection?", function (e) {
             if (e) {
@@ -558,11 +559,11 @@ btnStart.onclick = function () {
                         type: 'POST',
                         url: "/ondemandmgt",
                         data: JSON.stringify({
-                            "action": "start",
+                            "action": "stop",
                             "path": "",
                             "router": "",
-                            "data": "",
-                            "profile": window.dynamicData.currentProfile
+                            "data": config,
+                            "profile": ""
                         }),
                         contentType: "application/json",
                         dataType: "json",
@@ -570,7 +571,7 @@ btnStart.onclick = function () {
                             if (json["status"] == "OK") {
                                 window.dynamicData.run = false;
                                 changeBtnState(window.dynamicData.run);
-                                alertify.success('On-demand configuration has been applied and data-collection started')
+                                alertify.success('On-demand data-collection has been stopped')
                             } else {
                                 alertify.alert("JTSO...", json.msg);
                             }
