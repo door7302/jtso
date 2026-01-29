@@ -171,7 +171,7 @@ const GrafanaTemplate = `
               "tags": []
             }
           ],
-          "title": "Router: $device - Path: {{$element2.Info}} - Field: {{$element2.Field}}",
+          "title": "ROUTER: $device - FIELD: {{$element2.Field}}",
           "type": "timeseries"
         }
     {{end}}
