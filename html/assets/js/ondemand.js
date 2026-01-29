@@ -973,7 +973,7 @@ function renderPreview() {
     });
 
 
-    uniqueTags.tags.forEach((t, i) => {
+    uniqueTags.forEach((t, i) => {
         tagsDiv.innerHTML += `
             <span class="badge bg-primary">
                 ${t}
