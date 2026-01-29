@@ -64,9 +64,9 @@ const GrafanaTemplate = `
         "y": 0
       },
       "id": {{$index}},
-      "panels": [
-        {
+      "panels": [ 
 	  {{range $index2, $element2 := $element.Panels}}{{if $index2}},{{end}}
+        {
           "datasource": {
             "type": "influxdb",
             "uid": "jtsuid"
