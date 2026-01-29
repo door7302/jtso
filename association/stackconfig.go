@@ -367,20 +367,23 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	uniqueTagsGlobal := make(map[string]string)
 	uniqueTagsShort := make(map[string]struct{})
 	uniqueField := make(map[string]struct{})
-
+	uniqueAlias := make(map[string]struct{})
+	a := maker.Alias{
+		Name:     "ONDEMAND",
+		AliasOf:  "NA",
+		Prefixes: make([]string, 0),
+	}
 	for _, e := range profile.Entries {
 		row := ondemand.PathPanel{
 			Name:   e.Path,
 			Panels: make([]ondemand.Panel, 0),
 		}
 
+		// collect aliases
 		if len(e.Aliases) > 0 {
-			a := maker.Alias{
-				Name:     "ONDEMAND",
-				AliasOf:  strings.TrimSuffix(e.Path, "/"),
-				Prefixes: e.Aliases,
+			for _, al := range e.Aliases {
+				uniqueAlias[al] = struct{}{}
 			}
-			gnmi.Aliases = append(gnmi.Aliases, a)
 		}
 		sub := maker.Subscription{
 			Name:     "ONDEMAND",
@@ -520,6 +523,11 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		grafanaDash.Variables = append(grafanaDash.Variables, gfnaV)
 	}
 
+	// Update alias
+	for i := range uniqueAlias {
+		a.Prefixes = append(a.Prefixes, i)
+	}
+	gnmi.Aliases = append(gnmi.Aliases, a)
 	telegrafOnDemand.GnmiList = append(telegrafOnDemand.GnmiList, *gnmi)
 	telegrafOnDemand.RenameList = append(telegrafOnDemand.RenameList, *rename)
 	telegrafOnDemand.ConverterList = append(telegrafOnDemand.ConverterList, *converter)
