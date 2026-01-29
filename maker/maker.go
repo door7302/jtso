@@ -11,12 +11,20 @@ import (
 	"text/template"
 )
 
-const (
-	CLONE_ORDER     int = 1
-	PIVOT_ORDER     int = 10
-	RENAME_ORDER    int = 100
-	PROCESSOR_ORDER int = 200
-)
+var order = map[string]int{
+	"clone":      10,
+	"pivot":      30,
+	"rename":     50,
+	"enum":       70,
+	"string":     90,
+	"regex":      110,
+	"xreducer":   130,
+	"filter":     150,
+	"enrichment": 170,
+	"converter":  190,
+	"rate":       210,
+	"monitoring": 230,
+}
 
 func LoadConfig(filePath string) (*TelegrafConfig, error) {
 
@@ -112,8 +120,6 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 	//var order int
 	// Target config
 	var config TelegrafConfig
-	var keepOrder int
-
 	for _, entry := range listOfConf {
 
 		//---------------------------------------------------------------
@@ -184,7 +190,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 			}
 			// now we reallocate the order
 			for i := 0; i < len(config.CloneList); i++ {
-				config.CloneList[i].Order = CLONE_ORDER + i
+				config.CloneList[i].Order = order["clone"] + i
 			}
 		}
 
@@ -215,7 +221,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 			}
 			// now we reallocate the order
 			for i := 0; i < len(config.PivotList); i++ {
-				config.PivotList[i].Order = PIVOT_ORDER + i
+				config.PivotList[i].Order = order["pivot"] + i
 			}
 		}
 
@@ -233,7 +239,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 
 			// now we reallocate the order
 			for i := 0; i < len(config.RenameList); i++ {
-				config.RenameList[i].Order = RENAME_ORDER + i
+				config.RenameList[i].Order = order["rename"] + i
 			}
 		}
 
@@ -242,7 +248,6 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		//---------------------------------------------------------------
 		// Save smallest order
 		if len(entry.EnrichmentList) > 0 {
-			keepOrder = 0
 			if len(config.EnrichmentList) == 0 {
 				config.EnrichmentList = append([]Enrichment{}, entry.EnrichmentList...)
 			} else {
@@ -255,51 +260,42 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 							mergeUniqueInPlaceString(&config.EnrichmentList[i].Namepass, e.Namepass)
 							// then check if we have level2 tag in entry if yes merge with existing l2 tag and override twolevel flag
 							mergeUniqueInPlaceString(&config.EnrichmentList[i].Level2, e.Level2)
-							config.EnrichmentList[i].TwoLevels = true
+							if len(config.EnrichmentList[i].Level2) > 0 {
+								config.EnrichmentList[i].TwoLevels = true
+							}
 							match = true
 							break
 						}
 					}
 					if !match {
-						// Unknown Pivot add to the List
 						config.EnrichmentList = append(config.EnrichmentList, e)
 					}
 				}
 			}
-
-			for _, e := range config.EnrichmentList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
-			}
 			// now we reallocate the order
 			for i := 0; i < len(config.EnrichmentList); i++ {
-				config.EnrichmentList[i].Order = PROCESSOR_ORDER + keepOrder + i
+				config.EnrichmentList[i].Order = order["enrichment"] + i
 			}
 		}
 
 		//--------------------------------------------------------------------
 		// Optimise rate plugin: keep only one
 		//--------------------------------------------------------------------
-		// Init with one empty Rate opbject
+		// Init with one empty Rate object
 		if len(entry.RateList) > 0 {
 			if len(config.RateList) == 0 {
 				config.RateList = append(config.RateList, Rate{
-					Order:    0,
+					Order:    order["rate"],
 					Namepass: []string{},
 					Fields:   []string{},
 				})
 			}
-			keepOrder = config.RateList[0].Order
 
 			for _, e := range entry.RateList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
 				mergeUniqueInPlaceString(&config.RateList[0].Namepass, e.Namepass)
 				mergeUniqueInPlaceString(&config.RateList[0].Fields, e.Fields)
 			}
-			config.RateList[0].Order = PROCESSOR_ORDER + keepOrder
+			config.RateList[0].Order = order["rate"]
 		}
 
 		//---------------------------------------------------------------
@@ -307,7 +303,6 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		//---------------------------------------------------------------
 		// Save smallest order
 		if len(entry.XreducerList) > 0 {
-			keepOrder = 0
 			if len(config.XreducerList) == 0 {
 				config.XreducerList = append([]Xreducer{}, entry.XreducerList...)
 			} else {
@@ -315,25 +310,20 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 				mergeInPlaceStruct(&config.XreducerList, entry.XreducerList)
 			}
 
-			for _, e := range entry.XreducerList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
-			}
 			// now we reallocate the order
 			for i := 0; i < len(config.XreducerList); i++ {
-				config.XreducerList[i].Order = PROCESSOR_ORDER + keepOrder + i
+				config.XreducerList[i].Order = order["xreducer"] + i
 			}
 		}
 
 		//---------------------------------------------------------------
 		// Optimise Converter plugin - keep only one
 		//---------------------------------------------------------------
-		// Init with one empty Rate opbject
+		// Init with one empty converter object
 		if len(entry.ConverterList) > 0 {
 			if len(config.ConverterList) == 0 {
 				config.ConverterList = append(config.ConverterList, Converter{
-					Order:        0,
+					Order:        order["converter"],
 					Namepass:     []string{},
 					IntegerType:  []string{},
 					TagType:      []string{},
@@ -343,12 +333,9 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					UnsignedType: []string{},
 				})
 			}
-			keepOrder = config.ConverterList[0].Order
+			//keepOrder = config.ConverterList[0].Order
 
 			for _, e := range entry.ConverterList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
 				mergeUniqueInPlaceString(&config.ConverterList[0].Namepass, e.Namepass)
 				mergeUniqueInPlaceString(&config.ConverterList[0].IntegerType, e.IntegerType)
 				mergeUniqueInPlaceString(&config.ConverterList[0].TagType, e.TagType)
@@ -357,27 +344,23 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 				mergeUniqueInPlaceString(&config.ConverterList[0].BoolType, e.BoolType)
 				mergeUniqueInPlaceString(&config.ConverterList[0].UnsignedType, e.UnsignedType)
 			}
-			config.ConverterList[0].Order = PROCESSOR_ORDER + keepOrder
+			config.ConverterList[0].Order = order["converter"]
 		}
 
 		//---------------------------------------------------------------
 		// Optimise filtering plugin: keep one
 		//---------------------------------------------------------------
-		// Init with one empty Filter  opbject
+		// Init with one empty Filter  object
 		if len(entry.FilteringList) > 0 {
 			if len(config.FilteringList) == 0 {
 				config.FilteringList = append(config.FilteringList, Filtering{
-					Order:    0,
+					Order:    order["filter"],
 					Namepass: []string{},
 					Filters:  []Filter{},
 				})
 			}
-			keepOrder = config.FilteringList[0].Order
 
 			for _, e := range entry.FilteringList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
 				mergeUniqueInPlaceString(&config.FilteringList[0].Namepass, e.Namepass)
 				for _, f := range e.Filters {
 					lenEntry := len(config.FilteringList[0].Filters)
@@ -395,41 +378,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 			}
-			config.FilteringList[0].Order = PROCESSOR_ORDER + keepOrder
-		}
-
-		//---------------------------------------------------------------
-		// Optimise Converter plugin - keep only one
-		//---------------------------------------------------------------
-		// Init with one empty Rate opbject
-		if len(entry.ConverterList) > 0 {
-			if len(config.ConverterList) == 0 {
-				config.ConverterList = append(config.ConverterList, Converter{
-					Order:        0,
-					Namepass:     []string{},
-					IntegerType:  []string{},
-					TagType:      []string{},
-					FloatType:    []string{},
-					StringType:   []string{},
-					BoolType:     []string{},
-					UnsignedType: []string{},
-				})
-			}
-			keepOrder = config.ConverterList[0].Order
-
-			for _, e := range entry.ConverterList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
-				mergeUniqueInPlaceString(&config.ConverterList[0].Namepass, e.Namepass)
-				mergeUniqueInPlaceString(&config.ConverterList[0].IntegerType, e.IntegerType)
-				mergeUniqueInPlaceString(&config.ConverterList[0].TagType, e.TagType)
-				mergeUniqueInPlaceString(&config.ConverterList[0].FloatType, e.FloatType)
-				mergeUniqueInPlaceString(&config.ConverterList[0].StringType, e.StringType)
-				mergeUniqueInPlaceString(&config.ConverterList[0].BoolType, e.BoolType)
-				mergeUniqueInPlaceString(&config.ConverterList[0].UnsignedType, e.UnsignedType)
-			}
-			config.ConverterList[0].Order = PROCESSOR_ORDER + keepOrder
+			config.FilteringList[0].Order = order["filter"]
 		}
 
 		//---------------------------------------------------------------
@@ -437,7 +386,6 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		//---------------------------------------------------------------
 		// Save smallest order
 		if len(entry.EnumList) > 0 {
-			keepOrder = 0
 			if len(config.EnumList) == 0 {
 				config.EnumList = append([]Enum{}, entry.EnumList...)
 			} else {
@@ -445,35 +393,26 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 				mergeInPlaceStruct(&config.EnumList, entry.EnumList)
 			}
 
-			for _, e := range config.EnumList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
-			}
 			// now we reallocate the order
 			for i := 0; i < len(config.EnumList); i++ {
-				config.EnumList[i].Order = PROCESSOR_ORDER + keepOrder + i
+				config.EnumList[i].Order = order["enum"] + i
 			}
 		}
 
 		//---------------------------------------------------------------
 		// Optimise regex plugin: keep one
 		//---------------------------------------------------------------
-		// Init with one empty Filter  opbject
+		// Init with one empty regex  object
 		if len(entry.RegexList) > 0 {
 			if len(config.RegexList) == 0 {
 				config.RegexList = append(config.RegexList, Regex{
-					Order:    0,
+					Order:    order["regex"],
 					Namepass: []string{},
 					Entries:  []RegEntry{},
 				})
 			}
-			keepOrder = config.RegexList[0].Order
 
 			for _, e := range entry.RegexList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
 				mergeUniqueInPlaceString(&config.RegexList[0].Namepass, e.Namepass)
 				for _, f := range e.Entries {
 					lenEntry := len(config.RegexList[0].Entries)
@@ -491,27 +430,23 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 			}
-			config.RegexList[0].Order = PROCESSOR_ORDER + keepOrder
+			config.RegexList[0].Order = order["regex"]
 		}
 
 		//---------------------------------------------------------------
 		// Optimise string plugin: keep one
 		//---------------------------------------------------------------
-		// Init with one empty Filter  opbject
+		// Init with one empty string object
 		if len(entry.StringsList) > 0 {
 			if len(config.StringsList) == 0 {
 				config.StringsList = append(config.StringsList, Strings{
-					Order:    0,
+					Order:    order["string"],
 					Namepass: []string{},
 					Entries:  []StrEntry{},
 				})
 			}
-			keepOrder = config.StringsList[0].Order
 
 			for _, e := range entry.StringsList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
 				mergeUniqueInPlaceString(&config.StringsList[0].Namepass, e.Namepass)
 				for _, f := range e.Entries {
 					lenEntry := len(config.StringsList[0].Entries)
@@ -529,27 +464,24 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 			}
-			config.StringsList[0].Order = PROCESSOR_ORDER + keepOrder
+			config.StringsList[0].Order = order["string"]
 		}
 
 		//---------------------------------------------------------------
 		// Optimise monitoring plugin: keep one
 		//---------------------------------------------------------------
-		// Init with one empty Filter  opbject
+		// Init with one empty monitoring  object
 		if len(entry.MonitoringList) > 0 {
 			if len(config.MonitoringList) == 0 {
 				config.MonitoringList = append(config.MonitoringList, Monitoring{
-					Order:    0,
+					Order:    order["monitoring"],
 					Namepass: []string{},
 					Probes:   []Probe{},
 				})
 			}
-			keepOrder = config.MonitoringList[0].Order
 
 			for _, e := range entry.MonitoringList {
-				if e.Order < keepOrder || keepOrder == 0 {
-					keepOrder = e.Order
-				}
+
 				mergeUniqueInPlaceString(&config.MonitoringList[0].Namepass, e.Namepass)
 				for _, f := range e.Probes {
 					lenEntry := len(config.MonitoringList[0].Probes)
@@ -569,7 +501,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 					}
 				}
 			}
-			config.MonitoringList[0].Order = PROCESSOR_ORDER + keepOrder
+			config.MonitoringList[0].Order = order["monitoring"]
 		}
 
 		//---------------------------------------------------------------

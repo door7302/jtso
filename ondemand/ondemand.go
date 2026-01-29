@@ -11,15 +11,11 @@ import (
 
 type (
 	FieldEntry struct {
-		Name    string `json:"name"`
-		Monitor bool   `json:"monitor"`
-		Rate    bool   `json:"rate"`
-		Convert bool   `json:"convert"`
-	}
-
-	TagEntry struct {
-		Name    string `json:"name"`
-		GroupBy bool   `json:"groupby"`
+		Name        string   `json:"name"`
+		Monitor     bool     `json:"monitor"`
+		Rate        bool     `json:"rate"`
+		Convert     bool     `json:"convert"`
+		InheritTags []string `json:"inherit_tags"`
 	}
 
 	Entry struct {
@@ -27,7 +23,7 @@ type (
 		Interval int          `json:"interval"`
 		Aliases  []string     `json:"aliases"`
 		Fields   []FieldEntry `json:"fields"`
-		Tags     []TagEntry   `json:"tags"`
+		Tags     []string     `json:"tags"`
 	}
 
 	RunningProfile struct {

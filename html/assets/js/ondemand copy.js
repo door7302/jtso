@@ -17,7 +17,8 @@
           "monitor": true,
           "rate": true,
           "convert": false,
-          "inherit_tags": [
+          "inherit": {
+            "tags": [
               "tag1"
             ],
             "aliases": []
@@ -28,7 +29,8 @@
           "monitor": true,
           "rate": false,
           "convert": false,
-          "inherit_tags": [
+          "inherit": {
+            "tags": [
               "tag2"
             ],
             "aliases": []
@@ -45,7 +47,7 @@
 
 */
 
-const allTagsTable = document.getElementById("alltags-table");
+const groupbyTable = document.getElementById("groupby-table");
 const fieldsTable = document.getElementById("fields-table");
 const btnAnalyze = document.getElementById('analyze');
 const btnAddEntry = document.getElementById('addentry');
@@ -104,7 +106,7 @@ pathInterval.addEventListener("input", (e) => {
 
 // BUTTON CLICK HANDLERS
 btnAnalyze.onclick = function () {
-    allTagsTable.innerHTML = "";
+    groupbyTable.innerHTML = "";
     fieldsTable.innerHTML = "";
     aliasesList.innerHTML = "";
     aliasesInfo.classList.add("d-none");
@@ -205,7 +207,7 @@ btnAddEntry.onclick = function () {
 }
 
 btnAnalyze.onclick = function () {
-    allTagsTable.innerHTML = "";
+    groupbyTable.innerHTML = "";
     fieldsTable.innerHTML = "";
     aliasesList.innerHTML = "";
     aliasesInfo.classList.add("d-none");
@@ -269,13 +271,13 @@ function sanityCheckXPath(xpath) {
 
 function provisionMonitorTables(data) {
 
-    if (!allTagsTable || !fieldsTable) {
+    if (!groupbyTable || !fieldsTable) {
         console.warn("Tables not found in DOM");
         return;
     }
 
     // ===== Clear existing rows =====
-    allTagsTable.innerHTML = "";
+    groupbyTable.innerHTML = "";
     fieldsTable.innerHTML = "";
     aliasesList.innerHTML = "";
     aliasesInfo.classList.add("d-none");
@@ -285,11 +287,13 @@ function provisionMonitorTables(data) {
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-            <td>${tag}</td>
+            <td>${tag.name}</td>
+            <td class="text-center">
+                <input type="checkbox" ${tag.groupby ? "checked" : ""}>
             </td>
         `;
 
-        allTagsTable.appendChild(tr);
+        groupbyTable.appendChild(tr);
     });
 
     // ===== Populate Fields table =====
@@ -315,6 +319,7 @@ function provisionMonitorTables(data) {
     data.aliases.forEach((alias, i) => {
         aliasesList.insertAdjacentHTML("beforeend", `
         <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="alias${i}" value="${alias}">
             <label class="form-check-label" for="alias${i}">
                 ${alias}
             </label>
@@ -356,6 +361,19 @@ btnGnmi.onclick = function () {
                 if (json.status == "OK") {
                     btnGnmi.disabled = false;
                     waitingDialog.hide();
+                    /* received payload 
+                    Data = {
+                        aliases: [],
+                        tags: [
+                            { name: "host", groupby: true },
+                            { name: "interface", groupby: false }
+                        ],
+                        fields: [
+                            { name: "in-octets", monitor: true, rate: true, convert: false },
+                            { name: "out-octets", monitor: false, rate: false, convert: false }
+                        ]
+                    }; */
+                    // save the reply from JTSO 
                     provisionMonitorTables(json.data);
                 } else {
                     btnGnmi.disabled = false;
@@ -494,7 +512,7 @@ function save() {
         alertify.alert("JSTO...", "Please add at least one path into the monitor list!");
         return;
     }
-
+        
     alertify
         .prompt(
             'Please enter a name for your config: ',
@@ -749,7 +767,7 @@ function renderResultTable(data) {
         entry.tags.forEach(tag => {
             const badge = document.createElement("span");
             badge.className = "badge bg-primary";
-            badge.textContent = tag;
+            badge.textContent = tag.name;
             tagsWrap.appendChild(badge);
         });
 
@@ -784,7 +802,7 @@ function renderResultTable(data) {
     });
 }
 
-function buildTmpGnmi() { 
+function buildTmpGnmi() {
     const tmpGnmi = {
         aliases: [],
         fields: [],
@@ -792,16 +810,19 @@ function buildTmpGnmi() {
     };
 
     /* ==========================
-       TAGS (alltags-table)
+       TAGS (groupby-table)
        ========================== */
     document
-        .querySelectorAll("#alltags-table tr")
+        .querySelectorAll("#groupby-table tr")
         .forEach(row => {
             const tagName = row.cells[0]?.textContent.trim();
             const checkbox = row.querySelector("input[type='checkbox']");
 
             if (checkbox && checkbox.checked && tagName) {
-                tmpGnmi.tags.push(tagName);
+                tmpGnmi.tags.push({
+                    name: tagName,
+                    groupby: true
+                });
             }
         });
 
@@ -869,7 +890,10 @@ function processGnmiData(tmpGnmi) {
        ========================== */
     tmpGnmi.tags.forEach(tag => {
         if (!toAdd.tags.includes(tag)) {
-            toAdd.tags.push(tag);
+            toAdd.tags.push({
+                name: tag.name,
+                groupby: tag.groupby
+            });
         }
     });
 
@@ -890,40 +914,40 @@ function addField() {
     var name = fieldName.value.trim();
     if (!name) return;
 
-    // Retrieve tags
-    var tags = []
-    var tagN = tagName.value.trim();
-    if (tagN) {
-        tags = tagN.split(";").map(item => normalizePath(item.trim()));
-        tags.forEach(item => {
-            if (!toAdd.tags.includes(item)) {
-                toAdd.tags.push(item);
-            }
-        });
-    }
-
-    // Retrieve Aliases
-    var aliases = []
-    var aliasN = aliasName.value.trim();
-    if (aliasN) {
-        aliases = aliasN.split(";").map(item => normalizePath(item.trim()));
-        aliases.forEach(item => {
-            if (!toAdd.aliases.includes(item)) {
-                toAdd.aliases.push(item);
-            }
-        });
-    }
-
     name = normalizeFieldPath(name);
-    toAdd.fields.push({ "name": name, "monitor": true, "convert": convertCheck.checked, "rate": rateCheck.checked, "inherit_tags": tags});
-    
+    toAdd.fields.push({ "name": name, "monitor": true, "convert": convertCheck.checked, "rate": rateCheck.checked });
+
     fieldName.value = "";
-    tagName.value = "";
-    aliasName.value = "";
     convertCheck.checked = false;
     rateCheck.checked = false;
 
     bootstrap.Modal.getInstance(fieldModal).hide();
+    renderPreview();
+}
+
+/* ADD TAG */
+function addTag() {
+    var name = tagName.value.trim();
+    if (!name) return;
+
+    name = normalizePath(name);
+    toAdd.tags.push({ "name": name, "groupby": true });
+
+    tagName.value = "";
+    bootstrap.Modal.getInstance(tagModal).hide();
+    renderPreview();
+}
+
+/* ADD Alias */
+function addAlias() {
+    var name = aliasName.value.trim();
+    if (!name) return;
+
+    name = normalizePath(name);
+    toAdd.aliases.push(name);
+
+    aliasName.value = "";
+    bootstrap.Modal.getInstance(aliasModal).hide();
     renderPreview();
 }
 
@@ -982,7 +1006,7 @@ function renderPreview() {
     toAdd.tags.forEach((t, i) => {
         tagsDiv.innerHTML += `
             <span class="badge bg-primary">
-                ${t}
+                ${t.name}
                 <i class="fa fa-times ms-1 text-light"
                    role="button"
                    onclick="removeTag(${i})"></i>

@@ -62,21 +62,22 @@
 
                         <!-- ===== LEFT TABLE : GroupBy Tags ===== -->
                         <div class="flex-fill">
-                            <h6 class="mb-2">Associated Tags:</h6>
+                            <h6 class="mb-2">Tags found out:</h6>
                             <table class="table table-sm table-bordered table-hover">
                                 <thead class="thead-light">
                                     <tr>
                                         <th>Tag name</th>
+                                        <th class="text-center" style="width: 90px;">Group By</th>
                                     </tr>
                                 </thead>
-                                <tbody id="alltags-table">
+                                <tbody id="groupby-table">
                                 </tbody>
                             </table>
                         </div>
 
                         <!-- ===== RIGHT TABLE : Fields to Monitor ===== -->
                         <div class="flex-fill">
-                            <h6 class="mb-2">Fields found:</h6>
+                            <h6 class="mb-2">Fields found out:</h6>
                             <table class="table table-sm table-bordered table-hover">
                                 <thead class="thead-light">
                                     <tr>
@@ -109,7 +110,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Field and its Tags/Aliases</h5>
+                    <h5 class="modal-title">Add Field</h5>
                 </div>
 
                 <div class="modal-body">
@@ -124,15 +125,49 @@
                         <input id="rateCheck" class="form-check-input" type="checkbox">
                         <label class="form-check-label">Compute rate</label>
                     </div>
-
-                    <input id="tagName" class="form-control mb-2" placeholder="Full Tag's path. Add several? use ;">
-
-                    <input id="aliasName" class="form-control mb-2" placeholder="Full Alias's path. Add several? use ;">
                 </div>
 
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button class="btn btn-warning" onclick="addField()">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="tagModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Tag</h5>
+                </div>
+
+                <div class="modal-body">
+                    <input id="tagName" class="form-control" placeholder="Tag name">
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" onclick="addTag()">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="aliasModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Alias</h5>
+                </div>
+
+                <div class="modal-body">
+                    <input id="aliasName" class="form-control" placeholder="Alias path">
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" onclick="addAlias()">Add</button>
                 </div>
             </div>
         </div>
@@ -199,10 +234,19 @@
 
                 <!-- Add buttons -->
                 <div class="mb-3">
-                    <strong>Add Fields, Tags, Aliases manually:&nbsp;</strong>
+                    <strong>Add Fields, Tags manually:&nbsp;</strong>
                     <button class="btn btn-sm btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#fieldModal">
                         + Field
                     </button>
+
+                    <button class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#tagModal">
+                        + Tag
+                    </button>
+
+                    <button class="btn btn-sm btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#aliasModal">
+                        + Alias
+                    </button>
+
                 </div>
 
                 <!-- Preview -->
@@ -215,7 +259,7 @@
                     <div id="tagsPreview" class="d-flex flex-wrap gap-1 mt-1"></div>
                 </div>
                 <div class="mb-2">
-                    <strong>Aliases to include: </strong>
+                    <strong>Aliases to match: </strong>
                     <div id="aliasesPreview" class="d-flex flex-wrap gap-1 mt-1"></div>
                 </div>
             </div>

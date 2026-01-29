@@ -1372,20 +1372,24 @@ func routeGetRawConfig(c echo.Context) error {
 	}
 
 	filename := ""
+	found := false
 	for id, collection := range association.Collections[family] {
-		found := false
+
 		for _, rtr := range collection.Routers {
 			if rtr.Shortname == r.Shortname {
 				found = true
 				break
 			}
 		}
-
-		if !found {
-			logger.Log.Errorf("Unable to find family for router %s in a collection", r.Shortname)
-			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to find family for router in a collection"})
+		if found {
+			filename = family + "/" + "telegraf.d/" + family + "_" + id + ".conf"
+			break
 		}
-		filename = family + "/" + "telegraf.d/" + family + "_" + id + ".conf"
+
+	}
+	if !found {
+		logger.Log.Errorf("Unable to find family for router %s in a collection", r.Shortname)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to find family for router in a collection"})
 	}
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: filename})
 }

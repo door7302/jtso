@@ -75,22 +75,22 @@ type XPathInfo struct {
 	Leaf string
 }
 
-type Field struct {
-	Name    string `json:"name"`
-	Monitor bool   `json:"monitor"`
-	Rate    bool   `json:"rate"`
-	Convert bool   `json:"convert"`
+type InheritData struct {
+	Tags    []string `json:"tags"`
+	Aliases []string `json:"aliases"`
 }
 
-type Tag struct {
-	Name    string `json:"name"`
-	GroupBy bool   `json:"groupby"`
+type Field struct {
+	Name        string   `json:"name"`
+	Monitor     bool     `json:"monitor"`
+	Rate        bool     `json:"rate"`
+	Convert     bool     `json:"convert"`
+	InheritTags []string `json:"inherit_tags"`
 }
 
 type OnceReply struct {
-	Aliases []string `json:"aliases"`
 	Fields  []Field  `json:"fields"`
-	Tags    []Tag    `json:"tags"`
+	Aliases []string `json:"aliases"`
 }
 
 func genUUID() string {
@@ -622,9 +622,7 @@ func GnmiOnDemand(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 	var tg *target.Target
 	var err error
 	r := OnceReply{
-		Fields:  make([]Field, 0),
-		Tags:    make([]Tag, 0),
-		Aliases: make([]string, 0),
+		Fields: make([]Field, 0),
 	}
 
 	logger.Log.Infof("Start gNMI SAMPLE ONDEMAND subscription for router %s and xpath %s (timeout is %d)", o.Router, o.Path, o.Timeout)
@@ -741,29 +739,17 @@ Loop:
 			break Loop
 		}
 	}
-	// Parse the response
-	tagMap := make(map[string]struct{})
-	fieldMap := make(map[string]struct{})
 
+	// Parse the response
+	fieldMap := make(map[string][]string)
 	for k := range allReply {
 		info := extractFieldTag(o.Path, k, hideOrigin)
 		// Add tags and field in the 2 "set" - to keep unicity
 		if info.Leaf != "" {
-			fieldMap[info.Leaf] = struct{}{}
-		}
-		if len(info.Keys) != 0 {
-			for _, tag := range info.Keys {
-				tagMap[tag] = struct{}{}
-			}
+			sort.Strings(info.Keys)
+			fieldMap[info.Leaf] = info.Keys
 		}
 	}
-
-	// Extract keys for tagMap to sort them
-	tagKeys := make([]string, 0, len(tagMap))
-	for key := range tagMap {
-		tagKeys = append(tagKeys, key)
-	}
-	sort.Strings(tagKeys)
 
 	// Extract keys for fieldMap to sort them
 	fieldKeys := make([]string, 0, len(fieldMap))
@@ -772,22 +758,14 @@ Loop:
 	}
 	sort.Strings(fieldKeys)
 
-	// fill the reply
-	for _, k := range tagKeys {
-		t := Tag{
-			Name:    k,
-			GroupBy: false,
-		}
-		r.Tags = append(r.Tags, t)
-	}
-
 	rootAlias := &TrieNode{}
 	for _, k := range fieldKeys {
 		f := Field{
-			Name:    k,
-			Monitor: false,
-			Rate:    false,
-			Convert: false,
+			Name:        k,
+			Monitor:     false,
+			Rate:        false,
+			Convert:     false,
+			InheritTags: fieldMap[k],
 		}
 		r.Fields = append(r.Fields, f)
 
@@ -909,37 +887,17 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 		tg.Close()
 		return err, r
 	}
-	logger.Log.Infof("DEBUG: %v", onceResps)
+
 	// Parse the response
-	tagMap := make(map[string]struct{})
-	fieldMap := make(map[string]struct{})
-
-	for _, r := range onceResps {
-		f, err := formatters.ResponsesFlat(r)
-		if err != nil {
-			logger.Log.Errorf("Unable to parse the gNMI ONCE response: %v", err)
-			continue
-		}
-		for k := range f {
-			info := extractFieldTag(o.Path, k, hideOrigin)
-			// Add tags and field in the 2 "set" - to keep unicity
-			if info.Leaf != "" {
-				fieldMap[info.Leaf] = struct{}{}
-			}
-			if len(info.Keys) != 0 {
-				for _, tag := range info.Keys {
-					tagMap[tag] = struct{}{}
-				}
-			}
+	fieldMap := make(map[string][]string)
+	for k := range onceResps {
+		info := extractFieldTag(o.Path, k, hideOrigin)
+		// Add tags and field in the 2 "set" - to keep unicity
+		if info.Leaf != "" {
+			sort.Strings(info.Keys)
+			fieldMap[info.Leaf] = info.Keys
 		}
 	}
-
-	// Extract keys for tagMap to sort them
-	tagKeys := make([]string, 0, len(tagMap))
-	for key := range tagMap {
-		tagKeys = append(tagKeys, key)
-	}
-	sort.Strings(tagKeys)
 
 	// Extract keys for fieldMap to sort them
 	fieldKeys := make([]string, 0, len(fieldMap))
@@ -948,22 +906,14 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 	}
 	sort.Strings(fieldKeys)
 
-	// fill the reply
-	for _, k := range tagKeys {
-		t := Tag{
-			Name:    k,
-			GroupBy: false,
-		}
-		r.Tags = append(r.Tags, t)
-	}
-
 	rootAlias := &TrieNode{}
 	for _, k := range fieldKeys {
 		f := Field{
-			Name:    k,
-			Monitor: false,
-			Rate:    false,
-			Convert: false,
+			Name:        k,
+			Monitor:     false,
+			Rate:        false,
+			Convert:     false,
+			InheritTags: fieldMap[k],
 		}
 		r.Fields = append(r.Fields, f)
 
