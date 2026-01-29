@@ -15,6 +15,7 @@ type Variable struct {
 type Panel struct {
 	Alias   string
 	Field   string
+	Unit    string
 	TagCode string
 	Info    string
 }
@@ -110,6 +111,7 @@ const GrafanaTemplate = `
                 }
               },
               "mappings": [],
+              "min": 0,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -119,7 +121,7 @@ const GrafanaTemplate = `
                   }
                 ]
               },
-              "unit": "none",
+              "unit": "{{$element2.Unit}}",
               "unitScale": true
             },
             "overrides": []

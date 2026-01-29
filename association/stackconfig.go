@@ -495,10 +495,35 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 				tagsToAlias = tagsToAlias[:len(tagsToAlias)-3]
 			}
 
+			// auto detect some unit
+			unit := "none"
+			if strings.Contains(finalField, "octet") || strings.Contains(finalField, "byte") {
+				if f.Rate {
+					unit = "Bps"
+				} else {
+					unit = "decbytes"
+				}
+			}
+			if strings.Contains(finalField, "bit") {
+				if f.Rate {
+					unit = "bps"
+				} else {
+					unit = "decbits"
+				}
+			}
+			if strings.Contains(finalField, "packet") || strings.Contains(finalField, "pkt") {
+				if f.Rate {
+					unit = "pps"
+				} else {
+					unit = "pkts"
+				}
+			}
+
 			// Create panel
 			gfnaV := ondemand.Panel{
 				Alias:   tagsToAlias,
 				Field:   finalField,
+				Unit:    unit,
 				TagCode: tagCode,
 				Info:    e.Path,
 			}
