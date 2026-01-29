@@ -19,8 +19,7 @@
           "convert": false,
           "inherit_tags": [
               "tag1"
-            ],
-            "aliases": []
+            ]
           }
         },
         {
@@ -30,14 +29,9 @@
           "convert": false,
           "inherit_tags": [
               "tag2"
-            ],
-            "aliases": []
+            ]
           }
         }
-      ],
-      "tags": [
-        "tag1",
-        "tag2"
       ]
     }
   ]
@@ -80,14 +74,14 @@ var toAdd = {
     interval: 0,
     aliases: [],
     fields: [],
-    tags: []
 };
 
 var tmpGnmi = {
     aliases: [],
     fields: [],
-    tags: []
 };
+
+var tmpMap = {};
 
 var profileSaved = true;
 
@@ -192,7 +186,6 @@ btnAddEntry.onclick = function () {
                     interval: toAdd.interval,
                     aliases: toAdd.aliases,
                     fields: toAdd.fields,
-                    tags: toAdd.tags
                 });
                 renderResultTable(window.dynamicData.currentProfile)
                 resetEntry()
@@ -279,20 +272,10 @@ function provisionMonitorTables(data) {
     fieldsTable.innerHTML = "";
     aliasesList.innerHTML = "";
     aliasesInfo.classList.add("d-none");
+    tmpMap = {};
 
-    // ===== Populate GroupBy Tags table =====
-    data.tags.forEach(tag => {
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-            <td>${tag}</td>
-            </td>
-        `;
-
-        allTagsTable.appendChild(tr);
-    });
-
-    // ===== Populate Fields table =====
+    // // ===== Populate Fields table =====
+    var uniqueTags = []
     data.fields.forEach(field => {
         const tr = document.createElement("tr");
 
@@ -309,6 +292,29 @@ function provisionMonitorTables(data) {
         </td>
     `;
         fieldsTable.appendChild(tr);
+
+        // Get tags 
+        const tagTable = [];
+
+        field.inherit_tags.forEach(tag => {
+            if (!uniqueTags.includes(tag)) {
+                uniqueTags.push(tag);
+            }
+            tagTable.push(tag);
+        });
+        tmpMap[field.name] = tagTable;
+    });
+
+    // ===== Populate Tags table =====
+    uniqueTags.forEach(tag => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${tag}</td>
+            </td>
+        `;
+
+        allTagsTable.appendChild(tr);
     });
 
     // ===== Populate Aliases =====
@@ -544,7 +550,6 @@ function save() {
 btnStart.onclick = function () {
     if (window.dynamicData.run) {
         // Here we should stop
-
         alertify.confirm("Are you sure you want to stop data collection?", function (e) {
             if (e) {
                 $(function () {
@@ -691,7 +696,6 @@ function renderResultTable(data) {
     data.entries.forEach((entry, index) => {
         const tr = document.createElement("tr");
 
-
         /* PATH */
         const pathTd = document.createElement("td");
         pathTd.classList.add("align-middle", "text-break");
@@ -724,6 +728,7 @@ function renderResultTable(data) {
         const fieldsWrap = document.createElement("div");
         fieldsWrap.className = "d-flex flex-wrap gap-1";
 
+        var uniqueTags = [];
         entry.fields.forEach(field => {
             const badge = document.createElement("span");
             badge.className = "badge bg-warning text-dark";
@@ -736,6 +741,13 @@ function renderResultTable(data) {
             }
 
             fieldsWrap.appendChild(badge);
+
+            // Get tags 
+            field.inherit_tags.forEach(tag => {
+                if (!uniqueTags.includes(tag)) {
+                    uniqueTags.push(tag);
+                }
+            });
         });
 
         fieldsTd.appendChild(fieldsWrap);
@@ -746,7 +758,7 @@ function renderResultTable(data) {
         const tagsWrap = document.createElement("div");
         tagsWrap.className = "d-flex flex-wrap gap-1";
 
-        entry.tags.forEach(tag => {
+        uniqueTags.forEach(tag => {
             const badge = document.createElement("span");
             badge.className = "badge bg-primary";
             badge.textContent = tag;
@@ -766,6 +778,7 @@ function renderResultTable(data) {
                title="Edit"
                data-index="${index}"></i>
         */
+
         actionsTd.innerHTML = `
             <i class="fa fa-trash text-danger action-delete"
                role="button"
@@ -784,26 +797,11 @@ function renderResultTable(data) {
     });
 }
 
-function buildTmpGnmi() { 
+function buildTmpGnmi() {
     const tmpGnmi = {
         aliases: [],
         fields: [],
-        tags: []
     };
-
-    /* ==========================
-       TAGS (alltags-table)
-       ========================== */
-    document
-        .querySelectorAll("#alltags-table tr")
-        .forEach(row => {
-            const tagName = row.cells[0]?.textContent.trim();
-            const checkbox = row.querySelector("input[type='checkbox']");
-
-            if (checkbox && checkbox.checked && tagName) {
-                tmpGnmi.tags.push(tagName);
-            }
-        });
 
     /* ==========================
        ALIASES (aliases-list)
@@ -831,7 +829,8 @@ function buildTmpGnmi() {
                     name: name,
                     monitor: true,
                     rate: !!rateCb?.checked,
-                    convert: !!convertCb?.checked
+                    convert: !!convertCb?.checked,
+                    inherit_tags: tmpMap[name]
                 });
             }
         });
@@ -859,17 +858,9 @@ function processGnmiData(tmpGnmi) {
                 name: field.name,
                 monitor: field.monitor,
                 convert: field.convert,
-                rate: field.rate
+                rate: field.rate,
+                inherit_tags: field.inherit_tags
             });
-        }
-    });
-
-    /* ==========================
-       TAGS
-       ========================== */
-    tmpGnmi.tags.forEach(tag => {
-        if (!toAdd.tags.includes(tag)) {
-            toAdd.tags.push(tag);
         }
     });
 
@@ -902,28 +893,28 @@ function addField() {
         });
     }
 
-    // Retrieve Aliases
-    var aliases = []
-    var aliasN = aliasName.value.trim();
-    if (aliasN) {
-        aliases = aliasN.split(";").map(item => normalizePath(item.trim()));
-        aliases.forEach(item => {
-            if (!toAdd.aliases.includes(item)) {
-                toAdd.aliases.push(item);
-            }
-        });
-    }
-
     name = normalizeFieldPath(name);
-    toAdd.fields.push({ "name": name, "monitor": true, "convert": convertCheck.checked, "rate": rateCheck.checked, "inherit_tags": tags});
-    
+    toAdd.fields.push({ "name": name, "monitor": true, "convert": convertCheck.checked, "rate": rateCheck.checked, "inherit_tags": tags });
+
     fieldName.value = "";
     tagName.value = "";
-    aliasName.value = "";
     convertCheck.checked = false;
     rateCheck.checked = false;
 
     bootstrap.Modal.getInstance(fieldModal).hide();
+    renderPreview();
+}
+
+/* ADD Alias */
+function addAlias() {
+    var name = aliasName.value.trim();
+    if (!name) return;
+
+    name = normalizePath(name);
+    toAdd.aliases.push(name);
+
+    aliasName.value = "";
+    bootstrap.Modal.getInstance(aliasModal).hide();
     renderPreview();
 }
 
@@ -950,11 +941,6 @@ function removeField(idx) {
     renderPreview();
 }
 
-function removeTag(idx) {
-    toAdd.tags.splice(idx, 1);
-    renderPreview();
-}
-
 function removeAlias(idx) {
     toAdd.aliases.splice(idx, 1);
     renderPreview();
@@ -967,6 +953,7 @@ function renderPreview() {
     tagsDiv.innerHTML = "";
     aliasesDiv.innerHTML = "";
 
+    var uniqueTags = [];
     toAdd.fields.forEach((f, i) => {
         fieldsDiv.innerHTML += `
             <span class="badge bg-warning text-dark">
@@ -977,15 +964,19 @@ function renderPreview() {
                    onclick="removeField(${i})"></i>
             </span>
         `;
+        // Get tags 
+        f.inherit_tags.forEach(tag => {
+            if (!uniqueTags.includes(tag)) {
+                uniqueTags.push(tag);
+            }
+        });
     });
 
-    toAdd.tags.forEach((t, i) => {
+
+    uniqueTags.tags.forEach((t, i) => {
         tagsDiv.innerHTML += `
             <span class="badge bg-primary">
                 ${t}
-                <i class="fa fa-times ms-1 text-light"
-                   role="button"
-                   onclick="removeTag(${i})"></i>
             </span>
         `;
     });
@@ -1040,14 +1031,13 @@ function resetEntry() {
         interval: 0,
         aliases: [],
         fields: [],
-        tags: []
     };
     renderPreview();
-    var tmpGnmi = {
+    tmpGnmi = {
         aliases: [],
         fields: [],
-        tags: []
     };
+    tmpMap = {};
     pathInput.value = "";
     pathInterval.value = ""
 }

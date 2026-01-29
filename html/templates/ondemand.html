@@ -109,7 +109,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Field and its Tags/Aliases</h5>
+                    <h5 class="modal-title">Add Field and its Tags</h5>
                 </div>
 
                 <div class="modal-body">
@@ -126,8 +126,6 @@
                     </div>
 
                     <input id="tagName" class="form-control mb-2" placeholder="Full Tag's path. Add several? use ;">
-
-                    <input id="aliasName" class="form-control mb-2" placeholder="Full Alias's path. Add several? use ;">
                 </div>
 
                 <div class="modal-footer">
@@ -138,6 +136,25 @@
         </div>
     </div>
 
+
+    <div class="modal fade" id="aliasModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Alias</h5>
+                </div>
+
+                <div class="modal-body">
+                    <input id="aliasName" class="form-control" placeholder="Alias path">
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" onclick="addAlias()">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <nav class="navbar navbar-light navbar-expand-md py-3">
         <div class="container">
@@ -202,6 +219,9 @@
                     <strong>Add Fields, Tags, Aliases manually:&nbsp;</strong>
                     <button class="btn btn-sm btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#fieldModal">
                         + Field
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#aliasModal">
+                        + Alias
                     </button>
                 </div>
 

@@ -23,7 +23,6 @@ type (
 		Interval int          `json:"interval"`
 		Aliases  []string     `json:"aliases"`
 		Fields   []FieldEntry `json:"fields"`
-		Tags     []string     `json:"tags"`
 	}
 
 	RunningProfile struct {

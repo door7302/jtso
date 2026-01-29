@@ -75,11 +75,6 @@ type XPathInfo struct {
 	Leaf string
 }
 
-type InheritData struct {
-	Tags    []string `json:"tags"`
-	Aliases []string `json:"aliases"`
-}
-
 type Field struct {
 	Name        string   `json:"name"`
 	Monitor     bool     `json:"monitor"`
