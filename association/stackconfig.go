@@ -275,9 +275,11 @@ func StopOndemand(p string) error {
 		oneError = true
 	}
 
-	// stop container
+	// stop telegraf on_demand
 	container.StopContainer("telegraf_ondemand")
-	container.StopContainer("grafana")
+
+	// restart Grafana
+	container.RestartContainer("grafana")
 
 	if oneError {
 		return fmt.Errorf("One task failed while stopping ondemand collection - check logs for more info")
