@@ -563,10 +563,8 @@ btnExport.onclick = function () {
                             "data": config,
                             "profile": {}
                         }),
-                        contentType: "application/json",
-                        xhrFields: {
-                            responseType: 'blob'
-                        },
+                        contentType: 'application/json',
+                        dataType: 'json',
                         success: function (json) {
                             waitingDialog.hide();
 
