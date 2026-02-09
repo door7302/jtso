@@ -1670,24 +1670,31 @@ func routeOnDemandMgt(c echo.Context) error {
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Profile name is required."})
 		}
 
+		// Load the profile (returns struct)
 		err, profile := ondemand.Load(r.Data)
 		if err != nil {
 			logger.Log.Errorf("Unable to load the profile %s: %v", r.Data, err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to open the on-demand profile"})
 		}
 
-		// Marshal JSON
-		jsonData, err := json.MarshalIndent(profile, "", "  ")
+		// Marshal profile struct to JSON string
+		jsonBytes, err := json.MarshalIndent(profile, "", "  ")
 		if err != nil {
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to encode profile."})
 		}
 
-		filename := fmt.Sprintf("%s.json", r.Data)
+		// Convert JSON bytes back to interface{} so ReplyStats can hold it
+		var profileData any
+		if err := json.Unmarshal(jsonBytes, &profileData); err != nil {
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to prepare profile data."})
+		}
 
-		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=\"%s\"", filename))
-		c.Response().Header().Set(echo.HeaderContentType, "application/json")
-
-		return c.Blob(http.StatusOK, "application/json", jsonData)
+		// Return wrapped JSON with Status field
+		return c.JSON(http.StatusOK, ReplyStats{
+			Status: "OK",
+			Msg:    "Profile export ready",
+			Data:   profileData,
+		})
 	case "save":
 		err = ondemand.Save(r.Data, r.Profile)
 		if err != nil {

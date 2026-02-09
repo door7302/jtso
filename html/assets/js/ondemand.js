@@ -565,44 +565,27 @@ btnExport.onclick = function () {
                         }),
                         contentType: "application/json",
                         xhrFields: {
-                            responseType: 'blob'   
+                            responseType: 'blob'
                         },
-                        success: function (blob, status, xhr) {
-
+                        success: function (json) {
                             waitingDialog.hide();
 
-                            // Check if backend returned JSON error instead of file
-                            const contentType = xhr.getResponseHeader("Content-Type");
-
-                            if (contentType.includes("application/json") &&
-                                !xhr.getResponseHeader("Content-Disposition")) {
-
-                                // It is an error JSON
-                                const reader = new FileReader();
-                                reader.onload = function () {
-                                    const json = JSON.parse(reader.result);
-                                    alertify.alert("Error", json.Msg || "Unknown error");
-                                };
-                                reader.readAsText(blob);
+                            if (json.Status !== "OK") {
+                                alertify.alert("Error", json.Msg || "Unknown error");
                                 return;
                             }
 
-                            // Extract filename from header
-                            const disposition = xhr.getResponseHeader("Content-Disposition");
-                            let filename = config + ".json";
+                            // Convert the Data field to string
+                            const jsonString = JSON.stringify(json.Data, null, 2);
 
-                            if (disposition && disposition.indexOf("filename=") !== -1) {
-                                filename = disposition.split("filename=")[1].replace(/"/g, '');
-                            }
-
-                            // Create download link
+                            const blob = new Blob([jsonString], { type: "application/json" });
                             const url = window.URL.createObjectURL(blob);
+
                             const a = document.createElement("a");
                             a.href = url;
-                            a.download = filename;
-                            document.body.appendChild(a);
+                            a.download = config + ".json";  // file name
                             a.click();
-                            a.remove();
+
                             window.URL.revokeObjectURL(url);
                         },
                         error: function () {
