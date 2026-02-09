@@ -691,6 +691,7 @@ btnStart.onclick = function () {
 btnClear.onclick = function () {
     alertify.confirm("Are you sure you want clear all past on-demand data from the DB?", function (e) {
         if (e) {
+            waitingDialog.show();
             $(function () {
                 $.ajax({
                     type: 'POST',
@@ -705,13 +706,15 @@ btnClear.onclick = function () {
                     contentType: "application/json",
                     dataType: "json",
                     success: function (json) {
+                        waitingDialog.hide();
                         if (json["status"] == "OK") {
-                            alertify.success('Past On-demand data has been cleared.')
+                            alertify.success('Past On-demand data have been cleared.')
                         } else {
                             alertify.alert("JTSO...", json.msg);
                         }
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
+                        waitingDialog.hide();
                         alertify.alert("JSTO...", "Unexpected error...");
                     }
                 });

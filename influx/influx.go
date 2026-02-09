@@ -73,6 +73,45 @@ func EmptyDB() error {
 	}
 }
 
+// DropMeasurement drops all data from a specific measurement in InfluxDB
+func DropMeasurement(measurement string) error {
+	if measurement == "" {
+		return fmt.Errorf("measurement name cannot be empty")
+	}
+
+	// Create a new HTTP client
+	c, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr: influxDBURL,
+	})
+	if err != nil {
+		logger.Log.Errorf("Unable to establish InfluxDB connection: %v", err)
+		return err
+	}
+	defer c.Close()
+
+	// Prepare the query to drop all series from the measurement
+	q := client.Query{
+		Command:  fmt.Sprintf("DROP SERIES FROM \"%s\"", measurement),
+		Database: influxDBDatabase,
+	}
+
+	// Execute the query
+	if response, err := c.Query(q); err == nil && response.Error() == nil {
+		logger.Log.Infof("InfluxDB measurement %s has been successfully cleared", measurement)
+		return nil
+	} else {
+		if err != nil {
+			logger.Log.Errorf("Failed to execute DROP SERIES query: %v", err)
+			return err
+		} else if response.Error() != nil {
+			logger.Log.Errorf("InfluxDB response error: %v", response.Error())
+			return response.Error()
+		}
+	}
+
+	return nil
+}
+
 func DropRouter(r string) error {
 	// Create a new HTTP client
 	c, err := client.NewHTTPClient(client.HTTPConfig{

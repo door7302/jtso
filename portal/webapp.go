@@ -1665,6 +1665,13 @@ func routeOnDemandMgt(c echo.Context) error {
 		}
 		ondemand.CC.CurrentProfile = profile
 		return c.JSON(http.StatusOK, ReplyOnDemandProfile{Status: "OK", Profile: profile})
+	case "clear":
+		err := influx.DropMeasurement("ONDEMAND")
+		if err != nil {
+			logger.Log.Errorf("Unable to clear the ONDEMAND Influx measurement: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to clear the ONDEMAND Influx measurement"})
+		}
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "ONDEMAND measurement has been cleared"})
 	case "export":
 		if r.Data == "" {
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Profile name is required."})
