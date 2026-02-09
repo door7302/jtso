@@ -45,6 +45,7 @@ const btnAnalyze = document.getElementById('analyze');
 const btnAddEntry = document.getElementById('addentry');
 const btnResetEntry = document.getElementById('resetentry');
 const btnLoad = document.getElementById('load');
+const btnExport = document.getElementById('export');
 const btnRouter = document.getElementById('updatertr')
 const rtrList = document.getElementById('routerlist')
 const btnSave = document.getElementById('save');
@@ -542,6 +543,80 @@ function save() {
             }
         ).setHeader('JSTO...');
 }
+
+
+btnExport.onclick = function () {
+    const config = selectConfig.value;
+    if (config != "default") {
+
+        alertify.confirm("Do you want to dowload the " + config + " json file?", function (e) {
+            if (e) {
+                waitingDialog.show();
+                $(function () {
+                    $.ajax({
+                        type: 'POST',
+                        url: "/ondemandmgt",
+                        data: JSON.stringify({
+                            "action": "export",
+                            "path": "",
+                            "router": "",
+                            "data": config,
+                            "profile": {}
+                        }),
+                        contentType: "application/json",
+                        xhrFields: {
+                            responseType: 'blob'   
+                        },
+                        success: function (blob, status, xhr) {
+
+                            waitingDialog.hide();
+
+                            // Check if backend returned JSON error instead of file
+                            const contentType = xhr.getResponseHeader("Content-Type");
+
+                            if (contentType.includes("application/json") &&
+                                !xhr.getResponseHeader("Content-Disposition")) {
+
+                                // It is an error JSON
+                                const reader = new FileReader();
+                                reader.onload = function () {
+                                    const json = JSON.parse(reader.result);
+                                    alertify.alert("Error", json.Msg || "Unknown error");
+                                };
+                                reader.readAsText(blob);
+                                return;
+                            }
+
+                            // Extract filename from header
+                            const disposition = xhr.getResponseHeader("Content-Disposition");
+                            let filename = config + ".json";
+
+                            if (disposition && disposition.indexOf("filename=") !== -1) {
+                                filename = disposition.split("filename=")[1].replace(/"/g, '');
+                            }
+
+                            // Create download link
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            window.URL.revokeObjectURL(url);
+                        },
+                        error: function () {
+                            waitingDialog.hide();
+                            alertify.alert("JSTO...", "Unexpected error...");
+                        }
+                    });
+                });
+            }
+        }).setHeader('JSTO...');
+    } else {
+        alertify.alert("JTSO...", "Please select an config file in the list");
+    }
+};
 
 btnStart.onclick = function () {
     if (window.dynamicData.run) {

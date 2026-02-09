@@ -1665,6 +1665,29 @@ func routeOnDemandMgt(c echo.Context) error {
 		}
 		ondemand.CC.CurrentProfile = profile
 		return c.JSON(http.StatusOK, ReplyOnDemandProfile{Status: "OK", Profile: profile})
+	case "export":
+		if r.Data == "" {
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Profile name is required."})
+		}
+
+		err, profile := ondemand.Load(r.Data)
+		if err != nil {
+			logger.Log.Errorf("Unable to load the profile %s: %v", r.Data, err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to open the on-demand profile"})
+		}
+
+		// Marshal JSON
+		jsonData, err := json.MarshalIndent(profile, "", "  ")
+		if err != nil {
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Failed to encode profile."})
+		}
+
+		filename := fmt.Sprintf("%s.json", r.Data)
+
+		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=\"%s\"", filename))
+		c.Response().Header().Set(echo.HeaderContentType, "application/json")
+
+		return c.Blob(http.StatusOK, "application/json", jsonData)
 	case "save":
 		err = ondemand.Save(r.Data, r.Profile)
 		if err != nil {
