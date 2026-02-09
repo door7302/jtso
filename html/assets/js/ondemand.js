@@ -568,23 +568,23 @@ btnExport.onclick = function () {
                         success: function (json) {
                             waitingDialog.hide();
 
-                            if (json.Status !== "OK") {
-                                alertify.alert("Error", json.Msg || "Unknown error");
-                                return;
+                            if (json["status"] == "OK") {
+                                // Convert the Data field to string
+                                const jsonString = JSON.stringify(json["data"], null, 2);
+
+                                const blob = new Blob([jsonString], { type: "application/json" });
+                                const url = window.URL.createObjectURL(blob);
+
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = config + ".json";  // file name
+                                a.click();
+
+                                window.URL.revokeObjectURL(url);
+                            } else {
+                                alertify.alert('JSTO...', json.msg);
                             }
 
-                            // Convert the Data field to string
-                            const jsonString = JSON.stringify(json.Data, null, 2);
-
-                            const blob = new Blob([jsonString], { type: "application/json" });
-                            const url = window.URL.createObjectURL(blob);
-
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = config + ".json";  // file name
-                            a.click();
-
-                            window.URL.revokeObjectURL(url);
                         },
                         error: function () {
                             waitingDialog.hide();
