@@ -88,7 +88,7 @@ function saveSettings() {
     "kafkaversion": kVersion,
     "kafkaformat": kFormat,
     "kafkacompression": DictKafkaCodec[kCompression],
-    "kafkamessagesize": kMessageSize
+    "kafkamessagesize": parseInt(kMessageSize)
   };
   // send data
   $(function () {
