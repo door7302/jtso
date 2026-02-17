@@ -312,7 +312,7 @@ func UpdateKafkaConfig(enabled int, brokers, topic, format, version string, comp
 
 	_, err := db.Exec(`	
 		INSERT INTO kafka_config (id, enabled, brokers, topic, format, version, compression, messagesize)
-		VALUES (0, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (0, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			enabled = excluded.enabled,
 			brokers = excluded.brokers,
