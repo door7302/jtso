@@ -527,6 +527,18 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 				mergeInPlaceStruct(&config.FileList, entry.FileList)
 			}
 		}
+
+		//---------------------------------------------------------------
+		// Optimise Kafka output plugin
+		//---------------------------------------------------------------
+		if len(entry.KafkaList) > 0 {
+			if len(config.KafkaList) == 0 {
+				config.KafkaList = append([]KafkaOutput{}, entry.KafkaList...)
+			} else {
+				// We merge fieldpass - we support today only one Kafka Output that explains the [0]
+				mergeUniqueInPlaceString(&config.KafkaList[0].Fieldpass, entry.KafkaList[0].Fieldpass)
+			}
+		}
 	}
 
 	// Last step is to optimize Gnmi subscriptions
@@ -658,6 +670,27 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				err = tmpl.Execute(&result, config.FileList)
 				if err != nil {
 					logger.Log.Errorf("Unable to generate File toml payload - err: %v", err)
+				} else {
+					footer += result.String()
+					hasOutput = true
+				}
+			}
+		}
+	}
+	// Manage Kafka Output
+	if len(config.KafkaList) > 0 {
+		t, err := template.New("kafkaTemplate").Parse(KafkaTemplate)
+		if err != nil {
+			logger.Log.Errorf("Error parsing Kafka template: %v", err)
+		} else {
+			tmpl = template.Must(t, mustErr)
+			if mustErr != nil {
+				logger.Log.Errorf("Unable to render Kafka json template - err: %v", mustErr)
+			} else {
+				var result bytes.Buffer
+				err = tmpl.Execute(&result, config.KafkaList)
+				if err != nil {
+					logger.Log.Errorf("Unable to generate Kafka	 toml payload - err: %v", err)
 				} else {
 					footer += result.String()
 					hasOutput = true

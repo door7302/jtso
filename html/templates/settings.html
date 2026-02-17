@@ -62,12 +62,12 @@
         <div class="other-div">
             <div class="card other-card">
                 <div class="card-body">
-                    <h4 class="card-title">Settings Management</h4>
+                    <h4 class="card-title">Netconf & GNMI Credentials</h4>
                     <form><label class="form-label" style="margin-top: 10px;">Netconf Username:</label><input id="Username" class="form-control" type="text" value="{{.Netuser}}"></form>
                     <form style="margin-top: 10px;"><label class="form-label">Netconf Password:</label><input id="Password" class="form-control" type="password" value="{{.Netpwd}}"></form>
                     <form><label class="form-label" style="margin-top: 10px;">Gnmi Username:</label><input id="Username2" class="form-control" type="text" value="{{.Gnmiuser}}"></form>
                     <form style="margin-top: 10px;"><label class="form-label">Gnmi Password:</label><input id="Password2" class="form-control" type="password" value="{{.Gnmipwd}}"></form>
-                    </br>
+                    <hr>
                     <h4 class="card-title">Certificats Management for gNMI (Telegraf client side config)</h4>
                     <div style="margin-top: 10px;" class="form-check">
                         {{if eq .Usetls "yes"}}
@@ -100,7 +100,7 @@
                             see README)?
                         </label>
                     </div>
-                    </br>
+                   <hr>
                     <h4 class="card-title">Kafka export</h4>
                     <div style="margin-top: 10px;" class="form-check">
                         {{if eq .KafkaEnable 1}}

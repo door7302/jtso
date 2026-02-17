@@ -763,6 +763,7 @@ type KafkaOutput struct {
 	Version          string   `json:"version"`
 	MessageSize      int      `json:"message_size"`
 	CompressionCodec int      `json:"compression_codec"`
+	Fieldpass        []string `json:"fieldpass"`
 }
 
 // Go Template Receive a list of KafkaOutput (we should only have one) = KafkaList
@@ -783,5 +784,11 @@ const KafkaTemplate = `
   version = "{{.Version}}"
   max_message_bytes = {{.MessageSize}}
   compression_codec = {{.CompressionCodec}}
+  fieldpass = [
+  {{- range $index, $name := .Fieldpass}}
+  {{- if $index}},{{end}}
+      "{{$name}}"
+  {{- end}}
+  ]
 {{end}}
 `

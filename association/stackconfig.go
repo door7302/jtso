@@ -299,6 +299,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		EnrichmentList: make([]maker.Enrichment, 0), //Order = 300
 		RateList:       make([]maker.Rate, 0),       //Order = 400
 		InfluxList:     make([]maker.InfluxOutput, 0),
+		KafkaList:      make([]maker.KafkaOutput, 0),
 	}
 
 	// Prepare variables for ondemand grafana dashboard
@@ -566,6 +567,28 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
 	}
 	telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
+
+	// Add Kafka output if needed
+	if sqlite.ActiveKafkaConfig.Enabled == 1 {
+		// split list of brokers thanks to comma separator and trim spaces
+		brokers := strings.Split(sqlite.ActiveKafkaConfig.Brokers, ",")
+		s := make([]string, 0)
+		for _, b := range brokers {
+			s = append(s, strings.TrimSpace(b))
+		}
+		telegrafOnDemand.KafkaList = append(telegrafOnDemand.KafkaList, maker.KafkaOutput{
+			Brokers:          brokers,
+			Topic:            sqlite.ActiveKafkaConfig.Topic,
+			Format:           sqlite.ActiveKafkaConfig.Format,
+			Version:          sqlite.ActiveKafkaConfig.Version,
+			MessageSize:      sqlite.ActiveKafkaConfig.MessageSize,
+			CompressionCodec: sqlite.ActiveKafkaConfig.Compression,
+			// inherit some fields from influx output if not specified in kafka config
+			Fieldpass: telegrafOnDemand.InfluxList[0].Fieldpass,
+		})
+
+		logger.Log.Info("Kafka output added to the telegraf Ondemand config")
+	}
 
 	// render telegraf file
 	payload, err := maker.RenderConf(&telegrafOnDemand)
@@ -916,6 +939,28 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					mergedCfg.NetconfList[i].Username = sqlite.ActiveCred.NetconfUser
 					mergedCfg.NetconfList[i].Password = sqlite.ActiveCred.NetconfPwd
 				}
+			}
+			// Add Kafka output if needed
+			if sqlite.ActiveKafkaConfig.Enabled == 1 {
+				// split list of brokers thanks to comma separator and trim spaces
+				brokers := strings.Split(sqlite.ActiveKafkaConfig.Brokers, ",")
+				s := make([]string, 0)
+				for _, b := range brokers {
+					s = append(s, strings.TrimSpace(b))
+				}
+
+				mergedCfg.KafkaList = append(mergedCfg.KafkaList, maker.KafkaOutput{
+					Brokers:          brokers,
+					Topic:            sqlite.ActiveKafkaConfig.Topic,
+					Format:           sqlite.ActiveKafkaConfig.Format,
+					Version:          sqlite.ActiveKafkaConfig.Version,
+					MessageSize:      sqlite.ActiveKafkaConfig.MessageSize,
+					CompressionCodec: sqlite.ActiveKafkaConfig.Compression,
+					// inherit some fields from influx output if not specified in kafka config
+					Fieldpass: mergedCfg.InfluxList[0].Fieldpass,
+				})
+
+				logger.Log.Infof("Kafka output added to the telegraf config of the collection %s", id)
 			}
 			// render file
 			payload, err := maker.RenderConf(mergedCfg)
