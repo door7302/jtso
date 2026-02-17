@@ -93,14 +93,21 @@ type (
 		Tree   TreeView `json:"tree"`
 	}
 
-	Credential struct {
-		NetconfUser string `json:"netuser"`
-		NetconfPwd  string `json:"netpwd"`
-		GnmiUser    string `json:"gnmiuser"`
-		GnmiPwd     string `json:"gnmipwd"`
-		UseTls      string `json:"usetls"`
-		SkipVerify  string `json:"skipverify"`
-		ClientTls   string `json:"clienttls"`
+	Setting struct {
+		NetconfUser      string `json:"netuser"`
+		NetconfPwd       string `json:"netpwd"`
+		GnmiUser         string `json:"gnmiuser"`
+		GnmiPwd          string `json:"gnmipwd"`
+		UseTls           string `json:"usetls"`
+		SkipVerify       string `json:"skipverify"`
+		ClientTls        string `json:"clienttls"`
+		KafkaEnabled     int    `json:"kafkaenabled"`
+		KafkaBrokers     string `json:"kafkabrokers"`
+		KafkaTopic       string `json:"kafkatopic"`
+		KafkaVersion     string `json:"kafkaversion"`
+		KafkaFormat      string `json:"kafkaformat"`
+		KafkaCompression int    `json:"kafkacompression"`
+		KafkaMessageSize int    `json:"kafkamessagesize"`
 	}
 
 	InfluxMgt struct {

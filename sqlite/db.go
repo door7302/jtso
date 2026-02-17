@@ -76,6 +76,17 @@ type TelemetryInterval struct {
 	Interval int
 }
 
+type KafkaConfig struct {
+	Id          int
+	Enabled     int
+	Brokers     string
+	Topic       string
+	Format      string
+	Version     string
+	Compression int
+	MessageSize int
+}
+
 var db *sql.DB
 var dbMu *sync.Mutex
 var RtrList []*RtrEntry
@@ -83,6 +94,7 @@ var AssoList []*AssoEntry
 var ActiveInterval []*TelemetryInterval
 var ActiveCred Cred
 var ActiveAdmin Admin
+var ActiveKafkaConfig KafkaConfig
 
 func Init(f string) error {
 	var err error
@@ -171,6 +183,18 @@ func Init(f string) error {
 		UNIQUE(profile, path)
 		);`
 
+	const createKafka string = `
+		CREATE TABLE IF NOT EXISTS kafka_config (
+		id INTEGER NOT NULL PRIMARY KEY,
+		enabled INTEGER,
+		brokers TEXT,
+		topic TEXT,
+		format TEXT,
+		version TEXT,
+		compression INTEGER,
+		messagesize INTEGER
+		);`
+
 	if _, err := db.Exec(createRtr); err != nil {
 		logger.Log.Infof("Error while init DB %s Table routers - err: %v", f, err)
 		return err
@@ -189,6 +213,10 @@ func Init(f string) error {
 	}
 	if _, err := db.Exec(createTelegraf); err != nil {
 		logger.Log.Infof("Error while init DB %s Table telegraf - err: %v", f, err)
+		return err
+	}
+	if _, err := db.Exec(createKafka); err != nil {
+		logger.Log.Infof("Error while init DB %s Table kafka_config - err: %v", f, err)
 		return err
 	}
 	err = LoadAll()
@@ -275,6 +303,31 @@ func DeleteAllTelegrafByProfile(profile string) error {
 	rowsDeleted, _ := res.RowsAffected()
 	logger.Log.Infof("Deleted %d telegraf entries for profile '%s'", rowsDeleted, profile)
 
+	dbMu.Unlock()
+	return LoadAll()
+}
+
+func UpdateKafkaConfig(enabled int, brokers, topic, format, version string, compression, messageSize int) error {
+	dbMu.Lock()
+
+	_, err := db.Exec(`	
+		INSERT INTO kafka_config (id, enabled, brokers, topic, format, version, compression, messagesize)
+		VALUES (0, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET
+			enabled = excluded.enabled,
+			brokers = excluded.brokers,
+			topic = excluded.topic,
+			format = excluded.format,
+			version = excluded.version,
+			compression = excluded.compression,
+			messagesize = excluded.messagesize;
+	`, enabled, brokers, topic, format, version, compression, messageSize)
+
+	if err != nil {
+		logger.Log.Errorf("Error while upserting Kafka config: %v", err)
+		dbMu.Unlock()
+		return err
+	}
 	dbMu.Unlock()
 	return LoadAll()
 }
@@ -650,6 +703,41 @@ func LoadAll() error {
 		logger.Log.Errorf("Error while parsing administration rows - err: %v", err)
 		dbMu.Unlock()
 		return err
+	}
+
+	ActiveKafkaConfig := KafkaConfig{}
+	rows, err = db.Query("SELECT * FROM kafka_config;")
+	if err != nil {
+		logger.Log.Errorf("Error while selecting kafka_config - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	defer rows.Close()
+	i = rows.Next()
+	if i {
+		err = rows.Scan(
+			&ActiveKafkaConfig.Id,
+			&ActiveKafkaConfig.Enabled,
+			&ActiveKafkaConfig.Brokers,
+			&ActiveKafkaConfig.Topic,
+			&ActiveKafkaConfig.Format,
+			&ActiveKafkaConfig.Version,
+			&ActiveKafkaConfig.Compression,
+			&ActiveKafkaConfig.MessageSize,
+		)
+		if err != nil {
+			logger.Log.Errorf("Error while parsing kafka_config rows - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+	} else {
+		// nothing in the DB regarding kafka config - add default one
+		if _, err := db.Exec("INSERT INTO kafka_config VALUES(?,?,?,?,?,?,?,?);", 0, 0, "localhost:9092", "jtso_topic", "json", "2.7.0", 0, 1000000); err != nil {
+			logger.Log.Errorf("Error while adding default kafka config - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+		ActiveKafkaConfig = KafkaConfig{Id: 0, Enabled: 0, Brokers: "localhost:9092", Topic: "jtso_topic", Format: "json", Version: "2.7.0", Compression: 0, MessageSize: 1000000}
 	}
 
 	dbMu.Unlock()

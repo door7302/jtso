@@ -102,7 +102,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/index.html", routeIndex)
 	wapp.GET("/routers.html", routeRouters)
 	wapp.GET("/profiles.html", routeProfiles)
-	wapp.GET("/cred.html", routeCred)
+	wapp.GET("/settings.html", routeSettings)
 	wapp.GET("/pmanagement.html", routeDoc)
 	wapp.GET("/browser.html", routeBrowse)
 	wapp.GET("/stats.html", routeStats)
@@ -119,7 +119,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/resetrouter", routeResetRouter)
 	wapp.POST("/addprofile", routeAddProfile)
 	wapp.POST("/delprofile", routeShortNameRouter)
-	wapp.POST("/updatecred", routeUptCred)
+	wapp.POST("/updatesettings", routeUptSettings)
 	wapp.POST("/updatedoc", routeUptDoc)
 	wapp.POST("/influxmgt", routeInfluxMgt)
 	wapp.POST("/searchxpath", routeSearchPath)
@@ -636,11 +636,17 @@ func routeRouters(c echo.Context) error {
 	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
 }
 
-func routeCred(c echo.Context) error {
+func routeSettings(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
-	return c.Render(http.StatusOK, "cred.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser, "Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd,
-		"Usetls": sqlite.ActiveCred.UseTls, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTls, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "settings.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser,
+		"Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd,
+		"Usetls": sqlite.ActiveCred.UseTls, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTls,
+		"KafkaEnable": sqlite.ActiveKafkaConfig.Enabled, "KafkaBrokers": sqlite.ActiveKafkaConfig.Brokers,
+		"KafkaTopic": sqlite.ActiveKafkaConfig.Topic, "KafkaVersion": sqlite.ActiveKafkaConfig.Version,
+		"KafkaFormat": sqlite.ActiveKafkaConfig.Format, "KafkacCompression": sqlite.ActiveKafkaConfig.Compression,
+		"KafkaMessageSize": sqlite.ActiveKafkaConfig.MessageSize,
+		"GrafanaPort":      grafanaPort, "ChronografPort": chronografPort})
 }
 
 func routeProfiles(c echo.Context) error {
@@ -1414,23 +1420,29 @@ func routeShortNameRouter(c echo.Context) error {
 
 }
 
-func routeUptCred(c echo.Context) error {
+func routeUptSettings(c echo.Context) error {
 	var err error
 
-	r := new(Credential)
+	r := new(Setting)
 
 	err = c.Bind(r)
 	if err != nil {
-		logger.Log.Errorf("Unable to parse Post request for updating credentials: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update credentials"})
+		logger.Log.Errorf("Unable to parse Post request for updating Settings: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update Settings"})
 	}
 	err = sqlite.UpdateCredentials(r.NetconfUser, r.NetconfPwd, r.GnmiUser, r.GnmiPwd, r.UseTls, r.SkipVerify, r.ClientTls)
 	if err != nil {
 		logger.Log.Errorf("Unable to update credentials: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update credentials"})
 	}
-	logger.Log.Infof("Credentials have been successfully deleted")
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Credentials have been updated"})
+	err = sqlite.UpdateKafkaConfig(r.KafkaEnabled, r.KafkaBrokers, r.KafkaTopic, r.KafkaFormat, r.KafkaVersion, r.KafkaCompression, r.KafkaMessageSize)
+	if err != nil {
+		logger.Log.Errorf("Unable to update Kafka configuration: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update Kafka configuration"})
+	}
+
+	logger.Log.Infof("Settings have been successfully deleted")
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Settings have been updated"})
 
 }
 

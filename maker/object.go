@@ -23,6 +23,7 @@ type TelegrafConfig struct {
 	StringsList    []Strings      `json:"strings_list"`
 	FileList       []FileOutput   `json:"file_outputs"`
 	InfluxList     []InfluxOutput `json:"influx_outputs"`
+	KafkaList      []KafkaOutput  `json:"kafka_outputs"`
 }
 
 // ---------------------------------------------------- //
@@ -748,5 +749,39 @@ const FileTemplate = `
 {{range .}}[[outputs.file]]
   files = ["/var/log/{{.Filename}}"]
   data_format = "{{.Format}}"
+{{end}}
+`
+
+// ---------------------------------------------------- //
+// Kafka Output plugin
+// ---------------------------------------------------- //
+
+type KafkaOutput struct {
+	Brokers          []string `json:"brokers"`
+	Topic            string   `json:"topic"`
+	Format           string   `json:"format"`
+	Version          string   `json:"version"`
+	MessageSize      int      `json:"message_size"`
+	CompressionCodec int      `json:"compression_codec"`
+}
+
+// Go Template Receive a list of KafkaOutput (we should only have one) = KafkaList
+
+const KafkaTemplate = `
+###############################################################################
+#                               KAFKA OUTPUT PLUGIN                            #
+###############################################################################
+{{range .}}[[outputs.kafka]]
+  brokers = [
+  {{- range $index, $name := .Brokers}}
+  {{- if $index}},{{end}}
+      "{{$name}}"
+  {{- end}}
+  ]
+  topic = "{{.Topic}}"
+  data_format = "{{.Format}}"
+  version = "{{.Version}}"
+  max_message_bytes = {{.MessageSize}}
+  compression_codec = {{.CompressionCodec}}
 {{end}}
 `
