@@ -705,7 +705,7 @@ func LoadAll() error {
 		return err
 	}
 
-	ActiveKafkaConfig := KafkaConfig{}
+	ActiveKafkaConfig = KafkaConfig{}
 	rows, err = db.Query("SELECT * FROM kafka_config;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting kafka_config - err: %v", err)
@@ -739,7 +739,7 @@ func LoadAll() error {
 		}
 		ActiveKafkaConfig = KafkaConfig{Id: 0, Enabled: 0, Brokers: "localhost:9092", Topic: "jtso_topic", Format: "json", Version: "2.7.0", Compression: 0, MessageSize: 1000000}
 	}
-
+	logger.Log.Errorf("DEGUB: %v", ActiveKafkaConfig)
 	dbMu.Unlock()
 	return nil
 }
