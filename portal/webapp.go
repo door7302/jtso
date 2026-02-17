@@ -58,6 +58,14 @@ var nativePrefix = map[string]struct{}{
 	"state": {},
 }
 
+var reverseDictKafkaCodec = map[int]string{
+	0: "none",
+	1: "gzip",
+	2: "snappy",
+	3: "lz4",
+	4: "zstd",
+}
+
 type WebApp struct {
 	listen string
 	app    *echo.Echo
@@ -644,7 +652,7 @@ func routeSettings(c echo.Context) error {
 		"Usetls": sqlite.ActiveCred.UseTls, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTls,
 		"KafkaEnable": sqlite.ActiveKafkaConfig.Enabled, "KafkaBrokers": sqlite.ActiveKafkaConfig.Brokers,
 		"KafkaTopic": sqlite.ActiveKafkaConfig.Topic, "KafkaVersion": sqlite.ActiveKafkaConfig.Version,
-		"KafkaFormat": sqlite.ActiveKafkaConfig.Format, "KafkacCompression": sqlite.ActiveKafkaConfig.Compression,
+		"KafkaFormat": sqlite.ActiveKafkaConfig.Format, "KafkacCompression": reverseDictKafkaCodec[sqlite.ActiveKafkaConfig.Compression],
 		"KafkaMessageSize": sqlite.ActiveKafkaConfig.MessageSize,
 		"GrafanaPort":      grafanaPort, "ChronografPort": chronografPort})
 }
