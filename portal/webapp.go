@@ -1430,7 +1430,7 @@ func routeShortNameRouter(c echo.Context) error {
 
 func routeUptSettings(c echo.Context) error {
 	var err error
-
+	somethingChange := false
 	r := new(Setting)
 
 	err = c.Bind(r)
@@ -1438,20 +1438,53 @@ func routeUptSettings(c echo.Context) error {
 		logger.Log.Errorf("Unable to parse Post request for updating Settings: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update Settings"})
 	}
+	if r.UseTls != sqlite.ActiveCred.UseTls || r.SkipVerify != sqlite.ActiveCred.SkipVerify || r.ClientTls != sqlite.ActiveCred.ClientTls || r.NetconfUser != sqlite.ActiveCred.NetconfUser || r.NetconfPwd != sqlite.ActiveCred.NetconfPwd || r.GnmiUser != sqlite.ActiveCred.GnmiUser || r.GnmiPwd != sqlite.ActiveCred.GnmiPwd {
+		somethingChange = true
+	}
+
 	err = sqlite.UpdateCredentials(r.NetconfUser, r.NetconfPwd, r.GnmiUser, r.GnmiPwd, r.UseTls, r.SkipVerify, r.ClientTls)
 	if err != nil {
 		logger.Log.Errorf("Unable to update credentials: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update credentials"})
 	}
+
+	if r.KafkaEnabled != sqlite.ActiveKafkaConfig.Enabled || r.KafkaBrokers != sqlite.ActiveKafkaConfig.Brokers || r.KafkaTopic != sqlite.ActiveKafkaConfig.Topic || r.KafkaFormat != sqlite.ActiveKafkaConfig.Format || r.KafkaVersion != sqlite.ActiveKafkaConfig.Version || r.KafkaCompression != sqlite.ActiveKafkaConfig.Compression || r.KafkaMessageSize != sqlite.ActiveKafkaConfig.MessageSize {
+		somethingChange = true
+	}
+
 	err = sqlite.UpdateKafkaConfig(r.KafkaEnabled, r.KafkaBrokers, r.KafkaTopic, r.KafkaFormat, r.KafkaVersion, r.KafkaCompression, r.KafkaMessageSize)
 	if err != nil {
 		logger.Log.Errorf("Unable to update Kafka configuration: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update Kafka configuration"})
 	}
+	logger.Log.Info("Settings have been successfully updated")
 
-	logger.Log.Infof("Settings have been successfully deleted")
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Settings have been updated"})
+	// Check if we need to restart some components
+	if somethingChange {
+		// Restart in background all the collectors to apply new credentials and/or Kafka configuration
+		go association.ConfigueStack(collectCfg.cfg, "all")
+		logger.Log.Info("Restart all the collectors to apply new settings")
 
+		if ondemand.CC.Run {
+			// Stop properly the on-demand collection if there is a change in credentials or Kafka configuration to avoid any issue with the current session
+			err = association.StopOndemand(ondemand.CC.CurrentProfile.Name)
+			if err != nil {
+				logger.Log.Errorf("Unable to stop the profile %s: %v", ondemand.CC.CurrentProfile.Name, err)
+			} else {
+				ondemand.CC.Run = false
+				// Start again the on-demand collection if it was running before
+				err = association.ConfigureOndemand(collectCfg.cfg, ondemand.CC.CurrentProfile)
+				if err != nil {
+					logger.Log.Errorf("Unable to start the profile %s: %v", ondemand.CC.CurrentProfile.Name, err)
+				} else {
+					ondemand.CC.Run = true
+					logger.Log.Info("Restart on-demand collection to apply new settings")
+				}
+			}
+
+		}
+	}
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Settings have been successfully updated"})
 }
 
 func findOrigin(path string) string {
