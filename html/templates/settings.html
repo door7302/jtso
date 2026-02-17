@@ -103,7 +103,7 @@
                     </br>
                     <h4 class="card-title">Kafka export</h4>
                     <div style="margin-top: 10px;" class="form-check">
-                        {{if eq .KafkaEnable "yes"}}
+                        {{if eq .KafkaEnable 1}}
                         <input class="form-check-input" type="checkbox" id="UseKafka" checked>
                         {{ else }}
                         <input class="form-check-input" type="checkbox" id="UseKafka">
