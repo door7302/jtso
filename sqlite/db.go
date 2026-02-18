@@ -129,7 +129,7 @@ func Init(f string) error {
 	}
 
 	// Initialize SecretManager
-	SM, secretChange, err = security.NewSecretManager("/secrets")
+	SM, secretChange, err = security.NewSecretManager("/data")
 	if err != nil {
 		logger.Log.Errorf("Error initializing SecretManager: %v", err)
 		return err
