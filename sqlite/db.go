@@ -89,15 +89,19 @@ type KafkaConfig struct {
 	MessageSize int
 }
 
-var db *sql.DB
-var dbMu *sync.Mutex
-var RtrList []*RtrEntry
-var AssoList []*AssoEntry
-var ActiveInterval []*TelemetryInterval
-var ActiveCred Cred
-var ActiveAdmin Admin
-var ActiveKafkaConfig KafkaConfig
-var SM *security.SecretManager
+var (
+	db                *sql.DB
+	dbMu              *sync.Mutex
+	RtrList           []*RtrEntry
+	AssoList          []*AssoEntry
+	ActiveInterval    []*TelemetryInterval
+	ActiveCred        Cred
+	ActiveAdmin       Admin
+	ActiveKafkaConfig KafkaConfig
+	SM                *security.SecretManager
+)
+
+const PATH_CERT string = "/var/cert/"
 
 func Init(f string) error {
 	var err error
@@ -129,7 +133,7 @@ func Init(f string) error {
 	}
 
 	// Initialize SecretManager
-	SM, secretChange, err = security.NewSecretManager("/data")
+	SM, secretChange, err = security.NewSecretManager(PATH_CERT)
 	if err != nil {
 		logger.Log.Errorf("Error initializing SecretManager: %v", err)
 		return err
@@ -478,22 +482,13 @@ func UpdateRouter(s string, f string, m string, v string) error {
 
 func UpdateCredentials(nu string, np string, gu string, gp string, t string, s string, c string) error {
 	dbMu.Lock()
-	logger.Log.Infof("receive pwd %s and %s", np, gp)
-
 	encNetPwd, _ := security.Encrypt(SM.Current, np)
 	encGnmiPwd, _ := security.Encrypt(SM.Current, gp)
-
-	logger.Log.Infof("encrypted pwd %s and %s", encNetPwd, encGnmiPwd)
-
 	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?, skipverify=?, clienttls=?  WHERE id=0;", nu, encNetPwd, gu, encGnmiPwd, t, s, c); err != nil {
 		logger.Log.Errorf("Error while updating credential - err: %v", err)
 		dbMu.Unlock()
 		return err
 	}
-	decNetPwd, _ := security.Decrypt(SM.Current, encNetPwd)
-	decGnmiPwd, _ := security.Decrypt(SM.Current, encGnmiPwd)
-	logger.Log.Infof("decrypted pwd %s and %s", decNetPwd, decGnmiPwd)
-
 	dbMu.Unlock()
 	return LoadAll(false)
 }

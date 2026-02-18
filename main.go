@@ -38,6 +38,8 @@ const banner = `
  █████     ██    ███████  ██████  
 `
 
+const DBPATH = "/etc/jtso/jtso.db"
+
 func main() {
 	var err error
 	flag.Parse()
@@ -75,7 +77,7 @@ func main() {
 
 	// Init the sqliteDB
 	//err = sqlite.Init("./jtso.db")
-	err = sqlite.Init("/etc/jtso/jtso.db")
+	err = sqlite.Init(DBPATH)
 	if err != nil {
 		logger.Log.Errorf("unable to open DB... panic...: %v", err)
 		panic(err)
