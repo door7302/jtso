@@ -101,7 +101,7 @@ var (
 	SM                *security.SecretManager
 )
 
-const PATH_CERT string = "/var/cert/"
+const SECRET_STORE string = "/data"
 
 func Init(f string) error {
 	var err error
@@ -133,7 +133,7 @@ func Init(f string) error {
 	}
 
 	// Initialize SecretManager
-	SM, secretChange, err = security.NewSecretManager(PATH_CERT)
+	SM, secretChange, err = security.NewSecretManager(SECRET_STORE)
 	if err != nil {
 		logger.Log.Errorf("Error initializing SecretManager: %v", err)
 		return err
