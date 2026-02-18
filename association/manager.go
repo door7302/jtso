@@ -41,7 +41,6 @@ type Telegraf struct {
 
 type DefProfile struct {
 	Version     int      `json:"version"`
-	Cheatsheet  string   `json:"cheatsheet"`
 	Description string   `json:"description"`
 	TelCfg      Telegraf `json:"telegraf"`
 	KapaCfg     []string `json:"kapacitor"`
@@ -277,10 +276,6 @@ func PeriodicCheck(cfg *config.ConfigContainer) {
 			err := os.RemoveAll(ACTIVE_PROFILES + v.Filename)
 			if err != nil {
 				logger.Log.Errorf("Unable to remove profile %s: %v", v.Filename, err)
-			}
-			err = os.Remove("html/assets/img/" + v.Definition.Cheatsheet)
-			if err != nil {
-				logger.Log.Errorf("Unable to remove cheatsheet %s: %v", v.Definition.Cheatsheet, err)
 			}
 			logger.Log.Infof("Legacy profile %s remove it", v.Filename)
 			delete(ActiveProfiles, k)

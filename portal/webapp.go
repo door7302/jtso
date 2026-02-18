@@ -1671,7 +1671,7 @@ func routeUptDoc(c echo.Context) error {
 	if graf == "" {
 		graf = "No Grafana Dashboards attached to this profile"
 	}
-	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Img: p.Definition.Cheatsheet, Desc: p.Definition.Description, Tele: teleHTML, Graf: graf, Kapa: kapa})
+	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Desc: p.Definition.Description, Tele: teleHTML, Graf: graf, Kapa: kapa})
 }
 
 func routeOnDemandMgt(c echo.Context) error {

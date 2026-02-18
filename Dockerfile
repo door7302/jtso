@@ -23,6 +23,8 @@ RUN mkdir -p /var/shared/telegraf
 RUN mkdir -p /var/shared/grafana
 RUN mkdir -p /var/cert
 RUN mkdir -p /var/metadata
+RUN mkdir -p /var/profiles
+RUN mkdir -p /var/ondemand
 
 EXPOSE 8081
 
