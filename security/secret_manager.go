@@ -1,7 +1,6 @@
 package security
 
 import (
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -30,78 +29,38 @@ func NewSecretManager(dataDir string) (*SecretManager, bool, error) {
 	// CASE 1: No APP_SECRET provided
 	// --------------------------------------------------
 	if envSecret == "" {
-
-		if _, err := os.Stat(secretPath); errors.Is(err, os.ErrNotExist) {
-			// First ever start → generate secret
-			raw := make([]byte, 32)
-			if _, err := rand.Read(raw); err != nil {
-				return nil, false, err
-			}
-			current = hex.EncodeToString(raw)
-
-			if err := os.WriteFile(secretPath, []byte(current), 0600); err != nil {
-				return nil, false, err
-			}
-
-			// previous = current on first boot
-			if err := os.WriteFile(prevPath, []byte(current), 0600); err != nil {
-				return nil, false, err
-			}
-
-			previous = current
-
-		} else {
-			// Load existing secret
-			data, err := os.ReadFile(secretPath)
-			if err != nil {
-				return nil, false, err
-			}
-			current = string(data)
-
-			prevData, err := os.ReadFile(prevPath)
-			if err == nil {
-				previous = string(prevData)
-			} else {
-				previous = current
-				if err := os.WriteFile(prevPath, []byte(current), 0600); err != nil {
-					return nil, false, err
-				}
-			}
-		}
-
+		return nil, false, errors.New("APP_SECRET environment variable is not set")
 	} else {
 
-		// --------------------------------------------------
-		// CASE 2: APP_SECRET is set
-		// --------------------------------------------------
-
-		current = envSecret
-
-		// Check if previous exists
-		prevData, err := os.ReadFile(prevPath)
-		if errors.Is(err, os.ErrNotExist) {
-
-			// First time encryption is enabled
-			previous = current
-
-			if err := os.WriteFile(prevPath, []byte(current), 0600); err != nil {
-				return nil, false, err
-			}
-
-		} else if err != nil {
-			return nil, false, err
-		} else {
-			previous = string(prevData)
-
-			// Detect rotation
-			if previous != current {
+		// Try to load curent secret from file
+		currentData, err := os.ReadFile(secretPath)
+		if err == nil {
+			current = string(currentData)
+			if current != envSecret {
 				changeDetected = true
 				logger.Log.Infof("Secret rotation detected. Previous secret will be kept to manage secret rotation.")
 			}
-		}
-		// Always persist current secret
-		if err := os.WriteFile(secretPath, []byte(current), 0600); err != nil {
-			return nil, false, err
+			// Update current secret with env variable value
+			current = envSecret
+			if err := os.WriteFile(secretPath, []byte(current), 0600); err != nil {
+				return nil, false, err
+			}
+			// Keep previous secret if rotation is detected
+			if changeDetected {
+				previous = string(currentData)
+				if err := os.WriteFile(prevPath, []byte(previous), 0600); err != nil {
+					return nil, false, err
+				}
+			}
+		} else {
+			// First sime APP_SECRET is set, persist it and set previous = current
+			current, previous = envSecret, envSecret
+			if err := os.WriteFile(secretPath, []byte(current), 0600); err != nil {
+				return nil, false, err
+			}
+			if err := os.WriteFile(prevPath, []byte(previous), 0600); err != nil {
+				return nil, false, err
+			}
 		}
 	}
 
@@ -138,7 +97,7 @@ func (sm *SecretManager) Rotate() error {
 		return err
 	}
 
-	logger.Log.Infof("Secret rotation completed. Previous secret is now active.")
+	logger.Log.Infof("Rotate the secret")
 
 	return nil
 }

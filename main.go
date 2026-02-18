@@ -80,7 +80,7 @@ func main() {
 		logger.Log.Errorf("unable to open DB... panic...: %v", err)
 		panic(err)
 	}
-	logger.Log.Info("Sqlite DB file loade.")
+	logger.Log.Info("Sqlite DB file loaded successfully")
 
 	// init the webapp
 	webapp := portal.New(Cfg)
