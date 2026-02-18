@@ -628,16 +628,16 @@ func LoadAll(secretRotation bool) error {
 				dbMu.Unlock()
 				return err
 			}
-			if name == "PasswordVer" {
+			if name == "passwordver" {
 				colExists = true
 				break
 			}
 		}
 		rows.Close()
 		if !colExists {
-			_, err := db.Exec("ALTER TABLE credentials ADD COLUMN PasswordVer INTEGER DEFAULT 1;")
+			_, err := db.Exec("ALTER TABLE credentials ADD COLUMN passwordver INTEGER DEFAULT 1;")
 			if err != nil {
-				logger.Log.Errorf("Error adding PasswordVer column - err: %v", err)
+				logger.Log.Errorf("Error adding passwordver column - err: %v", err)
 				dbMu.Unlock()
 				return err
 			}
@@ -659,13 +659,13 @@ func LoadAll(secretRotation bool) error {
 			}
 			encNetPwd, _ := security.Encrypt(SM.Current, netPwd)
 			encGnmiPwd, _ := security.Encrypt(SM.Current, netPwd)
-			_, err = db.Exec("UPDATE credentials SET netpwd=?, gnmipwd=?, PasswordVer=1 WHERE id=0;", encNetPwd, encGnmiPwd)
+			_, err = db.Exec("UPDATE credentials SET netpwd=?, gnmipwd=?, passwordver=1 WHERE id=0;", encNetPwd, encGnmiPwd)
 			if err != nil {
 				logger.Log.Errorf("Error encrypting existing passwords - err: %v", err)
 				dbMu.Unlock()
 				return err
 			}
-			logger.Log.Infof("Existing credentials have been encrypted and PasswordVer column has been added successfully")
+			logger.Log.Infof("Existing credentials have been encrypted and passwordver column has been added successfully")
 		}
 	}
 	rows, err = db.Query("SELECT * FROM credentials;")
