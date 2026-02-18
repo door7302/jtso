@@ -482,11 +482,18 @@ func UpdateCredentials(nu string, np string, gu string, gp string, t string, s s
 
 	encNetPwd, _ := security.Encrypt(SM.Current, np)
 	encGnmiPwd, _ := security.Encrypt(SM.Current, gp)
+
+	logger.Log.Infof("encrypted pwd %s and %s", encNetPwd, encGnmiPwd)
+
 	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?, skipverify=?, clienttls=?  WHERE id=0;", nu, encNetPwd, gu, encGnmiPwd, t, s, c); err != nil {
 		logger.Log.Errorf("Error while updating credential - err: %v", err)
 		dbMu.Unlock()
 		return err
 	}
+	decNetPwd, _ := security.Decrypt(SM.Current, encNetPwd)
+	decGnmiPwd, _ := security.Decrypt(SM.Current, encGnmiPwd)
+	logger.Log.Infof("decrypted pwd %s and %s", decNetPwd, decGnmiPwd)
+
 	dbMu.Unlock()
 	return LoadAll(false)
 }
