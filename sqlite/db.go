@@ -478,6 +478,8 @@ func UpdateRouter(s string, f string, m string, v string) error {
 
 func UpdateCredentials(nu string, np string, gu string, gp string, t string, s string, c string) error {
 	dbMu.Lock()
+	logger.Log.Infof("receive pwd %s and %s", np, gp)
+
 	encNetPwd, _ := security.Encrypt(SM.Current, np)
 	encGnmiPwd, _ := security.Encrypt(SM.Current, gp)
 	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?, skipverify=?, clienttls=?  WHERE id=0;", nu, encNetPwd, gu, encGnmiPwd, t, s, c); err != nil {
@@ -883,7 +885,6 @@ func LoadAll(secretRotation bool) error {
 		}
 		ActiveKafkaConfig = KafkaConfig{Id: 0, Enabled: 0, Brokers: "localhost:9092", Topic: "jtso_topic", Format: "json", Version: "2.7.0", Compression: 0, MessageSize: 1000000}
 	}
-	logger.Log.Errorf("DEGUB: %v", ActiveKafkaConfig)
 	dbMu.Unlock()
 	return nil
 }
