@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	kapacitorURL                   = "http://kapacitor:9092"
-	kapacitorConnect               = "kapacitor:9092"
+	kapacitorURL                   = "http://kapacitor:9292"
+	kapacitorConnect               = "kapacitor:9292"
 	kapaTimeout      time.Duration = 1 * time.Second
 )
 

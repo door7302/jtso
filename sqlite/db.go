@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"jtso/influx"
 	"jtso/logger"
+	"jtso/security"
 	"os"
 	"strings"
 	"sync"
@@ -42,6 +43,7 @@ type Cred struct {
 	UseTls      string
 	SkipVerify  string
 	ClientTls   string
+	PasswordVer int // 0 = cleartext, 1 = encrypted
 }
 
 type Admin struct {
@@ -95,9 +97,11 @@ var ActiveInterval []*TelemetryInterval
 var ActiveCred Cred
 var ActiveAdmin Admin
 var ActiveKafkaConfig KafkaConfig
+var SM *security.SecretManager
 
 func Init(f string) error {
 	var err error
+	var secretChange bool
 	err = nil
 	dbMu = new(sync.Mutex)
 	// check if db filename exist - if not create empty file
@@ -122,6 +126,13 @@ func Init(f string) error {
 	_, err = db.Exec("PRAGMA journal_mode = WAL;")
 	if err != nil {
 		logger.Log.Infof("Error while enabling WAL for DB %s - err: %v", f, err)
+	}
+
+	// Initialize SecretManager
+	SM, secretChange, err = security.NewSecretManager("/secrets")
+	if err != nil {
+		logger.Log.Errorf("Error initializing SecretManager: %v", err)
+		return err
 	}
 
 	const createRtr string = `
@@ -151,7 +162,8 @@ func Init(f string) error {
 		gnmipwd TEXT,
 		usetls TEXT,
 		skipverify TEXT default "yes" NOT NULL,
-		clienttls TEXT
+		clienttls TEXT,
+		passwordver INTEGER
 		);`
 
 	const createAdmin string = `
@@ -219,7 +231,8 @@ func Init(f string) error {
 		logger.Log.Infof("Error while init DB %s Table kafka_config - err: %v", f, err)
 		return err
 	}
-	err = LoadAll()
+
+	err = LoadAll(secretChange)
 	return err
 }
 
@@ -304,7 +317,7 @@ func DeleteAllTelegrafByProfile(profile string) error {
 	logger.Log.Infof("Deleted %d telegraf entries for profile '%s'", rowsDeleted, profile)
 
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
 func UpdateKafkaConfig(enabled int, brokers, topic, format, version string, compression, messageSize int) error {
@@ -329,7 +342,7 @@ func UpdateKafkaConfig(enabled int, brokers, topic, format, version string, comp
 		return err
 	}
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
 func UpdateInterval(profile, path, mode string, interval int) error {
@@ -354,7 +367,7 @@ func UpdateInterval(profile, path, mode string, interval int) error {
 	}
 	logger.Log.Infof("The interval for profile %s and path %s has been overridden with the value %d sec(s)", profile, path, interval)
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
 func DeleteInterval(profile, path string) error {
@@ -381,7 +394,7 @@ func DeleteInterval(profile, path string) error {
 		)
 	}
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
 func AddRouter(n string, s string, f string, m string, v string) error {
@@ -393,7 +406,7 @@ func AddRouter(n string, s string, f string, m string, v string) error {
 		return err
 	}
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
 func DelAsso(n string) error {
@@ -438,7 +451,7 @@ func DelRouter(n string) error {
 		return err
 	}
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
 func updateRouterProfile(n string, p int) error {
@@ -449,7 +462,7 @@ func updateRouterProfile(n string, p int) error {
 		return err
 	}
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
 func UpdateRouter(s string, f string, m string, v string) error {
@@ -460,18 +473,20 @@ func UpdateRouter(s string, f string, m string, v string) error {
 		return err
 	}
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
 func UpdateCredentials(nu string, np string, gu string, gp string, t string, s string, c string) error {
 	dbMu.Lock()
-	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?, skipverify=?, clienttls=?  WHERE id=0;", nu, np, gu, gp, t, s, c); err != nil {
+	encNetPwd, _ := security.Encrypt(SM.Current, np)
+	encGnmiPwd, _ := security.Encrypt(SM.Current, gp)
+	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?, skipverify=?, clienttls=?  WHERE id=0;", nu, encNetPwd, gu, encGnmiPwd, t, s, c); err != nil {
 		logger.Log.Errorf("Error while updating credential - err: %v", err)
 		dbMu.Unlock()
 		return err
 	}
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
 func UpdateDebugMode(instance string, debug int) error {
@@ -486,7 +501,7 @@ func UpdateDebugMode(instance string, debug int) error {
 		return err
 	}
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
 func UpdateRpDuration(duration string) error {
@@ -498,10 +513,10 @@ func UpdateRpDuration(duration string) error {
 		return err
 	}
 	dbMu.Unlock()
-	return LoadAll()
+	return LoadAll(false)
 }
 
-func LoadAll() error {
+func LoadAll(secretRotation bool) error {
 	dbMu.Lock()
 	RtrList = make([]*RtrEntry, 0)
 	rows, err := db.Query("SELECT * FROM routers;")
@@ -566,7 +581,11 @@ func LoadAll() error {
 		ActiveInterval = append(ActiveInterval, &i)
 	}
 
-	ActiveCred = Cred{Id: 0, NetconfUser: "lab", NetconfPwd: "lab123", GnmiUser: "lab", GnmiPwd: "lab123", UseTls: "no", SkipVerify: "yes", ClientTls: "no"}
+	// Init with default credential in case of first launch and manage encryption if secret rotation or encryption just enabled
+	encNetPwd, _ := security.Encrypt(SM.Current, "lab123")
+	encGnmiPwd, _ := security.Encrypt(SM.Current, "lab123")
+	ActiveCred = Cred{Id: 0, NetconfUser: "lab", NetconfPwd: encNetPwd, GnmiUser: "lab", GnmiPwd: encGnmiPwd, UseTls: "no", SkipVerify: "yes", ClientTls: "no", PasswordVer: 1}
+
 	rows, err = db.Query("SELECT * FROM credentials;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting credentials - err: %v", err)
@@ -577,27 +596,152 @@ func LoadAll() error {
 	i := rows.Next()
 	if !i {
 		// nothing in the DB regarding credential - add default one
-		if _, err := db.Exec("INSERT INTO credentials VALUES(?,?,?,?,?,?,?,?);", 0, ActiveCred.NetconfUser, ActiveCred.NetconfPwd, ActiveCred.GnmiUser, ActiveCred.GnmiPwd, ActiveCred.UseTls, ActiveCred.SkipVerify, ActiveCred.ClientTls); err != nil {
+		if _, err := db.Exec("INSERT INTO credentials VALUES(?,?,?,?,?,?,?,?,?);", 0, ActiveCred.NetconfUser, ActiveCred.NetconfPwd, ActiveCred.GnmiUser, ActiveCred.GnmiPwd, ActiveCred.UseTls, ActiveCred.SkipVerify, ActiveCred.ClientTls, ActiveCred.PasswordVer); err != nil {
 			logger.Log.Errorf("Error while adding default credential - err: %v", err)
 			dbMu.Unlock()
 			return err
 		}
 	} else {
-		err = rows.Scan(
-			&ActiveCred.Id,
-			&ActiveCred.NetconfUser,
-			&ActiveCred.NetconfPwd,
-			&ActiveCred.GnmiUser,
-			&ActiveCred.GnmiPwd,
-			&ActiveCred.UseTls,
-			&ActiveCred.SkipVerify,
-			&ActiveCred.ClientTls,
-		)
+		colExists := false
+		rows, err := db.Query("PRAGMA table_info(credentials);")
 		if err != nil {
-			logger.Log.Errorf("Error while parsing credential rows - err: %v", err)
+			logger.Log.Errorf("Error while checking table info - err: %v", err)
 			dbMu.Unlock()
 			return err
 		}
+		for rows.Next() {
+			var cid int
+			var name, ctype string
+			var notnull, pk int
+			var dfltValue interface{}
+			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
+				logger.Log.Errorf("Error scanning table_info - err: %v", err)
+				dbMu.Unlock()
+				return err
+			}
+			if name == "PasswordVer" {
+				colExists = true
+				break
+			}
+		}
+		rows.Close()
+		if !colExists {
+			_, err := db.Exec("ALTER TABLE credentials ADD COLUMN PasswordVer INTEGER DEFAULT 1;")
+			if err != nil {
+				logger.Log.Errorf("Error adding PasswordVer column - err: %v", err)
+				dbMu.Unlock()
+				return err
+			}
+			var netPwd, gnmiPwd string
+			row := db.QueryRow("SELECT netpwd, gnmipwd FROM credentials WHERE id=0")
+			err = row.Scan(&netPwd, &gnmiPwd)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					// No row exists in the table
+					logger.Log.Errorf("No row exists in the table- err: %v", err)
+					dbMu.Unlock()
+					return err
+				} else {
+					// Some other DB error
+					logger.Log.Errorf("Error scanning credentials - err: %v", err)
+					dbMu.Unlock()
+					return err
+				}
+			}
+			encNetPwd, _ := security.Encrypt(SM.Current, netPwd)
+			encGnmiPwd, _ := security.Encrypt(SM.Current, netPwd)
+			_, err = db.Exec("UPDATE credentials SET netpwd=?, gnmipwd=?, PasswordVer=1 WHERE id=0;", encNetPwd, encGnmiPwd)
+			if err != nil {
+				logger.Log.Errorf("Error encrypting existing passwords - err: %v", err)
+				dbMu.Unlock()
+				return err
+			}
+			logger.Log.Infof("Existing credentials have been encrypted and PasswordVer column has been added successfully")
+		}
+	}
+	rows, err = db.Query("SELECT * FROM credentials;")
+	if err != nil {
+		logger.Log.Errorf("Error while selecting credentials - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	defer rows.Close()
+	rows.Next()
+	err = rows.Scan(
+		&ActiveCred.Id,
+		&ActiveCred.NetconfUser,
+		&ActiveCred.NetconfPwd,
+		&ActiveCred.GnmiUser,
+		&ActiveCred.GnmiPwd,
+		&ActiveCred.UseTls,
+		&ActiveCred.SkipVerify,
+		&ActiveCred.ClientTls,
+		&ActiveCred.PasswordVer,
+	)
+	if err != nil {
+		logger.Log.Errorf("Error while parsing credential rows - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+
+	if secretRotation && ActiveCred.PasswordVer == 1 {
+		// Try to decrypt with the new secret, if it fails try with the previous one
+		netconfPwd, errNetconf := security.Decrypt(SM.Current, ActiveCred.NetconfPwd)
+		if errNetconf != nil {
+			netconfPwd, errNetconf = security.Decrypt(SM.Previous, ActiveCred.NetconfPwd)
+			if errNetconf != nil {
+				logger.Log.Errorf("Error decrypting netconf password with both current and previous secrets - err: %v", errNetconf)
+				dbMu.Unlock()
+				return errNetconf
+			}
+		}
+		gnmiPwd, errGnmi := security.Decrypt(SM.Current, ActiveCred.GnmiPwd)
+		if errGnmi != nil {
+			gnmiPwd, errGnmi = security.Decrypt(SM.Previous, ActiveCred.GnmiPwd)
+			if errGnmi != nil {
+				logger.Log.Errorf("Error decrypting gnmi password with both current and previous secrets - err: %v", errGnmi)
+				dbMu.Unlock()
+				return errGnmi
+			}
+		}
+		ActiveCred.NetconfPwd = netconfPwd
+		ActiveCred.GnmiPwd = gnmiPwd
+
+		// reencrypt with the new secret to update the DB and avoid keeping encrypted passwords with the previous secret
+		encNetPwd, _ := security.Encrypt(SM.Current, netconfPwd)
+		encGnmiPwd, _ := security.Encrypt(SM.Current, gnmiPwd)
+		_, err = db.Exec("UPDATE credentials SET netpwd=?, gnmipwd=? WHERE id=0;", encNetPwd, encGnmiPwd)
+		if err != nil {
+			logger.Log.Errorf("Error re-encrypting passwords with the new secret - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+		// Finalize the secret rotation by removing the previous secret from the SecretManager
+		err = SM.Rotate()
+		if err != nil {
+			logger.Log.Errorf("Error finalizing secret rotation - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+		logger.Log.Infof("Secret rotation has been finalized successfully, previous secret has been removed and credentials have been re-encrypted with the new secret")
+
+	} else if ActiveCred.PasswordVer == 1 {
+		netconfPwd, errNetconf := security.Decrypt(SM.Current, ActiveCred.NetconfPwd)
+		if errNetconf != nil {
+			logger.Log.Errorf("Error decrypting netconf password with current secret - err: %v", errNetconf)
+			dbMu.Unlock()
+			return errNetconf
+		}
+		gnmiPwd, errGnmi := security.Decrypt(SM.Current, ActiveCred.GnmiPwd)
+		if errGnmi != nil {
+			logger.Log.Errorf("Error decrypting gnmi password with current secret - err: %v", errGnmi)
+			dbMu.Unlock()
+			return errGnmi
+		}
+		ActiveCred.NetconfPwd = netconfPwd
+		ActiveCred.GnmiPwd = gnmiPwd
+	} else {
+		logger.Log.Warnf("Credentials are stored in cleartext, consider rotating the secret to encrypt them")
 	}
 
 	ActiveAdmin = Admin{}
