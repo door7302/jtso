@@ -185,8 +185,8 @@ func Init(f string) error {
 		vsrxdebug INTEGER,
 		vjunosdebug INTEGER,
 		vevodebug INTEGER,
-		ondemanddebug INTEGER
-		rpduration TEXT
+		ondemanddebug INTEGER,
+		rpduration TEXT,
 		ondemandconf TEXT
 		);`
 
