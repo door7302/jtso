@@ -783,10 +783,10 @@ func LoadAll(secretRotation bool) error {
 				dbMu.Unlock()
 				return err
 			}
-			if name == "rpduration" {
+			if name == "ondemanddebug" {
 				colExists = true
 			}
-			if name == "ondemanddebug" {
+			if name == "rpduration" {
 				colExists2 = true
 			}
 			if name == "ondemandconf" {
@@ -796,17 +796,17 @@ func LoadAll(secretRotation bool) error {
 		}
 		rows.Close()
 		if !colExists {
-			_, err := db.Exec("ALTER TABLE administration ADD COLUMN rpduration TEXT DEFAULT '" + influx.DefaultRetention + "';")
+			_, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemanddebug INTEGER DEFAULT 0;")
 			if err != nil {
-				logger.Log.Errorf("Error adding rpduration column - err: %v", err)
+				logger.Log.Errorf("Error adding ondemanddebug column - err: %v", err)
 				dbMu.Unlock()
 				return err
 			}
 		}
 		if !colExists2 {
-			_, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemanddebug INTEGER DEFAULT 0;")
+			_, err := db.Exec("ALTER TABLE administration ADD COLUMN rpduration TEXT DEFAULT '" + influx.DefaultRetention + "';")
 			if err != nil {
-				logger.Log.Errorf("Error adding ondemanddebug column - err: %v", err)
+				logger.Log.Errorf("Error adding rpduration column - err: %v", err)
 				dbMu.Unlock()
 				return err
 			}
