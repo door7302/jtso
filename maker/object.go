@@ -721,10 +721,7 @@ const InfluxTemplate = `
 {{range .}}[[outputs.influxdb]]
   database="jtsdb"
   urls = ["http://influxdb:8086"]
-  timeout = "10s"
-  write_batch_size = 500
-  max_retries = 5
-  retry_interval = "5s"
+  timeout = "20s"
   retention_policy = "{{.Retention}}"
   fieldpass = [
   {{- range $index, $name := .Fieldpass}}
