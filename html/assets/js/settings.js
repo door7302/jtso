@@ -13,6 +13,10 @@ function saveSettings() {
   var kFormat = document.getElementById("KafkaFormat").value.trim().toLowerCase();
   var kCompression = document.getElementById("KafkaCompression").value.trim().toLowerCase();
   var kMessageSize = document.getElementById("KafkaMessageSize").value.trim();  
+  var mbSize = document.getElementById("MetricBatchSize").value.trim();
+  var mbLimit = document.getElementById("MetricBufferLimit").value.trim();
+  var flushInterval = document.getElementById("FlushInterval").value.trim();
+  var flushJitter = document.getElementById("FlushJitter").value.trim();
 
   var SupportedFormats = ["json", "influx"];
   var SupportedCompressions = ["none", "gzip", "snappy", "lz4", "zstd"];
@@ -39,6 +43,26 @@ function saveSettings() {
   if (kEnabled) {
     enabled = 1;
   }
+
+  if (mbSize == "" || isNaN(mbSize) || parseInt(mbSize) <= 100) {
+    alertify.alert("JSTO...", "Invalid metric batch size - should be more than 100");
+    return;
+  }
+
+  if (mbLimit == "" || isNaN(mbLimit) || parseInt(mbLimit) <= 1000) {
+    alertify.alert("JSTO...", "Invalid metric buffer limit - should be more than 1000");
+    return;
+  }
+
+  if (flushInterval == "" || isNaN(flushInterval) || parseInt(flushInterval) <= 2) {
+    alertify.alert("JSTO...", "Invalid flush interval - should be more than 2 seconds");
+    return;
+  }
+
+  if (flushJitter == "" || isNaN(flushJitter) || parseInt(flushJitter) < 0) {
+    alertify.alert("JSTO...", "Invalid flush jitter - should be 0 or more");
+    return;
+  } 
 
   if (kEnabled && (kFormat == "" || SupportedFormats.indexOf(kFormat) == -1)) {
     alertify.alert("JSTO...", "Invalid Kafka format");
@@ -82,6 +106,10 @@ function saveSettings() {
     "usetls": tls,
     "skipverify": skip,
     "clienttls": client,
+    "metricbatchsize": stringify(mbSize),
+    "metricbufferlimit": stringify(mbLimit),
+    "flushinterval": stringify(flushInterval) + "s",
+    "flushjitter": stringify(flushJitter) + "s",
     "kafkaenabled": enabled,
     "kafkabrokers": kBrokers,
     "kafkatopic": kTopic,

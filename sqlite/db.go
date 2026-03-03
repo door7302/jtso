@@ -97,15 +97,16 @@ type KafkaConfig struct {
 }
 
 var (
-	db                *sql.DB
-	dbMu              *sync.Mutex
-	RtrList           []*RtrEntry
-	AssoList          []*AssoEntry
-	ActiveInterval    []*TelemetryInterval
-	ActiveCred        Cred
-	ActiveAdmin       Admin
-	ActiveKafkaConfig KafkaConfig
-	SM                *security.SecretManager
+	db                        *sql.DB
+	dbMu                      *sync.Mutex
+	RtrList                   []*RtrEntry
+	AssoList                  []*AssoEntry
+	ActiveInterval            []*TelemetryInterval
+	ActiveCred                Cred
+	ActiveAdmin               Admin
+	ActiveKafkaConfig         KafkaConfig
+	ActiveCollectorParameters CollectorParameters
+	SM                        *security.SecretManager
 )
 
 const SECRET_STORE string = "/data"
@@ -362,6 +363,27 @@ func UpdateKafkaConfig(enabled int, brokers, topic, format, version string, comp
 
 	if err != nil {
 		logger.Log.Errorf("Error while upserting Kafka config: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	dbMu.Unlock()
+	return LoadAll(false)
+}
+
+func UpdateCollectorParameters(metricBatchSize, metricBufferLimit, flushInterval, flushJitter string) error {
+	dbMu.Lock()
+	_, err := db.Exec(`
+		INSERT INTO collector_parameters (id, metric_batch_size, metric_buffer_limit, flush_interval, flush_jitter)
+		VALUES (0, ?, ?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET
+			metric_batch_size = excluded.metric_batch_size,
+			metric_buffer_limit = excluded.metric_buffer_limit,
+			flush_interval = excluded.flush_interval,
+			flush_jitter = excluded.flush_jitter;
+	`, metricBatchSize, metricBufferLimit, flushInterval, flushJitter)
+
+	if err != nil {
+		logger.Log.Errorf("Error while upserting collector parameters: %v", err)
 		dbMu.Unlock()
 		return err
 	}
@@ -907,6 +929,38 @@ func LoadAll(secretRotation bool) error {
 		}
 		ActiveKafkaConfig = KafkaConfig{Id: 0, Enabled: 0, Brokers: "localhost:9092", Topic: "jtso_topic", Format: "json", Version: "2.7.0", Compression: 0, MessageSize: 1000000}
 	}
+
+	ActiveCollectorParameters = CollectorParameters{}
+	rows, err = db.Query("SELECT * FROM collector_parameters;")
+	if err != nil {
+		logger.Log.Errorf("Error while selecting collector_parameters - err: %v", err)
+		dbMu.Unlock()
+		return err
+	}
+	defer rows.Close()
+	i = rows.Next()
+	if i {
+		err = rows.Scan(
+			&ActiveCollectorParameters.MetricBatchSize,
+			&ActiveCollectorParameters.MetricBufferLimit,
+			&ActiveCollectorParameters.FlushInterval,
+			&ActiveCollectorParameters.FlushJitter,
+		)
+		if err != nil {
+			logger.Log.Errorf("Error while parsing collector_parameters rows - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+	} else {
+		// nothing in the DB regarding collector parameters - add default one
+		if _, err := db.Exec("INSERT INTO collector_parameters VALUES(?,?,?,?,?);", 0, "5000", "100000", "5s", "0s"); err != nil {
+			logger.Log.Errorf("Error while adding default collector parameters - err: %v", err)
+			dbMu.Unlock()
+			return err
+		}
+		ActiveCollectorParameters = CollectorParameters{MetricBatchSize: "5000", MetricBufferLimit: "100000", FlushInterval: "5s", FlushJitter: "0s"}
+	}
+
 	dbMu.Unlock()
 	return nil
 }

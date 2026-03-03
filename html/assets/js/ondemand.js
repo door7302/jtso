@@ -524,6 +524,20 @@ function save() {
                         if (json.status === 'OK') {
                             waitingDialog.hide();
                             changeProfileState(true);
+                            // Add the new config to the select and focus on it
+                            var selectConfig = document.getElementById('ondemand-config');
+                            var exists = false;
+                            for (var i = 0; i < selectConfig.options.length; i++) {
+                                if (selectConfig.options[i].value === value) {
+                                    exists = true;
+                                    selectConfig.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                            if (!exists) {
+                                var newOption = new Option(value, value, true, true);
+                                selectConfig.add(newOption);
+                            }
                             alertify.success('File ' + value + ' has been saved.');
                         } else {
                             waitingDialog.hide();

@@ -102,10 +102,10 @@
                     </div>
                     <hr>
                     <h4 class="card-title">Telegraf Tuning</h4>
-                    <form><label class="form-label" style="margin-top: 10px;">Metric Batch Size</label><input id="MetricBatchSize" class="form-control" type="text" value="{{.MetricBatchSize}}"></form>
-                    <form><label class="form-label" style="margin-top: 10px;">Metric Buffer Limit</label><input id="MetricBufferLimit" class="form-control" type="text" value="{{.MetricBufferLimit}}"></form>
-                    <form><label class="form-label" style="margin-top: 10px;">Flush Interval (seconds)</label><input id="FlushInterval" class="form-control" type="text" value="{{.FlushInterval}}"></form>
-                    <form><label class="form-label" style="margin-top: 10px;">Flush Jitter (seconds)</label><input id="FlushJitter" class="form-control" type="text" value="{{.FlushJitter}}"></form>
+                    <form><label class="form-label" style="margin-top: 10px;">Metric Batch Size</label><input id="MetricBatchSize" class="form-control" type="number" value="{{.MetricBatchSize}}"></form>
+                    <form><label class="form-label" style="margin-top: 10px;">Metric Buffer Limit</label><input id="MetricBufferLimit" class="form-control" type="number" value="{{.MetricBufferLimit}}"></form>
+                    <form><label class="form-label" style="margin-top: 10px;">Flush Interval (seconds)</label><input id="FlushInterval" class="form-control" type="number" value="{{.FlushInterval}}"></form>
+                    <form><label class="form-label" style="margin-top: 10px;">Flush Jitter (seconds)</label><input id="FlushJitter" class="form-control" type="number" value="{{.FlushJitter}}"></form>
                    <hr>
                     <h4 class="card-title">Kafka export</h4>
                     <div style="margin-top: 10px;" class="form-check">

@@ -94,20 +94,24 @@ type (
 	}
 
 	Setting struct {
-		NetconfUser      string `json:"netuser"`
-		NetconfPwd       string `json:"netpwd"`
-		GnmiUser         string `json:"gnmiuser"`
-		GnmiPwd          string `json:"gnmipwd"`
-		UseTls           string `json:"usetls"`
-		SkipVerify       string `json:"skipverify"`
-		ClientTls        string `json:"clienttls"`
-		KafkaEnabled     int    `json:"kafkaenabled"`
-		KafkaBrokers     string `json:"kafkabrokers"`
-		KafkaTopic       string `json:"kafkatopic"`
-		KafkaVersion     string `json:"kafkaversion"`
-		KafkaFormat      string `json:"kafkaformat"`
-		KafkaCompression int    `json:"kafkacompression"`
-		KafkaMessageSize int    `json:"kafkamessagesize"`
+		NetconfUser       string `json:"netuser"`
+		NetconfPwd        string `json:"netpwd"`
+		GnmiUser          string `json:"gnmiuser"`
+		GnmiPwd           string `json:"gnmipwd"`
+		UseTls            string `json:"usetls"`
+		SkipVerify        string `json:"skipverify"`
+		ClientTls         string `json:"clienttls"`
+		MetricBatchSize   string `json:"metric_batch_size"`
+		MetricBufferLimit string `json:"metric_buffer_limit"`
+		FlushInterval     string `json:"flush_interval"`
+		FlushJitter       string `json:"flush_jitter"`
+		KafkaEnabled      int    `json:"kafkaenabled"`
+		KafkaBrokers      string `json:"kafkabrokers"`
+		KafkaTopic        string `json:"kafkatopic"`
+		KafkaVersion      string `json:"kafkaversion"`
+		KafkaFormat       string `json:"kafkaformat"`
+		KafkaCompression  int    `json:"kafkacompression"`
+		KafkaMessageSize  int    `json:"kafkamessagesize"`
 	}
 
 	InfluxMgt struct {

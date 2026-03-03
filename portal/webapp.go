@@ -650,6 +650,8 @@ func routeSettings(c echo.Context) error {
 	return c.Render(http.StatusOK, "settings.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser,
 		"Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd,
 		"Usetls": sqlite.ActiveCred.UseTls, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTls,
+		"MetricBatchSize": sqlite.ActiveCollectorParameters.MetricBatchSize, "MetricBufferLimit": sqlite.ActiveCollectorParameters.MetricBufferLimit,
+		"FlushInterval": sqlite.ActiveCollectorParameters.FlushInterval, "FlushJitter": sqlite.ActiveCollectorParameters.FlushJitter,
 		"KafkaEnable": sqlite.ActiveKafkaConfig.Enabled, "KafkaBrokers": sqlite.ActiveKafkaConfig.Brokers,
 		"KafkaTopic": sqlite.ActiveKafkaConfig.Topic, "KafkaVersion": sqlite.ActiveKafkaConfig.Version,
 		"KafkaFormat": sqlite.ActiveKafkaConfig.Format, "KafkaCompression": reverseDictKafkaCodec[sqlite.ActiveKafkaConfig.Compression],
@@ -1446,6 +1448,17 @@ func routeUptSettings(c echo.Context) error {
 	if err != nil {
 		logger.Log.Errorf("Unable to update credentials: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update credentials"})
+	}
+
+	if r.MetricBatchSize != sqlite.ActiveCollectorParameters.MetricBatchSize || r.MetricBufferLimit != sqlite.ActiveCollectorParameters.MetricBufferLimit || r.FlushInterval != sqlite.ActiveCollectorParameters.FlushInterval || r.FlushJitter != sqlite.ActiveCollectorParameters.FlushJitter {
+		somethingChange = true
+		go association.ChangeTelegrafTuning(r.MetricBatchSize, r.MetricBufferLimit, r.FlushInterval, r.FlushJitter)
+	}
+
+	err = sqlite.UpdateCollectorParameters(r.MetricBatchSize, r.MetricBufferLimit, r.FlushInterval, r.FlushJitter)
+	if err != nil {
+		logger.Log.Errorf("Unable to update collector parameters: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update collector parameters"})
 	}
 
 	if r.KafkaEnabled != sqlite.ActiveKafkaConfig.Enabled || r.KafkaBrokers != sqlite.ActiveKafkaConfig.Brokers || r.KafkaTopic != sqlite.ActiveKafkaConfig.Topic || r.KafkaFormat != sqlite.ActiveKafkaConfig.Format || r.KafkaVersion != sqlite.ActiveKafkaConfig.Version || r.KafkaCompression != sqlite.ActiveKafkaConfig.Compression || r.KafkaMessageSize != sqlite.ActiveKafkaConfig.MessageSize {

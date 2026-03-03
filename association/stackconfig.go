@@ -53,6 +53,61 @@ func hashStringFNV(input string) uint32 {
 	return hasher.Sum32()
 }
 
+func ChangeTelegrafTuning(batchSize string, bufferLimit string, flushInterval string, flushJitter string) error {
+	instances := []string{"mx", "ptx", "acx", "ex", "qfx", "srx", "crpd", "cptx", "vmx", "vsrx", "vjunos", "vevo", "ondemand"}
+
+	batchRegex := regexp.MustCompile(`^\s*metric_batch_size\s*=\s*\d+\s*$`)
+	bufferRegex := regexp.MustCompile(`^\s*metric_buffer_limit\s*=\s*\d+\s*$`)
+	flushIntervalRegex := regexp.MustCompile(`^\s*flush_interval\s*=\s*"[^"]*"\s*$`)
+	flushJitterRegex := regexp.MustCompile(`^\s*flush_jitter\s*=\s*"[^"]*"\s*$`)
+
+	for _, instance := range instances {
+		filePath := TELEGRAF_ROOT_PATH + instance + "/telegraf.conf"
+
+		// Read the file
+		file, err := os.Open(filePath)
+		if err != nil {
+			logger.Log.Errorf("Unable to open the file %s: %v", filePath, err)
+			return err
+		}
+
+		var updatedLines []string
+		scanner := bufio.NewScanner(file)
+
+		for scanner.Scan() {
+			line := scanner.Text()
+			if batchRegex.MatchString(line) {
+				line = fmt.Sprintf("  metric_batch_size = %s", batchSize)
+			} else if bufferRegex.MatchString(line) {
+				line = fmt.Sprintf("  metric_buffer_limit = %s", bufferLimit)
+			} else if flushIntervalRegex.MatchString(line) {
+				line = fmt.Sprintf("  flush_interval = \"%s\"", flushInterval)
+			} else if flushJitterRegex.MatchString(line) {
+				line = fmt.Sprintf("  flush_jitter = \"%s\"", flushJitter)
+			}
+			updatedLines = append(updatedLines, line)
+		}
+
+		if err := scanner.Err(); err != nil {
+			file.Close()
+			logger.Log.Errorf("Error while reading the file %s: %v", filePath, err)
+			return err
+		}
+		file.Close()
+
+		// Write the updated content back to the file
+		err = os.WriteFile(filePath, []byte(strings.Join(updatedLines, "\n")), 0644)
+		if err != nil {
+			logger.Log.Errorf("Error while saving the file %s: %v", filePath, err)
+			return err
+		}
+
+		logger.Log.Infof("Telegraf tuning updated for instance %s", instance)
+	}
+
+	return nil
+}
+
 func changeTelegrafDebug(instance string, debug int) error {
 	// for enable debug we need to change telegraf.conf and set debug = false
 	filePath := TELEGRAF_ROOT_PATH + instance + "/telegraf.conf"
