@@ -78,6 +78,13 @@ type TelemetryInterval struct {
 	Interval int
 }
 
+type CollectorParameters struct {
+	MetricBatchSize   string
+	MetricBufferLimit string
+	FlushInterval     string
+	FlushJitter       string
+}
+
 type KafkaConfig struct {
 	Id          int
 	Enabled     int
@@ -211,6 +218,15 @@ func Init(f string) error {
 		messagesize INTEGER
 		);`
 
+	const createCollector string = `
+		CREATE TABLE IF NOT EXISTS collector_parameters (
+		id INTEGER NOT NULL PRIMARY KEY,
+		metric_batch_size TEXT,
+		metric_buffer_limit TEXT,
+		flush_interval TEXT,
+		flush_jitter TEXT
+		);`
+
 	if _, err := db.Exec(createRtr); err != nil {
 		logger.Log.Infof("Error while init DB %s Table routers - err: %v", f, err)
 		return err
@@ -233,6 +249,10 @@ func Init(f string) error {
 	}
 	if _, err := db.Exec(createKafka); err != nil {
 		logger.Log.Infof("Error while init DB %s Table kafka_config - err: %v", f, err)
+		return err
+	}
+	if _, err := db.Exec(createCollector); err != nil {
+		logger.Log.Infof("Error while init DB %s Table collector_parameters - err: %v", f, err)
 		return err
 	}
 
