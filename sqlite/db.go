@@ -79,6 +79,7 @@ type TelemetryInterval struct {
 }
 
 type CollectorParameters struct {
+	Id                int
 	MetricBatchSize   string
 	MetricBufferLimit string
 	FlushInterval     string
