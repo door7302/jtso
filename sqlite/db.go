@@ -942,6 +942,7 @@ func LoadAll(secretRotation bool) error {
 	i = rows.Next()
 	if i {
 		err = rows.Scan(
+			&ActiveCollectorParameters.Id,
 			&ActiveCollectorParameters.MetricBatchSize,
 			&ActiveCollectorParameters.MetricBufferLimit,
 			&ActiveCollectorParameters.FlushInterval,
@@ -959,7 +960,7 @@ func LoadAll(secretRotation bool) error {
 			dbMu.Unlock()
 			return err
 		}
-		ActiveCollectorParameters = CollectorParameters{MetricBatchSize: "5000", MetricBufferLimit: "100000", FlushInterval: "5s", FlushJitter: "0s"}
+		ActiveCollectorParameters = CollectorParameters{Id: 0, MetricBatchSize: "5000", MetricBufferLimit: "100000", FlushInterval: "5s", FlushJitter: "0s"}
 	}
 
 	dbMu.Unlock()
