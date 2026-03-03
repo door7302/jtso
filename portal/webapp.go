@@ -651,7 +651,7 @@ func routeSettings(c echo.Context) error {
 		"Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd,
 		"Usetls": sqlite.ActiveCred.UseTls, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTls,
 		"MetricBatchSize": sqlite.ActiveCollectorParameters.MetricBatchSize, "MetricBufferLimit": sqlite.ActiveCollectorParameters.MetricBufferLimit,
-		"FlushInterval": sqlite.ActiveCollectorParameters.FlushInterval, "FlushJitter": sqlite.ActiveCollectorParameters.FlushJitter,
+		"FlushInterval": strings.Replace(sqlite.ActiveCollectorParameters.FlushInterval, "s", "", -1), "FlushJitter": strings.Replace(sqlite.ActiveCollectorParameters.FlushJitter, "s", "", -1),
 		"KafkaEnable": sqlite.ActiveKafkaConfig.Enabled, "KafkaBrokers": sqlite.ActiveKafkaConfig.Brokers,
 		"KafkaTopic": sqlite.ActiveKafkaConfig.Topic, "KafkaVersion": sqlite.ActiveKafkaConfig.Version,
 		"KafkaFormat": sqlite.ActiveKafkaConfig.Format, "KafkaCompression": reverseDictKafkaCodec[sqlite.ActiveKafkaConfig.Compression],
