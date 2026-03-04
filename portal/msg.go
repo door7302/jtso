@@ -101,10 +101,10 @@ type (
 		UseTls            string `json:"usetls"`
 		SkipVerify        string `json:"skipverify"`
 		ClientTls         string `json:"clienttls"`
-		MetricBatchSize   string `json:"metric_batch_size"`
-		MetricBufferLimit string `json:"metric_buffer_limit"`
-		FlushInterval     string `json:"flush_interval"`
-		FlushJitter       string `json:"flush_jitter"`
+		MetricBatchSize   string `json:"metricbatchsize"`
+		MetricBufferLimit string `json:"metricbufferlimit"`
+		FlushInterval     string `json:"flushinterval"`
+		FlushJitter       string `json:"flushjitter"`
 		KafkaEnabled      int    `json:"kafkaenabled"`
 		KafkaBrokers      string `json:"kafkabrokers"`
 		KafkaTopic        string `json:"kafkatopic"`
