@@ -57,8 +57,8 @@ func ChangeTelegrafTuning(batchSize string, bufferLimit string, flushInterval st
 	instances := []string{"mx", "ptx", "acx", "ex", "qfx", "srx", "crpd", "cptx", "vmx", "vsrx", "vjunos", "vevo", "ondemand"}
 	logger.Log.Infof("Changing telegraf tuning with batch size %s, buffer limit %s, flush interval %s and flush jitter %s", batchSize, bufferLimit, flushInterval, flushJitter)
 
-	batchRegex := regexp.MustCompile(`^\s*metric_batch_size\s*=\s*\d+\s*$`)
-	bufferRegex := regexp.MustCompile(`^\s*metric_buffer_limit\s*=\s*\d+\s*$`)
+	batchRegex := regexp.MustCompile(`^\s*metric_batch_size\s*=\s*\d*\s*$`)
+	bufferRegex := regexp.MustCompile(`^\s*metric_buffer_limit\s*=\s*\d*\s*$`)
 	flushIntervalRegex := regexp.MustCompile(`^\s*flush_interval\s*=\s*"[^"]*"\s*$`)
 	flushJitterRegex := regexp.MustCompile(`^\s*flush_jitter\s*=\s*"[^"]*"\s*$`)
 
