@@ -1452,7 +1452,7 @@ func routeUptSettings(c echo.Context) error {
 
 	if r.MetricBatchSize != sqlite.ActiveCollectorParameters.MetricBatchSize || r.MetricBufferLimit != sqlite.ActiveCollectorParameters.MetricBufferLimit || r.FlushInterval != sqlite.ActiveCollectorParameters.FlushInterval || r.FlushJitter != sqlite.ActiveCollectorParameters.FlushJitter {
 		somethingChange = true
-		go association.ChangeTelegrafTuning(r.MetricBatchSize, r.MetricBufferLimit, r.FlushInterval, r.FlushJitter)
+		association.ChangeTelegrafTuning(r.MetricBatchSize, r.MetricBufferLimit, r.FlushInterval, r.FlushJitter)
 	}
 
 	err = sqlite.UpdateCollectorParameters(r.MetricBatchSize, r.MetricBufferLimit, r.FlushInterval, r.FlushJitter)
