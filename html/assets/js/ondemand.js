@@ -538,6 +538,7 @@ function save() {
                                 var newOption = new Option(value, value, true, true);
                                 selectConfig.add(newOption);
                             }
+                            $('#ondemand-config').selectpicker('refresh');
                             alertify.success('File ' + value + ' has been saved.');
                         } else {
                             waitingDialog.hide();
