@@ -48,7 +48,7 @@ func main() {
 		os.Exit(0)
 	}
 	logger.StartLogger()
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 
 	logger.Log.Info(banner)
 	logger.Log.Infof("JTSO version: %s", config.JTSO_VERSION)
@@ -57,7 +57,7 @@ func main() {
 	Cfg := config.NewConfigContainer(ConfigFile)
 
 	// Create a shared Context with cancel function
-	_, close := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 
 	// Clean all kapacitor tasks
 	maxAttempts := Cfg.Kapacitor.BootTimeout
@@ -100,6 +100,8 @@ func main() {
 	go func() {
 		for {
 			select {
+			case <-ctx.Done():
+				return
 			case <-ticker.C:
 				worker.Collect(Cfg)
 			}
@@ -113,6 +115,8 @@ func main() {
 	go func() {
 		for {
 			select {
+			case <-ctx.Done():
+				return
 			case <-ticker2.C:
 				association.PeriodicCheck(Cfg)
 			}
@@ -136,6 +140,8 @@ func main() {
 	go func() {
 		for {
 			select {
+			case <-ctx.Done():
+				return
 			case <-ticker3.C:
 				container.GetContainerStats()
 			}
@@ -162,12 +168,21 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
+	// Bye...
+	sig := <-c
+	fmt.Println("JTSO - received signal: ", sig)
+
 	// Send Close to all threads
-	close()
+	cancel()
+
+	// Stop tickers
+	ticker.Stop()
+	ticker2.Stop()
+	ticker3.Stop()
 
 	// close DB
-	defer sqlite.CloseDb()
+	sqlite.CloseDb()
 
-	// Bye...
-	fmt.Println("JTSO - received signal: ", <-c)
+	// close logger
+	logger.CloseLogger()
 }

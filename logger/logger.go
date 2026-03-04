@@ -13,6 +13,7 @@ import (
 var (
 	Log     *logrus.Logger
 	Verbose bool
+	logFile *os.File
 )
 
 func StartLogger() {
@@ -21,8 +22,9 @@ func StartLogger() {
 
 	if err != nil {
 		fmt.Printf("Error opening file: %v", err)
-		os.Exit(0)
+		os.Exit(1)
 	}
+	logFile = f
 
 	if Verbose {
 		Log = &logrus.Logger{
@@ -45,11 +47,18 @@ func StartLogger() {
 	}
 }
 
-// Redirect panic in logger file
+// HandlePanic should be called as: defer logger.HandlePanic()
+// It recovers from panics and logs the stack trace.
 func HandlePanic() {
-	defer func() {
-		if err := recover(); err != nil {
-			Log.Error(string(debug.Stack()))
-		}
-	}()
+	if err := recover(); err != nil {
+		Log.Errorf("Recovered from panic: %v", err)
+		Log.Error(string(debug.Stack()))
+	}
+}
+
+// CloseLogger closes the log file handle.
+func CloseLogger() {
+	if logFile != nil {
+		logFile.Close()
+	}
 }

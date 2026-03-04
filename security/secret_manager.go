@@ -2,7 +2,6 @@ package security
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"jtso/logger"
 	"os"
@@ -12,6 +11,7 @@ import (
 type SecretManager struct {
 	Current  []byte
 	Previous []byte
+	dataDir  string
 }
 
 func NewSecretManager(dataDir string) (*SecretManager, bool, error) {
@@ -79,6 +79,7 @@ func NewSecretManager(dataDir string) (*SecretManager, bool, error) {
 	sm := &SecretManager{
 		Current:  currentKey[:],
 		Previous: previousKey,
+		dataDir:  dataDir,
 	}
 
 	return sm, changeDetected, nil
@@ -89,13 +90,14 @@ func (sm *SecretManager) Rotate() error {
 		return errors.New("no previous secret to rotate to")
 	}
 
-	// Set current as previous
-	sm.Previous = sm.Current
-
-	// Update previous secret file
-	if err := os.WriteFile(filepath.Join("data", "secret.previous.txt"), []byte(hex.EncodeToString(sm.Current)), 0600); err != nil {
+	// Remove the previous secret file since credentials are now re-encrypted with the current secret
+	prevPath := filepath.Join(sm.dataDir, "secret.previous.txt")
+	if err := os.Remove(prevPath); err != nil && !os.IsNotExist(err) {
 		return err
 	}
+
+	// Clear the previous secret
+	sm.Previous = nil
 
 	logger.Log.Infof("Rotate the secret")
 

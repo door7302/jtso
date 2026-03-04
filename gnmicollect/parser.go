@@ -148,7 +148,8 @@ func advancedSplit(path string, merge bool, hideOrigin bool) []string {
 
 	// then attributes
 	if strings.Contains(path, "=") && strings.Contains(path, "[") {
-		var newPath string
+		var sb strings.Builder
+		sb.Grow(len(path))
 		escape := false
 
 		for _, w := range path {
@@ -160,15 +161,15 @@ func advancedSplit(path string, merge bool, hideOrigin bool) []string {
 			}
 			if !escape {
 				if w == '/' {
-					newPath += "£££"
+					sb.WriteString("£££")
 				} else {
-					newPath += string(w)
+					sb.WriteRune(w)
 				}
 			} else {
-				newPath += string(w)
+				sb.WriteRune(w)
 			}
 		}
-		lp := strings.Split(newPath, "£££")
+		lp := strings.Split(sb.String(), "£££")
 		if merge {
 			for i, v := range lp {
 				if strings.Contains(v, "=") {
@@ -426,6 +427,7 @@ func parseXpath(xpath string, value string, merge bool, hideOrigin bool) error {
 	for i, v := range lpath {
 		if i == len(lpath)-1 {
 			if len(key) == 0 {
+				val = make(map[string]interface{})
 				val["alone"] = value
 			} else {
 				val = make(map[string]interface{})

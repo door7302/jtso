@@ -152,7 +152,10 @@ func Insert(root *TrieNode, base string, xpath string) {
 func CollectPrefixes(node *TrieNode, path []string, result *[]string) {
 	for seg, child := range node.children {
 		if child.count >= 2 {
-			newPath := append(path, seg)
+			// Copy path to avoid slice corruption from append reusing underlying array
+			newPath := make([]string, len(path)+1)
+			copy(newPath, path)
+			newPath[len(path)] = seg
 
 			stop := false
 			for _, gc := range child.children {

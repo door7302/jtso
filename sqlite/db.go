@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"database/sql"
+	"fmt"
 	"jtso/influx"
 	"jtso/logger"
 	"jtso/security"
@@ -282,20 +283,20 @@ func GetRouterByShort(shortName string) (family string, name string, err error) 
 
 func CheckAsso(n string) (bool, error) {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 	rows, err := db.Query("SELECT * FROM associations where name=?;", n)
 	if err != nil {
 		logger.Log.Errorf("Error while selecting associations - err: %v", err)
-		dbMu.Unlock()
 		return false, err
 	}
 	defer rows.Close()
 	flag := rows.Next()
-	dbMu.Unlock()
 	return flag, nil
 }
 
 func GetTelegrafInterval(profile, path string) (interval int, found bool, err error) {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 
 	row := db.QueryRow(`
 		SELECT interval
@@ -307,7 +308,6 @@ func GetTelegrafInterval(profile, path string) (interval int, found bool, err er
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// Row does not exist
-			dbMu.Unlock()
 			return 0, false, nil
 		}
 		// Other error
@@ -315,15 +315,14 @@ func GetTelegrafInterval(profile, path string) (interval int, found bool, err er
 			"Error while querying telegraf interval (profile=%s, path=%s): %v",
 			profile, path, err,
 		)
-		dbMu.Unlock()
 		return 0, false, err
 	}
-	dbMu.Unlock()
 	return interval, true, nil
 }
 
 func DeleteAllTelegrafByProfile(profile string) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 
 	res, err := db.Exec(`
 		DELETE FROM telegraf
@@ -335,19 +334,18 @@ func DeleteAllTelegrafByProfile(profile string) error {
 			"Error while deleting telegraf entries for profile '%s': %v",
 			profile, err,
 		)
-		dbMu.Unlock()
 		return err
 	}
 
 	rowsDeleted, _ := res.RowsAffected()
 	logger.Log.Infof("Deleted %d telegraf entries for profile '%s'", rowsDeleted, profile)
 
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func UpdateKafkaConfig(enabled int, brokers, topic, format, version string, compression, messageSize int) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 
 	_, err := db.Exec(`	
 		INSERT INTO kafka_config (id, enabled, brokers, topic, format, version, compression, messagesize)
@@ -364,15 +362,14 @@ func UpdateKafkaConfig(enabled int, brokers, topic, format, version string, comp
 
 	if err != nil {
 		logger.Log.Errorf("Error while upserting Kafka config: %v", err)
-		dbMu.Unlock()
 		return err
 	}
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func UpdateCollectorParameters(metricBatchSize, metricBufferLimit, flushInterval, flushJitter string) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 	_, err := db.Exec(`
 		INSERT INTO collector_parameters (id, metric_batch_size, metric_buffer_limit, flush_interval, flush_jitter)
 		VALUES (0, ?, ?, ?, ?)
@@ -385,15 +382,14 @@ func UpdateCollectorParameters(metricBatchSize, metricBufferLimit, flushInterval
 
 	if err != nil {
 		logger.Log.Errorf("Error while upserting collector parameters: %v", err)
-		dbMu.Unlock()
 		return err
 	}
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func UpdateInterval(profile, path, mode string, interval int) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 
 	_, err := db.Exec(`
 		INSERT INTO telegraf (profile, path, mode, interval)
@@ -409,16 +405,15 @@ func UpdateInterval(profile, path, mode string, interval int) error {
 			"Error while upserting telegraf entry (profile=%s, path=%s): %v",
 			profile, path, err,
 		)
-		dbMu.Unlock()
 		return err
 	}
 	logger.Log.Infof("The interval for profile %s and path %s has been overridden with the value %d sec(s)", profile, path, interval)
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func DeleteInterval(profile, path string) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 
 	res, err := db.Exec(`
 		DELETE FROM telegraf
@@ -430,7 +425,6 @@ func DeleteInterval(profile, path string) error {
 			"Error while deleting telegraf entry (profile=%s, path=%s): %v",
 			profile, path, err,
 		)
-		dbMu.Unlock()
 		return err
 	}
 
@@ -440,136 +434,150 @@ func DeleteInterval(profile, path string) error {
 			profile, path,
 		)
 	}
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func AddRouter(n string, s string, f string, m string, v string) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 
 	if _, err := db.Exec("INSERT INTO routers VALUES(NULL,?,?,?,?,?,?);", n, s, f, m, v, 0); err != nil {
 		logger.Log.Errorf("Error while adding router %s - err: %v", n, err)
-		dbMu.Unlock()
 		return err
 	}
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func DelAsso(n string) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 	if _, err := db.Exec("DELETE FROM associations WHERE name=?;", n); err != nil {
 		logger.Log.Errorf("Error while removing association for router %s - err: %v", n, err)
-		dbMu.Unlock()
 		return err
 	}
-	dbMu.Unlock()
-	err := updateRouterProfile(n, 0)
-	return err
+	if _, err := db.Exec("UPDATE routers SET profile=? WHERE short=?;", 0, n); err != nil {
+		logger.Log.Errorf("Error while updating router profile %s - err: %v", n, err)
+		return err
+	}
+	return loadAllInternal(false)
 }
 
 func AddAsso(n string, a []string) error {
 
 	dbMu.Lock()
+	defer dbMu.Unlock()
 	// convert list to string
-	var asso string
-	for i, v := range a {
-		if i != len(a)-1 {
-			asso += v + "|"
-		} else {
-			asso += v
-		}
-	}
+	asso := strings.Join(a, "|")
 	if _, err := db.Exec("INSERT INTO associations VALUES(NULL,?,?);", n, asso); err != nil {
 		logger.Log.Errorf("Error while adding router %s - err: %v", n, err)
-		dbMu.Unlock()
 		return err
 	}
-	dbMu.Unlock()
-	err := updateRouterProfile(n, 1)
-	return err
+	if _, err := db.Exec("UPDATE routers SET profile=? WHERE short=?;", 1, n); err != nil {
+		logger.Log.Errorf("Error while updating router profile %s - err: %v", n, err)
+		return err
+	}
+	return loadAllInternal(false)
 }
 
 func DelRouter(n string) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 	if _, err := db.Exec("DELETE FROM routers WHERE short=?;", n); err != nil {
 		logger.Log.Errorf("Error while adding router %s - err: %v", n, err)
-		dbMu.Unlock()
 		return err
 	}
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func updateRouterProfile(n string, p int) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 	if _, err := db.Exec("UPDATE routers SET profile=? WHERE short=?;", p, n); err != nil {
 		logger.Log.Errorf("Error while updating router profile %s - err: %v", n, err)
-		dbMu.Unlock()
 		return err
 	}
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func UpdateRouter(s string, f string, m string, v string) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 	if _, err := db.Exec("UPDATE routers SET family=?, model=?, version=? WHERE short=?", f, m, v, s); err != nil {
 		logger.Log.Errorf("Error while updating router - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func UpdateCredentials(nu string, np string, gu string, gp string, t string, s string, c string) error {
 	dbMu.Lock()
-	encNetPwd, _ := security.Encrypt(SM.Current, np)
-	encGnmiPwd, _ := security.Encrypt(SM.Current, gp)
-	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?, skipverify=?, clienttls=?  WHERE id=0;", nu, encNetPwd, gu, encGnmiPwd, t, s, c); err != nil {
-		logger.Log.Errorf("Error while updating credential - err: %v", err)
-		dbMu.Unlock()
+	defer dbMu.Unlock()
+	encNetPwd, err := security.Encrypt(SM.Current, np)
+	if err != nil {
+		logger.Log.Errorf("Error while encrypting netconf password - err: %v", err)
 		return err
 	}
-	dbMu.Unlock()
-	return LoadAll(false)
+	encGnmiPwd, err := security.Encrypt(SM.Current, gp)
+	if err != nil {
+		logger.Log.Errorf("Error while encrypting gnmi password - err: %v", err)
+		return err
+	}
+	if _, err := db.Exec("UPDATE credentials SET netuser=?, netpwd=?, gnmiuser=?, gnmipwd=?, usetls=?, skipverify=?, clienttls=?  WHERE id=0;", nu, encNetPwd, gu, encGnmiPwd, t, s, c); err != nil {
+		logger.Log.Errorf("Error while updating credential - err: %v", err)
+		return err
+	}
+	return loadAllInternal(false)
 }
 
 func UpdateDebugMode(instance string, debug int) error {
+	// Validate instance against allowlist to prevent SQL injection
+	allowedInstances := map[string]bool{
+		"mx": true, "ptx": true, "acx": true, "ex": true,
+		"qfx": true, "srx": true, "crpd": true, "cptx": true,
+		"vmx": true, "vsrx": true, "vjunos": true, "vevo": true,
+		"ondemand": true,
+	}
+	if !allowedInstances[instance] {
+		return fmt.Errorf("invalid instance name: %s", instance)
+	}
+
 	dbMu.Lock()
+	defer dbMu.Unlock()
 	// Save debug state
 	debugInst := instance + "debug"
 
 	// update the debug value for the instance
 	if _, err := db.Exec("UPDATE administration SET "+debugInst+"=? WHERE id=0;", debug); err != nil {
 		logger.Log.Errorf("Error while updating debug mode - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func UpdateRpDuration(duration string) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
 	// update the debug value for the instance
 	if _, err := db.Exec("UPDATE administration SET rpduration=? WHERE id=0;", duration); err != nil {
 		logger.Log.Errorf("Error while updating the RP duration - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
-	dbMu.Unlock()
-	return LoadAll(false)
+	return loadAllInternal(false)
 }
 
 func LoadAll(secretRotation bool) error {
 	dbMu.Lock()
+	defer dbMu.Unlock()
+	return loadAllInternal(secretRotation)
+}
+
+// loadAllInternal performs the actual data reload without locking.
+// Caller must hold dbMu.Lock().
+func loadAllInternal(secretRotation bool) error {
 	RtrList = make([]*RtrEntry, 0)
 	rows, err := db.Query("SELECT * FROM routers;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting routers - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 	defer rows.Close()
@@ -578,7 +586,6 @@ func LoadAll(secretRotation bool) error {
 		err = rows.Scan(&i.Id, &i.Hostname, &i.Shortname, &i.Family, &i.Model, &i.Version, &i.Profile)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing routers rows - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 		RtrList = append(RtrList, &i)
@@ -588,7 +595,6 @@ func LoadAll(secretRotation bool) error {
 	rows, err = db.Query("SELECT * FROM associations;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting associations - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 	defer rows.Close()
@@ -598,7 +604,6 @@ func LoadAll(secretRotation bool) error {
 		err = rows.Scan(&i.Id, &i.Shortname, &tmpList)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing associations rows - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 		// Fix legacy naming - be deprecated in future release
@@ -613,7 +618,6 @@ func LoadAll(secretRotation bool) error {
 	rows, err = db.Query("SELECT * FROM telegraf;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting telegraf - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 	defer rows.Close()
@@ -622,21 +626,27 @@ func LoadAll(secretRotation bool) error {
 		err = rows.Scan(&i.Profile, &i.Path, &i.Mode, &i.Interval)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing telegraf interval rows - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 		ActiveInterval = append(ActiveInterval, &i)
 	}
 
 	// Init with default credential in case of first launch and manage encryption if secret rotation or encryption just enabled
-	encNetPwd, _ := security.Encrypt(SM.Current, "lab123")
-	encGnmiPwd, _ := security.Encrypt(SM.Current, "lab123")
+	encNetPwd, err := security.Encrypt(SM.Current, "lab123")
+	if err != nil {
+		logger.Log.Errorf("Error encrypting default netconf password - err: %v", err)
+		return err
+	}
+	encGnmiPwd, err := security.Encrypt(SM.Current, "lab123")
+	if err != nil {
+		logger.Log.Errorf("Error encrypting default gnmi password - err: %v", err)
+		return err
+	}
 	ActiveCred = Cred{Id: 0, NetconfUser: "lab", NetconfPwd: encNetPwd, GnmiUser: "lab", GnmiPwd: encGnmiPwd, UseTls: "no", SkipVerify: "yes", ClientTls: "no", PasswordVer: 1}
 
 	rows, err = db.Query("SELECT * FROM credentials;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting credentials - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 	defer rows.Close()
@@ -645,7 +655,6 @@ func LoadAll(secretRotation bool) error {
 		// nothing in the DB regarding credential - add default one
 		if _, err := db.Exec("INSERT INTO credentials VALUES(?,?,?,?,?,?,?,?,?);", 0, ActiveCred.NetconfUser, ActiveCred.NetconfPwd, ActiveCred.GnmiUser, ActiveCred.GnmiPwd, ActiveCred.UseTls, ActiveCred.SkipVerify, ActiveCred.ClientTls, ActiveCred.PasswordVer); err != nil {
 			logger.Log.Errorf("Error while adding default credential - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 	} else {
@@ -653,7 +662,6 @@ func LoadAll(secretRotation bool) error {
 		rows, err := db.Query("PRAGMA table_info(credentials);")
 		if err != nil {
 			logger.Log.Errorf("Error while checking table info - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 		for rows.Next() {
@@ -663,7 +671,6 @@ func LoadAll(secretRotation bool) error {
 			var dfltValue interface{}
 			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
 				logger.Log.Errorf("Error scanning table_info - err: %v", err)
-				dbMu.Unlock()
 				return err
 			}
 			if name == "passwordver" {
@@ -676,7 +683,6 @@ func LoadAll(secretRotation bool) error {
 			_, err := db.Exec("ALTER TABLE credentials ADD COLUMN passwordver INTEGER DEFAULT 1;")
 			if err != nil {
 				logger.Log.Errorf("Error adding passwordver column - err: %v", err)
-				dbMu.Unlock()
 				return err
 			}
 			var netPwd, gnmiPwd string
@@ -686,21 +692,26 @@ func LoadAll(secretRotation bool) error {
 				if err == sql.ErrNoRows {
 					// No row exists in the table
 					logger.Log.Errorf("No row exists in the table- err: %v", err)
-					dbMu.Unlock()
 					return err
 				} else {
 					// Some other DB error
 					logger.Log.Errorf("Error scanning credentials - err: %v", err)
-					dbMu.Unlock()
 					return err
 				}
 			}
-			encNetPwd, _ := security.Encrypt(SM.Current, netPwd)
-			encGnmiPwd, _ := security.Encrypt(SM.Current, netPwd)
+			encNetPwd, err := security.Encrypt(SM.Current, netPwd)
+			if err != nil {
+				logger.Log.Errorf("Error encrypting netconf password - err: %v", err)
+				return err
+			}
+			encGnmiPwd, err := security.Encrypt(SM.Current, netPwd)
+			if err != nil {
+				logger.Log.Errorf("Error encrypting gnmi password - err: %v", err)
+				return err
+			}
 			_, err = db.Exec("UPDATE credentials SET netpwd=?, gnmipwd=?, passwordver=1 WHERE id=0;", encNetPwd, encGnmiPwd)
 			if err != nil {
 				logger.Log.Errorf("Error encrypting existing passwords - err: %v", err)
-				dbMu.Unlock()
 				return err
 			}
 			logger.Log.Infof("Existing credentials have been encrypted and passwordver column has been added successfully")
@@ -709,7 +720,6 @@ func LoadAll(secretRotation bool) error {
 	rows, err = db.Query("SELECT * FROM credentials;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting credentials - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 	defer rows.Close()
@@ -727,7 +737,6 @@ func LoadAll(secretRotation bool) error {
 	)
 	if err != nil {
 		logger.Log.Errorf("Error while parsing credential rows - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 
@@ -738,7 +747,6 @@ func LoadAll(secretRotation bool) error {
 			netconfPwd, errNetconf = security.Decrypt(SM.Previous, ActiveCred.NetconfPwd)
 			if errNetconf != nil {
 				logger.Log.Errorf("Error decrypting netconf password with both current and previous secrets - err: %v", errNetconf)
-				dbMu.Unlock()
 				return errNetconf
 			}
 		}
@@ -747,7 +755,6 @@ func LoadAll(secretRotation bool) error {
 			gnmiPwd, errGnmi = security.Decrypt(SM.Previous, ActiveCred.GnmiPwd)
 			if errGnmi != nil {
 				logger.Log.Errorf("Error decrypting gnmi password with both current and previous secrets - err: %v", errGnmi)
-				dbMu.Unlock()
 				return errGnmi
 			}
 		}
@@ -760,14 +767,12 @@ func LoadAll(secretRotation bool) error {
 		_, err = db.Exec("UPDATE credentials SET netpwd=?, gnmipwd=? WHERE id=0;", encNetPwd, encGnmiPwd)
 		if err != nil {
 			logger.Log.Errorf("Error re-encrypting passwords with the new secret - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 		// Finalize the secret rotation by removing the previous secret from the SecretManager
 		err = SM.Rotate()
 		if err != nil {
 			logger.Log.Errorf("Error finalizing secret rotation - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 		logger.Log.Infof("Secret rotation has been finalized successfully, previous secret has been removed and credentials have been re-encrypted with the new secret")
@@ -776,13 +781,11 @@ func LoadAll(secretRotation bool) error {
 		netconfPwd, errNetconf := security.Decrypt(SM.Current, ActiveCred.NetconfPwd)
 		if errNetconf != nil {
 			logger.Log.Errorf("Error decrypting netconf password with current secret - err: %v", errNetconf)
-			dbMu.Unlock()
 			return errNetconf
 		}
 		gnmiPwd, errGnmi := security.Decrypt(SM.Current, ActiveCred.GnmiPwd)
 		if errGnmi != nil {
 			logger.Log.Errorf("Error decrypting gnmi password with current secret - err: %v", errGnmi)
-			dbMu.Unlock()
 			return errGnmi
 		}
 		ActiveCred.NetconfPwd = netconfPwd
@@ -795,7 +798,6 @@ func LoadAll(secretRotation bool) error {
 	rows, err = db.Query("SELECT * FROM administration;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting administration - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 	defer rows.Close()
@@ -804,7 +806,6 @@ func LoadAll(secretRotation bool) error {
 		// nothing in the DB regarding administration  - add default one
 		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, influx.DefaultRetention, ""); err != nil {
 			logger.Log.Errorf("Error while adding default administration - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 	} else {
@@ -813,7 +814,6 @@ func LoadAll(secretRotation bool) error {
 		rows, err := db.Query("PRAGMA table_info(administration);")
 		if err != nil {
 			logger.Log.Errorf("Error while checking table info - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 		for rows.Next() {
@@ -823,7 +823,6 @@ func LoadAll(secretRotation bool) error {
 			var dfltValue interface{}
 			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
 				logger.Log.Errorf("Error scanning table_info - err: %v", err)
-				dbMu.Unlock()
 				return err
 			}
 			if name == "ondemanddebug" {
@@ -842,7 +841,6 @@ func LoadAll(secretRotation bool) error {
 			_, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemanddebug INTEGER DEFAULT 0;")
 			if err != nil {
 				logger.Log.Errorf("Error adding ondemanddebug column - err: %v", err)
-				dbMu.Unlock()
 				return err
 			}
 		}
@@ -850,7 +848,6 @@ func LoadAll(secretRotation bool) error {
 			_, err := db.Exec("ALTER TABLE administration ADD COLUMN rpduration TEXT DEFAULT '" + influx.DefaultRetention + "';")
 			if err != nil {
 				logger.Log.Errorf("Error adding rpduration column - err: %v", err)
-				dbMu.Unlock()
 				return err
 			}
 		}
@@ -858,7 +855,6 @@ func LoadAll(secretRotation bool) error {
 			_, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemandconf INTEGER DEFAULT 0;")
 			if err != nil {
 				logger.Log.Errorf("Error adding ondemandconf column - err: %v", err)
-				dbMu.Unlock()
 				return err
 			}
 		}
@@ -867,7 +863,6 @@ func LoadAll(secretRotation bool) error {
 	rows, err = db.Query("SELECT * FROM administration;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting administration - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 	defer rows.Close()
@@ -892,7 +887,6 @@ func LoadAll(secretRotation bool) error {
 	)
 	if err != nil {
 		logger.Log.Errorf("Error while parsing administration rows - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 
@@ -900,7 +894,6 @@ func LoadAll(secretRotation bool) error {
 	rows, err = db.Query("SELECT * FROM kafka_config;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting kafka_config - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 	defer rows.Close()
@@ -918,14 +911,12 @@ func LoadAll(secretRotation bool) error {
 		)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing kafka_config rows - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 	} else {
 		// nothing in the DB regarding kafka config - add default one
 		if _, err := db.Exec("INSERT INTO kafka_config VALUES(?,?,?,?,?,?,?,?);", 0, 0, "localhost:9092", "jtso_topic", "json", "2.7.0", 0, 1000000); err != nil {
 			logger.Log.Errorf("Error while adding default kafka config - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 		ActiveKafkaConfig = KafkaConfig{Id: 0, Enabled: 0, Brokers: "localhost:9092", Topic: "jtso_topic", Format: "json", Version: "2.7.0", Compression: 0, MessageSize: 1000000}
@@ -935,7 +926,6 @@ func LoadAll(secretRotation bool) error {
 	rows, err = db.Query("SELECT * FROM collector_parameters;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting collector_parameters - err: %v", err)
-		dbMu.Unlock()
 		return err
 	}
 	defer rows.Close()
@@ -950,20 +940,17 @@ func LoadAll(secretRotation bool) error {
 		)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing collector_parameters rows - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 	} else {
 		// nothing in the DB regarding collector parameters - add default one
 		if _, err := db.Exec("INSERT INTO collector_parameters VALUES(?,?,?,?,?);", 0, "5000", "100000", "5s", "0s"); err != nil {
 			logger.Log.Errorf("Error while adding default collector parameters - err: %v", err)
-			dbMu.Unlock()
 			return err
 		}
 		ActiveCollectorParameters = CollectorParameters{Id: 0, MetricBatchSize: "5000", MetricBufferLimit: "100000", FlushInterval: "5s", FlushJitter: "0s"}
 	}
 
-	dbMu.Unlock()
 	return nil
 }
 

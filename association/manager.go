@@ -123,9 +123,10 @@ func PeriodicCheck(cfg *config.ConfigContainer) {
 				hash := md5.New()
 				if _, err := io.Copy(hash, tmpFile); err != nil {
 					logger.Log.Errorf("Unable to compute hash for file %s: %v", filename, err)
+					tmpFile.Close()
 					continue
 				}
-				defer tmpFile.Close()
+				tmpFile.Close()
 				hashInBytes := hash.Sum(nil)[:16]
 				MD5String := hex.EncodeToString(hashInBytes)
 
@@ -148,12 +149,19 @@ func PeriodicCheck(cfg *config.ConfigContainer) {
 						logger.Log.Errorf("Unable to open defintion.json for profile %s: %v", filename, err)
 						continue
 					}
-					defer jsonFile.Close()
 
-					byteValue, _ := io.ReadAll(jsonFile)
+					byteValue, err := io.ReadAll(jsonFile)
+					jsonFile.Close()
+					if err != nil {
+						logger.Log.Errorf("Unable to read defintion.json for profile %s: %v", filename, err)
+						continue
+					}
 					entry.Definition = new(DefProfile)
 					// push json into definition structure
-					json.Unmarshal(byteValue, entry.Definition)
+					if err := json.Unmarshal(byteValue, entry.Definition); err != nil {
+						logger.Log.Errorf("Unable to parse defintion.json for profile %s: %v", filename, err)
+						continue
+					}
 					entry.Hash = MD5String
 
 					// Legacy code - will be removed further.
@@ -216,9 +224,10 @@ func PeriodicCheck(cfg *config.ConfigContainer) {
 				hash := md5.New()
 				if _, err := io.Copy(hash, tmpFile); err != nil {
 					logger.Log.Errorf("Unable to compute hash for file %s: %v", filename, err)
+					tmpFile.Close()
 					continue
 				}
-				defer tmpFile.Close()
+				tmpFile.Close()
 				hashInBytes := hash.Sum(nil)[:16]
 				MD5String := hex.EncodeToString(hashInBytes)
 				entry.Hash = MD5String
@@ -235,12 +244,19 @@ func PeriodicCheck(cfg *config.ConfigContainer) {
 					logger.Log.Errorf("Unable to open defintion.json for profile %s: %v", filename, err)
 					continue
 				}
-				defer jsonFile.Close()
 
-				byteValue, _ := io.ReadAll(jsonFile)
+				byteValue, err := io.ReadAll(jsonFile)
+				jsonFile.Close()
+				if err != nil {
+					logger.Log.Errorf("Unable to read defintion.json for profile %s: %v", filename, err)
+					continue
+				}
 
 				// push json into definition structure
-				json.Unmarshal(byteValue, entry.Definition)
+				if err := json.Unmarshal(byteValue, entry.Definition); err != nil {
+					logger.Log.Errorf("Unable to parse defintion.json for profile %s: %v", filename, err)
+					continue
+				}
 
 				// Legacy code - will be removed further.
 				//

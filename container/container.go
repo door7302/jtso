@@ -175,6 +175,7 @@ func GetContainerStats() {
 		logger.Log.Errorf("Error creating Docker client: %v\n", err)
 		return
 	}
+	defer cli.Close()
 
 	// Get list of containers
 	containers, err := cli.ContainerList(context.Background(), container.ListOptions{})

@@ -193,36 +193,64 @@ func parseLine(line string, expectElem int) ([]string, error) {
 
 func findFamily(m string) string {
 	// derive family from model
+	if len(m) == 0 {
+		return ""
+	}
 	var f string
-	firstChar := strings.ToLower(string(m[0]))
+	ml := strings.ToLower(m)
+	firstChar := string(ml[0])
 	switch firstChar {
 	case "m":
-		f = strings.ToLower(string(m[0:2]))
+		if len(ml) >= 2 {
+			f = ml[0:2]
+		}
 	case "p":
-		f = strings.ToLower(string(m[0:3]))
+		if len(ml) >= 3 {
+			f = ml[0:3]
+		}
 	case "a":
-		f = strings.ToLower(string(m[0:3]))
+		if len(ml) >= 3 {
+			f = ml[0:3]
+		}
 	case "e":
-		f = strings.ToLower(string(m[0:2]))
+		if len(ml) >= 2 {
+			f = ml[0:2]
+		}
 	case "q":
-		f = strings.ToLower(string(m[0:3]))
+		if len(ml) >= 3 {
+			f = ml[0:3]
+		}
 	case "s":
-		f = strings.ToLower(string(m[0:3]))
+		if len(ml) >= 3 {
+			f = ml[0:3]
+		}
 	case "c":
-		f = strings.ToLower(string(m[0:4]))
+		if len(ml) >= 4 {
+			f = ml[0:4]
+		}
 	case "v":
-		twoChar := strings.ToLower(string(m[0:2]))
-		switch twoChar {
-		case "vm":
-			f = strings.ToLower(string(m[0:3]))
-		case "vj":
-			f = strings.ToLower(string(m[0:6]))
-		case "ve":
-			f = strings.ToLower(string(m[0:4]))
-		case "vs":
-			f = strings.ToLower(string(m[0:4]))
-		default:
-			f = ""
+		if len(ml) >= 2 {
+			twoChar := ml[0:2]
+			switch twoChar {
+			case "vm":
+				if len(ml) >= 3 {
+					f = ml[0:3]
+				}
+			case "vj":
+				if len(ml) >= 6 {
+					f = ml[0:6]
+				}
+			case "ve":
+				if len(ml) >= 4 {
+					f = ml[0:4]
+				}
+			case "vs":
+				if len(ml) >= 4 {
+					f = ml[0:4]
+				}
+			default:
+				f = ""
+			}
 		}
 	default:
 		f = ""
@@ -1271,6 +1299,11 @@ func routeStream(c echo.Context) error {
 		// loop until the end
 		for {
 			select {
+			case <-c.Request().Context().Done():
+				// Client disconnected - clean up
+				gnmicollect.StreamObj.Stream = 0
+				logger.Log.Info("Client disconnected, stopping stream")
+				return nil
 			case <-gnmicollect.StreamObj.StopStreaming:
 				var jsTree []gnmicollect.TreeJs
 				//var fancytreeData []*gnmicollect.FancytreeNode

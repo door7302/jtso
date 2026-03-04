@@ -60,8 +60,13 @@ func Load(f string) (error, RunningProfile) {
 	logger.Log.Infof("Load Ondemand configuration %s", f)
 
 	filePath := filepath.Join(PATH_ONDEMAND, f)
+	// Prevent path traversal
+	cleanPath := filepath.Clean(filePath)
+	if !strings.HasPrefix(cleanPath, filepath.Clean(PATH_ONDEMAND)) {
+		return fmt.Errorf("invalid file path: path traversal detected"), RunningProfile{}
+	}
 
-	data, err := os.ReadFile(filePath + ".json")
+	data, err := os.ReadFile(cleanPath + ".json")
 	if err != nil {
 		return fmt.Errorf("failed to read file %s: %w", filePath, err), RunningProfile{}
 	}
@@ -79,13 +84,18 @@ func Save(f string, profile RunningProfile) error {
 	logger.Log.Infof("Save Ondemand configuration %s", f)
 
 	filePath := filepath.Join(PATH_ONDEMAND, f)
+	// Prevent path traversal
+	cleanPath := filepath.Clean(filePath)
+	if !strings.HasPrefix(cleanPath, filepath.Clean(PATH_ONDEMAND)) {
+		return fmt.Errorf("invalid file path: path traversal detected")
+	}
 
 	data, err := json.MarshalIndent(profile, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %w", err)
 	}
 
-	err = os.WriteFile(filePath+".json", data, 0644)
+	err = os.WriteFile(cleanPath+".json", data, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write file %s: %w", filePath, err)
 	}

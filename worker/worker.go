@@ -33,7 +33,7 @@ var ErrNoWorkers = fmt.Errorf("Attempting to create worker pool with less than 1
 var ErrNegativeChannelSize = fmt.Errorf("Attempting to create worker pool with a negative channel size")
 
 func NewSimplePool(numWorkers int, channelSize int, ctx context.Context) (Pool, error) {
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 	if numWorkers <= 0 {
 		return nil, ErrNoWorkers
 	}
@@ -67,7 +67,7 @@ func (p *SimplePool) Stop() {
 }
 
 func (p *SimplePool) AddWork(t Task) {
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 	select {
 	case p.tasks <- t:
 	case <-p.ctx.Done():
@@ -78,10 +78,11 @@ func (p *SimplePool) AddWork(t Task) {
 }
 
 func (p *SimplePool) startWorkers() {
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 	for i := 0; i < p.numWorkers; i++ {
 		logger.Log.Debugf("Start worker thread number %d", i)
 		go func(i int) {
+			defer logger.HandlePanic()
 			for {
 				select {
 				case <-p.ctx.Done():
@@ -91,16 +92,16 @@ func (p *SimplePool) startWorkers() {
 					logger.Log.Infof("Stop Worker %d", i)
 					return
 				case task, ok := <-p.tasks:
+					if !ok {
+						logger.Log.Errorf("Worker %d experienced an issue when receiving task", i)
+						return
+					}
 					t, isOk := task.(*netconf.RouterTask)
 					if !isOk {
 						logger.Log.Errorf("Worker %d experienced an issue when casting task", i)
 						return
 					}
 					logger.Log.Debugf("Worker %d receives a JOB for router %s", i, t.Name)
-					if !ok {
-						logger.Log.Errorf("Worker %d experienced an issue when receiving task", i)
-						return
-					}
 					if err := task.Work(); err != nil {
 						logger.Log.Errorf("Worker %d experienced an issue after executing its task: %v", i, err)
 					}

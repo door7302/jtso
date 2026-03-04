@@ -155,7 +155,7 @@ type LacpDigest struct {
 
 // Parsing function for version
 func ParseVersion(s string) (*Version, error) {
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 	var i Version
 	// convert in byte array
 	b := []byte(s)
@@ -166,7 +166,7 @@ func ParseVersion(s string) (*Version, error) {
 
 // Parsing function for interfaces description
 func ParseIfdesc(s string) (*Ifdesc, error) {
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 	var i Ifdesc
 	// convert in byte array
 	b := []byte(s)
@@ -177,7 +177,7 @@ func ParseIfdesc(s string) (*Ifdesc, error) {
 
 // Parsing function for interfaces terse
 func ParseIflist(s string) (*Iflist, error) {
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 	var i Iflist
 	// convert in byte array
 	b := []byte(s)
@@ -188,7 +188,7 @@ func ParseIflist(s string) (*Iflist, error) {
 
 // Parsing function for chassis hw
 func ParseChassis(s string) (*Hw, error) {
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 	var i Hw
 	// convert in byte array
 	b := []byte(s)
@@ -199,7 +199,7 @@ func ParseChassis(s string) (*Hw, error) {
 
 // Parsing function for chassis hw
 func ParseIsis(s string) (*Isis, error) {
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 	var i Isis
 	// convert in byte array
 	b := []byte(s)
@@ -210,7 +210,7 @@ func ParseIsis(s string) (*Isis, error) {
 
 // Parsing function for Lacp interface
 func ParseLacp(s string) (*Lacp, *LacpDigest, error) {
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 	var i Lacp
 	data := new(LacpDigest)
 	data.LacpMap = make(map[string]string)

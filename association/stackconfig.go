@@ -911,6 +911,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		}
 		// clean the right directory only if there are files
 		allFiles, _ := readDirectory.Readdir(0)
+		readDirectory.Close()
 
 		for f := range allFiles {
 			file := allFiles[f]
@@ -1030,10 +1031,10 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				logger.Log.Errorf("Unable to open the target rendering file %s - err: %v", savedName, err)
 				continue
 			}
-			defer file.Close()
 
 			// Write text to the file
 			_, err = file.WriteString(*payload)
+			file.Close()
 			if err != nil {
 				logger.Log.Errorf("Error writing to file %s: %v", savedName, err)
 				continue
@@ -1066,14 +1067,15 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 						logger.Log.Errorf("Unable to open the source dashboard %s - err: %v", d, err)
 						continue
 					}
-					defer source.Close()
 					destination, err := os.Create(PATH_GRAFANA + d) //create the destination file
 					if err != nil {
 						logger.Log.Errorf("Unable to open the destination dashboard %s - err: %v", d, err)
+						source.Close()
 						continue
 					}
-					defer destination.Close()
 					_, err = io.Copy(destination, source) //copy the contents of source to destination file
+					source.Close()
+					destination.Close()
 					if err != nil {
 						logger.Log.Errorf("Unable to update the dashboard %s - err: %v", d, err)
 						continue
@@ -1087,6 +1089,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// Now clean grafana dashbord directory and keep only dashbords related to active profiles
 	readDirectory, _ = os.Open(PATH_GRAFANA)
 	allFiles, _ := readDirectory.Readdir(0)
+	readDirectory.Close()
 	for f := range allFiles {
 		file := allFiles[f]
 

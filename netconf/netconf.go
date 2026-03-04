@@ -121,7 +121,7 @@ func GetFacts(r string, u string, p string, port int, timeout int) (*xml.Version
 
 // The Worker function
 func (r *RouterTask) Work() error {
-	logger.HandlePanic()
+	defer logger.HandlePanic()
 	defer r.Wg.Done()
 
 	logger.Log.Infof("[%s] Start collecting and updating Metadata", r.Name)
