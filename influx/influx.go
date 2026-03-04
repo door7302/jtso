@@ -126,7 +126,7 @@ func DropRouter(r string) error {
 
 	// Create a new query
 	q := client.Query{
-		Command:  fmt.Sprintf("DROP SERIES FROM /.*/ WHERE device='%s'", strings.ReplaceAll(r, "'", "\\'"))  ,
+		Command:  fmt.Sprintf("DROP SERIES FROM /.*/ WHERE device='%s'", strings.ReplaceAll(r, "'", "\\'")),
 		Database: influxDBDatabase,
 	}
 	// Execute the query
