@@ -9,13 +9,32 @@ import (
 	"strings"
 )
 
+type ProcessorConvert struct {
+	Enable bool   `json:"enable"`
+	Type   string `json:"type"`
+}
+
+type ProcessorRate struct {
+	Enable bool `json:"enable"`
+	Factor int  `json:"factor"`
+}
+
+type ProcessorAlarm struct {
+	Enable    bool    `json:"enable"`
+	Name      string  `json:"name"`
+	Type      string  `json:"type"`
+	Threshold float32 `json:"threshold"`
+	Operator  string  `json:"operator"`
+}
+
 type (
 	FieldEntry struct {
-		Name        string   `json:"name"`
-		Monitor     bool     `json:"monitor"`
-		Rate        bool     `json:"rate"`
-		Convert     bool     `json:"convert"`
-		InheritTags []string `json:"inherit_tags"`
+		Name        string           `json:"name"`
+		Monitor     bool             `json:"monitor"`
+		Rate        ProcessorRate    `json:"rate"`
+		Convert     ProcessorConvert `json:"convert"`
+		Alarming    ProcessorAlarm   `json:"alarming"`
+		InheritTags []string         `json:"inherit_tags"`
 	}
 
 	Entry struct {

@@ -15,8 +15,21 @@
         {
           "name": "field1",
           "monitor": true,
-          "rate": true,
-          "convert": false,
+          "rate": {
+              "enable": true,
+              "factor": 100
+          },
+          "convert": {
+              "enable": true,
+              "type": "float"
+          },
+          "alarm": {
+              "enable": true,
+              "name": "alarm1",
+              "type": "current",
+              "operator": "gt",
+              "threshold": 100
+          },
           "inherit_tags": [
               "tag1"
             ]
@@ -25,8 +38,21 @@
         {
           "name": "field2",
           "monitor": true,
-          "rate": false,
-          "convert": false,
+          "rate": {
+              "enable": false,
+              "factor": 100
+          },
+          "convert": {
+              "enable": false,
+              "type": "float"
+          },
+          "alarm": {
+              "enable": false,
+              "name": "alarm2",
+              "type": "current",
+              "operator": "gt",
+              "threshold": 100
+          },
           "inherit_tags": [
               "tag2"
             ]
@@ -83,6 +109,12 @@ var tmpGnmi = {
 };
 
 var tmpMap = {};
+
+// Config maps for rate/convert/alarm parameters per field
+var tmpRateConfig = {};
+var tmpConvertConfig = {};
+var tmpAlarmConfig = {};
+var currentConfigField = ""; // tracks which field a config popup is for
 
 var profileSaved = true;
 
@@ -174,8 +206,8 @@ btnAddEntry.onclick = function () {
                 }
 
                 // do some additionnal checks 
-                if (toAdd.interval < 10) {
-                    alertify.alert("JSTO...", "Inverval must be greater than 10 secs!");
+                if (toAdd.interval < 10 && toAdd.interval !== 0) {
+                    alertify.alert("JSTO...", "Inverval must be greater than 10 secs (SAMPLE Mode) or equal to 0 (ON_CHANGE Mode)!");
                     return;
                 }
                 // A change occured
@@ -274,11 +306,25 @@ function provisionMonitorTables(data) {
     aliasesList.innerHTML = "";
     aliasesInfo.classList.add("d-none");
     tmpMap = {};
+    tmpRateConfig = {};
+    tmpConvertConfig = {};
+    tmpAlarmConfig = {};
 
     // // ===== Populate Fields table =====
     var uniqueTags = []
     data.fields.forEach(field => {
         const tr = document.createElement("tr");
+
+        // Initialize config defaults from incoming data
+        if (field.rate_factor !== undefined) {
+            tmpRateConfig[field.name] = { factor: field.rate_factor };
+        }
+        if (field.convert_type !== undefined) {
+            tmpConvertConfig[field.name] = { type: field.convert_type };
+        }
+        if (field.alarm_config !== undefined) {
+            tmpAlarmConfig[field.name] = field.alarm_config;
+        }
 
         tr.innerHTML = `
         <td>${field.name}</td>
@@ -287,9 +333,18 @@ function provisionMonitorTables(data) {
         </td>
         <td class="text-center">
             <input type="checkbox" data-role="rate" ${field.rate ? "checked" : ""}>
+            <i class="fa fa-cog text-muted ms-1 config-icon" role="button" title="Rate config"
+               data-config-type="rate" data-field-name="${field.name}"></i>
         </td>
         <td class="text-center">
             <input type="checkbox" data-role="convert" ${field.convert ? "checked" : ""}>
+            <i class="fa fa-cog text-muted ms-1 config-icon" role="button" title="Convert config"
+               data-config-type="convert" data-field-name="${field.name}"></i>
+        </td>
+        <td class="text-center">
+            <input type="checkbox" data-role="alarm" ${field.alarm ? "checked" : ""}>
+            <i class="fa fa-cog text-muted ms-1 config-icon" role="button" title="Alarm config"
+               data-config-type="alarm" data-field-name="${field.name}"></i>
         </td>
     `;
         fieldsTable.appendChild(tr);
@@ -304,6 +359,16 @@ function provisionMonitorTables(data) {
             tagTable.push(tag);
         });
         tmpMap[field.name] = tagTable;
+    });
+
+    // Bind config icon clicks
+    fieldsTable.querySelectorAll(".config-icon").forEach(icon => {
+        icon.addEventListener("click", function () {
+            const configType = this.getAttribute("data-config-type");
+            const fieldName = this.getAttribute("data-field-name");
+            currentConfigField = fieldName;
+            openConfigPopup(configType, fieldName);
+        });
     });
 
     // ===== Populate Tags table =====
@@ -335,6 +400,74 @@ function provisionMonitorTables(data) {
     }
 
 }
+
+/* ============================================================
+   CONFIG POPUP LOGIC for Rate / Convert / Alarm
+   ============================================================ */
+function openConfigPopup(type, fieldName) {
+    if (type === "rate") {
+        var input = document.getElementById("rateFactorInput");
+        input.value = (tmpRateConfig[fieldName] && tmpRateConfig[fieldName].factor) || "";
+        new bootstrap.Modal(document.getElementById("rateConfigModal")).show();
+    } else if (type === "convert") {
+        var sel = document.getElementById("convertTypeSelect");
+        sel.value = (tmpConvertConfig[fieldName] && tmpConvertConfig[fieldName].type) || "string";
+        new bootstrap.Modal(document.getElementById("convertConfigModal")).show();
+    } else if (type === "alarm") {
+        var cfg = tmpAlarmConfig[fieldName] || {};
+        document.getElementById("alarmNameInput").value = cfg.name || "";
+        document.getElementById("alarmTypeSelect").value = cfg.alarm_type || "current";
+        document.getElementById("alarmOperatorSelect").value = cfg.operator || "lt";
+        document.getElementById("alarmThresholdInput").value = (cfg.threshold !== undefined) ? cfg.threshold : "";
+        new bootstrap.Modal(document.getElementById("alarmConfigModal")).show();
+    }
+}
+
+// Rate config OK
+document.getElementById("rateConfigOk").addEventListener("click", function () {
+    var val = parseFloat(document.getElementById("rateFactorInput").value);
+    if (!isNaN(val)) {
+        tmpRateConfig[currentConfigField] = { factor: val };
+    }
+    bootstrap.Modal.getInstance(document.getElementById("rateConfigModal")).hide();
+});
+
+// Convert config OK
+document.getElementById("convertConfigOk").addEventListener("click", function () {
+    var val = document.getElementById("convertTypeSelect").value;
+    tmpConvertConfig[currentConfigField] = { type: val };
+    bootstrap.Modal.getInstance(document.getElementById("convertConfigModal")).hide();
+});
+
+// Alarm name validation — prevent spaces
+document.getElementById("alarmNameInput").addEventListener("input", function (e) {
+    this.value = this.value.replace(/\s/g, "");
+});
+
+// Alarm config OK
+document.getElementById("alarmConfigOk").addEventListener("click", function () {
+    var name = document.getElementById("alarmNameInput").value.trim();
+    var alarmType = document.getElementById("alarmTypeSelect").value;
+    var operator = document.getElementById("alarmOperatorSelect").value;
+    var threshold = parseFloat(document.getElementById("alarmThresholdInput").value);
+
+    if (!name) {
+        alertify.alert("JSTO...", "Please enter an alarm name!");
+        return;
+    }
+    if (isNaN(threshold)) {
+        alertify.alert("JSTO...", "Please enter a valid threshold!");
+        return;
+    }
+
+    tmpAlarmConfig[currentConfigField] = {
+        name: name,
+        alarm_type: alarmType,
+        operator: operator,
+        threshold: threshold
+    };
+    bootstrap.Modal.getInstance(document.getElementById("alarmConfigModal")).hide();
+});
 
 btnGnmi.onclick = function () {
     var check = sanityCheckXPath(toAdd.path)
@@ -805,9 +938,28 @@ function renderResultTable(data) {
 
             badge.innerHTML = field.name;
 
-            if (field.rate || field.converter) {
+            var tooltipParts = [];
+            if (field.rate) {
+                var rateTip = "Rate";
+                if (field.rate_factor !== undefined) rateTip += " (factor: " + field.rate_factor + ")";
+                tooltipParts.push(rateTip);
+            }
+            if (field.convert) {
+                var convTip = "Convert";
+                if (field.convert_type !== undefined) convTip += " (" + field.convert_type + ")";
+                tooltipParts.push(convTip);
+            }
+            if (field.alarm) {
+                var alarmTip = "Alarm";
+                if (field.alarm_config) {
+                    alarmTip += " (" + field.alarm_config.name + ")";
+                }
+                tooltipParts.push(alarmTip);
+            }
+
+            if (tooltipParts.length > 0) {
                 badge.innerHTML +=
-                    ' <i class="fa fa-info-circle ms-1" data-bs-toggle="tooltip" title="Processor enabled"></i>';
+                    ' <i class="fa fa-info-circle ms-1" data-bs-toggle="tooltip" title="' + tooltipParts.join(', ') + '"></i>';
             }
 
             fieldsWrap.appendChild(badge);
@@ -893,15 +1045,34 @@ function buildTmpGnmi() {
             const monitorCb = row.querySelector("input[data-role='monitor']");
             const rateCb = row.querySelector("input[data-role='rate']");
             const convertCb = row.querySelector("input[data-role='convert']");
+            const alarmCb = row.querySelector("input[data-role='alarm']");
 
             if (monitorCb && monitorCb.checked && name) {
-                tmpGnmi.fields.push({
+                var fieldObj = {
                     name: name,
                     monitor: true,
                     rate: !!rateCb?.checked,
                     convert: !!convertCb?.checked,
+                    alarm: !!alarmCb?.checked,
                     inherit_tags: tmpMap[name]
-                });
+                };
+
+                // Attach rate config if present
+                if (fieldObj.rate && tmpRateConfig[name]) {
+                    fieldObj.rate_factor = tmpRateConfig[name].factor;
+                }
+
+                // Attach convert config if present
+                if (fieldObj.convert && tmpConvertConfig[name]) {
+                    fieldObj.convert_type = tmpConvertConfig[name].type;
+                }
+
+                // Attach alarm config if present
+                if (fieldObj.alarm && tmpAlarmConfig[name]) {
+                    fieldObj.alarm_config = tmpAlarmConfig[name];
+                }
+
+                tmpGnmi.fields.push(fieldObj);
             }
         });
 
@@ -913,8 +1084,6 @@ function processGnmiData(tmpGnmi) {
        FIELDS
        ========================== */
     tmpGnmi.fields.forEach(field => {
-        const processor = (field.rate === true || field.convert === true) ? 1 : 0;
-
         const existing = toAdd.fields.find(f => f.name === field.name);
 
         if (existing) {
@@ -922,15 +1091,24 @@ function processGnmiData(tmpGnmi) {
             existing.monitor = field.monitor;
             existing.convert = field.convert;
             existing.rate = field.rate;
+            existing.alarm = field.alarm;
+            if (field.rate_factor !== undefined) existing.rate_factor = field.rate_factor;
+            if (field.convert_type !== undefined) existing.convert_type = field.convert_type;
+            if (field.alarm_config !== undefined) existing.alarm_config = field.alarm_config;
         } else {
             // add new entry
-            toAdd.fields.push({
+            var newField = {
                 name: field.name,
                 monitor: field.monitor,
                 convert: field.convert,
                 rate: field.rate,
+                alarm: field.alarm,
                 inherit_tags: field.inherit_tags
-            });
+            };
+            if (field.rate_factor !== undefined) newField.rate_factor = field.rate_factor;
+            if (field.convert_type !== undefined) newField.convert_type = field.convert_type;
+            if (field.alarm_config !== undefined) newField.alarm_config = field.alarm_config;
+            toAdd.fields.push(newField);
         }
     });
 
@@ -959,7 +1137,7 @@ function addField() {
     }
 
     name = normalizeFieldPath(name);
-    toAdd.fields.push({ "name": name, "monitor": true, "convert": convertCheck.checked, "rate": rateCheck.checked, "inherit_tags": tags });
+    toAdd.fields.push({ "name": name, "monitor": true, "convert": convertCheck.checked, "rate": rateCheck.checked, "alarm": false, "inherit_tags": tags });
 
     fieldName.value = "";
     tagName.value = "";
@@ -1020,10 +1198,30 @@ function renderPreview() {
 
     var uniqueTags = [];
     toAdd.fields.forEach((f, i) => {
+        var previewTooltipParts = [];
+        if (f.rate) {
+            var rt = "Rate";
+            if (f.rate_factor !== undefined) rt += " (factor: " + f.rate_factor + ")";
+            previewTooltipParts.push(rt);
+        }
+        if (f.convert) {
+            var ct = "Convert";
+            if (f.convert_type !== undefined) ct += " (" + f.convert_type + ")";
+            previewTooltipParts.push(ct);
+        }
+        if (f.alarm) {
+            var at = "Alarm";
+            if (f.alarm_config) at += " (" + f.alarm_config.name + ")";
+            previewTooltipParts.push(at);
+        }
+        var infoIcon = previewTooltipParts.length > 0
+            ? '<i class="fa fa-info-circle ms-1" data-bs-toggle="tooltip" title="' + previewTooltipParts.join(', ') + '"></i>'
+            : '';
+
         fieldsDiv.innerHTML += `
             <span class="badge bg-warning text-dark">
                 ${f.name}
-                ${f.rate != 0 || f.convert ? '<i class="fa fa-info-circle ms-1" data-bs-toggle="tooltip" title="Processor enabled"></i>' : ''}
+                ${infoIcon}
                 <i class="fa fa-times ms-1 text-danger"
                    role="button"
                    onclick="removeField(${i})"></i>
@@ -1103,6 +1301,10 @@ function resetEntry() {
         fields: [],
     };
     tmpMap = {};
+    tmpRateConfig = {};
+    tmpConvertConfig = {};
+    tmpAlarmConfig = {};
+    currentConfigField = "";
     pathInput.value = "";
     pathInterval.value = ""
 }

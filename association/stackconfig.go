@@ -444,10 +444,14 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 				uniqueAlias[al] = struct{}{}
 			}
 		}
+		mode := "sample"
+		if e.Interval == 0 {
+			mode = "on_change"
+		}
 		sub := maker.Subscription{
 			Name:     "ONDEMAND",
 			Path:     strings.TrimSuffix(e.Path, "/"),
-			Mode:     "sample",
+			Mode:     mode,
 			Interval: e.Interval,
 		}
 		gnmi.Subs = append(gnmi.Subs, sub)

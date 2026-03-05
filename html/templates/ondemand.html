@@ -82,8 +82,9 @@
                                     <tr>
                                         <th>Field name</th>
                                         <th class="text-center" style="width: 90px;">Monitor</th>
-                                        <th class="text-center" style="width: 90px;">Rate</th>
-                                        <th class="text-center" style="width: 90px;">Convert</th>
+                                        <th class="text-center" style="width: 120px;">Rate</th>
+                                        <th class="text-center" style="width: 120px;">Convert</th>
+                                        <th class="text-center" style="width: 120px;">Alarm</th>
                                     </tr>
                                 </thead>
                                 <tbody id="fields-table">
@@ -368,6 +369,96 @@
             </div>
         </div>
     </div>
+    <!-- Rate Configuration Modal -->
+    <div class="modal fade" id="rateConfigModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #13215c; color: white;">
+                    <h6 class="modal-title">Rate Configuration</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="rateFactorInput" class="form-label">Factor to apply:</label>
+                    <input id="rateFactorInput" type="number" class="form-control" min="0" step="any" placeholder="e.g. 1000">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-sm btn-success" id="rateConfigOk">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Convert Configuration Modal -->
+    <div class="modal fade" id="convertConfigModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #13215c; color: white;">
+                    <h6 class="modal-title">Convert Configuration</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="convertTypeSelect" class="form-label">Type of conversion:</label>
+                    <select id="convertTypeSelect" class="form-select">
+                        <option value="string">string</option>
+                        <option value="int">int</option>
+                        <option value="float">float</option>
+                        <option value="tag">tag</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-sm btn-success" id="convertConfigOk">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alarm Configuration Modal -->
+    <div class="modal fade" id="alarmConfigModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #13215c; color: white;">
+                    <h6 class="modal-title">Alarm Configuration</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="alarmNameInput" class="form-label">Name of the Alarm:</label>
+                        <input id="alarmNameInput" type="text" class="form-control" placeholder="alarm_name (no spaces)">
+                        <div class="form-text text-muted">No spaces allowed.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alarmTypeSelect" class="form-label">Type of alarm:</label>
+                        <select id="alarmTypeSelect" class="form-select">
+                            <option value="current">current</option>
+                            <option value="delta">delta</option>
+                            <option value="delta-rate">delta-rate</option>
+                            <option value="delta_percent">delta_percent</option>
+                            <option value="min_value">min_value</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alarmOperatorSelect" class="form-label">Operator:</label>
+                        <select id="alarmOperatorSelect" class="form-select">
+                            <option value="lt">lt</option>
+                            <option value="gt">gt</option>
+                            <option value="eq">eq</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alarmThresholdInput" class="form-label">Threshold:</label>
+                        <input id="alarmThresholdInput" type="number" class="form-control" step="any" placeholder="Threshold value">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-sm btn-success" id="alarmConfigOk">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // load current context from server side
         window.dynamicData = {{.CurrentContext}};
