@@ -1,6 +1,9 @@
 package gnmicollect
 
-import "strings"
+import (
+	"jtso/logger"
+	"strings"
+)
 
 type TrieNode struct {
 	children map[string]*TrieNode
@@ -124,8 +127,7 @@ func (n *TreeNode) Traverse(f func(node *TreeNode)) {
 	}
 }
 
-/// For gnmi once only - to auto detect aliasing
-
+// / For gnmi once only - to auto detect aliasing
 func Insert(root *TrieNode, base string, xpath string) {
 
 	// Normalize xpath starting with "./" -> concatenate with the base path
@@ -137,6 +139,8 @@ func Insert(root *TrieNode, base string, xpath string) {
 	parts := strings.Split(strings.Trim(xpath, "/"), "/")
 	node := root
 
+	logger.Log.Infof("DEBUG: parts = %v for xpath %s", parts, xpath)
+
 	for _, p := range parts {
 		if node.children == nil {
 			node.children = make(map[string]*TrieNode)
@@ -147,6 +151,7 @@ func Insert(root *TrieNode, base string, xpath string) {
 		node = node.children[p]
 		node.count++
 	}
+	logger.Log.Infof("DEBUG: node is now %v for xpath %s", node, xpath)
 }
 
 func CollectPrefixes(node *TrieNode, path []string, result *[]string) {
