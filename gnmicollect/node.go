@@ -142,14 +142,18 @@ func Insert(root *TrieNode, base string, xpath string) {
 	logger.Log.Infof("DEBUG: parts = %v for xpath %s", parts, xpath)
 
 	for _, p := range parts {
+		logger.Log.Infof("DEBUG: processing part %s for xpath %s", p, xpath)
 		if node.children == nil {
 			node.children = make(map[string]*TrieNode)
+			logger.Log.Infof("DEBUG: initialized children map for node %v for xpath %s", node, xpath)
 		}
 		if _, ok := node.children[p]; !ok {
 			node.children[p] = &TrieNode{}
+			logger.Log.Infof("DEBUG: created new TrieNode for part %s for xpath %s", p, xpath)
 		}
 		node = node.children[p]
 		node.count++
+		logger.Log.Infof("DEBUG: node %v count incremented to %d for xpath %s", node, node.count, xpath)
 	}
 	logger.Log.Infof("DEBUG: node is now %v for xpath %s", node, xpath)
 }
