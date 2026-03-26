@@ -159,7 +159,7 @@ func CollectPrefixes(node *TrieNode, path []string, result *[]string) {
 	logger.Log.Infof("DEBUG: Collecting prefixes at node with count %d and path %v", node.count, path)
 	for seg, child := range node.children {
 		logger.Log.Infof("DEBUG: Collecting prefix for segment %s with count %d", seg, child.count)
-		if child.count >= 2 {
+		if child.count >= 1 {
 			// Copy path to avoid slice corruption from append reusing underlying array
 			newPath := make([]string, len(path)+1)
 			copy(newPath, path)
