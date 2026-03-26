@@ -139,27 +139,26 @@ func Insert(root *TrieNode, base string, xpath string) {
 	parts := strings.Split(strings.Trim(xpath, "/"), "/")
 	node := root
 
-	logger.Log.Infof("DEBUG: parts = %v for xpath %s", parts, xpath)
-
 	for _, p := range parts {
-		logger.Log.Infof("DEBUG: processing part %s for xpath %s", p, xpath)
+
 		if node.children == nil {
 			node.children = make(map[string]*TrieNode)
-			logger.Log.Infof("DEBUG: initialized children map for node %v for xpath %s", node, xpath)
+
 		}
 		if _, ok := node.children[p]; !ok {
 			node.children[p] = &TrieNode{}
-			logger.Log.Infof("DEBUG: created new TrieNode for part %s for xpath %s", p, xpath)
+
 		}
 		node = node.children[p]
 		node.count++
-		logger.Log.Infof("DEBUG: node %v count incremented to %d for xpath %s", node, node.count, xpath)
+
 	}
-	logger.Log.Infof("DEBUG: node is now %v for xpath %s", node, xpath)
 }
 
 func CollectPrefixes(node *TrieNode, path []string, result *[]string) {
+	logger.Log.Infof("DEBUG: Collecting prefixes at node with count %d and path %v", node.count, path)
 	for seg, child := range node.children {
+		logger.Log.Infof("DEBUG: Collecting prefix for segment %s with count %d", seg, child.count)
 		if child.count >= 2 {
 			// Copy path to avoid slice corruption from append reusing underlying array
 			newPath := make([]string, len(path)+1)
@@ -168,6 +167,7 @@ func CollectPrefixes(node *TrieNode, path []string, result *[]string) {
 
 			stop := false
 			for _, gc := range child.children {
+				logger.Log.Infof("DEBUG: Checking grandchild %v with count %d", gc, gc.count)
 				if gc.count < 2 {
 					stop = true
 					break
