@@ -1,6 +1,9 @@
 package gnmicollect
 
-import "strings"
+import (
+	"jtso/logger"
+	"strings"
+)
 
 type TrieNode struct {
 	children map[string]*TrieNode
@@ -124,8 +127,7 @@ func (n *TreeNode) Traverse(f func(node *TreeNode)) {
 	}
 }
 
-/// For gnmi once only - to auto detect aliasing
-
+// / For gnmi once only - to auto detect aliasing
 func Insert(root *TrieNode, base string, xpath string) {
 
 	// Normalize xpath starting with "./" -> concatenate with the base path
@@ -138,20 +140,26 @@ func Insert(root *TrieNode, base string, xpath string) {
 	node := root
 
 	for _, p := range parts {
+
 		if node.children == nil {
 			node.children = make(map[string]*TrieNode)
+
 		}
 		if _, ok := node.children[p]; !ok {
 			node.children[p] = &TrieNode{}
+
 		}
 		node = node.children[p]
 		node.count++
+
 	}
 }
 
 func CollectPrefixes(node *TrieNode, path []string, result *[]string) {
+	logger.Log.Infof("DEBUG: Collecting prefixes at node with count %d and path %v", node.count, path)
 	for seg, child := range node.children {
-		if child.count >= 2 {
+		logger.Log.Infof("DEBUG: Collecting prefix for segment %s with count %d", seg, child.count)
+		if child.count >= 1 {
 			// Copy path to avoid slice corruption from append reusing underlying array
 			newPath := make([]string, len(path)+1)
 			copy(newPath, path)
@@ -159,6 +167,7 @@ func CollectPrefixes(node *TrieNode, path []string, result *[]string) {
 
 			stop := false
 			for _, gc := range child.children {
+				logger.Log.Infof("DEBUG: Checking grandchild %v with count %d", gc, gc.count)
 				if gc.count < 2 {
 					stop = true
 					break
