@@ -546,9 +546,12 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		newSubs := config.GnmiList[0].Subs[:0] // Reuse the existing slice memory
 
 		for i := 0; i < len(config.GnmiList[0].Subs); i++ {
+			if config.GnmiList[0].Subs[i].Path == "" {
+				continue
+			}
 			remove := false
 			for j := 0; j < len(config.GnmiList[0].Subs); j++ {
-				if i != j {
+				if i != j && config.GnmiList[0].Subs[j].Path != "" {
 					shortestPath, who := findShortestSubstring(config.GnmiList[0].Subs[i].Path, config.GnmiList[0].Subs[j].Path)
 					if shortestPath != "" {
 						if who == "B" {
@@ -557,6 +560,7 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 								config.GnmiList[0].Subs[j].Interval = config.GnmiList[0].Subs[i].Interval
 							}
 							// Mark i for removal
+							config.GnmiList[0].Subs[i].Path = ""
 							remove = true
 							break
 						} else {
