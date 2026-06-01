@@ -661,8 +661,8 @@ const RegexTemplate = `
   {{range .Entries}} {{if eq .RegType 0}}
   [[processors.regex.tag_rename]] {{else if eq .RegType 1}}
   [[processors.regex.field_rename]] {{else if eq .RegType 2}}
-  [[processors.regex.tag]] {{else}}
-  [[processors.regex.field]] {{end}} {{if .IsResult}}  
+  [[processors.regex.tags]] {{else}}
+  [[processors.regex.fields]] {{end}} {{if .IsResult}}  
     key= "{{.Key}}" {{end}} 
     pattern = "{{tomlEscape .Pattern}}"
     replacement = "{{tomlEscape .Replacement}}" {{if .IsResult}}
