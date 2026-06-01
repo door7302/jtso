@@ -253,15 +253,27 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 													// Extract the channel after the :
 													parts := strings.Split(phy_name, ":")
 													if len(parts) > 1 {
-														channel := parts[1]
+														// Update CAGE info
 														m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "yes"
+														m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
+														portDesc := "Unknown"
+														if len(parts[0]) > 3 {
+															cageDesc, ok := mapDesc[parts[0][3:]]
+															if ok {
+																portDesc = cageDesc
+															}
+														}
+														m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = portDesc
+
+														// Update also the channelized port with optic and cage info
+														channel := parts[1]
 														channelizedKey := key + ":" + channel
 														_, ok = m.Meta[rd.Family][rd.RtrName][channelizedKey]
 														if !ok {
 															m.Meta[rd.Family][rd.RtrName][channelizedKey] = make(map[string]string)
 														}
 														m.Meta[rd.Family][rd.RtrName][channelizedKey]["OPTIC_DESC"] = opticDesc
-														portDesc := "Unknown"
+														portDesc = "Unknown"
 														if len(phy_name) > 3 {
 															cageDesc, ok := mapDesc[phy_name[3:]]
 															if ok {
@@ -271,6 +283,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 														m.Meta[rd.Family][rd.RtrName][channelizedKey]["PORT_DESC"] = portDesc
 													}
 												} else {
+													// Update the cage info for non channelized port
 													portDesc := "Unknown"
 													if len(phy_name) > 3 {
 														cageDesc, ok := mapDesc[phy_name[3:]]
@@ -279,6 +292,8 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 														}
 													}
 													m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = portDesc
+													m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "no"
+													m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
 												}
 											}
 										}
@@ -314,15 +329,27 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 											// Extract the channel after the :
 											parts := strings.Split(phy_name, ":")
 											if len(parts) > 1 {
-												channel := parts[1]
+												// Update CAGE info
 												m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "yes"
+												m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
+												portDesc := "Unknown"
+												if len(parts[0]) > 3 {
+													cageDesc, ok := mapDesc[parts[0][3:]]
+													if ok {
+														portDesc = cageDesc
+													}
+												}
+												m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = portDesc
+
+												// Update also the channelized port with optic and cage info
+												channel := parts[1]
 												channelizedKey := key + ":" + channel
 												_, ok = m.Meta[rd.Family][rd.RtrName][channelizedKey]
 												if !ok {
 													m.Meta[rd.Family][rd.RtrName][channelizedKey] = make(map[string]string)
 												}
 												m.Meta[rd.Family][rd.RtrName][channelizedKey]["OPTIC_DESC"] = opticDesc
-												portDesc := "Unknown"
+												portDesc = "Unknown"
 												if len(phy_name) > 3 {
 													cageDesc, ok := mapDesc[phy_name[3:]]
 													if ok {
@@ -332,6 +359,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 												m.Meta[rd.Family][rd.RtrName][channelizedKey]["PORT_DESC"] = portDesc
 											}
 										} else {
+											// Update the cage info for non channelized port
 											portDesc := "Unknown"
 											if len(phy_name) > 3 {
 												cageDesc, ok := mapDesc[phy_name[3:]]
@@ -340,6 +368,8 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 												}
 											}
 											m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = portDesc
+											m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "no"
+											m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
 										}
 									}
 								}
