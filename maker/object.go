@@ -664,8 +664,8 @@ const RegexTemplate = `
   [[processors.regex.tag]] {{else}}
   [[processors.regex.field]] {{end}} {{if .IsResult}}  
     key= "{{.Key}}" {{end}} 
-    pattern = "{{.Pattern}}"
-    replacement = "{{.Replacement}}" {{if .IsResult}}
+    pattern = "{{tomlEscape .Pattern}}"
+    replacement = "{{tomlEscape .Replacement}}" {{if .IsResult}}
     result_key = "{{.ResultKey}}" {{end}} {{end}}
 {{end}}
 `

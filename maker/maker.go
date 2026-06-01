@@ -828,7 +828,12 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 
 	// Manage Regex Processor
 	if len(config.RegexList) > 0 {
-		t, err := template.New("regexTemplate").Parse(RegexTemplate)
+		funcMap := template.FuncMap{
+			"tomlEscape": func(s string) string {
+				return strings.ReplaceAll(s, "\\", "\\\\")
+			},
+		}
+		t, err := template.New("regexTemplate").Funcs(funcMap).Parse(RegexTemplate)
 		if err != nil {
 			logger.Log.Errorf("Error parsing Regex template: %v", err)
 		} else {
