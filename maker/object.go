@@ -629,11 +629,9 @@ const EnumTemplate = `
 type RegEntry struct {
 	RegType int `json:"type"`
 	// 0 = tag_rename - 1 = field_rename - 2 = tag - 3 = field
-	IsKey       bool   `json:"is_key"`
 	Key         string `json:"key"`
 	Pattern     string `json:"pattern"`
 	Replacement string `json:"replacement"`
-	IsResult    bool   `json:"is_result"`
 	ResultKey   string `json:"result_key"`
 	Append      bool   `json:"append"`
 }
@@ -665,10 +663,10 @@ const RegexTemplate = `
   [[processors.regex.tags]] {{if .Append}}
     append = true {{else}} 
     append = false {{end}} {{else}}
-  [[processors.regex.fields]] {{end}} {{if .IsKey}}  
+  [[processors.regex.fields]] {{end}} {{if ne .Key ""}}  
     key= "{{.Key}}" {{end}} 
     pattern = "{{tomlEscape .Pattern}}"
-    replacement = "{{tomlEscape .Replacement}}" {{if .IsResult}}
+    replacement = "{{tomlEscape .Replacement}}" {{if ne .ResultKey ""}}
     result_key = "{{.ResultKey}}" {{end}} {{end}}
 {{end}}
 `
