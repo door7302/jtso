@@ -208,7 +208,16 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 	for _, mod := range rd.HwInfo.Chassis.Modules {
 		mSlot := strings.Trim(strings.Replace(mod.Name, " ", "", 1), "\n")
 
+		// Manage new naming convention for chassis and slot in Junos 26.2 and later
+		if strings.Contains(strings.ToLower(mSlot), "chassis") {
+			parts := strings.SplitN(mSlot, ":", 2)
+			if len(parts) > 1 {
+				mSlot = parts[1]
+			}
+		}
+
 		if strings.Contains(mSlot, "FPC") {
+
 			fpcSlot := strings.Replace(mSlot, "FPC", "", 1)
 			_, ok := m.Meta[rd.Family][rd.RtrName][mSlot]
 			if !ok {
@@ -224,8 +233,8 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 							picSlot := strings.Replace(ssmSlot, "PIC", "", 1)
 							for _, sssm := range ssm.SubSubSubMods {
 								sssmSlot := strings.Trim(strings.Replace(sssm.Name, " ", "", 1), "\n")
-								if strings.Contains(sssmSlot, "Xcvr") {
-									portSlot := strings.Replace(sssmSlot, "Xcvr", "", 1)
+								if strings.Contains(strings.ToLower(sssmSlot), "xcvr") {
+									portSlot := strings.Replace(strings.Replace(sssmSlot, "Xcvr", "", 1), "XCVR", "", 1)
 									opticDesc := sssm.Desc
 									key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 									key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
@@ -315,8 +324,8 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 					picSlot := strings.Replace(smSlot, "PIC", "", 1)
 					for _, ssm := range sm.SubSubMods {
 						ssmSlot := strings.Trim(strings.Replace(ssm.Name, " ", "", 1), "\n")
-						if strings.Contains(ssmSlot, "Xcvr") {
-							portSlot := strings.Replace(ssmSlot, "Xcvr", "", 1)
+						if strings.Contains(strings.ToLower(ssmSlot), "xcvr") {
+							portSlot := strings.Replace(strings.Replace(ssmSlot, "Xcvr", "", 1), "XCVR", "", 1)
 							opticDesc := ssm.Desc
 							key1 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0"
 							key2 := "FPC" + fpcSlot + ":PIC" + picSlot + ":PORT" + portSlot + ":Xcvr0:OCH"
