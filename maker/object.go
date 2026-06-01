@@ -635,6 +635,7 @@ type RegEntry struct {
 	Replacement string `json:"replacement"`
 	IsResult    bool   `json:"is_result"`
 	ResultKey   string `json:"result_key"`
+	Append      bool   `json:"append"`
 }
 
 type Regex struct {
@@ -661,12 +662,17 @@ const RegexTemplate = `
   {{range .Entries}} {{if eq .RegType 0}}
   [[processors.regex.tag_rename]] {{else if eq .RegType 1}}
   [[processors.regex.field_rename]] {{else if eq .RegType 2}}
-  [[processors.regex.tags]] {{else}}
+  [[processors.regex.tags]] {{if .Append}}
+    append = true {{else}} 
+    append = false {{end}} {{else}}
   [[processors.regex.fields]] {{end}} {{if .IsResult}}  
     key= "{{.Key}}" {{end}} 
     pattern = "{{tomlEscape .Pattern}}"
     replacement = "{{tomlEscape .Replacement}}" {{if .IsResult}}
     result_key = "{{.ResultKey}}" {{end}} {{end}}
+    {{if .Append}}
+    append = true
+    {{end}}
 {{end}}
 `
 
