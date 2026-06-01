@@ -247,7 +247,8 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 										phy_name := strings.Trim(phy.Name, "\n")
 										// Keep only WAN ports
 										if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
-											if strings.Contains(phy_name, key) {
+											suffix := phy_name[3:]
+											if suffix == key || strings.HasPrefix(suffix, key+":") {
 												if strings.Contains(phy_name, ":") {
 													// Extract the channel after the :
 													parts := strings.Split(phy_name, ":")
@@ -307,7 +308,8 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 								phy_name := strings.Trim(phy.Name, "\n")
 								// Keep only WAN ports
 								if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
-									if strings.Contains(phy_name, key) {
+									suffix := phy_name[3:]
+									if suffix == key || strings.HasPrefix(suffix, key+":") {
 										if strings.Contains(phy_name, ":") {
 											// Extract the channel after the :
 											parts := strings.Split(phy_name, ":")
