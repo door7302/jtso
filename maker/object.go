@@ -670,9 +670,6 @@ const RegexTemplate = `
     pattern = "{{tomlEscape .Pattern}}"
     replacement = "{{tomlEscape .Replacement}}" {{if .IsResult}}
     result_key = "{{.ResultKey}}" {{end}} {{end}}
-    {{if .Append}}
-    append = true
-    {{end}}
 {{end}}
 `
 
