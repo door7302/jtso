@@ -265,7 +265,6 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 															}
 														}
 														m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = parts[0] + " - " + portDesc
-														m.Meta[rd.Family][rd.RtrName][key]["PARENT"] = parts[0] + " - " + portDesc
 
 														// Update also the channelized port with optic and cage info
 														channel := parts[1]
@@ -283,7 +282,6 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 															}
 														}
 														m.Meta[rd.Family][rd.RtrName][channelizedKey]["LINKNAME"] = phy_name + " - " + portDesc
-														m.Meta[rd.Family][rd.RtrName][channelizedKey]["PARENT"] = parts[0] + " - " + portDesc
 													}
 												} else {
 													// Update the cage info for non channelized port
@@ -295,7 +293,6 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 														}
 													}
 													m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = phy_name + " - " + portDesc
-													m.Meta[rd.Family][rd.RtrName][key]["PARENT"] = phy_name + " - " + portDesc
 													m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "no"
 													m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
 												}
@@ -344,7 +341,6 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 													}
 												}
 												m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = parts[0] + " - " + portDesc
-												m.Meta[rd.Family][rd.RtrName][key]["PARENT"] = parts[0] + " - " + portDesc
 
 												// Update also the channelized port with optic and cage info
 												channel := parts[1]
@@ -362,7 +358,6 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 													}
 												}
 												m.Meta[rd.Family][rd.RtrName][channelizedKey]["LINKNAME"] = phy_name + " - " + portDesc
-												m.Meta[rd.Family][rd.RtrName][channelizedKey]["PARENT"] = parts[0] + " - " + portDesc
 											}
 										} else {
 											// Update the cage info for non channelized port
@@ -374,7 +369,6 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 												}
 											}
 											m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = phy_name + " - " + portDesc
-											m.Meta[rd.Family][rd.RtrName][key]["PARENT"] = phy_name + " - " + portDesc
 											m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "no"
 											m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
 										}
