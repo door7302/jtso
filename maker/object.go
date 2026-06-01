@@ -658,12 +658,12 @@ const RegexTemplate = `
       "{{$name}}"
   {{- end}}
   ]
-  {{range .Entries}} 
-{{if .IsResult}}  key= "{{.Key}}" {{end}} {{if eq .RegType 0}}
+  {{range .Entries}} {{if eq .RegType 0}}
   [[processors.regex.tag_rename]] {{else if eq .RegType 1}}
   [[processors.regex.field_rename]] {{else if eq .RegType 2}}
   [[processors.regex.tag]] {{else}}
-  [[processors.regex.field]] {{end}}
+  [[processors.regex.field]] {{end}} {{if .IsResult}}  
+    key= "{{.Key}}" {{end}} 
     pattern = "{{.Pattern}}"
     replacement = "{{.Replacement}}" {{if .IsResult}}
     result_key = "{{.ResultKey}}" {{end}} {{end}}
