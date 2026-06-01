@@ -263,7 +263,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 																portDesc = cageDesc
 															}
 														}
-														m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = phy_name + " - " + portDesc
+														m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = parts[0] + " - " + portDesc
 
 														// Update also the channelized port with optic and cage info
 														channel := parts[1]
@@ -339,7 +339,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 														portDesc = cageDesc
 													}
 												}
-												m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = phy_name + " - " + portDesc
+												m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = parts[0] + " - " + portDesc
 
 												// Update also the channelized port with optic and cage info
 												channel := parts[1]
