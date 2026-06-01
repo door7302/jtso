@@ -665,7 +665,7 @@ const RegexTemplate = `
   [[processors.regex.tags]] {{if .Append}}
     append = true {{else}} 
     append = false {{end}} {{else}}
-  [[processors.regex.fields]] {{end}} {{if .IsResult}}  
+  [[processors.regex.fields]] {{end}} {{if .IsKey}}  
     key= "{{.Key}}" {{end}} 
     pattern = "{{tomlEscape .Pattern}}"
     replacement = "{{tomlEscape .Replacement}}" {{if .IsResult}}
