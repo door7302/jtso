@@ -263,7 +263,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 																portDesc = cageDesc
 															}
 														}
-														m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = portDesc
+														m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = key + " - " + portDesc
 
 														// Update also the channelized port with optic and cage info
 														channel := parts[1]
@@ -280,7 +280,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 																portDesc = cageDesc
 															}
 														}
-														m.Meta[rd.Family][rd.RtrName][channelizedKey]["PORT_DESC"] = portDesc
+														m.Meta[rd.Family][rd.RtrName][channelizedKey]["PORT_DESC"] = channelizedKey + " - " + portDesc
 													}
 												} else {
 													// Update the cage info for non channelized port
@@ -291,7 +291,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 															portDesc = cageDesc
 														}
 													}
-													m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = portDesc
+													m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = key + " - " + portDesc
 													m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "no"
 													m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
 												}
@@ -339,7 +339,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 														portDesc = cageDesc
 													}
 												}
-												m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = portDesc
+												m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = key + " - " + portDesc
 
 												// Update also the channelized port with optic and cage info
 												channel := parts[1]
@@ -356,7 +356,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 														portDesc = cageDesc
 													}
 												}
-												m.Meta[rd.Family][rd.RtrName][channelizedKey]["PORT_DESC"] = portDesc
+												m.Meta[rd.Family][rd.RtrName][channelizedKey]["PORT_DESC"] = channelizedKey + " - " + portDesc
 											}
 										} else {
 											// Update the cage info for non channelized port
@@ -367,7 +367,7 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 													portDesc = cageDesc
 												}
 											}
-											m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = portDesc
+											m.Meta[rd.Family][rd.RtrName][key]["PORT_DESC"] = key + " - " + portDesc
 											m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "no"
 											m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
 										}
