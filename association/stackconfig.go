@@ -255,10 +255,12 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 		// }
 		switch operator {
 		case "==":
-			if strings.Contains(routerVersion, searchVersion) {
-				return true
+			if len(searchVersion) <= len(routerVersion)+3 {
+				if strings.Contains(routerVersion[:len(searchVersion)], searchVersion) {
+					return true
+				}
 			}
-
+			return false
 		case ">>":
 			if strings.Compare(routerVersion, searchVersion) > 0 {
 				return true
