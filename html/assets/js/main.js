@@ -1,6 +1,7 @@
 function emptydb() {
   alertify.confirm("Are you sure you want to empty the DB? All data will be lost.", function (e) {
     if (e) {
+      waitingDialog.show();
       $(function () {
         $.ajax({
           type: 'POST',
@@ -13,12 +14,15 @@ function emptydb() {
           dataType: "json",
           success: function (json) {
             if (json["status"] == "OK") {
+              waitingDialog.hide();
               alertify.success('The JTS DB has been successfully empty')
             } else {
+              waitingDialog.hide();
               alertify.alert("JTSO...", json.msg);
             }
           },
           error: function (xhr, ajaxOptions, thrownError) {
+            waitingDialog.hide();
             alertify.alert("JSTO...", "Unexpected error...");
           }
         });
