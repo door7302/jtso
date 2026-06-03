@@ -790,7 +790,7 @@ select {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
     position: relative;
-    color: var(--text-primary);
+    color: #000000;
     font-size: 0.8rem;
     font-weight: 500;
     border: 1px solid var(--border-primary);
