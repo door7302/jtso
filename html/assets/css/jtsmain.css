@@ -916,6 +916,32 @@ select {
     margin-top: 0.5rem;
 }
 
+/* Settings tables */
+.settings-table {
+    margin-top: 1rem;
+}
+
+.settings-table td {
+    vertical-align: middle;
+    padding: 0.6rem 0.75rem;
+}
+
+.settings-table .settings-label {
+    width: 40%;
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.settings-table .form-control {
+    max-width: 400px;
+}
+
+.settings-table .form-check-input {
+    width: 1.25em;
+    height: 1.25em;
+}
+
 /* Form layout */
 .form-container {
     display: flex;
