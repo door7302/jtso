@@ -1,7 +1,6 @@
 package gnmicollect
 
 import (
-	"jtso/logger"
 	"strings"
 )
 
@@ -156,9 +155,9 @@ func Insert(root *TrieNode, base string, xpath string) {
 }
 
 func CollectPrefixes(node *TrieNode, path []string, result *[]string) {
-	logger.Log.Infof("DEBUG: Collecting prefixes at node with count %d and path %v", node.count, path)
+	//logger.Log.Infof("DEBUG: Collecting prefixes at node with count %d and path %v", node.count, path)
 	for seg, child := range node.children {
-		logger.Log.Infof("DEBUG: Collecting prefix for segment %s with count %d", seg, child.count)
+		//logger.Log.Infof("DEBUG: Collecting prefix for segment %s with count %d", seg, child.count)
 		if child.count >= 1 {
 			// Copy path to avoid slice corruption from append reusing underlying array
 			newPath := make([]string, len(path)+1)
@@ -167,13 +166,12 @@ func CollectPrefixes(node *TrieNode, path []string, result *[]string) {
 
 			stop := false
 			for _, gc := range child.children {
-				logger.Log.Infof("DEBUG: Checking grandchild %v with count %d", gc, gc.count)
+				//logger.Log.Infof("DEBUG: Checking grandchild %v with count %d", gc, gc.count)
 				if gc.count < 2 {
 					stop = true
 					break
 				}
 			}
-
 			if stop || len(child.children) == 0 {
 				*result = append(*result, "/"+strings.Join(newPath, "/"))
 			} else {

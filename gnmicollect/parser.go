@@ -757,7 +757,7 @@ Loop:
 
 	rootAlias := &TrieNode{}
 	for _, k := range fieldKeys {
-		logger.Log.Infof("DEBUG: Field extracted: %s with tags %v", k, fieldMap[k])
+		//logger.Log.Infof("DEBUG: Field extracted: %s with tags %v", k, fieldMap[k])
 		f := Field{
 			Name:        k,
 			Monitor:     false,
@@ -769,7 +769,7 @@ Loop:
 
 		// to detect alias then
 		Insert(rootAlias, o.Path, k)
-		logger.Log.Infof("DEBUG: Inserted in Trie with base %s and xpath %s", o.Path, k)
+		//logger.Log.Infof("DEBUG: Inserted in Trie with base %s and xpath %s", o.Path, k)
 	}
 
 	// Provision Alias if found out.

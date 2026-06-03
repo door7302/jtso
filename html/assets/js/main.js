@@ -85,6 +85,7 @@ function enableDebug(element) {
 
     alertify.confirm("Are you sure you want to disable Debug mode for the " + elementId + " Telegraf Instance.", function (e) {
       if (e) {
+        waitingDialog.show();
         $(function () {
           $.ajax({
             type: 'POST',
@@ -101,9 +102,11 @@ function enableDebug(element) {
               } else {
                 alertify.alert("JTSO...", json.msg);
               }
+              waitingDialog.hide();
             },
             error: function (xhr, ajaxOptions, thrownError) {
               alertify.alert("JSTO...", "Unexpected error...");
+              waitingDialog.hide();
             }
           });
         });
@@ -113,6 +116,7 @@ function enableDebug(element) {
 
     alertify.confirm("Are you sure you want to enable Debug mode for the " + elementId + " Telegraf Instance?<br/><br/><b>Note:</b> The instance will be automatically reloaded. Enabling debug mode may produce a significant volume of logs.</b> You should be able to see debug logs into the file /var/log/debugtelegraf_" + elementId.toLowerCase() + ".log", function (e) {
       if (e) {
+        waitingDialog.show();
         $(function () {
           $.ajax({
             type: 'POST',
@@ -129,9 +133,11 @@ function enableDebug(element) {
               } else {
                 alertify.alert("JTSO...", json.msg);
               }
+              waitingDialog.hide();
             },
             error: function (xhr, ajaxOptions, thrownError) {
               alertify.alert("JSTO...", "Unexpected error...");
+              waitingDialog.hide();
             }
           });
         });
