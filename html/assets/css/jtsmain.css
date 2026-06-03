@@ -266,6 +266,7 @@ hr {
 
 .form-check-input {
     cursor: pointer;
+    border: 2px solid #6b7280;
 }
 
 .form-check-input:checked {
