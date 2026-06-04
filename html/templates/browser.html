@@ -7,6 +7,7 @@
     <title>OpenJTS - gNMI Browser</title>
     <link rel="stylesheet" href="css/myfonts.css">
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-icons.css">
     <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/alertify.min.css">
     <link rel="stylesheet" href="css/bootstrap-multiselect.css">
@@ -89,10 +90,22 @@
 
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="merge" checked>
-                        <label class="form-check-label" for="flexCheckDefault">
+                        <label class="form-check-label" for="merge">
                             Merge data for cleaner view (recommended)?
                         </label>
                     </div>
+
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="setTimeoutCheck">
+                        <label class="form-check-label" for="setTimeoutCheck">
+                            Set Timeout?
+                        </label>
+                    </div>
+                    <div id="timeoutInputDiv" class="mt-2" style="display:none;">
+                        <label class="form-label" for="customTimeout">Timeout (secs)</label>
+                        <input id="customTimeout" class="form-control" type="number" min="10" max="600" value="30">
+                    </div>
+
                 </form>
                 <br />
                 <div class="d-flex justify-content-center align-items-center">
@@ -146,6 +159,11 @@
         <script src="js/browser.js"></script>
         {{end}}
 
+    <script>
+        document.getElementById('setTimeoutCheck').addEventListener('change', function() {
+            document.getElementById('timeoutInputDiv').style.display = this.checked ? 'block' : 'none';
+        });
+    </script>
 
 </body>
 

@@ -52,6 +52,7 @@ type Streamer struct {
 	Router        string
 	Port          int
 	Merger        bool
+	Timeout       int
 	Ticker        time.Time
 	ForceFlush    bool
 	Result        *TreeNode
@@ -480,9 +481,9 @@ func parseXpath(xpath string, value string, merge bool, hideOrigin bool) error {
 	return nil
 }
 
-func GnmiSample(timeout int, hideOrigin bool) {
+func GnmiSample(hideOrigin bool) {
 
-	logger.Log.Infof("Start gNMI SAMPLE subscription for router %s and xpath %s (timeout is %d)", StreamObj.Router, StreamObj.Path, timeout)
+	logger.Log.Infof("Start gNMI SAMPLE subscription for router %s and xpath %s (timeout is %d)", StreamObj.Router, StreamObj.Path, StreamObj.Timeout)
 	StreamData(fmt.Sprintf("Start gNMI subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
 
 	// Init global variable
@@ -595,7 +596,7 @@ func GnmiSample(timeout int, hideOrigin bool) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(time.Duration(timeout) * time.Second):
+		case <-time.After(time.Duration(StreamObj.Timeout) * time.Second):
 			logger.Log.Infof("End of the subscription timer")
 			tg.StopSubscription("sub1")
 			// Safety: if StopSubscription doesn't trigger subErrChan (e.g. huge buffered data),

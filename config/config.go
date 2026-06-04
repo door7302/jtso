@@ -85,7 +85,7 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("modules.portal.server_crt", "")
 	viper.SetDefault("modules.portal.server_key", "")
 	viper.SetDefault("modules.portal.port", 8082)
-	viper.SetDefault("modules.portal.browsertimeout", 40)
+	viper.SetDefault("modules.portal.browsertimeout", 30)
 	viper.SetDefault("modules.portal.use_fancytree", true)
 	viper.SetDefault("modules.portal.hide_origin", true)
 

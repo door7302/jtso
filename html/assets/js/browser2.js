@@ -60,11 +60,13 @@ browseButton.addEventListener("click", function () {
   const p = document.getElementById("pathName").value.trim();
   const m = document.getElementById("merge").checked;
   const r = document.getElementById("router").value.trim();
+  const timeoutCheck = document.getElementById("setTimeoutCheck").checked;
+  const t = timeoutCheck ? parseInt(document.getElementById("customTimeout").value, 10) : 30;
   browseButton.disabled = true;
   modal.innerHTML = '';
   tick.setAttribute('data-value', 0);
 
-  const dataToSend = { "shortname": r, "xpath": p, "merge": m };
+  const dataToSend = { "shortname": r, "xpath": p, "merge": m, "timeout": t };
   exportButton.disabled = true;
 
   fetch("/searchxpath", {

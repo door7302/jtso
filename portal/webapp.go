@@ -1248,6 +1248,11 @@ func routeSearchPath(c echo.Context) error {
 	gnmicollect.StreamObj.Path = r.Xpath
 	gnmicollect.StreamObj.Merger = r.Merge
 	gnmicollect.StreamObj.StopStreaming = make(chan struct{})
+	if r.Timeout >= 10 && r.Timeout <= 600 {
+		gnmicollect.StreamObj.Timeout = r.Timeout
+	} else {
+		gnmicollect.StreamObj.Timeout = collectCfg.cfg.Portal.BrowserTimeout
+	}
 
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Streaming well started."})
 }
@@ -1301,7 +1306,7 @@ func routeStream(c echo.Context) error {
 		gnmicollect.StreamObj.Cancel = cancel
 		// launch parser
 		logger.Log.Info("Start data collection and streaming to the browser...")
-		go gnmicollect.GnmiSample(collectCfg.cfg.Portal.BrowserTimeout, collectCfg.cfg.Portal.HideOrigin)
+		go gnmicollect.GnmiSample(collectCfg.cfg.Portal.HideOrigin)
 		logger.Log.Info("Data collection and streaming well started...")
 		// loop until the end
 		for {

@@ -20,6 +20,7 @@ type (
 		Shortname string `json:"shortname"`
 		Xpath     string `json:"xpath"`
 		Merge     bool   `json:"merge"`
+		Timeout   int    `json:"timeout"`
 	}
 
 	RouterDetails struct {
