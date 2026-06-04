@@ -578,7 +578,7 @@ func GnmiSample(hideOrigin bool) {
 		api.Subscription(
 			api.Path(StreamObj.Path),
 			api.SubscriptionMode("sample"),
-			api.SampleInterval(15*time.Second),
+			api.SampleInterval(time.Duration(15+StreamObj.Timeout)*time.Second),
 		))
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI subscription: %v", err)
