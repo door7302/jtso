@@ -557,7 +557,7 @@ func GnmiSample(timeout int, hideOrigin bool) {
 	}
 	StreamData("gNMI Target created", "OK")
 
-	ctx, cancel := context.WithTimeout(StreamObj.Ctx, time.Duration(timeout)*time.Second)
+	ctx, cancel := context.WithCancel(StreamObj.Ctx)
 	defer cancel()
 	err = tg.CreateGNMIClient(ctx)
 	if err != nil {
@@ -597,6 +597,15 @@ func GnmiSample(timeout int, hideOrigin bool) {
 		case <-time.After(time.Duration(timeout) * time.Second):
 			logger.Log.Infof("End of the subscription timer")
 			tg.StopSubscription("sub1")
+			// Safety: if StopSubscription doesn't trigger subErrChan (e.g. huge buffered data),
+			// force cancel context after a grace period to unblock the loop
+			select {
+			case <-StreamObj.StopStreaming:
+				// Already exited normally
+			case <-time.After(10 * time.Second):
+				logger.Log.Warn("StopSubscription did not terminate the loop, forcing context cancel")
+				cancel()
+			}
 		}
 	}()
 

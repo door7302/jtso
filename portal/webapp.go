@@ -1324,6 +1324,7 @@ func routeStream(c echo.Context) error {
 				errString := gnmicollect.StreamObj.Error.Error()
 
 				// Normal end
+				// || strings.Contains(errString, "context deadline exceeded"
 				if strings.Contains(errString, "context canceled") {
 
 					gnmicollect.StreamData("End of the subscription. Close gNMI session", "OK")
