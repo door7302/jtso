@@ -2,6 +2,7 @@ package portal
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1294,13 +1295,22 @@ func routeStream(c echo.Context) error {
 		gnmicollect.StreamObj.Writer = c.Response().Writer
 		gnmicollect.StreamObj.Ticker = time.Now()
 		gnmicollect.StreamObj.ForceFlush = true
+		// Create a cancellable context for the goroutine
+		ctx, cancel := context.WithCancel(c.Request().Context())
+		gnmicollect.StreamObj.Ctx = ctx
+		gnmicollect.StreamObj.Cancel = cancel
 		// launch parser
+		logger.Log.Info("Start data collection and streaming to the browser...")
 		go gnmicollect.GnmiSample(collectCfg.cfg.Portal.BrowserTimeout, collectCfg.cfg.Portal.HideOrigin)
+		logger.Log.Info("Data collection and streaming well started...")
 		// loop until the end
 		for {
 			select {
 			case <-c.Request().Context().Done():
-				// Client disconnected - clean up
+				// Client disconnected - cancel the goroutine context
+				cancel()
+				// Wait for the goroutine to finish
+				<-gnmicollect.StreamObj.StopStreaming
 				gnmicollect.StreamObj.Stream = 0
 				logger.Log.Info("Client disconnected, stopping stream")
 				return nil

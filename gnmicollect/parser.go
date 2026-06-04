@@ -61,6 +61,8 @@ type Streamer struct {
 	XpathCpt      int
 	XpathList     map[string]struct{}
 	StopStreaming chan struct{}
+	Ctx           context.Context
+	Cancel        context.CancelFunc
 }
 
 type OnceRequest struct {
@@ -115,6 +117,15 @@ func ToJSON(data map[string]interface{}) string {
 }
 
 func StreamData(m string, s string, payload ...string) {
+	// Check if context is cancelled (client disconnected)
+	if StreamObj.Ctx != nil {
+		select {
+		case <-StreamObj.Ctx.Done():
+			return
+		default:
+		}
+	}
+
 	var pl string
 	if len(payload) == 0 {
 		pl = ""
@@ -546,7 +557,7 @@ func GnmiSample(timeout int, hideOrigin bool) {
 	}
 	StreamData("gNMI Target created", "OK")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(StreamObj.Ctx)
 	defer cancel()
 	err = tg.CreateGNMIClient(ctx)
 	if err != nil {
@@ -595,6 +606,14 @@ func GnmiSample(timeout int, hideOrigin bool) {
 	StreamObj.ForceFlush = false
 	for {
 		select {
+		case <-ctx.Done():
+			// Context cancelled (client disconnected)
+			StreamObj.ForceFlush = true
+			logger.Log.Info("Context cancelled, stopping gNMI subscription")
+			StreamObj.Error = ctx.Err()
+			StreamObj.Result = root
+			close(StreamObj.StopStreaming)
+			return
 		case rsp := <-subRspChan:
 			r, _ := formatters.ResponsesFlat(rsp.Response)
 			for k, v := range r {
