@@ -590,6 +590,7 @@ func GnmiSample(timeout int, hideOrigin bool) {
 
 	go tg.Subscribe(ctx, subReq, "sub1")
 
+	forceStopCh := make(chan struct{})
 	go func() {
 		select {
 		case <-ctx.Done():
@@ -604,6 +605,7 @@ func GnmiSample(timeout int, hideOrigin bool) {
 				// Already exited normally
 			case <-time.After(10 * time.Second):
 				logger.Log.Warn("StopSubscription did not terminate the loop, forcing context cancel")
+				close(forceStopCh)
 				cancel()
 			}
 		}
@@ -616,10 +618,16 @@ func GnmiSample(timeout int, hideOrigin bool) {
 	for {
 		select {
 		case <-ctx.Done():
-			// Context cancelled (client disconnected or timeout expired)
 			StreamObj.ForceFlush = true
-			logger.Log.Infof("Context done, stopping gNMI subscription: %v", ctx.Err())
-			StreamObj.Error = ctx.Err()
+			// Determine if this was a force-stop (too much data) or a client disconnect
+			select {
+			case <-forceStopCh:
+				logger.Log.Warn("Context done due to too much data received, forcing stop")
+				StreamObj.Error = fmt.Errorf("Context done due to too much data received, forcing stop")
+			default:
+				logger.Log.Infof("Context done, client disconnected: %v", ctx.Err())
+				StreamObj.Error = ctx.Err()
+			}
 			StreamObj.Result = root
 			close(StreamObj.StopStreaming)
 			return
@@ -632,7 +640,6 @@ func GnmiSample(timeout int, hideOrigin bool) {
 		case gnmiErr := <-subErrChan:
 			//traverseTree(root)
 			StreamObj.ForceFlush = true
-			logger.Log.Infof("End of the subscription after timeout exprired - status of the end: %v", gnmiErr.Err.Error())
 			StreamObj.Error = gnmiErr.Err
 			time.Sleep(1 * time.Second)
 			StreamObj.Result = root

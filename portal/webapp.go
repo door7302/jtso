@@ -1323,9 +1323,8 @@ func routeStream(c echo.Context) error {
 				// depending on the error report:
 				errString := gnmicollect.StreamObj.Error.Error()
 
-				// Normal end
-				// || strings.Contains(errString, "context deadline exceeded"
-				if strings.Contains(errString, "context canceled") {
+				// Normal end or too much data received (browser timeout protection)
+				if strings.Contains(errString, "context canceled") || strings.Contains(errString, "too much data received") {
 
 					gnmicollect.StreamData("End of the subscription. Close gNMI session", "OK")
 					logger.Log.Debug("Generate payload based on the Tree")
@@ -1353,7 +1352,14 @@ func routeStream(c echo.Context) error {
 						logger.Log.Debug("Marshall the result: success")
 						// Convert the JSON data to a string
 						jsonString := string(jsonData)
-						gnmicollect.StreamData("End of the collection.", "END", jsonString)
+
+						if strings.Contains(errString, "too much data received") {
+							gnmicollect.StreamData("End of the collection.", "OK")
+							gnmicollect.StreamData(`<div class="alert alert-warning d-flex align-items-center" role="alert"><i class="bi bi-exclamation-triangle-fill text-danger me-2" style="font-size:1.5rem;"></i><span>High-volume sensor. Incomplete data. Increase timeout.</span></div>`, "END", jsonString)
+						} else {
+							gnmicollect.StreamData("End of the collection.", "END", jsonString)
+						}
+
 						// saved the XPATH raw list in a static file
 						keys := make([]string, 0, len(gnmicollect.StreamObj.XpathList))
 						for key := range gnmicollect.StreamObj.XpathList {
@@ -1376,6 +1382,7 @@ func routeStream(c echo.Context) error {
 							}
 						}
 					}
+					// Any other error
 				} else {
 					logger.Log.Errorf("Unexpected gnmi error: %v", errString)
 					gnmicollect.StreamData(fmt.Sprintf("Unexpected gnmi error: %s", errString), "ERROR")
