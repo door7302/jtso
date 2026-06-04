@@ -557,7 +557,7 @@ func GnmiSample(timeout int, hideOrigin bool) {
 	}
 	StreamData("gNMI Target created", "OK")
 
-	ctx, cancel := context.WithCancel(StreamObj.Ctx)
+	ctx, cancel := context.WithTimeout(StreamObj.Ctx, time.Duration(timeout)*time.Second)
 	defer cancel()
 	err = tg.CreateGNMIClient(ctx)
 	if err != nil {
@@ -607,9 +607,9 @@ func GnmiSample(timeout int, hideOrigin bool) {
 	for {
 		select {
 		case <-ctx.Done():
-			// Context cancelled (client disconnected)
+			// Context cancelled (client disconnected or timeout expired)
 			StreamObj.ForceFlush = true
-			logger.Log.Info("Context cancelled, stopping gNMI subscription")
+			logger.Log.Infof("Context done, stopping gNMI subscription: %v", ctx.Err())
 			StreamObj.Error = ctx.Err()
 			StreamObj.Result = root
 			close(StreamObj.StopStreaming)
