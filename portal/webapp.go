@@ -143,6 +143,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/ondemandmgt", routeOnDemandMgt)
 	wapp.GET("/downloadyang", routeDownloadYang)
 	wapp.GET("/listschemas", routeListSchemas)
+	wapp.GET("/getschema", routeGetSchema)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -1340,6 +1341,28 @@ func routeListSchemas(c echo.Context) error {
 	sort.Strings(schemas)
 
 	return c.JSON(http.StatusOK, ReplySchemas{Status: "OK", Schemas: schemas})
+}
+
+func routeGetSchema(c echo.Context) error {
+	folder := c.QueryParam("folder")
+	schema := c.QueryParam("schema")
+	if folder == "" || schema == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Missing folder or schema parameter"})
+	}
+
+	// Sanitize to prevent directory traversal
+	folder = filepath.Base(folder)
+	schema = filepath.Base(schema)
+	filePath := filepath.Join(netconf.YANG_PATH, folder, schema+".json")
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		logger.Log.Errorf("Unable to read schema file %s: %v", filePath, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to read schema file"})
+	}
+
+	// Return raw JSON content as-is (it's already valid JSON array)
+	return c.JSONBlob(http.StatusOK, data)
 }
 
 func routeSearchPath(c echo.Context) error {

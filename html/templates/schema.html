@@ -92,6 +92,45 @@
         </div>
     </div>
 
+    <!-- Schema Detail Modal -->
+    <div class="modal fade" id="schemaModal" tabindex="-1" aria-labelledby="schemaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="schemaModalLabel">Schema Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="showDesc" checked>
+                            <label class="form-check-label" for="showDesc">Description</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="showType" checked>
+                            <label class="form-check-label" for="showType">Type</label>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success" id="exportCsv">
+                            <i class="bi bi-download"></i> Export CSV
+                        </button>
+                    </div>
+                    <table class="table table-sm table-striped" id="schemaTable">
+                        <thead>
+                            <tr>
+                                <th style="width:65%;">XPath <input type="text" class="form-control form-control-sm mt-1" id="filterXpath" placeholder="Filter..."></th>
+                                <th class="col-desc" style="width:25%;">Description <input type="text" class="form-control form-control-sm mt-1" id="filterDesc" placeholder="Filter..."></th>
+                                <th class="col-type" style="width:10%;">Type <input type="text" class="form-control form-control-sm mt-1" id="filterType" placeholder="Filter..."></th>
+                            </tr>
+                        </thead>
+                        <tbody id="schemaTableBody">
+                        </tbody>
+                    </table>
+                    <div id="schemaCount" class="text-muted small mt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/jquery-3.6.4.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="js/alertify.min.js"></script>

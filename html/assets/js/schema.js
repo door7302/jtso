@@ -97,12 +97,10 @@ function loadSchemas() {
           navigator.innerHTML = '<div class="alert alert-info">No schemas found in this folder.</div>';
           return;
         }
-        let html = '<div class="list-group">';
-        for (let i = 0; i < schemas.length; i++) {
-          html += '<a href="#" class="list-group-item list-group-item-action schema-item" data-schema="' + schemas[i] + '" data-folder="' + folder + '">' + schemas[i] + '</a>';
-        }
-        html += '</div>';
-        navigator.innerHTML = html;
+        // Store for filtering
+        loadedSchemas = schemas;
+        loadedFolder = folder;
+        renderSchemaGrid("");
       } else {
         navigator.innerHTML = '<div class="alert alert-danger">' + json["msg"] + '</div>';
       }
@@ -112,3 +110,172 @@ function loadSchemas() {
     }
   });
 }
+
+let loadedSchemas = [];
+let loadedFolder = "";
+
+function renderSchemaGrid(filter) {
+  const navigator = document.getElementById("navigator");
+  if (!navigator) return;
+  const f = filter.toLowerCase();
+
+  let html = '<input type="text" class="form-control form-control-sm mb-3" id="schemaGridFilter" placeholder="Filter schemas..." value="' + filter.replace(/"/g, '&quot;') + '">';
+  html += '<div class="row g-2">';
+  let count = 0;
+  for (let i = 0; i < loadedSchemas.length; i++) {
+    if (f && !loadedSchemas[i].toLowerCase().includes(f)) continue;
+    html += '<div class="col-md-4">';
+    html += '<a href="#" class="card schema-item text-decoration-none h-100" data-schema="' + loadedSchemas[i] + '" data-folder="' + loadedFolder + '">';
+    html += '<div class="card-body d-flex align-items-center py-2 px-3">';
+    html += '<i class="bi bi-file-earmark-code me-2 text-success"></i>';
+    html += '<span class="small">' + loadedSchemas[i] + '</span>';
+    html += '</div></a></div>';
+    count++;
+  }
+  html += '</div>';
+  html += '<div class="text-muted small mt-2">' + count + ' / ' + loadedSchemas.length + ' schemas</div>';
+  navigator.innerHTML = html;
+}
+
+// Live filter on schema grid
+$(document).on("input", "#schemaGridFilter", function() {
+  renderSchemaGrid($(this).val());
+});
+
+// --- Schema detail modal ---
+let schemaData = [];
+let currentSchemaName = "";
+
+// Delegate click on schema items
+$(document).on("click", ".schema-item", function(e) {
+  e.preventDefault();
+  const schema = $(this).data("schema");
+  const folder = $(this).data("folder");
+  currentSchemaName = schema;
+  openSchemaModal(folder, schema);
+});
+
+function openSchemaModal(folder, schema) {
+  $("#schemaModalLabel").text(schema);
+  $("#schemaTableBody").html('<tr><td colspan="3" class="text-center"><i class="bi bi-arrow-repeat spin"></i> Loading...</td></tr>');
+  $("#schemaCount").text("");
+
+  // Reset filters
+  $("#filterXpath").val("");
+  $("#filterDesc").val("");
+  $("#filterType").val("");
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById("schemaModal"));
+  modal.show();
+
+  $.ajax({
+    type: 'GET',
+    url: "/getschema?folder=" + encodeURIComponent(folder) + "&schema=" + encodeURIComponent(schema),
+    dataType: "json",
+    success: function(json) {
+      if (Array.isArray(json)) {
+        schemaData = json;
+        renderSchemaTable();
+      } else {
+        $("#schemaTableBody").html('<tr><td colspan="3" class="text-danger">' + (json["msg"] || "Error loading schema") + '</td></tr>');
+      }
+    },
+    error: function() {
+      $("#schemaTableBody").html('<tr><td colspan="3" class="text-danger">Failed to load schema data.</td></tr>');
+    }
+  });
+}
+
+function renderSchemaTable() {
+  const fXpath = $("#filterXpath").val().toLowerCase();
+  const fDesc = $("#filterDesc").val().toLowerCase();
+  const fType = $("#filterType").val().toLowerCase();
+  const showDesc = $("#showDesc").is(":checked");
+  const showType = $("#showType").is(":checked");
+
+  // Toggle column visibility
+  $(".col-desc").toggle(showDesc);
+  $(".col-type").toggle(showType);
+
+  let html = "";
+  let count = 0;
+
+  for (let i = 0; i < schemaData.length; i++) {
+    const item = schemaData[i];
+    const xpath = item.xpath || "";
+    const desc = item.xdesc || "";
+    const type = item.xtype || "";
+
+    // Apply filters
+    if (fXpath && !xpath.toLowerCase().includes(fXpath)) continue;
+    if (fDesc && !desc.toLowerCase().includes(fDesc)) continue;
+    if (fType && !type.toLowerCase().includes(fType)) continue;
+
+    html += '<tr>';
+    html += '<td style="word-break:break-all;">' + escapeHtml(xpath) + '</td>';
+    if (showDesc) html += '<td class="col-desc">' + escapeHtml(desc) + '</td>';
+    if (showType) html += '<td class="col-type"><code>' + escapeHtml(type) + '</code></td>';
+    html += '</tr>';
+    count++;
+  }
+
+  if (count === 0) {
+    html = '<tr><td colspan="3" class="text-muted">No matching entries.</td></tr>';
+  }
+
+  $("#schemaTableBody").html(html);
+  $("#schemaCount").text(count + " / " + schemaData.length + " entries");
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(text));
+  return div.innerHTML;
+}
+
+// Filter inputs
+$(document).on("input", "#filterXpath, #filterDesc, #filterType", function() {
+  renderSchemaTable();
+});
+
+// Toggle checkboxes
+$(document).on("change", "#showDesc, #showType", function() {
+  renderSchemaTable();
+});
+
+// Export CSV
+$(document).on("click", "#exportCsv", function() {
+  const showDesc = $("#showDesc").is(":checked");
+  const showType = $("#showType").is(":checked");
+  const fXpath = $("#filterXpath").val().toLowerCase();
+  const fDesc = $("#filterDesc").val().toLowerCase();
+  const fType = $("#filterType").val().toLowerCase();
+
+  let csv = "xpath";
+  if (showDesc) csv += ",description";
+  if (showType) csv += ",type";
+  csv += "\n";
+
+  for (let i = 0; i < schemaData.length; i++) {
+    const item = schemaData[i];
+    const xpath = item.xpath || "";
+    const desc = item.xdesc || "";
+    const type = item.xtype || "";
+
+    if (fXpath && !xpath.toLowerCase().includes(fXpath)) continue;
+    if (fDesc && !desc.toLowerCase().includes(fDesc)) continue;
+    if (fType && !type.toLowerCase().includes(fType)) continue;
+
+    csv += '"' + xpath.replace(/"/g, '""') + '"';
+    if (showDesc) csv += ',"' + desc.replace(/"/g, '""') + '"';
+    if (showType) csv += ',"' + type.replace(/"/g, '""') + '"';
+    csv += "\n";
+  }
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = currentSchemaName + ".csv";
+  link.click();
+});
