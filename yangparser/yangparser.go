@@ -19,20 +19,74 @@ type FlatPath struct {
 	XType    string `json:"xtype"`
 }
 
-// Export parses the YANG module located at yangFile using the YANG directory
-// provided in yangDir, and writes all state (read-only) leaf paths as JSON
-// into yangDir with the same base name as yangFile but with .json extension.
-// If withType is true, the type name is included in XType; otherwise XType is "not-checked".
-func Export(yangDir string, yangFile string, withType bool) error {
-	// Read the module
-	ms := yang.NewModules()
+// Exporter holds pre-computed data for a YANG directory so that multiple
+// Export calls don't re-scan the filesystem each time.
+type Exporter struct {
+	yangDir      string
+	expandedPath []string
+	// augFiles maps moduleName -> list of augmentation file paths
+	augFiles map[string][]string
+	// devFiles maps moduleName -> list of deviation file paths
+	devFiles map[string][]string
+	// commonDevFile is the path to jnx-openconfig-dev.yang (empty if not present)
+	commonDevFile string
+}
 
-	// Add YANG directory to the search path
+// NewExporter creates an Exporter for the given YANG directory.
+// It pre-scans the directory for augmentation and deviation files.
+func NewExporter(yangDir string) (*Exporter, error) {
 	expanded, err := yang.PathsWithModules(yangDir)
 	if err != nil {
-		return fmt.Errorf("failed to expand YANG dir %s: %w", yangDir, err)
+		return nil, fmt.Errorf("failed to expand YANG dir %s: %w", yangDir, err)
 	}
-	ms.AddPath(expanded...)
+
+	ex := &Exporter{
+		yangDir:      yangDir,
+		expandedPath: expanded,
+		augFiles:     make(map[string][]string),
+		devFiles:     make(map[string][]string),
+	}
+
+	// Pre-scan augmentation files: jnx-aug-*.yang
+	augPattern := filepath.Join(yangDir, "jnx-aug-*.yang")
+	augMatches, _ := filepath.Glob(augPattern)
+	for _, f := range augMatches {
+		base := filepath.Base(f)
+		// Extract module name from jnx-aug-<moduleName>*.yang
+		name := strings.TrimPrefix(base, "jnx-aug-")
+		name = strings.TrimSuffix(name, ".yang")
+		// Remove any trailing version suffix (e.g., "-1.0")
+		// The key is the openconfig module being augmented
+		// We'll match by prefix at lookup time
+		ex.augFiles[base] = append(ex.augFiles[base], f)
+	}
+
+	// Pre-scan deviation files: jnx-*-dev*.yang (excluding jnx-openconfig-dev.yang)
+	devPattern := filepath.Join(yangDir, "jnx-*-dev*.yang")
+	devMatches, _ := filepath.Glob(devPattern)
+	for _, f := range devMatches {
+		base := filepath.Base(f)
+		if base == "jnx-openconfig-dev.yang" {
+			continue
+		}
+		ex.devFiles[base] = append(ex.devFiles[base], f)
+	}
+
+	// Check for common deviation file
+	commonDev := filepath.Join(yangDir, "jnx-openconfig-dev.yang")
+	if _, err := os.Stat(commonDev); err == nil {
+		ex.commonDevFile = commonDev
+	}
+
+	return ex, nil
+}
+
+// Export parses a single YANG module and writes all state (read-only) leaf
+// paths as JSON into yangDir with the same base name but .json extension.
+// If withType is true, the type name is included in XType; otherwise XType is "not-checked".
+func (ex *Exporter) Export(yangFile string, withType bool) error {
+	ms := yang.NewModules()
+	ms.AddPath(ex.expandedPath...)
 
 	if err := ms.Read(yangFile); err != nil {
 		return fmt.Errorf("failed to read YANG module %s: %w", yangFile, err)
@@ -54,7 +108,7 @@ func Export(yangDir string, yangFile string, withType bool) error {
 
 	// Load augmentation and deviation files only for openconfig modules
 	if strings.HasPrefix(moduleName, "openconfig") {
-		loadAugmentAndDeviation(ms, yangDir, moduleName)
+		ex.loadAugmentAndDeviation(ms, moduleName)
 	}
 
 	// Process the modules — ignore errors from deviations targeting
@@ -77,13 +131,23 @@ func Export(yangDir string, yangFile string, withType bool) error {
 	// Write JSON file with same base name as yangFile but .json extension
 	baseName := filepath.Base(yangFile)
 	jsonName := strings.TrimSuffix(baseName, ".yang") + ".json"
-	outputPath := filepath.Join(yangDir, jsonName)
+	outputPath := filepath.Join(ex.yangDir, jsonName)
 
 	if err := os.WriteFile(outputPath, jsonData, 0644); err != nil {
 		return fmt.Errorf("failed to write JSON file %s: %w", outputPath, err)
 	}
 
 	return nil
+}
+
+// Export is a convenience function that creates a one-shot Exporter.
+// For batch processing, use NewExporter + ex.Export in a loop instead.
+func Export(yangDir string, yangFile string, withType bool) error {
+	ex, err := NewExporter(yangDir)
+	if err != nil {
+		return err
+	}
+	return ex.Export(yangFile, withType)
 }
 
 // traverseEntry recursively walks the YANG entry tree, building xpath paths
@@ -194,26 +258,29 @@ func resolveTypeName(e *yang.Entry) string {
 	return typeName
 }
 
-// loadAugmentAndDeviation scans yangDir for jnx-aug-* and jnx-*-dev* files
-// that augment or deviate the given module, and loads them into ms.
-func loadAugmentAndDeviation(ms *yang.Modules, yangDir string, moduleName string) {
-	// Look for augmentation files: jnx-aug-<moduleName>.yang
-	augPattern := filepath.Join(yangDir, "jnx-aug-"+moduleName+"*.yang")
-	augFiles, _ := filepath.Glob(augPattern)
-	for _, f := range augFiles {
-		_ = ms.Read(f)
+// loadAugmentAndDeviation loads pre-scanned augmentation and deviation files
+// that target the given module into ms.
+func (ex *Exporter) loadAugmentAndDeviation(ms *yang.Modules, moduleName string) {
+	// Load augmentation files: jnx-aug-<moduleName>*.yang
+	for base, files := range ex.augFiles {
+		if strings.HasPrefix(base, "jnx-aug-"+moduleName) {
+			for _, f := range files {
+				_ = ms.Read(f)
+			}
+		}
 	}
 
-	// Look for deviation files: jnx-<moduleName>-dev*.yang
-	devPattern := filepath.Join(yangDir, "jnx-"+moduleName+"-dev*.yang")
-	devFiles, _ := filepath.Glob(devPattern)
-	for _, f := range devFiles {
-		_ = ms.Read(f)
+	// Load deviation files: jnx-<moduleName>-dev*.yang
+	for base, files := range ex.devFiles {
+		if strings.HasPrefix(base, "jnx-"+moduleName+"-dev") {
+			for _, f := range files {
+				_ = ms.Read(f)
+			}
+		}
 	}
 
-	// Also check for the common deviation file: jnx-openconfig-dev.yang
-	commonDev := filepath.Join(yangDir, "jnx-openconfig-dev.yang")
-	if _, err := os.Stat(commonDev); err == nil {
-		_ = ms.Read(commonDev)
+	// Load common deviation file
+	if ex.commonDevFile != "" {
+		_ = ms.Read(ex.commonDevFile)
 	}
 }

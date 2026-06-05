@@ -119,6 +119,13 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 	excludeFiles = append(excludeFiles, "jnx-aug", "jnx-openconfig-dev")
 
 	// Step 3 / Create the flat xpaths JSON file for all downloaded schemas
+	// Use a single Exporter to avoid re-scanning the directory for each file
+	exporter, err := yangparser.NewExporter(YANG_PATH + outputDir)
+	if err != nil {
+		logger.Log.Warnf("[%s] Failed to create YANG exporter: %v", router, err)
+		return downloaded, 0, nil
+	}
+
 	converted := 0
 	for _, s := range allSchemas {
 		if shouldExclude(s.Identifier, excludeFiles) {
@@ -128,7 +135,7 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 
 		// Generate the flat path JSON file from the downloaded schema
 		yangFile := filepath.Join(YANG_PATH+outputDir, s.Identifier+".yang")
-		if err := yangparser.Export(YANG_PATH+outputDir, yangFile, true); err != nil {
+		if err := exporter.Export(yangFile, true); err != nil {
 			logger.Log.Warnf("[%s] Failed to generate flat paths for %s: %v", router, s.Identifier, err)
 			continue
 		}
