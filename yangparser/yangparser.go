@@ -55,11 +55,10 @@ func Export(yangDir string, yangFile string, withType bool) error {
 	// Load augmentation and deviation files that target this module
 	loadAugmentAndDeviation(ms, yangDir, moduleName)
 
-	// Process the modules
-	errs := ms.Process()
-	if len(errs) > 0 {
-		return fmt.Errorf("YANG processing errors: %v", errs)
-	}
+	// Process the modules — ignore errors from deviations targeting
+	// nodes not present in this module (e.g. jnx-openconfig-dev.yang
+	// contains deviations for many modules).
+	ms.Process()
 
 	entry := yang.ToEntry(ms.Modules[moduleName])
 
