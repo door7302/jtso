@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"jtso/logger"
+	"jtso/yangparser"
 	"os"
 	"path/filepath"
 	"strings"
@@ -108,6 +109,13 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 			logger.Log.Warnf("[%s] Failed to download schema %s: %v", router, s.Identifier, err)
 			continue
 		}
+
+		// Generate the flat path JSON file from the downloaded schema
+		yangFile := filepath.Join(YANG_PATH+outputDir, s.Identifier+".yang")
+		if err := yangparser.Export(YANG_PATH+outputDir, yangFile, true); err != nil {
+			logger.Log.Warnf("[%s] Failed to generate flat paths for %s: %v", router, s.Identifier, err)
+		}
+
 		downloaded++
 	}
 

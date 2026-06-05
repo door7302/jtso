@@ -25,9 +25,9 @@ DownloadButton.addEventListener("click", function () {
             dataType: "json",
             success: function (json) {
               if (json["status"] == "OK") {
-                alertify.alert("JSTO...", json["message"]);
+                alertify.alert("JSTO...", json["Msg"]);
               } else {
-                alertify.alert("JSTO...", json["message"]);
+                alertify.alert("JSTO...", json["Msg"]);
               }
               waitingDialog.hide();
             },

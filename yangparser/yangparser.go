@@ -1,7 +1,10 @@
 package yangparser
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -10,33 +13,32 @@ import (
 
 // FlatPath represents a single YANG leaf path with its metadata.
 type FlatPath struct {
-	ReadOnly bool
-	Xpath    string
-	XDesc    string
-	XType    string
+	ReadOnly bool   `json:"read_only"`
+	Xpath    string `json:"xpath"`
+	XDesc    string `json:"xdesc"`
+	XType    string `json:"xtype"`
 }
 
-// Export parses the YANG module located at yangFile using the YANG directories
-// provided in yangDirs, and returns all state (read-only) leaf paths.
+// Export parses the YANG module located at yangFile using the YANG directory
+// provided in yangDir, and writes all state (read-only) leaf paths as JSON
+// into yangDir with the same base name as yangFile but with .json extension.
 // If withType is true, the type name is included in XType; otherwise XType is "not-checked".
-func Export(yangDirs []string, yangFile string, withType bool) ([]FlatPath, error) {
+func Export(yangDir string, yangFile string, withType bool) error {
 	// Read the module
 	ms := yang.NewModules()
 
-	// Add YANG directories to the search path
-	for _, dir := range yangDirs {
-		expanded, err := yang.PathsWithModules(dir)
-		if err != nil {
-			return nil, fmt.Errorf("failed to expand YANG dir %s: %w", dir, err)
-		}
-		ms.AddPath(expanded...)
+	// Add YANG directory to the search path
+	expanded, err := yang.PathsWithModules(yangDir)
+	if err != nil {
+		return fmt.Errorf("failed to expand YANG dir %s: %w", yangDir, err)
 	}
+	ms.AddPath(expanded...)
 
 	if err := ms.Read(yangFile); err != nil {
-		return nil, fmt.Errorf("failed to read YANG module %s: %w", yangFile, err)
+		return fmt.Errorf("failed to read YANG module %s: %w", yangFile, err)
 	}
 	if len(ms.Modules) == 0 {
-		return nil, fmt.Errorf("no YANG modules found for %s", yangFile)
+		return fmt.Errorf("no YANG modules found for %s", yangFile)
 	}
 
 	// Get the module name (remove revision entries)
@@ -52,7 +54,7 @@ func Export(yangDirs []string, yangFile string, withType bool) ([]FlatPath, erro
 	// Process the modules
 	errs := ms.Process()
 	if len(errs) > 0 {
-		return nil, fmt.Errorf("YANG processing errors: %v", errs)
+		return fmt.Errorf("YANG processing errors: %v", errs)
 	}
 
 	entry := yang.ToEntry(ms.Modules[moduleName])
@@ -61,7 +63,22 @@ func Export(yangDirs []string, yangFile string, withType bool) ([]FlatPath, erro
 	var results []FlatPath
 	traverseEntry(entry, "", yang.TSUnset, withType, &results)
 
-	return results, nil
+	// Marshal results to JSON
+	jsonData, err := json.MarshalIndent(results, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal results to JSON: %w", err)
+	}
+
+	// Write JSON file with same base name as yangFile but .json extension
+	baseName := filepath.Base(yangFile)
+	jsonName := strings.TrimSuffix(baseName, ".yang") + ".json"
+	outputPath := filepath.Join(yangDir, jsonName)
+
+	if err := os.WriteFile(outputPath, jsonData, 0644); err != nil {
+		return fmt.Errorf("failed to write JSON file %s: %w", outputPath, err)
+	}
+
+	return nil
 }
 
 // traverseEntry recursively walks the YANG entry tree, building xpath paths
