@@ -122,6 +122,11 @@ func (ex *Exporter) Export(yangFile string, withType bool) error {
 	var results []FlatPath
 	traverseEntry(entry, "", yang.TSUnset, withType, &results)
 
+	// Skip writing if no state paths found
+	if len(results) == 0 {
+		return nil
+	}
+
 	// Marshal results to JSON
 	jsonData, err := json.MarshalIndent(results, "", "  ")
 	if err != nil {

@@ -1305,7 +1305,7 @@ func routeDownloadYang(c echo.Context) error {
 		return nil
 	}
 
-	result := fmt.Sprintf("Successfully downloaded %d schemas and converted %d to flat paths", yangFiles, convertFiles)
+	result := fmt.Sprintf("Successfully downloaded %d schemas.", yangFiles)
 	logger.Log.Infof("Yang schema for router %s downloaded in folder %s - %d files, %d converted", shortname, folderName, yangFiles, convertFiles)
 	sendEvent("folder", folderName)
 	sendEvent("done", result)
