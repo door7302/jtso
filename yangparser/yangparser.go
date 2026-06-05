@@ -52,8 +52,10 @@ func Export(yangDir string, yangFile string, withType bool) error {
 		moduleName = m.Name
 	}
 
-	// Load augmentation and deviation files that target this module
-	loadAugmentAndDeviation(ms, yangDir, moduleName)
+	// Load augmentation and deviation files only for openconfig modules
+	if strings.HasPrefix(moduleName, "openconfig") {
+		loadAugmentAndDeviation(ms, yangDir, moduleName)
+	}
 
 	// Process the modules — ignore errors from deviations targeting
 	// nodes not present in this module (e.g. jnx-openconfig-dev.yang
