@@ -1257,13 +1257,13 @@ func routeDownloadYang(c echo.Context) error {
 		var excludeList = []string{"junos-rpc", "junos-conf"}
 
 		// call netconf API to down the schema and store it in the right folder
-		yangFiles, err := netconf.DownloadYangSchemas(r.Hostname, collectCfg.cfg.Netconf.Port, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, excludeList, folderName)
+		yangFiles, convertFiles, err := netconf.DownloadYangSchemas(r.Hostname, collectCfg.cfg.Netconf.Port, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, excludeList, folderName)
 		if err != nil {
 			logger.Log.Errorf("Unable to download yang schema for router %s: %v", r.Shortname, err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to download yang schema for the router"})
 		}
-		logger.Log.Infof("Yang schema for router %s has been successfully downloaded in folder %s - %d files", r.Shortname, folderName, yangFiles)
-		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("Yang schema for router %s has been successfully downloaded in folder %s - %d files", r.Shortname, folderName, yangFiles)})
+		logger.Log.Infof("Yang schema for router %s has been successfully downloaded in folder %s - %d files, %d converted", r.Shortname, folderName, yangFiles, convertFiles)
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("Yang schema for router %s has been successfully downloaded in folder %s - %d files, %d converted", r.Shortname, folderName, yangFiles, convertFiles)})
 	} else {
 		logger.Log.Infof("Folder %s already exists. Remove it and download the yang schema", folderName)
 		return c.JSON(http.StatusOK, Reply{Status: "PARTIAL", Msg: "Folder " + folderName + " already exists. No need to download the yang schema"})

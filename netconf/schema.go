@@ -40,7 +40,7 @@ type getSchemaData struct {
 // available YANG schemas, filters out any whose name contains a substring from
 // excludeFiles, and downloads the remaining schemas to outputDir.
 // Returns the number of successfully downloaded schemas and any error.
-func DownloadYangSchemas(router string, port int, username string, password string, excludeFiles []string, outputDir string) (int, error) {
+func DownloadYangSchemas(router string, port int, username string, password string, excludeFiles []string, outputDir string) (int, int, error) {
 
 	logger.Log.Infof("[%s] Start downloading YANG schemas", router)
 
@@ -53,7 +53,7 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 	session, err := netconf.DialSSH(fmt.Sprintf("%s:%d", router, port), sshConfig)
 	if err != nil {
 		logger.Log.Errorf("[%s] Unable to open Netconf session for schema download: %v", router, err)
-		return 0, err
+		return 0, 0, err
 	}
 	defer session.Close()
 
@@ -61,7 +61,7 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 	err = session.SendHello(&message.Hello{Capabilities: capabilities})
 	if err != nil {
 		logger.Log.Errorf("[%s] Error while sending Hello: %v", router, err)
-		return 0, err
+		return 0, 0, err
 	}
 
 	// Step 1: Get the list of available schemas
@@ -70,30 +70,30 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 	reply, err := session.SyncRPC(rpc, 60)
 	if err != nil || reply == nil {
 		logger.Log.Errorf("[%s] Unable to retrieve schema list: %v", router, err)
-		return 0, fmt.Errorf("unable to retrieve schema list: %w", err)
+		return 0, 0, fmt.Errorf("unable to retrieve schema list: %w", err)
 	}
 	if strings.Contains(reply.Data, "<rpc-error>") {
 		logger.Log.Errorf("[%s] RPC error while retrieving schema list", router)
-		return 0, fmt.Errorf("RPC error in schema list response")
+		return 0, 0, fmt.Errorf("RPC error in schema list response")
 	}
 
 	// Parse the schema list
 	var schemas schemaList
 	if err := xml.Unmarshal([]byte(reply.Data), &schemas); err != nil {
 		logger.Log.Errorf("[%s] Unable to parse schema list: %v", router, err)
-		return 0, fmt.Errorf("unable to parse schema list: %w", err)
+		return 0, 0, fmt.Errorf("unable to parse schema list: %w", err)
 	}
 
 	allSchemas := schemas.State.Schemas.Schema
 	if len(allSchemas) == 0 {
 		logger.Log.Warnf("[%s] No YANG schemas found on device", router)
-		return 0, nil
+		return 0, 0, nil
 	}
 	logger.Log.Infof("[%s] Found %d schemas on device", router, len(allSchemas))
 
 	// Create output directory
 	if err := os.MkdirAll(YANG_PATH+outputDir, 0755); err != nil {
-		return 0, fmt.Errorf("unable to create output directory %s: %w", YANG_PATH+outputDir, err)
+		return 0, 0, fmt.Errorf("unable to create output directory %s: %w", YANG_PATH+outputDir, err)
 	}
 
 	// Step 2: Download each schema (filtering out excluded ones)
@@ -110,17 +110,23 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 			continue
 		}
 
+		downloaded++
+	}
+	logger.Log.Infof("[%s] Successfully downloaded %d YANG schemas to %s", router, downloaded, YANG_PATH+outputDir)
+
+	// Step 3 / Create the flat xpaths JSON file for all downloaded schemas
+	converted := 0
+	for _, s := range allSchemas {
 		// Generate the flat path JSON file from the downloaded schema
 		yangFile := filepath.Join(YANG_PATH+outputDir, s.Identifier+".yang")
 		if err := yangparser.Export(YANG_PATH+outputDir, yangFile, true); err != nil {
 			logger.Log.Warnf("[%s] Failed to generate flat paths for %s: %v", router, s.Identifier, err)
 		}
-
-		downloaded++
+		converted++
 	}
 
-	logger.Log.Infof("[%s] Successfully downloaded %d YANG schemas to %s", router, downloaded, YANG_PATH+outputDir)
-	return downloaded, nil
+	logger.Log.Infof("[%s] Successfully converted %d YANG schemas to %s", router, converted, YANG_PATH+outputDir)
+	return downloaded, converted, nil
 }
 
 // shouldExclude checks if a schema name contains any of the exclude substrings
