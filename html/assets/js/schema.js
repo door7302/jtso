@@ -37,8 +37,9 @@ DownloadButton.addEventListener("click", function () {
           if (select) {
             const exists = Array.from(select.options).some(opt => opt.value === event.data);
             if (!exists) {
-              const option = new Option(event.data, event.data);
+              const option = new Option(event.data, event.data, true, true);
               select.add(option);
+            } else {
               select.value = event.data;
             }
           }
