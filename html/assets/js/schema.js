@@ -73,10 +73,10 @@ DownloadButton.addEventListener("click", function () {
     }).setHeader('JSTO...');
 });
 
-// Schema folder selection: load available schemas
-const schemaFolderSelect = document.getElementById("schemaFolder");
-if (schemaFolderSelect) {
-  schemaFolderSelect.addEventListener("change", loadSchemas);
+// Schema folder: load available schemas on button click
+const loadSchemasBtn = document.getElementById("loadSchemas");
+if (loadSchemasBtn) {
+  loadSchemasBtn.addEventListener("click", loadSchemas);
 }
 
 function loadSchemas() {
@@ -92,7 +92,7 @@ function loadSchemas() {
     dataType: "json",
     success: function(json) {
       if (json["status"] === "OK") {
-        const schemas = json["schemas"];
+        const schemas = json["schemas"] || [];
         if (schemas.length === 0) {
           navigator.innerHTML = '<div class="alert alert-info">No schemas found in this folder.</div>';
           return;
