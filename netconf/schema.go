@@ -13,6 +13,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+const YANG_PATH = "/var/yang/"
+
 // schemaList represents the NETCONF monitoring schemas response
 type schemaList struct {
 	XMLName xml.Name `xml:"data"`
@@ -89,8 +91,8 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 	logger.Log.Infof("[%s] Found %d schemas on device", router, len(allSchemas))
 
 	// Create output directory
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return 0, fmt.Errorf("unable to create output directory %s: %w", outputDir, err)
+	if err := os.MkdirAll(YANG_PATH+outputDir, 0755); err != nil {
+		return 0, fmt.Errorf("unable to create output directory %s: %w", YANG_PATH+outputDir, err)
 	}
 
 	// Step 2: Download each schema (filtering out excluded ones)
@@ -101,7 +103,7 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 			continue
 		}
 
-		err := downloadSingleSchema(session, router, s.Identifier, outputDir)
+		err := downloadSingleSchema(session, s.Identifier, YANG_PATH+outputDir)
 		if err != nil {
 			logger.Log.Warnf("[%s] Failed to download schema %s: %v", router, s.Identifier, err)
 			continue
@@ -109,7 +111,7 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 		downloaded++
 	}
 
-	logger.Log.Infof("[%s] Successfully downloaded %d YANG schemas to %s", router, downloaded, outputDir)
+	logger.Log.Infof("[%s] Successfully downloaded %d YANG schemas to %s", router, downloaded, YANG_PATH+outputDir)
 	return downloaded, nil
 }
 
@@ -124,7 +126,7 @@ func shouldExclude(name string, excludeFiles []string) bool {
 }
 
 // downloadSingleSchema downloads a single YANG schema from the device
-func downloadSingleSchema(session *netconf.Session, router string, module string, outputDir string) error {
+func downloadSingleSchema(session *netconf.Session, module string, outputDir string) error {
 	rpcData := fmt.Sprintf(`<get-schema xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-monitoring"><identifier>%s</identifier><format>yang</format></get-schema>`, module)
 	rpc := message.NewRPC(rpcData)
 	reply, err := session.SyncRPC(rpc, 60)

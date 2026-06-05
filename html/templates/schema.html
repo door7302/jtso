@@ -44,7 +44,7 @@
 
                     <select id="router" class="selectpicker" data-width="100%">
                         {{range .Rtrs}}
-                        <option value="{{.Shortname}}">{{.Shortname}}</option>
+                        <option value="{{.Shortname}}#{{.Hostname}}#{{.Model}}#{{.Version}}#{{.Family}}">{{.Shortname}}</option>
                         {{end}}
                     </select>
 

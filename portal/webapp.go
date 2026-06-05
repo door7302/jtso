@@ -140,6 +140,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/gettree", routeGetTreeDoc)
 	wapp.POST("/intervalmgmt", routeIntervalMgt)
 	wapp.POST("/ondemandmgt", routeOnDemandMgt)
+	wapp.POST("/downloadyang", routeDownloadYang)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -1234,6 +1235,39 @@ func routeAddProfile(c echo.Context) error {
 	go association.ConfigueStack(collectCfg.cfg, fam)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router's Profile(s) updated"})
 
+}
+
+func routeDownloadYang(c echo.Context) error {
+	var err error
+
+	r := new(RouterDetails)
+	err = c.Bind(r)
+	if err != nil {
+		logger.Log.Errorf("Unable to parse Post request for downloading Yang schema: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse Post request for downloading Yang schema"})
+	}
+	//create folder name base on the model and version of the router - all in upper case and space replaced by underscore
+	folderName := fmt.Sprintf("%s_%s", strings.ToUpper(r.Model), strings.ToUpper(r.Version))
+	folderName = strings.ReplaceAll(folderName, " ", "_")
+
+	// check if the folder already exists (use YANG_PATH of netcont package + foldername)
+	if _, err := os.Stat(netconf.YANG_PATH + folderName); os.IsNotExist(err) {
+		logger.Log.Infof("Folder %s does not exist. Create it and download the yang schema", folderName)
+		// Create the exclude list for the yang schema download. This is a static list that exclude rpc, conf etc.
+		var excludeList = []string{"junos-rpc", "junos-conf"}
+
+		// call netconf API to down the schema and store it in the right folder
+		yangFiles, err := netconf.DownloadYangSchemas(r.Hostname, collectCfg.cfg.Netconf.Port, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, excludeList, folderName)
+		if err != nil {
+			logger.Log.Errorf("Unable to download yang schema for router %s: %v", r.Shortname, err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to download yang schema for the router"})
+		}
+		logger.Log.Infof("Yang schema for router %s has been successfully downloaded in folder %s - %d files", r.Shortname, folderName, yangFiles)
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("Yang schema for router %s has been successfully downloaded in folder %s - %d files", r.Shortname, folderName, yangFiles)})
+	} else {
+		logger.Log.Infof("Folder %s already exists. Remove it and download the yang schema", folderName)
+		return c.JSON(http.StatusOK, Reply{Status: "PARTIAL", Msg: "Folder " + folderName + " already exists. No need to download the yang schema"})
+	}
 }
 
 func routeSearchPath(c echo.Context) error {
