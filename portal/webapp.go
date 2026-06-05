@@ -116,6 +116,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/browser.html", routeBrowse)
 	wapp.GET("/stats.html", routeStats)
 	wapp.GET("/ondemand.html", routeOndemand)
+	wapp.GET("/schema.html", routeSchema)
 
 	// GET API routes
 	wapp.GET("/stream", routeStream)
@@ -774,6 +775,26 @@ func routeOndemand(c echo.Context) error {
 	sort.Strings(lc)
 
 	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": ondemand.CC, "ConfigList": lc})
+}
+
+func routeSchema(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
+
+	// Get all routers from db
+	var lr []RouterDetails
+	lr = make([]RouterDetails, 0)
+
+	for _, r := range sqlite.RtrList {
+		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
+	}
+	// sort it
+	sort.Sort(ByShortname(lr))
+
+	// Get the list of available schemas
+	var ls []string
+	ls = make([]string, 0)
+	return c.Render(http.StatusOK, "schema.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "Rtrs": lr, "SchemaFolders": ls})
 }
 
 func routeBrowse(c echo.Context) error {

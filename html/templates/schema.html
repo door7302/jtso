@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>OpenJTS - Yang Schemas Browser</title>
+    <link rel="stylesheet" href="css/myfonts.css">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-icons.css">
+    <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
+    <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/bootstrap-multiselect.css">
+    <link rel="stylesheet" href="css/flip.min.css">
+    <link rel="stylesheet" href="css/jtsmain.css">
+    {{if .UseFancyTree}}
+    <link rel="stylesheet" href="css/jquery-ui.css">
+    <link rel="stylesheet" href="css/ui.fancytree.min.css">
+    {{else}}
+        <link rel="stylesheet" href="css/jstree.css">
+        {{end}}
+
+</head>
+
+<body>
+
+    {{template "navbar" .}}
+
+    <div class="container mt-4">
+        <div class="d-flex align-items-center mb-4">
+            <i class="fas fa-search fa-lg text-success me-2"></i>
+            <h1 class="h3 mb-0">Yang Schemas Browser</h1>
+        </div>
+    </div>
+
+    <div class="other-div">
+        <div class="card other-card">
+            <div class="card-body">
+                <h4 class="card-title">Yang Schemas Downloaded</h4>
+                <form>
+
+
+                    <label class="form-label">Select a Router:</label>
+
+                    <select id="router" class="selectpicker" data-width="100%">
+                        {{range .Rtrs}}
+                        <option value="{{.Shortname}}">{{.Shortname}}</option>
+                        {{end}}
+                    </select>
+
+                </form>
+                <br />
+                <div class="d-flex justify-content-center align-items-center">
+                    <input class="btn btn-success" type="submit" value="Download" name="download" id="download" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+    <div class="other-div">
+        <div class="card other-card">
+            <h4 class="card-title">Schema Navigator</h4>
+            <form>
+                <div class="row align-items-center">
+                    <label class="form-label">Select a schema folder:</label>
+
+                    <select id="schemaFolder" class="selectpicker" data-width="100%">
+                        {{range .SchemaFolders}}
+                        <option value="{{.Schema}}">{{.Schema}}</option>
+                        {{end}}
+                    </select>
+                   
+                </div>
+            </form>
+            </br>
+            <div id="navigator">
+
+            </div>
+        </div>
+    </div>
+
+    <script src="js/jquery-3.6.4.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="js/alertify.min.js"></script>
+    <script src="js/bootstrap-waitingfor.min.js"></script>
+    <script src="js/bootstrap-multiselect.js"></script>
+    <script src="js/dark.js"></script>
+    <script src="js/schema.js"></script>
+</body>
+
+</html>
