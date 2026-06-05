@@ -75,21 +75,17 @@
         <div class="card other-card">
             <h4 class="card-title">Schema Navigator</h4>
             <form>
-                <div class="row align-items-center">
-                    <div class="col">
-                        <label class="form-label">Select one of the available schema folders:</label>
-                        <select id="schemaFolder" class="selectpicker" data-width="100%">
-                            {{range .SchemaFolders}}
-                            <option value="{{.}}">{{.}}</option>
-                            {{end}}
-                        </select>
-                    </div>
-                    <div class="col-auto" style="align-self: flex-end;">
-                        <button type="button" class="btn btn-success" id="loadSchemas">Load</button>
-                    </div>
-                </div>
+                <label class="form-label">Select one of the available schema folders:</label>
+                <select id="schemaFolder" class="selectpicker" data-width="100%">
+                    {{range .SchemaFolders}}
+                    <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
             </form>
-            </br>
+            <div class="d-flex justify-content-center align-items-center mt-3">
+                <button type="button" class="btn btn-success" id="loadSchemas">Load</button>
+            </div>
+            <br/>
             <div id="navigator">
 
             </div>
