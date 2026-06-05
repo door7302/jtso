@@ -119,8 +119,21 @@ function renderSchemaGrid(filter) {
   if (!navigator) return;
   const f = filter.toLowerCase();
 
-  let html = '<input type="text" class="form-control form-control-sm mb-3" id="schemaGridFilter" placeholder="Filter schemas..." value="' + filter.replace(/"/g, '&quot;') + '">';
-  html += '<div class="row g-2">';
+  // Only create the filter input once, then just update the grid
+  let filterInput = document.getElementById("schemaGridFilter");
+  let gridContainer = document.getElementById("schemaGridContent");
+
+  if (!filterInput) {
+    navigator.innerHTML = '<input type="text" class="form-control form-control-sm mb-3" id="schemaGridFilter" placeholder="Filter schemas...">' +
+      '<div id="schemaGridContent"></div>' +
+      '<div id="schemaGridCount" class="text-muted small mt-2"></div>';
+    filterInput = document.getElementById("schemaGridFilter");
+    gridContainer = document.getElementById("schemaGridContent");
+  }
+
+  filterInput.value = filter;
+
+  let html = '<div class="row g-2">';
   let count = 0;
   for (let i = 0; i < loadedSchemas.length; i++) {
     if (f && !loadedSchemas[i].toLowerCase().includes(f)) continue;
@@ -133,8 +146,8 @@ function renderSchemaGrid(filter) {
     count++;
   }
   html += '</div>';
-  html += '<div class="text-muted small mt-2">' + count + ' / ' + loadedSchemas.length + ' schemas</div>';
-  navigator.innerHTML = html;
+  gridContainer.innerHTML = html;
+  document.getElementById("schemaGridCount").textContent = count + ' / ' + loadedSchemas.length + ' schemas';
 }
 
 // Live filter on schema grid
@@ -175,7 +188,9 @@ function openSchemaModal(folder, schema) {
     dataType: "json",
     success: function(json) {
       if (Array.isArray(json)) {
-        schemaData = json;
+        schemaData = json.sort(function(a, b) {
+          return (a.xpath || "").localeCompare(b.xpath || "");
+        });
         renderSchemaTable();
       } else {
         $("#schemaTableBody").html('<tr><td colspan="3" class="text-danger">' + (json["msg"] || "Error loading schema") + '</td></tr>');
