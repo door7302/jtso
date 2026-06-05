@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>OpenJTS - Yang Schemas Browser</title>
+    <title>OpenJTS - Yang Schema Explorer</title>
     <link rel="stylesheet" href="css/myfonts.css">
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-icons.css">
@@ -30,16 +30,15 @@
     <div class="container mt-4">
         <div class="d-flex align-items-center mb-4">
             <i class="fas fa-search fa-lg text-success me-2"></i>
-            <h1 class="h3 mb-0">Yang Schemas Browser</h1>
+            <h1 class="h3 mb-0">Yang Schema Explorer</h1>
         </div>
     </div>
 
     <div class="other-div">
         <div class="card other-card">
             <div class="card-body">
-                <h4 class="card-title">Yang Schemas Downloaded</h4>
+                <h4 class="card-title">Download Yang Schemas</h4>
                 <form>
-
 
                     <label class="form-label">Select a Router:</label>
 
@@ -70,7 +69,7 @@
             <h4 class="card-title">Schema Navigator</h4>
             <form>
                 <div class="row align-items-center">
-                    <label class="form-label">Select a schema folder:</label>
+                    <label class="form-label">Select one of the available schema folders:</label>
 
                     <select id="schemaFolder" class="selectpicker" data-width="100%">
                         {{range .SchemaFolders}}

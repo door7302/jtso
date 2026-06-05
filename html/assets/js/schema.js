@@ -31,6 +31,19 @@ DownloadButton.addEventListener("click", function () {
           }
         });
 
+        evtSource.addEventListener("folder", function(event) {
+          // Add the new folder to the schema folder dropdown
+          const select = document.getElementById("schemaFolder");
+          if (select) {
+            const exists = Array.from(select.options).some(opt => opt.value === event.data);
+            if (!exists) {
+              const option = new Option(event.data, event.data);
+              select.add(option);
+              select.value = event.data;
+            }
+          }
+        });
+
         evtSource.addEventListener("done", function(event) {
           evtSource.close();
           if (progressDiv) {
@@ -59,3 +72,43 @@ DownloadButton.addEventListener("click", function () {
       }
     }).setHeader('JSTO...');
 });
+
+// Schema folder selection: load available schemas
+const schemaFolderSelect = document.getElementById("schemaFolder");
+if (schemaFolderSelect) {
+  schemaFolderSelect.addEventListener("change", loadSchemas);
+}
+
+function loadSchemas() {
+  const folder = document.getElementById("schemaFolder").value.trim();
+  const navigator = document.getElementById("navigator");
+  if (!folder || !navigator) return;
+
+  navigator.innerHTML = '<div class="text-center"><i class="bi bi-arrow-repeat spin"></i> Loading...</div>';
+
+  $.ajax({
+    type: 'GET',
+    url: "/listschemas?folder=" + encodeURIComponent(folder),
+    dataType: "json",
+    success: function(json) {
+      if (json["status"] === "OK") {
+        const schemas = json["schemas"];
+        if (schemas.length === 0) {
+          navigator.innerHTML = '<div class="alert alert-info">No schemas found in this folder.</div>';
+          return;
+        }
+        let html = '<div class="list-group">';
+        for (let i = 0; i < schemas.length; i++) {
+          html += '<a href="#" class="list-group-item list-group-item-action schema-item" data-schema="' + schemas[i] + '" data-folder="' + folder + '">' + schemas[i] + '</a>';
+        }
+        html += '</div>';
+        navigator.innerHTML = html;
+      } else {
+        navigator.innerHTML = '<div class="alert alert-danger">' + json["msg"] + '</div>';
+      }
+    },
+    error: function() {
+      navigator.innerHTML = '<div class="alert alert-danger">Failed to load schemas.</div>';
+    }
+  });
+}

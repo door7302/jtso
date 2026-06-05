@@ -94,6 +94,12 @@ type (
 		Tree   TreeView `json:"tree"`
 	}
 
+	ReplySchemas struct {
+		Status  string   `json:"status"`
+		Msg     string   `json:"msg,omitempty"`
+		Schemas []string `json:"schemas,omitempty"`
+	}
+
 	Setting struct {
 		NetconfUser       string `json:"netuser"`
 		NetconfPwd        string `json:"netpwd"`

@@ -21,6 +21,7 @@ import (
 	"jtso/worker"
 	"net/http"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strconv"
@@ -141,6 +142,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/intervalmgmt", routeIntervalMgt)
 	wapp.POST("/ondemandmgt", routeOnDemandMgt)
 	wapp.GET("/downloadyang", routeDownloadYang)
+	wapp.GET("/listschemas", routeListSchemas)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -792,9 +794,20 @@ func routeSchema(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	// Get the list of available schemas
+	// Get the list of available schemas - Analyse the director YANG_PATH and extract the list of subfolders which represent the different schemas
 	var ls []string
 	ls = make([]string, 0)
+	files, err := os.ReadDir(netconf.YANG_PATH)
+	if err != nil {
+		logger.Log.Errorf("Unable to read YANG_PATH directory: %v", err)
+	} else {
+		for _, file := range files {
+			if file.IsDir() {
+				ls = append(ls, file.Name())
+			}
+		}
+	}
+
 	return c.Render(http.StatusOK, "schema.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "Rtrs": lr, "SchemaFolders": ls})
 }
 
@@ -1266,6 +1279,7 @@ func routeDownloadYang(c echo.Context) error {
 	// check if the folder already exists (use YANG_PATH of netconf package + foldername)
 	if _, err := os.Stat(netconf.YANG_PATH + folderName); !os.IsNotExist(err) {
 		logger.Log.Infof("Folder %s already exists. No need to download the yang schema", folderName)
+		sendEvent("folder", folderName)
 		sendEvent("done", "Folder "+folderName+" already exists. No need to download the yang schema")
 		return nil
 	}
@@ -1290,10 +1304,42 @@ func routeDownloadYang(c echo.Context) error {
 		return nil
 	}
 
-	result := fmt.Sprintf("Yang schema for router %s has been successfully downloaded in folder %s - %d files, %d converted", shortname, folderName, yangFiles, convertFiles)
-	logger.Log.Info(result)
+	result := fmt.Sprintf("Successfully downloaded %d schemas and converted %d to flat paths", yangFiles, convertFiles)
+	logger.Log.Infof("Yang schema for router %s downloaded in folder %s - %d files, %d converted", shortname, folderName, yangFiles, convertFiles)
+	sendEvent("folder", folderName)
 	sendEvent("done", result)
 	return nil
+}
+
+func routeListSchemas(c echo.Context) error {
+	folder := c.QueryParam("folder")
+	if folder == "" {
+		return c.JSON(http.StatusOK, ReplySchemas{Status: "NOK", Msg: "Missing folder parameter"})
+	}
+
+	// Sanitize folder name to prevent directory traversal
+	folder = filepath.Base(folder)
+	dirPath := filepath.Join(netconf.YANG_PATH, folder)
+
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		logger.Log.Errorf("Unable to read schema folder %s: %v", folder, err)
+		return c.JSON(http.StatusOK, ReplySchemas{Status: "NOK", Msg: "Unable to read schema folder"})
+	}
+
+	schemas := make([]string, 0)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if strings.HasSuffix(name, ".json") {
+			schemas = append(schemas, strings.TrimSuffix(name, ".json"))
+		}
+	}
+	sort.Strings(schemas)
+
+	return c.JSON(http.StatusOK, ReplySchemas{Status: "OK", Schemas: schemas})
 }
 
 func routeSearchPath(c echo.Context) error {
