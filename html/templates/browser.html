@@ -68,10 +68,16 @@
         </div>
     </div>
 
-    <div class="other-div">
+    <div class="other-div" id="browserDiv">
         <div class="card other-card">
             <div class="card-body">
-                <h4 class="card-title">Telemetry sensor Analyzer</h4>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Telemetry sensor Analyzer</h4>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#browserCardBody" aria-expanded="true" aria-controls="browserCardBody" id="browserCollapseBtn">
+                        <i class="bi bi-dash"></i>
+                    </button>
+                </div>
+                <div class="collapse show mt-3" id="browserCardBody">
                 <form>
 
 
@@ -110,6 +116,7 @@
                 <br />
                 <div class="d-flex justify-content-center align-items-center">
                     <input class="btn btn-success" type="submit" value="Analyze path" name="browse" id="browse" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+                </div>
                 </div>
             </div>
         </div>
@@ -162,6 +169,15 @@
     <script>
         document.getElementById('setTimeoutCheck').addEventListener('change', function() {
             document.getElementById('timeoutInputDiv').style.display = this.checked ? 'block' : 'none';
+        });
+
+        const browserCollapse = document.getElementById('browserCardBody');
+        const browserBtn = document.getElementById('browserCollapseBtn');
+        browserCollapse.addEventListener('shown.bs.collapse', function() {
+            browserBtn.innerHTML = '<i class="bi bi-dash"></i>';
+        });
+        browserCollapse.addEventListener('hidden.bs.collapse', function() {
+            browserBtn.innerHTML = '<i class="bi bi-plus"></i>';
         });
     </script>
 
