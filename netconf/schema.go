@@ -114,6 +114,10 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 	}
 	logger.Log.Infof("[%s] Successfully downloaded %d YANG schemas to %s", router, downloaded, YANG_PATH+outputDir)
 
+	// Exclude augmentation/deviation files from standalone export
+	// (they are used internally by yangparser.Export to enrich parent modules)
+	excludeFiles = append(excludeFiles, "jnx-aug", "jnx-openconfig-dev")
+
 	// Step 3 / Create the flat xpaths JSON file for all downloaded schemas
 	converted := 0
 	for _, s := range allSchemas {

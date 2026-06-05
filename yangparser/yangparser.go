@@ -38,7 +38,8 @@ func Export(yangDir string, yangFile string, withType bool) error {
 		return fmt.Errorf("failed to read YANG module %s: %w", yangFile, err)
 	}
 	if len(ms.Modules) == 0 {
-		return fmt.Errorf("no YANG modules found for %s", yangFile)
+		// This is likely a submodule (belongs-to another module), skip silently
+		return nil
 	}
 
 	// Get the module name (remove revision entries)
@@ -50,6 +51,9 @@ func Export(yangDir string, yangFile string, withType bool) error {
 		}
 		moduleName = m.Name
 	}
+
+	// Load augmentation and deviation files that target this module
+	loadAugmentAndDeviation(ms, yangDir, moduleName)
 
 	// Process the modules
 	errs := ms.Process()
@@ -187,4 +191,28 @@ func resolveTypeName(e *yang.Entry) string {
 	}
 
 	return typeName
+}
+
+// loadAugmentAndDeviation scans yangDir for jnx-aug-* and jnx-*-dev* files
+// that augment or deviate the given module, and loads them into ms.
+func loadAugmentAndDeviation(ms *yang.Modules, yangDir string, moduleName string) {
+	// Look for augmentation files: jnx-aug-<moduleName>.yang
+	augPattern := filepath.Join(yangDir, "jnx-aug-"+moduleName+"*.yang")
+	augFiles, _ := filepath.Glob(augPattern)
+	for _, f := range augFiles {
+		_ = ms.Read(f)
+	}
+
+	// Look for deviation files: jnx-<moduleName>-dev*.yang
+	devPattern := filepath.Join(yangDir, "jnx-"+moduleName+"-dev*.yang")
+	devFiles, _ := filepath.Glob(devPattern)
+	for _, f := range devFiles {
+		_ = ms.Read(f)
+	}
+
+	// Also check for the common deviation file: jnx-openconfig-dev.yang
+	commonDev := filepath.Join(yangDir, "jnx-openconfig-dev.yang")
+	if _, err := os.Stat(commonDev); err == nil {
+		_ = ms.Read(commonDev)
+	}
 }
