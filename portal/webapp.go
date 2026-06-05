@@ -140,7 +140,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/gettree", routeGetTreeDoc)
 	wapp.POST("/intervalmgmt", routeIntervalMgt)
 	wapp.POST("/ondemandmgt", routeOnDemandMgt)
-	wapp.POST("/downloadyang", routeDownloadYang)
+	wapp.GET("/downloadyang", routeDownloadYang)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -1238,36 +1238,62 @@ func routeAddProfile(c echo.Context) error {
 }
 
 func routeDownloadYang(c echo.Context) error {
-	var err error
+	// SSE endpoint: stream progress to browser
+	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+	c.Response().Header().Set("Cache-Control", "no-cache")
+	c.Response().Header().Set("Connection", "keep-alive")
+	c.Response().Flush()
 
-	r := new(RouterDetails)
-	err = c.Bind(r)
-	if err != nil {
-		logger.Log.Errorf("Unable to parse Post request for downloading Yang schema: %v", err)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse Post request for downloading Yang schema"})
+	sendEvent := func(event string, data string) {
+		fmt.Fprintf(c.Response().Writer, "event: %s\ndata: %s\n\n", event, data)
+		c.Response().Flush()
 	}
+
+	hostname := c.QueryParam("hostname")
+	shortname := c.QueryParam("shortname")
+	model := c.QueryParam("model")
+	version := c.QueryParam("version")
+
+	if hostname == "" || model == "" || version == "" {
+		sendEvent("error", "Missing required parameters")
+		return nil
+	}
+
 	//create folder name base on the model and version of the router - all in upper case and space replaced by underscore
-	folderName := fmt.Sprintf("%s_%s", strings.ToUpper(r.Model), strings.ToUpper(r.Version))
+	folderName := fmt.Sprintf("%s_%s", strings.ToUpper(model), strings.ToUpper(version))
 	folderName = strings.ReplaceAll(folderName, " ", "_")
 
-	// check if the folder already exists (use YANG_PATH of netcont package + foldername)
-	if _, err := os.Stat(netconf.YANG_PATH + folderName); os.IsNotExist(err) {
-		logger.Log.Infof("Folder %s does not exist. Create it and download the yang schema", folderName)
-		// Create the exclude list for the yang schema download. This is a static list that exclude rpc, conf etc.
-		var excludeList = []string{"junos-rpc", "junos-conf"}
-
-		// call netconf API to down the schema and store it in the right folder
-		yangFiles, convertFiles, err := netconf.DownloadYangSchemas(r.Hostname, collectCfg.cfg.Netconf.Port, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, excludeList, folderName)
-		if err != nil {
-			logger.Log.Errorf("Unable to download yang schema for router %s: %v", r.Shortname, err)
-			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to download yang schema for the router"})
-		}
-		logger.Log.Infof("Yang schema for router %s has been successfully downloaded in folder %s - %d files, %d converted", r.Shortname, folderName, yangFiles, convertFiles)
-		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: fmt.Sprintf("Yang schema for router %s has been successfully downloaded in folder %s - %d files, %d converted", r.Shortname, folderName, yangFiles, convertFiles)})
-	} else {
-		logger.Log.Infof("Folder %s already exists. Remove it and download the yang schema", folderName)
-		return c.JSON(http.StatusOK, Reply{Status: "PARTIAL", Msg: "Folder " + folderName + " already exists. No need to download the yang schema"})
+	// check if the folder already exists (use YANG_PATH of netconf package + foldername)
+	if _, err := os.Stat(netconf.YANG_PATH + folderName); !os.IsNotExist(err) {
+		logger.Log.Infof("Folder %s already exists. No need to download the yang schema", folderName)
+		sendEvent("done", "Folder "+folderName+" already exists. No need to download the yang schema")
+		return nil
 	}
+
+	logger.Log.Infof("Folder %s does not exist. Create it and download the yang schema", folderName)
+	sendEvent("progress", "Starting YANG schema download...")
+
+	// Create the exclude list for the yang schema download
+	var excludeList = []string{"junos-rpc", "junos-conf"}
+
+	// Progress callback sends SSE events
+	progressFn := func(phase string, current int, total int, name string) {
+		msg := fmt.Sprintf("%s [%d/%d] %s", phase, current, total, name)
+		sendEvent("progress", msg)
+	}
+
+	// call netconf API to download the schema and store it in the right folder
+	yangFiles, convertFiles, err := netconf.DownloadYangSchemas(hostname, collectCfg.cfg.Netconf.Port, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, excludeList, folderName, progressFn)
+	if err != nil {
+		logger.Log.Errorf("Unable to download yang schema for router %s: %v", shortname, err)
+		sendEvent("error", "Unable to download yang schema for the router: "+err.Error())
+		return nil
+	}
+
+	result := fmt.Sprintf("Yang schema for router %s has been successfully downloaded in folder %s - %d files, %d converted", shortname, folderName, yangFiles, convertFiles)
+	logger.Log.Info(result)
+	sendEvent("done", result)
+	return nil
 }
 
 func routeSearchPath(c echo.Context) error {

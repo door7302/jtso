@@ -36,11 +36,15 @@ type getSchemaData struct {
 	Data    string   `xml:",chardata"`
 }
 
+// ProgressFunc is a callback invoked to report progress during schema operations.
+// phase is "download" or "convert", current/total indicate progress.
+type ProgressFunc func(phase string, current int, total int, name string)
+
 // DownloadYangSchemas connects to a router via NETCONF, retrieves the list of
 // available YANG schemas, filters out any whose name contains a substring from
 // excludeFiles, and downloads the remaining schemas to outputDir.
 // Returns the number of successfully downloaded schemas and any error.
-func DownloadYangSchemas(router string, port int, username string, password string, excludeFiles []string, outputDir string) (int, int, error) {
+func DownloadYangSchemas(router string, port int, username string, password string, excludeFiles []string, outputDir string, progress ProgressFunc) (int, int, error) {
 
 	logger.Log.Infof("[%s] Start downloading YANG schemas", router)
 
@@ -97,11 +101,25 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 	}
 
 	// Step 2: Download each schema (filtering out excluded ones)
+	// First count eligible schemas for progress reporting
+	totalDownload := 0
+	for _, s := range allSchemas {
+		if !shouldExclude(s.Identifier, excludeFiles) {
+			totalDownload++
+		}
+	}
+
 	downloaded := 0
+	dlIndex := 0
 	for _, s := range allSchemas {
 		if shouldExclude(s.Identifier, excludeFiles) {
 			logger.Log.Debugf("[%s] Skipping excluded schema: %s", router, s.Identifier)
 			continue
+		}
+
+		dlIndex++
+		if progress != nil {
+			progress("download", dlIndex, totalDownload, s.Identifier)
 		}
 
 		err := downloadSingleSchema(session, s.Identifier, YANG_PATH+outputDir)
@@ -126,11 +144,25 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 		return downloaded, 0, nil
 	}
 
+	// Count eligible schemas for convert progress
+	totalConvert := 0
+	for _, s := range allSchemas {
+		if !shouldExclude(s.Identifier, excludeFiles) {
+			totalConvert++
+		}
+	}
+
 	converted := 0
+	cvIndex := 0
 	for _, s := range allSchemas {
 		if shouldExclude(s.Identifier, excludeFiles) {
 			logger.Log.Debugf("[%s] Skipping excluded schema: %s", router, s.Identifier)
 			continue
+		}
+
+		cvIndex++
+		if progress != nil {
+			progress("convert", cvIndex, totalConvert, s.Identifier)
 		}
 
 		// Generate the flat path JSON file from the downloaded schema
