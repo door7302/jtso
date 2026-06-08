@@ -16,11 +16,13 @@ DownloadButton.addEventListener("click", function () {
           progressDiv.innerHTML = '<div class="alert alert-info"><strong>Starting...</strong></div>';
         }
 
+        const forceDownload = document.getElementById("forceDownload").checked;
         const params = new URLSearchParams({
           hostname: hostname,
           shortname: shortname,
           model: model,
-          version: version
+          version: version,
+          force: forceDownload
         });
 
         const evtSource = new EventSource("/downloadyang?" + params.toString());
@@ -42,6 +44,7 @@ DownloadButton.addEventListener("click", function () {
             } else {
               select.value = event.data;
             }
+            $('#schemaFolder').selectpicker('refresh');
           }
         });
 

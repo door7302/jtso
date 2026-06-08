@@ -1267,6 +1267,7 @@ func routeDownloadYang(c echo.Context) error {
 	shortname := c.QueryParam("shortname")
 	model := c.QueryParam("model")
 	version := c.QueryParam("version")
+	force := c.QueryParam("force") == "true"
 
 	if hostname == "" || model == "" || version == "" {
 		sendEvent("error", "Missing required parameters")
@@ -1279,10 +1280,20 @@ func routeDownloadYang(c echo.Context) error {
 
 	// check if the folder already exists (use YANG_PATH of netconf package + foldername)
 	if _, err := os.Stat(netconf.YANG_PATH + folderName); !os.IsNotExist(err) {
-		logger.Log.Infof("Folder %s already exists. No need to download the yang schema", folderName)
-		sendEvent("folder", folderName)
-		sendEvent("done", "Folder "+folderName+" already exists. No need to download the yang schema")
-		return nil
+		if force {
+			logger.Log.Infof("Folder %s already exists but force flag is set. Removing existing folder.", folderName)
+			sendEvent("progress", "Removing existing folder "+folderName+"...")
+			if err := os.RemoveAll(netconf.YANG_PATH + folderName); err != nil {
+				logger.Log.Errorf("Unable to remove existing folder %s: %v", folderName, err)
+				sendEvent("error", "Unable to remove existing folder: "+err.Error())
+				return nil
+			}
+		} else {
+			logger.Log.Infof("Folder %s already exists. No need to download the yang schema", folderName)
+			sendEvent("folder", folderName)
+			sendEvent("done", "Folder "+folderName+" already exists. No need to download the yang schema")
+			return nil
+		}
 	}
 
 	logger.Log.Infof("Folder %s does not exist. Create it and download the yang schema", folderName)
