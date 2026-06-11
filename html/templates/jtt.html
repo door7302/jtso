@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>OpenJTS - JTT Plugin</title>
+    <link rel="stylesheet" href="css/myfonts.css">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
+    <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/jtsmain.css">
+    <link rel="stylesheet" href="css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="css/bootstrap-multiselect.css">
+    <link rel="stylesheet" href="css/bootstrap-icons.css">
+</head>
+
+<body>
+
+    {{template "navbar" .}}
+
+    <div class="container mt-4">
+        <div class="d-flex align-items-center mb-4">
+            <i class="fas fa-vial fa-lg text-primary me-2"></i>
+            <h1 class="h3 mb-0">JTT Plugin</h1>
+        </div>
+    </div>
+
+    <!-- Card 1: Launch a new JTT test -->
+    <div class="other-div">
+        <div class="card other-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Launch a new JTT's test</h4>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#launchCardBody" aria-expanded="true" aria-controls="launchCardBody">
+                        <i class="bi bi-dash"></i>
+                    </button>
+                </div>
+                <div class="collapse show mt-3" id="launchCardBody">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Select Router(s):</label>
+                            <select id="routerlist" class="selectpicker" data-width="100%" data-actions-box="true" multiple>
+                                {{range .Rtrs}}
+                                <option value="{{.Shortname}}#{{.Hostname}}#{{.Model}}#{{.Version}}#{{.Family}}">{{.Shortname}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Load JTT Test File (JSON):</label>
+                            <input class="form-control" type="file" id="jttTestFile" accept=".json">
+                            <small class="text-muted">Select a local JSON test definition file</small>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center mt-3">
+                        <button class="btn btn-success" id="launchTest">
+                            <i class="fas fa-play me-1"></i> Launch Test
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br />
+
+    <!-- Card 2: JTT tests status -->
+    <div class="other-div">
+        <div class="card other-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">JTT's tests status</h4>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#statusCardBody" aria-expanded="true" aria-controls="statusCardBody">
+                        <i class="bi bi-dash"></i>
+                    </button>
+                </div>
+                <div class="collapse show mt-3" id="statusCardBody">
+                    <div class="table-responsive">
+                        <table id="jttJobsTable" class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Job ID</th>
+                                    <th>State</th>
+                                    <th width="15%" class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Static entries for look & feel validation -->
+                                <tr>
+                                    <td>550e8400-e29b-41d4-a716-446655440000</td>
+                                    <td><span class="badge bg-secondary">QUEUED</span></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-warning" title="Cancel Job">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>660f9500-f30c-52e5-b827-557766550111</td>
+                                    <td><span class="badge bg-info text-dark">IN-PROGRESS</span></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-warning" title="Cancel Job">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>770a0600-a41d-63f6-c938-668877660222</td>
+                                    <td><span class="badge bg-success">COMPLETED</span></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" title="Show Result">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>880b1700-b52e-74g7-d049-779988770333</td>
+                                    <td><span class="badge bg-danger">FAILED</span></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" title="Show Result">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>990c2800-c63f-85h8-e150-880099880444</td>
+                                    <td><span class="badge bg-dark">CANCELED</span></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" title="Show Result">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/jquery-3.6.4.min.js"></script>
+    <script src="js/jquery.dataTables.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="js/bootstrap-multiselect.js"></script>
+    <script src="js/alertify.min.js"></script>
+    <script src="js/dark.js"></script>
+</body>
+
+</html>

@@ -77,7 +77,7 @@ func main() {
 
 	// Init the sqliteDB
 	//err = sqlite.Init("./jtso.db")
-	err = sqlite.Init(DBPATH)
+	err = sqlite.Init(DBPATH, Cfg.JTT.URL != "")
 	if err != nil {
 		logger.Log.Errorf("unable to open DB... panic...: %v", err)
 		panic(err)

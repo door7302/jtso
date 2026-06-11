@@ -17,4 +17,10 @@ modules:
     server_crt: ""
     server_key: ""
     port: 80
+plugins:
+  jtt:
+    url: ""
+    use_ssl: false
+    client_crt: "client.crt"
+    client_key: "client.key"
 

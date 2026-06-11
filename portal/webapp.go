@@ -118,6 +118,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/stats.html", routeStats)
 	wapp.GET("/ondemand.html", routeOndemand)
 	wapp.GET("/schema.html", routeSchema)
+	wapp.GET("/jtt.html", routeJTT)
 
 	// GET API routes
 	wapp.GET("/stream", routeStream)
@@ -651,14 +652,15 @@ func routeIndex(c echo.Context) error {
 		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVEVO": numVEVO, "NumONDEMAND": numONDEMAND,
 		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
 		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VEVODebug": VEVODebug, "ONDEMANDDebug": ONDEMANDDebug,
-		"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
+		"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion,
+		"JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 func routeStats(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
 
-	return c.Render(http.StatusOK, "stats.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "stats.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 func routeRouters(c echo.Context) error {
@@ -675,7 +677,7 @@ func routeRouters(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 func routeSettings(c echo.Context) error {
@@ -690,7 +692,7 @@ func routeSettings(c echo.Context) error {
 		"KafkaTopic": sqlite.ActiveKafkaConfig.Topic, "KafkaVersion": sqlite.ActiveKafkaConfig.Version,
 		"KafkaFormat": sqlite.ActiveKafkaConfig.Format, "KafkaCompression": reverseDictKafkaCodec[sqlite.ActiveKafkaConfig.Compression],
 		"KafkaMessageSize": sqlite.ActiveKafkaConfig.MessageSize,
-		"GrafanaPort":      grafanaPort, "ChronografPort": chronografPort})
+		"GrafanaPort":      grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 func routeProfiles(c echo.Context) error {
@@ -735,7 +737,7 @@ func routeProfiles(c echo.Context) error {
 		}
 		la = append(la, TabAsso{Shortname: r.Shortname, Profiles: asso})
 	}
-	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 func routeDoc(c echo.Context) error {
@@ -753,7 +755,7 @@ func routeDoc(c echo.Context) error {
 	association.ProfileLock.Unlock()
 	sort.Strings(lp)
 
-	return c.Render(http.StatusOK, "pmanagement.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "pmanagement.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 func routeOndemand(c echo.Context) error {
@@ -778,7 +780,7 @@ func routeOndemand(c echo.Context) error {
 	// sort it
 	sort.Strings(lc)
 
-	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": ondemand.CC, "ConfigList": lc})
+	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": ondemand.CC, "ConfigList": lc, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 func routeSchema(c echo.Context) error {
@@ -809,7 +811,7 @@ func routeSchema(c echo.Context) error {
 		}
 	}
 
-	return c.Render(http.StatusOK, "schema.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "Rtrs": lr, "SchemaFolders": ls})
+	return c.Render(http.StatusOK, "schema.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "Rtrs": lr, "SchemaFolders": ls, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 func routeBrowse(c echo.Context) error {
@@ -827,7 +829,24 @@ func routeBrowse(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "UseFancyTree": useFancy})
+	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "UseFancyTree": useFancy, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
+}
+
+func routeJTT(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
+
+	// Get all routers from db
+	var lr []RouterDetails
+	lr = make([]RouterDetails, 0)
+
+	for _, r := range sqlite.RtrList {
+		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
+	}
+	// sort it
+	sort.Sort(ByShortname(lr))
+
+	return c.Render(http.StatusOK, "jtt.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 /// ---------------------------------------------///

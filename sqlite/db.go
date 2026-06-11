@@ -98,6 +98,11 @@ type KafkaConfig struct {
 	MessageSize int
 }
 
+type JTTJob struct {
+	JobID string
+	State string
+}
+
 var (
 	db                        *sql.DB
 	dbMu                      *sync.Mutex
@@ -113,7 +118,7 @@ var (
 
 const SECRET_STORE string = "/data"
 
-func Init(f string) error {
+func Init(f string, jttEnabled bool) error {
 	var err error
 	var secretChange bool
 	err = nil
@@ -230,6 +235,12 @@ func Init(f string) error {
 		flush_jitter TEXT
 		);`
 
+	const createJTTJobs string = `
+		CREATE TABLE IF NOT EXISTS jttjobs (
+		jobid TEXT NOT NULL PRIMARY KEY,
+		state TEXT NOT NULL
+		);`
+
 	if _, err := db.Exec(createRtr); err != nil {
 		logger.Log.Infof("Error while init DB %s Table routers - err: %v", f, err)
 		return err
@@ -257,6 +268,12 @@ func Init(f string) error {
 	if _, err := db.Exec(createCollector); err != nil {
 		logger.Log.Infof("Error while init DB %s Table collector_parameters - err: %v", f, err)
 		return err
+	}
+	if jttEnabled {
+		if _, err := db.Exec(createJTTJobs); err != nil {
+			logger.Log.Infof("Error while init DB %s Table jttjobs - err: %v", f, err)
+			return err
+		}
 	}
 
 	err = LoadAll(secretChange)
@@ -957,4 +974,56 @@ func loadAllInternal(secretRotation bool) error {
 func CloseDb() error {
 	logger.Log.Info("Closing database.")
 	return db.Close()
+}
+
+func AddJTTJob(jobID string, state string) error {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	if _, err := db.Exec("INSERT INTO jttjobs VALUES(?,?);", jobID, state); err != nil {
+		logger.Log.Errorf("Error while adding JTT job %s - err: %v", jobID, err)
+		return err
+	}
+	return nil
+}
+
+func UpdateJTTJob(jobID string, state string) error {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	if _, err := db.Exec("UPDATE jttjobs SET state=? WHERE jobid=?;", state, jobID); err != nil {
+		logger.Log.Errorf("Error while updating JTT job %s - err: %v", jobID, err)
+		return err
+	}
+	return nil
+}
+
+func DelJTTJob(jobID string) error {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	if _, err := db.Exec("DELETE FROM jttjobs WHERE jobid=?;", jobID); err != nil {
+		logger.Log.Errorf("Error while deleting JTT job %s - err: %v", jobID, err)
+		return err
+	}
+	return nil
+}
+
+func GetJTTJobsByState(state string) ([]*JTTJob, error) {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	jobs := make([]*JTTJob, 0)
+	rows, err := db.Query("SELECT jobid, state FROM jttjobs WHERE state=?;", state)
+	if err != nil {
+		logger.Log.Errorf("Error while selecting JTT jobs - err: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		j := &JTTJob{}
+		err = rows.Scan(&j.JobID, &j.State)
+		if err != nil {
+			logger.Log.Errorf("Error while parsing JTT jobs rows - err: %v", err)
+			return nil, err
+		}
+		jobs = append(jobs, j)
+	}
+	return jobs, nil
 }
