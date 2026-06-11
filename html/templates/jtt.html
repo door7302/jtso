@@ -46,7 +46,7 @@
                             <label class="form-label">Select Router(s):</label>
                             <select id="routerlist" class="selectpicker" data-width="100%" data-actions-box="true" multiple>
                                 {{range .Rtrs}}
-                                <option value="{{.Shortname}}#{{.Hostname}}#{{.Model}}#{{.Version}}#{{.Family}}">{{.Shortname}}</option>
+                                <option value="{{.Shortname}}#{{.Hostname}}#{{.Model}}#{{.Family}}">{{.Shortname}}</option>
                                 {{end}}
                             </select>
                         </div>
@@ -96,7 +96,10 @@
                                     <td>550e8400-e29b-41d4-a716-446655440000</td>
                                     <td><span class="badge bg-secondary">QUEUED</span></td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning" title="Cancel Job">
+                                        <button class="btn btn-sm btn-outline-info" title="Update Status" onclick="updateJob('550e8400-e29b-41d4-a716-446655440000','Interface Counters Test', this)">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning ms-1" title="Cancel Job" onclick="cancelJob('550e8400-e29b-41d4-a716-446655440000','Interface Counters Test', this)">
                                             <i class="fas fa-ban"></i>
                                         </button>
                                     </td>
@@ -106,7 +109,10 @@
                                     <td>660f9500-f30c-52e5-b827-557766550111</td>
                                     <td><span class="badge bg-info text-dark">IN-PROGRESS</span></td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning" title="Cancel Job">
+                                        <button class="btn btn-sm btn-outline-info" title="Update Status" onclick="updateJob('660f9500-f30c-52e5-b827-557766550111','BGP Neighbors Check', this)">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning ms-1" title="Cancel Job" onclick="cancelJob('660f9500-f30c-52e5-b827-557766550111','BGP Neighbors Check', this)">
                                             <i class="fas fa-ban"></i>
                                         </button>
                                     </td>
@@ -116,10 +122,10 @@
                                     <td>770a0600-a41d-63f6-c938-668877660222</td>
                                     <td><span class="badge bg-success">COMPLETED</span></td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-primary" title="Show Result">
+                                        <button class="btn btn-sm btn-outline-primary" title="Show Result" onclick="showDetail('770a0600-a41d-63f6-c938-668877660222','LLDP Validation')">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job">
+                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job" onclick="removeJob('770a0600-a41d-63f6-c938-668877660222','LLDP Validation', this)">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
@@ -129,10 +135,10 @@
                                     <td>880b1700-b52e-74g7-d049-779988770333</td>
                                     <td><span class="badge bg-danger">FAILED</span></td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-primary" title="Show Result">
+                                        <button class="btn btn-sm btn-outline-primary" title="Show Result" onclick="showDetail('880b1700-b52e-74g7-d049-779988770333','QoS Queues Test')">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job">
+                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job" onclick="removeJob('880b1700-b52e-74g7-d049-779988770333','QoS Queues Test', this)">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
@@ -142,10 +148,10 @@
                                     <td>990c2800-c63f-85h8-e150-880099880444</td>
                                     <td><span class="badge bg-dark">CANCELED</span></td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-primary" title="Show Result">
+                                        <button class="btn btn-sm btn-outline-primary" title="Show Result" onclick="showDetail('990c2800-c63f-85h8-e150-880099880444','Optics Power Levels')">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job">
+                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job" onclick="removeJob('990c2800-c63f-85h8-e150-880099880444','Optics Power Levels', this)">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
@@ -158,12 +164,28 @@
         </div>
     </div>
 
+    <!-- Job Detail Modal -->
+    <div class="modal fade" id="jttDetailModal" tabindex="-1" aria-labelledby="jttDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width:85%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jttDetailModalLabel">Job Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="jttDetailModalBody">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/jquery-3.6.4.min.js"></script>
     <script src="js/jquery.dataTables.min.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="js/bootstrap-multiselect.js"></script>
     <script src="js/alertify.min.js"></script>
+    <script src="js/bootstrap-waitingfor.min.js"></script>
     <script src="js/dark.js"></script>
+    <script src="js/jtt.js"></script>
 </body>
 
 </html>

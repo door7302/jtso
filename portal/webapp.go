@@ -146,6 +146,13 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/listschemas", routeListSchemas)
 	wapp.GET("/getschema", routeGetSchema)
 
+	// JTT Plugin routes
+	wapp.POST("/jttlaunch", routeJTTLaunch)
+	wapp.POST("/jttcancel", routeJTTCancel)
+	wapp.POST("/jttupdate", routeJTTUpdate)
+	wapp.POST("/jttdelete", routeJTTDelete)
+	wapp.POST("/jttdetail", routeJTTDetail)
+
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
 
@@ -2205,4 +2212,86 @@ func routeInfluxMgt(c echo.Context) error {
 	default:
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown InfluxDB action"})
 	}
+}
+
+/// ---------------------------------------------///
+/// --------------- JTT Plugin ------------------///
+/// ---------------------------------------------///
+
+func routeJTTLaunch(c echo.Context) error {
+	r := new(JTTLaunchRequest)
+	if err := c.Bind(r); err != nil {
+		logger.Log.Errorf("Unable to parse JTT launch request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the request"})
+	}
+	if r.Name == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Test name cannot be empty"})
+	}
+	if len(r.Routers) == 0 {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "At least one router must be selected"})
+	}
+
+	// TODO: forward request to JTT backend and retrieve job_id
+	logger.Log.Infof("JTT Launch request received - name: %s, routers: %d", r.Name, len(r.Routers))
+	return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "OK", JobID: ""})
+}
+
+func routeJTTCancel(c echo.Context) error {
+	r := new(JTTJobRequest)
+	if err := c.Bind(r); err != nil {
+		logger.Log.Errorf("Unable to parse JTT cancel request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the request"})
+	}
+	if r.JobID == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
+	}
+
+	// TODO: forward cancel to JTT backend
+	logger.Log.Infof("JTT Cancel request received - job_id: %s, name: %s", r.JobID, r.Name)
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: ""})
+}
+
+func routeJTTUpdate(c echo.Context) error {
+	r := new(JTTJobRequest)
+	if err := c.Bind(r); err != nil {
+		logger.Log.Errorf("Unable to parse JTT update request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the request"})
+	}
+	if r.JobID == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
+	}
+
+	// TODO: query JTT backend for current state
+	logger.Log.Infof("JTT Update request received - job_id: %s, name: %s", r.JobID, r.Name)
+	return c.JSON(http.StatusOK, ReplyJTTUpdate{Status: "OK", State: ""})
+}
+
+func routeJTTDelete(c echo.Context) error {
+	r := new(JTTJobRequest)
+	if err := c.Bind(r); err != nil {
+		logger.Log.Errorf("Unable to parse JTT delete request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the request"})
+	}
+	if r.JobID == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
+	}
+
+	// TODO: delete job from JTT backend and local DB
+	logger.Log.Infof("JTT Delete request received - job_id: %s, name: %s", r.JobID, r.Name)
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: ""})
+}
+
+func routeJTTDetail(c echo.Context) error {
+	r := new(JTTJobRequest)
+	if err := c.Bind(r); err != nil {
+		logger.Log.Errorf("Unable to parse JTT detail request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the request"})
+	}
+	if r.JobID == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
+	}
+
+	// TODO: query JTT backend for full job result
+	logger.Log.Infof("JTT Detail request received - job_id: %s, name: %s", r.JobID, r.Name)
+	return c.JSON(http.StatusOK, ReplyJTTDetail{Status: "OK", Data: nil})
 }

@@ -174,6 +174,42 @@ type (
 		RootName string     `json:"rootName"`
 		Paths    []TreePath `json:"listOfPaths"`
 	}
+
+	JTTRouter struct {
+		Shortname string `json:"shortname"`
+		Hostname  string `json:"hostname"`
+		Model     string `json:"model"`
+		Family    string `json:"family"`
+	}
+
+	JTTLaunchRequest struct {
+		Name     string      `json:"name"`
+		Routers  []JTTRouter `json:"routers"`
+		TestData interface{} `json:"test_data"`
+	}
+
+	JTTJobRequest struct {
+		JobID string `json:"job_id"`
+		Name  string `json:"name"`
+	}
+
+	ReplyJTTLaunch struct {
+		Status string `json:"status"`
+		Msg    string `json:"msg,omitempty"`
+		JobID  string `json:"job_id,omitempty"`
+	}
+
+	ReplyJTTUpdate struct {
+		Status string `json:"status"`
+		Msg    string `json:"msg,omitempty"`
+		State  string `json:"state,omitempty"`
+	}
+
+	ReplyJTTDetail struct {
+		Status string      `json:"status"`
+		Msg    string      `json:"msg,omitempty"`
+		Data   interface{} `json:"data,omitempty"`
+	}
 )
 
 func (a ByShortname) Len() int           { return len(a) }
