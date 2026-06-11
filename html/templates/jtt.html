@@ -22,7 +22,7 @@
     <div class="container mt-4">
         <div class="d-flex align-items-center mb-4">
             <i class="fas fa-vial fa-lg text-primary me-2"></i>
-            <h1 class="h3 mb-0">JTT Plugin</h1>
+            <h1 class="h3 mb-0">Telemetry Tester Plugin</h1>
         </div>
     </div>
 
@@ -38,6 +38,10 @@
                 </div>
                 <div class="collapse show mt-3" id="launchCardBody">
                     <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Test Name:</label>
+                            <input class="form-control" type="text" id="jttTestName" placeholder="Enter a name for this test">
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label">Select Router(s):</label>
                             <select id="routerlist" class="selectpicker" data-width="100%" data-actions-box="true" multiple>
@@ -79,6 +83,7 @@
                         <table id="jttJobsTable" class="table table-striped table-hover">
                             <thead>
                                 <tr>
+                                    <th>Name</th>
                                     <th>Job ID</th>
                                     <th>State</th>
                                     <th width="15%" class="text-center">Actions</th>
@@ -87,6 +92,7 @@
                             <tbody>
                                 <!-- Static entries for look & feel validation -->
                                 <tr>
+                                    <td>Interface Counters Test</td>
                                     <td>550e8400-e29b-41d4-a716-446655440000</td>
                                     <td><span class="badge bg-secondary">QUEUED</span></td>
                                     <td class="text-center">
@@ -96,6 +102,7 @@
                                     </td>
                                 </tr>
                                 <tr>
+                                    <td>BGP Neighbors Check</td>
                                     <td>660f9500-f30c-52e5-b827-557766550111</td>
                                     <td><span class="badge bg-info text-dark">IN-PROGRESS</span></td>
                                     <td class="text-center">
@@ -105,6 +112,7 @@
                                     </td>
                                 </tr>
                                 <tr>
+                                    <td>LLDP Validation</td>
                                     <td>770a0600-a41d-63f6-c938-668877660222</td>
                                     <td><span class="badge bg-success">COMPLETED</span></td>
                                     <td class="text-center">
@@ -117,6 +125,7 @@
                                     </td>
                                 </tr>
                                 <tr>
+                                    <td>QoS Queues Test</td>
                                     <td>880b1700-b52e-74g7-d049-779988770333</td>
                                     <td><span class="badge bg-danger">FAILED</span></td>
                                     <td class="text-center">
@@ -129,6 +138,7 @@
                                     </td>
                                 </tr>
                                 <tr>
+                                    <td>Optics Power Levels</td>
                                     <td>990c2800-c63f-85h8-e150-880099880444</td>
                                     <td><span class="badge bg-dark">CANCELED</span></td>
                                     <td class="text-center">
