@@ -578,7 +578,7 @@ func GnmiSample(hideOrigin bool) {
 		api.Subscription(
 			api.Path(StreamObj.Path),
 			api.SubscriptionMode("sample"),
-			api.SampleInterval(time.Duration(15+StreamObj.Timeout)*time.Second),
+			api.SampleInterval(time.Duration(StreamObj.Timeout)*time.Second),
 		))
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI subscription: %v", err)
@@ -596,7 +596,7 @@ func GnmiSample(hideOrigin bool) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(time.Duration(StreamObj.Timeout) * time.Second):
+		case <-time.After(time.Duration(15+StreamObj.Timeout) * time.Second):
 			logger.Log.Infof("End of the subscription timer")
 			tg.StopSubscription("sub1")
 			// Safety: if StopSubscription doesn't trigger subErrChan (e.g. huge buffered data),
