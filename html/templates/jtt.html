@@ -51,12 +51,13 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Load JTT Test File (JSON):</label>
-                            <input class="form-control" type="file" id="jttTestFile" accept=".json">
-                            <small class="text-muted">Select a local JSON test definition file</small>
+                            <label class="form-label">Load JTT Test File (CSV):</label>
+                            <input class="form-control" type="file" id="jttTestFile" accept=".csv">
+                            <small class="text-muted">Select a local CSV test definition file</small>
                         </div>
                     </div>
-                    <div class="d-flex justify-content-center mt-3">
+                    <div class="text-center mt-3">
+                        <small class="text-muted d-block mb-2">Note: one job will be created per router.</small>
                         <button class="btn btn-success" id="launchTest">
                             <i class="fas fa-play me-1"></i> Launch Test
                         </button>
