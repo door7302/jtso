@@ -44,8 +44,8 @@
                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">Admin</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="settings.html">Settings</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/chronograf/data-explorer', '_blank')">Manage InfluxDB</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/tickscripts', '_blank')">Manage Tick scripts</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="window.open('http://' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/chronograf/data-explorer', '_blank')">Manage InfluxDB</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="window.open('http://' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/tickscripts', '_blank')">Manage Tick scripts</a></li>
                             <li><a class="dropdown-item" href="stats.html">Stack Util. & Logs</a></li>
                         </ul>
                     </li>
@@ -165,7 +165,7 @@
             <div class="card chronograf" style="--box-color: #{{.Chronograf}};">
                 <h3>Chronograf</h3>
                 <div class="button-container">
-                    <button class="button" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/?orgId=1', '_blank')">Open</button>
+                    <button class="button" onclick="window.open('http://' + window.location.hostname + ':' + {{.ChronografPort}} + '/?orgId=1', '_blank')">Open</button>
                 </div>
                 <img class="docker-logo" src="img/docker.png" alt="Docker">
             </div>
