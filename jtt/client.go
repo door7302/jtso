@@ -63,6 +63,7 @@ type JobResult struct {
 	Status      string       `json:"status"`
 	DeviceName  string       `json:"device_name"`
 	Error       string       `json:"error"`
+	CompletedAt string       `json:"completed_at"`
 	Model       string       `json:"model"`
 	TestType    int          `json:"test_type"`
 	ListOfPaths []PathResult `json:"listOfPaths"`

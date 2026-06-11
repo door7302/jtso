@@ -189,6 +189,7 @@ type (
 		JobID  string `json:"job_id"`
 		Name   string `json:"name"`
 		Status string `json:"status"`
+		Date   string `json:"date"`
 	}
 
 	ReplyJTTLaunch struct {

@@ -9,7 +9,7 @@ $(document).ready(function () {
       search: "Filter:",
     },
     columnDefs: [
-      { orderable: false, targets: 3 }
+      { orderable: false, targets: 4 }
     ]
   });
 
@@ -101,6 +101,7 @@ $('#launchTest').on('click', function () {
               actions = buildActiveActions(job.job_id, job.name);
             }
             table.row.add([
+              job.date,
               job.name,
               job.job_id,
               badge,
@@ -145,8 +146,8 @@ function cancelJob(jobId, name, td) {
         success: function (json) {
           if (json.status == "OK") {
             var row = $(td).closest("tr");
-            row.find("td").eq(2).html(stateBadge["CANCELED"]);
-            row.find("td").eq(3).html(buildFinishedActions(jobId, name));
+            row.find("td").eq(3).html(stateBadge["CANCELED"]);
+            row.find("td").eq(4).html(buildFinishedActions(jobId, name));
             waitingDialog.hide();
             alertify.success("Job '" + name + "' has been canceled");
           } else {
@@ -179,13 +180,13 @@ function updateJob(jobId, name, td) {
     success: function (json) {
       if (json.status == "OK") {
         var row = $(td).closest("tr");
-        var currentState = row.find("td").eq(2).text().trim();
+        var currentState = row.find("td").eq(3).text().trim();
         var newState = json.state;
         if (newState !== currentState) {
-          row.find("td").eq(2).html(stateBadge[newState]);
+          row.find("td").eq(3).html(stateBadge[newState]);
           // Update actions if state moved to a finished state
           if (newState === "COMPLETED" || newState === "FAILED" || newState === "CANCELED") {
-            row.find("td").eq(3).html(buildFinishedActions(jobId, name));
+            row.find("td").eq(4).html(buildFinishedActions(jobId, name));
           }
         }
         waitingDialog.hide();

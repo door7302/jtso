@@ -2233,8 +2233,9 @@ func routeJTTLaunch(c echo.Context) error {
 	}
 
 	// TODO: parse CSV lines and forward request to JTT backend
+	date := time.Now().Format("01/02/2006 15:04")
 	logger.Log.Infof("JTT Launch request received - name: %s, csv lines: %d", r.Name, len(r.CsvLines))
-	return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "OK", Jobs: []JTTJobEntry{}})
+	return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "OK", Jobs: []JTTJobEntry{{Name: r.Name, Date: date}}})
 }
 
 func routeJTTCancel(c echo.Context) error {

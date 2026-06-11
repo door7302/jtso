@@ -102,6 +102,7 @@ type JTTJob struct {
 	JobID string
 	Name  string
 	State string
+	Date  string
 }
 
 var (
@@ -240,7 +241,8 @@ func Init(f string, jttEnabled bool) error {
 		CREATE TABLE IF NOT EXISTS jttjobs (
 		jobid TEXT NOT NULL PRIMARY KEY,
 		name TEXT NOT NULL,
-		state TEXT NOT NULL
+		state TEXT NOT NULL,
+		date TEXT NOT NULL DEFAULT ''
 		);`
 
 	if _, err := db.Exec(createRtr); err != nil {
@@ -978,10 +980,10 @@ func CloseDb() error {
 	return db.Close()
 }
 
-func AddJTTJob(jobID string, name string, state string) error {
+func AddJTTJob(jobID string, name string, state string, date string) error {
 	dbMu.Lock()
 	defer dbMu.Unlock()
-	if _, err := db.Exec("INSERT INTO jttjobs VALUES(?,?,?);", jobID, name, state); err != nil {
+	if _, err := db.Exec("INSERT INTO jttjobs VALUES(?,?,?,?);", jobID, name, state, date); err != nil {
 		logger.Log.Errorf("Error while adding JTT job %s - err: %v", jobID, err)
 		return err
 	}
@@ -1012,7 +1014,7 @@ func GetJTTJobsByState(state string) ([]*JTTJob, error) {
 	dbMu.Lock()
 	defer dbMu.Unlock()
 	jobs := make([]*JTTJob, 0)
-	rows, err := db.Query("SELECT jobid, name, state FROM jttjobs WHERE state=?;", state)
+	rows, err := db.Query("SELECT jobid, name, state, date FROM jttjobs WHERE state=?;", state)
 	if err != nil {
 		logger.Log.Errorf("Error while selecting JTT jobs - err: %v", err)
 		return nil, err
@@ -1020,7 +1022,7 @@ func GetJTTJobsByState(state string) ([]*JTTJob, error) {
 	defer rows.Close()
 	for rows.Next() {
 		j := &JTTJob{}
-		err = rows.Scan(&j.JobID, &j.Name, &j.State)
+		err = rows.Scan(&j.JobID, &j.Name, &j.State, &j.Date)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing JTT jobs rows - err: %v", err)
 			return nil, err
