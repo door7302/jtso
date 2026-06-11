@@ -48,7 +48,6 @@ function buildFinishedActions(jobId, name) {
 // 1/ Launch Test
 $('#launchTest').on('click', function () {
   var testName = $('#jttTestName').val().trim();
-  var selected = $('#routerlist').val();
   var fileInput = document.getElementById('jttTestFile');
 
   // Validations
@@ -60,12 +59,8 @@ $('#launchTest').on('click', function () {
     alertify.alert("JTT...", "Test name cannot exceed 64 characters");
     return;
   }
-  if (!selected || selected.length === 0) {
-    alertify.alert("JTT...", "Please select at least one router");
-    return;
-  }
   if (!fileInput.files || fileInput.files.length === 0) {
-    alertify.alert("JTT...", "Please select a JSON test file");
+    alertify.alert("JTT...", "Please select a CSV test file");
     return;
   }
 
@@ -73,30 +68,16 @@ $('#launchTest').on('click', function () {
   var reader = new FileReader();
   reader.onload = function (e) {
     var content = e.target.result;
-    var jsonData;
-    try {
-      jsonData = JSON.parse(content);
-    } catch (err) {
-      alertify.alert("JTT...", "Invalid JSON file: " + err.message);
+    // Split into lines and filter out empty lines
+    var lines = content.split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
+    if (lines.length === 0) {
+      alertify.alert("JTT...", "CSV file is empty");
       return;
-    }
-
-    // Build routers array
-    var routers = [];
-    for (var i = 0; i < selected.length; i++) {
-      var parts = selected[i].split('#');
-      routers.push({
-        shortname: parts[0],
-        hostname: parts[1],
-        model: parts[2],
-        family: parts[3]
-      });
     }
 
     var dataToSend = {
       name: testName,
-      routers: routers,
-      test_data: jsonData
+      csv_lines: lines
     };
 
     waitingDialog.show();
@@ -108,22 +89,30 @@ $('#launchTest').on('click', function () {
       dataType: "json",
       success: function (json) {
         if (json.status == "OK") {
-          // Add new row to table
+          // Add new rows to table for each job
           var table = $('#jttJobsTable').DataTable();
-          table.row.add([
-            testName,
-            json.job_id,
-            stateBadge["QUEUED"],
-            buildActiveActions(json.job_id, testName)
-          ]).draw(false);
+          for (var j = 0; j < json.jobs.length; j++) {
+            var job = json.jobs[j];
+            var badge = stateBadge[job.status] || stateBadge["QUEUED"];
+            var actions;
+            if (job.status === "COMPLETED" || job.status === "FAILED" || job.status === "CANCELED") {
+              actions = buildFinishedActions(job.job_id, job.name);
+            } else {
+              actions = buildActiveActions(job.job_id, job.name);
+            }
+            table.row.add([
+              job.name,
+              job.job_id,
+              badge,
+              actions
+            ]).draw(false);
+          }
 
           // Reset form
           $('#jttTestName').val('');
-          $('#routerlist').multiselect('deselectAll', false);
-          $('#routerlist').multiselect('updateButtonText');
           fileInput.value = '';
           waitingDialog.hide();
-          alertify.success("Test '" + testName + "' has been successfully submitted");
+          alertify.success("Test '" + testName + "' has been successfully submitted (" + json.jobs.length + " job(s))");
         } else {
           waitingDialog.hide();
           alertify.alert("JTT...", json.msg);

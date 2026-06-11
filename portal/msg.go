@@ -175,17 +175,9 @@ type (
 		Paths    []TreePath `json:"listOfPaths"`
 	}
 
-	JTTRouter struct {
-		Shortname string `json:"shortname"`
-		Hostname  string `json:"hostname"`
-		Model     string `json:"model"`
-		Family    string `json:"family"`
-	}
-
 	JTTLaunchRequest struct {
-		Name     string      `json:"name"`
-		Routers  []JTTRouter `json:"routers"`
-		TestData interface{} `json:"test_data"`
+		Name     string   `json:"name"`
+		CsvLines []string `json:"csv_lines"`
 	}
 
 	JTTJobRequest struct {
@@ -193,10 +185,16 @@ type (
 		Name  string `json:"name"`
 	}
 
-	ReplyJTTLaunch struct {
+	JTTJobEntry struct {
+		JobID  string `json:"job_id"`
+		Name   string `json:"name"`
 		Status string `json:"status"`
-		Msg    string `json:"msg,omitempty"`
-		JobID  string `json:"job_id,omitempty"`
+	}
+
+	ReplyJTTLaunch struct {
+		Status string        `json:"status"`
+		Msg    string        `json:"msg,omitempty"`
+		Jobs   []JTTJobEntry `json:"jobs,omitempty"`
 	}
 
 	ReplyJTTUpdate struct {

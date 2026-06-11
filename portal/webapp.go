@@ -13,6 +13,7 @@ import (
 	"jtso/container"
 	"jtso/gnmicollect"
 	"jtso/influx"
+	"jtso/jtt"
 	"jtso/logger"
 	"jtso/maker"
 	"jtso/netconf"
@@ -2227,13 +2228,13 @@ func routeJTTLaunch(c echo.Context) error {
 	if r.Name == "" {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Test name cannot be empty"})
 	}
-	if len(r.Routers) == 0 {
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "At least one router must be selected"})
+	if len(r.CsvLines) == 0 {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "CSV file is empty"})
 	}
 
-	// TODO: forward request to JTT backend and retrieve job_id
-	logger.Log.Infof("JTT Launch request received - name: %s, routers: %d", r.Name, len(r.Routers))
-	return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "OK", JobID: ""})
+	// TODO: parse CSV lines and forward request to JTT backend
+	logger.Log.Infof("JTT Launch request received - name: %s, csv lines: %d", r.Name, len(r.CsvLines))
+	return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "OK", Jobs: []JTTJobEntry{}})
 }
 
 func routeJTTCancel(c echo.Context) error {
@@ -2246,9 +2247,15 @@ func routeJTTCancel(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
 	}
 
-	// TODO: forward cancel to JTT backend
-	logger.Log.Infof("JTT Cancel request received - job_id: %s, name: %s", r.JobID, r.Name)
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: ""})
+	client := jtt.NewClient(collectCfg.cfg.JTT)
+	_, err := client.CancelJob(r.JobID)
+	if err != nil {
+		logger.Log.Errorf("Unable to cancel JTT job %s (%s): %v", r.JobID, r.Name, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to cancel the job on JTT backend"})
+	}
+
+	logger.Log.Infof("JTT job %s (%s) has been successfully cancelled", r.JobID, r.Name)
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Job cancelled"})
 }
 
 func routeJTTUpdate(c echo.Context) error {
@@ -2261,9 +2268,15 @@ func routeJTTUpdate(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
 	}
 
-	// TODO: query JTT backend for current state
-	logger.Log.Infof("JTT Update request received - job_id: %s, name: %s", r.JobID, r.Name)
-	return c.JSON(http.StatusOK, ReplyJTTUpdate{Status: "OK", State: ""})
+	client := jtt.NewClient(collectCfg.cfg.JTT)
+	js, err := client.GetJobState(r.JobID)
+	if err != nil {
+		logger.Log.Errorf("Unable to get JTT job state for %s (%s): %v", r.JobID, r.Name, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve job state from JTT"})
+	}
+
+	logger.Log.Infof("JTT Update request - job_id: %s, name: %s, state: %s", r.JobID, r.Name, js.Status)
+	return c.JSON(http.StatusOK, ReplyJTTUpdate{Status: "OK", State: js.Status})
 }
 
 func routeJTTDelete(c echo.Context) error {
@@ -2276,9 +2289,14 @@ func routeJTTDelete(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
 	}
 
-	// TODO: delete job from JTT backend and local DB
-	logger.Log.Infof("JTT Delete request received - job_id: %s, name: %s", r.JobID, r.Name)
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: ""})
+	err := sqlite.DelJTTJob(r.JobID)
+	if err != nil {
+		logger.Log.Errorf("Unable to delete JTT job %s (%s) from DB: %v", r.JobID, r.Name, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete the job from DB"})
+	}
+
+	logger.Log.Infof("JTT job %s (%s) has been successfully deleted", r.JobID, r.Name)
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Job deleted"})
 }
 
 func routeJTTDetail(c echo.Context) error {
@@ -2291,7 +2309,13 @@ func routeJTTDetail(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
 	}
 
-	// TODO: query JTT backend for full job result
-	logger.Log.Infof("JTT Detail request received - job_id: %s, name: %s", r.JobID, r.Name)
-	return c.JSON(http.StatusOK, ReplyJTTDetail{Status: "OK", Data: nil})
+	client := jtt.NewClient(collectCfg.cfg.JTT)
+	jr, err := client.GetJobResult(r.JobID)
+	if err != nil {
+		logger.Log.Errorf("Unable to get JTT job result for %s (%s): %v", r.JobID, r.Name, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve job result from JTT"})
+	}
+
+	logger.Log.Infof("JTT Detail request - job_id: %s, name: %s, status: %s", r.JobID, r.Name, jr.Status)
+	return c.JSON(http.StatusOK, ReplyJTTDetail{Status: "OK", Data: jr})
 }
