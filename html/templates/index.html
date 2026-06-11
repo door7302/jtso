@@ -122,7 +122,7 @@
             <div class="card chronograf" style="--box-color: #{{.Chronograf}};">
                 <h3>Chronograf</h3>
                 <div class="button-container">
-                    <button class="button" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/?orgId=1', '_blank')">Open</button>
+                    <button class="button" onclick="window.open('http://' + window.location.hostname + ':' + {{.ChronografPort}} + '/?orgId=1', '_blank')">Open</button>
                 </div>
                 <img class="docker-logo" src="img/docker.png" alt="Docker">
             </div>
