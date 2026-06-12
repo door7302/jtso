@@ -594,10 +594,10 @@ function buildDetailView(data) {
           html += '</div>';
 
           if (leaf.netconf_rpc) {
-            html += '<div class="mb-2"><small class="jtt-detail-label">Netconf RPC:</small> <code style="font-size:0.8em;">' + leaf.netconf_rpc + '</code></div>';
+            html += '<div class="mb-2"><small class="jtt-detail-label">Netconf RPC:</small><pre class="mt-1 mb-0 p-2 jtt-detail-panel" style="font-size:0.8em;border-radius:4px;white-space:pre-wrap;">' + htmlEscape(leaf.netconf_rpc) + '</pre></div>';
           }
           if (leaf.netconf_leaf) {
-            html += '<div class="mb-2"><small class="jtt-detail-label">Netconf Leaf:</small> <code style="font-size:0.8em;">' + leaf.netconf_leaf + '</code></div>';
+            html += '<div class="mb-2"><small class="jtt-detail-label">Netconf Leaf:</small> <code style="font-size:0.8em;">' + htmlEscape(leaf.netconf_leaf) + '</code></div>';
           }
 
           // Test detail steps
@@ -729,6 +729,15 @@ function csvEscape(value, sep) {
     return '"' + str.replace(/"/g, '""') + '"';
   }
   return str;
+}
+
+function htmlEscape(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 }
 
