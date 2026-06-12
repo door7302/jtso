@@ -118,7 +118,7 @@ func ToJSON(data map[string]interface{}) string {
 }
 
 func StreamData(m string, s string, payload ...string) {
-	// Check if context is cancelled (client disconnected)
+	// Check if context is canceled (client disconnected)
 	if StreamObj.Ctx != nil {
 		select {
 		case <-StreamObj.Ctx.Done():

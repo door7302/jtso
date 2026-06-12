@@ -71,7 +71,7 @@ function changeRP() {
       },
       function () {
         // Cancel clicked
-        alertify.message('Operation cancelled');
+        alertify.message('Operation canceled');
       }
     ).setHeader('JSTO...');
 }

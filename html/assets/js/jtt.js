@@ -151,32 +151,57 @@ $('#launchTest').on('click', function () {
       contentType: "application/json",
       dataType: "json",
       success: function (json) {
-        if (json.status == "OK") {
-          // Add new rows to table for each job
-          var table = $('#jttJobsTable').DataTable();
-          for (var j = 0; j < json.jobs.length; j++) {
-            var job = json.jobs[j];
-            var badge = stateBadge[job.status] || stateBadge["QUEUED"];
-            var actions;
-            if (job.status === "COMPLETED" || job.status === "FAILED" || job.status === "CANCELED") {
-              actions = buildFinishedActions(job.job_id, job.name);
-            } else {
-              actions = buildActiveActions(job.job_id, job.name);
+        var table = $('#jttJobsTable').DataTable();
+        var jobErrors = [];
+
+        if (json.status == "OK" || json.status == "NOK") {
+          // Process all jobs
+          if (json.jobs && json.jobs.length > 0) {
+            for (var j = 0; j < json.jobs.length; j++) {
+              var job = json.jobs[j];
+
+              // Collect errors
+              if (job.error && job.error !== "") {
+                jobErrors.push({ name: job.name, job_id: job.job_id, error: job.error });
+              }
+
+              // Add to table only if status is not WATCHDOG
+              if (job.status !== "WATCHDOG") {
+                var badge = stateBadge[job.status] || stateBadge["QUEUED"];
+                var actions;
+                if (job.status === "COMPLETED" || job.status === "FAILED" || job.status === "CANCELED") {
+                  actions = buildFinishedActions(job.job_id, job.name);
+                } else {
+                  actions = buildActiveActions(job.job_id, job.name);
+                }
+                table.row.add([
+                  job.date,
+                  job.name,
+                  job.job_id,
+                  badge,
+                  actions
+                ]).draw(false);
+              }
             }
-            table.row.add([
-              job.date,
-              job.name,
-              job.job_id,
-              badge,
-              actions
-            ]).draw(false);
           }
 
           // Reset form
           $('#jttTestName').val('');
           fileInput.value = '';
           waitingDialog.hide();
-          alertify.success("Test '" + testName + "' has been successfully submitted (" + json.jobs.length + " job(s))");
+
+          // Show errors modal or success
+          if (jobErrors.length > 0) {
+            var tbody = $('#jobErrorsTableBody');
+            tbody.empty();
+            for (var e = 0; e < jobErrors.length; e++) {
+              tbody.append('<tr><td>' + jobErrors[e].name + '</td><td>' + jobErrors[e].job_id + '</td><td>' + jobErrors[e].error + '</td></tr>');
+            }
+            var modal = new bootstrap.Modal(document.getElementById('jobErrorsModal'));
+            modal.show();
+          } else if (json.status == "OK") {
+            alertify.success("Test '" + testName + "' has been successfully submitted (" + (json.jobs ? json.jobs.length : 0) + " job(s))");
+          }
         } else {
           waitingDialog.hide();
           alertify.alert("JTT...", json.msg);

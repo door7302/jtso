@@ -2343,9 +2343,141 @@ func routeJTTLaunch(c echo.Context) error {
 		})
 	}
 
-	logger.Log.Infof("JTT Launch request received - name: %s, routers: %d, csv entries: %d", r.Name, len(r.Routers), len(csvEntries))
-	date := time.Now().Format("01/02/2006 15:04")
-	return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "OK", Jobs: []JTTJobEntry{{Name: r.Name, Date: date}}})
+	// Build one NewJobRequest per router
+	jobRequests := make([]*jtt.NewJobRequest, 0, len(r.Routers))
+
+	// Job name
+	jobName := r.Name
+
+	for _, rtr := range r.Routers {
+		// Filter CSV entries by supported families for this router
+		family := strings.ToLower(strings.TrimSpace(rtr.Family))
+
+		// Group entries by ParentPath to build XPathInput list
+		type pathKey struct {
+			path     string
+			interval int
+			category string
+			origin   string
+		}
+		pathOrder := make([]pathKey, 0)
+		pathMap := make(map[pathKey][]jtt.LeafInput)
+
+		for _, entry := range csvEntries {
+			// Check if this router's family is in the supported families
+			if _, ok := entry.SupportedFamilies[family]; !ok {
+				continue
+			}
+
+			key := pathKey{
+				path:     entry.ParentPath,
+				interval: entry.IntervalRate,
+				category: entry.Category,
+				origin:   entry.Origin,
+			}
+
+			leaf := jtt.LeafInput{
+				GnmiLeaf:           entry.LeafPath,
+				Description:        entry.Description,
+				NetconfRpc:         entry.ParentNetconf,
+				NetconfLeaf:        entry.LeafNetconf,
+				CounterType:        entry.CounterType,
+				SpecificThresholds: entry.OverrideThld,
+				ValueRatio:         entry.ValueCheckRatio,
+				FalsePositive:      entry.FalsePositiveAllowed,
+				TestType:           entry.TestType,
+			}
+
+			if _, exists := pathMap[key]; !exists {
+				pathOrder = append(pathOrder, key)
+			}
+			pathMap[key] = append(pathMap[key], leaf)
+		}
+
+		// Skip router if no matching entries
+		if len(pathOrder) == 0 {
+			continue
+		}
+
+		// Build XPaths list
+		xpaths := make([]jtt.XPathInput, 0, len(pathOrder))
+		for _, key := range pathOrder {
+			xpaths = append(xpaths, jtt.XPathInput{
+				Subscription: key.path,
+				Interval:     key.interval,
+				Category:     key.category,
+				Origin:       key.origin,
+				Leaves:       pathMap[key],
+			})
+		}
+
+		req := &jtt.NewJobRequest{
+			RouterName:          rtr.Hostname,
+			Model:               rtr.Model,
+			XPaths:              xpaths,
+			TestType:            0,
+			ForceSchemaDownload: false,
+			NetconfCfg: &jtt.NetconfCfg{
+				User:    sqlite.ActiveCred.NetconfUser,
+				Pwd:     sqlite.ActiveCred.NetconfPwd,
+				Port:    collectCfg.cfg.Netconf.Port,
+				Timeout: collectCfg.cfg.Netconf.RpcTimeout,
+			},
+			GnmiCfg: &jtt.GnmiCfg{
+				User:        sqlite.ActiveCred.GnmiUser,
+				Pwd:         sqlite.ActiveCred.GnmiPwd,
+				Port:        collectCfg.cfg.Gnmi.Port,
+				Insecure:    sqlite.ActiveCred.UseTls == "no",
+				SkipVerify:  sqlite.ActiveCred.SkipVerify == "yes",
+				ClientTls:   sqlite.ActiveCred.ClientTls == "yes",
+				HideOrigin:  collectCfg.cfg.Portal.HideOrigin,
+				MergeLeaves: false,
+				StreamMode:  "sample",
+			},
+		}
+		jobRequests = append(jobRequests, req)
+	}
+
+	//
+	jobResults := make([]JTTJobEntry, len(jobRequests))
+	client := jtt.NewClient(collectCfg.cfg.JTT)
+
+	// Launch jobs in sequencial - no need of goroutine - JTT will queued jobs
+	oneGood := false
+	for _, req := range jobRequests {
+		jobID, err := client.NewJob(req)
+		date := time.Now().Format("01/02/2006 15:04")
+		if err != nil {
+			logger.Log.Errorf("Failed to launch JTT job for router %s: %v", req.RouterName, err)
+			jobResults = append(jobResults, JTTJobEntry{JobID: "", Status: "FAILED", Name: req.RouterName, Error: err.Error(), Date: date})
+			continue
+		}
+		logger.Log.Infof("JTT job launched for router %s with job ID %s", req.RouterName, jobID)
+
+		//Save the new job in the sqlite db jttjobs table
+		err = sqlite.AddJTTJob(jobID.JobID, jobName+" - "+req.RouterName, req.RouterName, jobID.Status)
+		if err != nil {
+			logger.Log.Errorf("Failed to save JTT job %s in DB - cancel it: %v", jobID.JobID, err)
+			// We should cancel the job on JTT if we fail to save it in DB to avoid orphan job, but for now we just log the error and continue
+			_, err = client.CancelJob(jobID.JobID)
+			if err != nil {
+				logger.Log.Errorf("Failed to cancel JTT job %s after DB save failure: %v", jobID.JobID, err)
+			} else {
+				logger.Log.Infof("JTT job %s has been canceled due to DB save failure", jobID.JobID)
+			}
+			jobResults = append(jobResults, JTTJobEntry{JobID: "", Status: "WATCHDOG", Name: req.RouterName, Error: fmt.Sprintf("Job canceled due to DB save failure: %v", err), Date: date})
+
+		} else {
+			jobResults = append(jobResults, JTTJobEntry{JobID: jobID.JobID, Status: jobID.Status, Name: jobName + " - " + req.RouterName, Error: "", Date: date})
+			logger.Log.Infof("JTT Launch request received - name: %s, routers: %d, csv entries: %d, jobs: %d", jobName+" - "+req.RouterName, len(r.Routers), len(csvEntries), len(jobRequests))
+			oneGood = true
+		}
+	}
+	if oneGood {
+		return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "OK", Jobs: jobResults})
+	} else {
+		return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "NOK", Jobs: jobResults})
+	}
 }
 
 func routeJTTCancel(c echo.Context) error {
@@ -2365,8 +2497,8 @@ func routeJTTCancel(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to cancel the job on JTT backend"})
 	}
 
-	logger.Log.Infof("JTT job %s (%s) has been successfully cancelled", r.JobID, r.Name)
-	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Job cancelled"})
+	logger.Log.Infof("JTT job %s (%s) has been successfully canceled", r.JobID, r.Name)
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Job canceled"})
 }
 
 func routeJTTUpdate(c echo.Context) error {

@@ -216,6 +216,7 @@ type (
 		Name   string `json:"name"`
 		Status string `json:"status"`
 		Date   string `json:"date"`
+		Error  string `json:"error,omitempty"`
 	}
 
 	ReplyJTTLaunch struct {
