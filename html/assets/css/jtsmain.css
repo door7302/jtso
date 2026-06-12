@@ -127,10 +127,16 @@ body.dark-mode {
     box-sizing: border-box;
 }
 
-html,
+html {
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
 body {
     max-width: 100%;
     overflow-x: hidden;
+    overflow-y: visible;
 }
 
 body {
