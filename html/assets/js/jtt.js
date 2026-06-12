@@ -407,46 +407,53 @@ function validateCSV(lines) {
       errors.push({ line: lineNum, message: "Column 7 (INTERVAL_RATE): must be between 0 and 3600 (got " + intervalInt + ")" });
     }
 
-    // Column 8: PARENT_NETCONF_RPC
-    var rpc = cols[8].trim();
-    if (rpc !== "") {
-      var rpcErrors = validateXmlRpc(rpc);
-      for (var e = 0; e < rpcErrors.length; e++) {
-        errors.push({ line: lineNum, message: "Column 8 (PARENT_NETCONF_RPC): " + rpcErrors[e] });
+    // Column 8: PARENT_NETCONF_RPC (only checked if TEST_TYPE == 3)
+    if (testTypeInt === 3) {
+      var rpc = cols[8].trim();
+      if (rpc !== "") {
+        var rpcErrors = validateXmlRpc(rpc);
+        for (var e = 0; e < rpcErrors.length; e++) {
+          errors.push({ line: lineNum, message: "Column 8 (PARENT_NETCONF_RPC): " + rpcErrors[e] });
+        }
       }
     }
 
-    // Column 9: LEAF_NETCONF_PATH
-    var netconfLeaf = cols[9].trim();
-    if (netconfLeaf !== "") {
-      var pathErrors9 = validatePath(netconfLeaf, true);
-      for (var e = 0; e < pathErrors9.length; e++) {
-        errors.push({ line: lineNum, message: "Column 9 (LEAF_NETCONF_PATH): " + pathErrors9[e] });
+    // Column 9: LEAF_NETCONF_PATH (only checked if TEST_TYPE == 3)
+    if (testTypeInt === 3) {
+      var netconfLeaf = cols[9].trim();
+      if (netconfLeaf !== "") {
+        var pathErrors9 = validatePath(netconfLeaf, true);
+        for (var e = 0; e < pathErrors9.length; e++) {
+          errors.push({ line: lineNum, message: "Column 9 (LEAF_NETCONF_PATH): " + pathErrors9[e] });
+        }
       }
     }
 
-    // Column 10: OVERRIDE_THRESHOLD (yes/no)
+    // Column 10: OVERRIDE_THRESHOLD (yes/no or empty)
     var override = cols[10].trim().toUpperCase();
-    if (override !== "YES" && override !== "NO") {
-      errors.push({ line: lineNum, message: "Column 10 (OVERRIDE_THRESHOLD): must be YES or NO (got '" + cols[10].trim() + "')" });
+    if (override !== "" && override !== "YES" && override !== "NO") {
+      errors.push({ line: lineNum, message: "Column 10 (OVERRIDE_THRESHOLD): must be YES, NO, or empty (got '" + cols[10].trim() + "')" });
     }
 
-    // Column 11: VALUE_CHECK_RATIO (0-100)
-    var ratio = cols[11].trim();
-    var ratioInt = parseInt(ratio, 10);
-    if (ratio === "" || isNaN(ratioInt)) {
-      errors.push({ line: lineNum, message: "Column 11 (VALUE_CHECK_RATIO): must be an integer" });
-    } else if (ratioInt < 0 || ratioInt > 100) {
-      errors.push({ line: lineNum, message: "Column 11 (VALUE_CHECK_RATIO): must be between 0 and 100 (got " + ratioInt + ")" });
-    }
+    // Column 11 & 12: only checked if OVERRIDE_THRESHOLD == YES
+    if (override === "YES") {
+      // Column 11: VALUE_CHECK_RATIO (0-100)
+      var ratio = cols[11].trim();
+      var ratioInt = parseInt(ratio, 10);
+      if (ratio === "" || isNaN(ratioInt)) {
+        errors.push({ line: lineNum, message: "Column 11 (VALUE_CHECK_RATIO): must be an integer when OVERRIDE_THRESHOLD is YES" });
+      } else if (ratioInt < 0 || ratioInt > 100) {
+        errors.push({ line: lineNum, message: "Column 11 (VALUE_CHECK_RATIO): must be between 0 and 100 (got " + ratioInt + ")" });
+      }
 
-    // Column 12: FALSE_POSITIVE_ALLOWED (0-100)
-    var fp = cols[12].trim();
-    var fpInt = parseInt(fp, 10);
-    if (fp === "" || isNaN(fpInt)) {
-      errors.push({ line: lineNum, message: "Column 12 (FALSE_POSITIVE_ALLOWED): must be an integer" });
-    } else if (fpInt < 0 || fpInt > 100) {
-      errors.push({ line: lineNum, message: "Column 12 (FALSE_POSITIVE_ALLOWED): must be between 0 and 100 (got " + fpInt + ")" });
+      // Column 12: FALSE_POSITIVE_ALLOWED (0-100)
+      var fp = cols[12].trim();
+      var fpInt = parseInt(fp, 10);
+      if (fp === "" || isNaN(fpInt)) {
+        errors.push({ line: lineNum, message: "Column 12 (FALSE_POSITIVE_ALLOWED): must be an integer when OVERRIDE_THRESHOLD is YES" });
+      } else if (fpInt < 0 || fpInt > 100) {
+        errors.push({ line: lineNum, message: "Column 12 (FALSE_POSITIVE_ALLOWED): must be between 0 and 100 (got " + fpInt + ")" });
+      }
     }
 
     // Column 13: SUPPORTED_FAMILIES
