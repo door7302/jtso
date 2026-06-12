@@ -167,6 +167,14 @@ $('#launchTest').on('click', function () {
 
               // Add to table only if status is not WATCHDOG
               if (job.status !== "WATCHDOG") {
+                // Remove existing row with same job_id if present
+                table.rows().every(function () {
+                  var data = this.data();
+                  if (data[2] === job.job_id) {
+                    this.remove();
+                  }
+                });
+
                 var badge = stateBadge[job.status] || stateBadge["QUEUED"];
                 var actions;
                 if (job.status === "COMPLETED" || job.status === "FAILED" || job.status === "CANCELED") {
