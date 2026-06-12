@@ -2458,7 +2458,7 @@ func routeJTTLaunch(c echo.Context) error {
 	}
 
 	//
-	jobResults := make([]JTTJobEntry, len(jobRequests))
+	jobResults := make([]JTTJobEntry, 0, len(jobRequests))
 	client := jtt.NewClient(collectCfg.cfg.JTT)
 
 	// Launch jobs in sequencial - no need of goroutine - JTT will queued jobs

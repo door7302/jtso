@@ -420,7 +420,7 @@ function showDetail(jobId, name) {
     success: function (json) {
       if (json.status == "OK") {
         $('#jttDetailModalLabel').text("Job Details - " + name);
-        $('#jttDetailModalBody').html('<pre>' + JSON.stringify(json.data, null, 2) + '</pre>');
+        $('#jttDetailModalBody').html(buildDetailView(json.data));
         waitingDialog.hide();
         var modal = new bootstrap.Modal(document.getElementById('jttDetailModal'));
         modal.show();
@@ -434,6 +434,170 @@ function showDetail(jobId, name) {
       alertify.alert("JTT...", "Unexpected error");
     }
   });
+}
+
+function buildDetailView(data) {
+  var html = '';
+
+  // Global summary card
+  var statusBadge = stateBadge[data.status] || '<span class="badge bg-secondary">' + data.status + '</span>';
+  html += '<div class="card mb-3">';
+  html += '<div class="card-header"><strong><i class="fas fa-info-circle me-2"></i>Summary</strong></div>';
+  html += '<div class="card-body">';
+  html += '<table class="table table-sm table-bordered mb-0">';
+  html += '<tbody>';
+  html += '<tr><th style="width:180px;">Job ID</th><td><code>' + data.job_id + '</code></td></tr>';
+  html += '<tr><th>Status</th><td>' + statusBadge + '</td></tr>';
+  html += '<tr><th>Device</th><td>' + data.device_name + '</td></tr>';
+  html += '<tr><th>Model</th><td>' + (data.model || 'N/A') + '</td></tr>';
+  html += '<tr><th>Test Type</th><td>' + data.test_type + '</td></tr>';
+  html += '<tr><th>Completed At</th><td>' + (data.completed_at || 'N/A') + '</td></tr>';
+  if (data.error && data.error !== "") {
+    html += '<tr><th>Error</th><td><span class="text-danger">' + data.error + '</span></td></tr>';
+  }
+  html += '</tbody></table>';
+  html += '</div></div>';
+
+  // Per-subscription results
+  if (data.listOfPaths && data.listOfPaths.length > 0) {
+    // Compute global stats
+    var totalLeaves = 0, passedLeaves = 0, failedLeaves = 0;
+    for (var p = 0; p < data.listOfPaths.length; p++) {
+      var path = data.listOfPaths[p];
+      if (path.leaves) {
+        for (var l = 0; l < path.leaves.length; l++) {
+          totalLeaves++;
+          if (path.leaves[l].test_status === "PASSED") passedLeaves++;
+          else failedLeaves++;
+        }
+      }
+    }
+
+    html += '<div class="card mb-3">';
+    html += '<div class="card-header"><strong><i class="fas fa-chart-bar me-2"></i>Test Results Overview</strong>';
+    html += '<span class="float-end">';
+    html += '<span class="badge bg-success me-1">' + passedLeaves + ' Passed</span>';
+    html += '<span class="badge bg-danger me-1">' + failedLeaves + ' Failed</span>';
+    html += '<span class="badge bg-secondary">' + totalLeaves + ' Total</span>';
+    html += '</span></div>';
+    html += '<div class="card-body p-0">';
+
+    // Progress bar
+    var pctPass = totalLeaves > 0 ? Math.round((passedLeaves / totalLeaves) * 100) : 0;
+    html += '<div class="progress" style="height:6px;border-radius:0;">';
+    html += '<div class="progress-bar bg-success" style="width:' + pctPass + '%"></div>';
+    html += '<div class="progress-bar bg-danger" style="width:' + (100 - pctPass) + '%"></div>';
+    html += '</div>';
+    html += '</div></div>';
+
+    // Per subscription accordion
+    html += '<div class="accordion" id="subsAccordion">';
+    for (var p = 0; p < data.listOfPaths.length; p++) {
+      var path = data.listOfPaths[p];
+      var subId = 'sub_' + p;
+      var subPassed = 0, subFailed = 0;
+      if (path.leaves) {
+        for (var l = 0; l < path.leaves.length; l++) {
+          if (path.leaves[l].test_status === "PASSED") subPassed++;
+          else subFailed++;
+        }
+      }
+      var subTotal = (path.leaves ? path.leaves.length : 0);
+      var subBadgeClass = subFailed === 0 ? 'bg-success' : 'bg-danger';
+
+      html += '<div class="accordion-item">';
+      html += '<h2 class="accordion-header" id="heading_' + subId + '">';
+      html += '<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_' + subId + '">';
+      html += '<i class="fas fa-stream me-2"></i><code>' + path.subscription + '</code>';
+      html += '<span class="ms-3 badge bg-light text-dark">Interval: ' + path.interval + 's</span>';
+      html += '<span class="ms-2 badge bg-light text-dark">Origin: ' + (path.origin || 'N/A') + '</span>';
+      if (path.category) {
+        html += '<span class="ms-2 badge bg-light text-dark">Category: ' + path.category + '</span>';
+      }
+      html += '<span class="ms-auto me-2 badge ' + subBadgeClass + '">' + subPassed + '/' + subTotal + ' passed</span>';
+      html += '</button></h2>';
+
+      html += '<div id="collapse_' + subId + '" class="accordion-collapse collapse" data-bs-parent="#subsAccordion">';
+      html += '<div class="accordion-body p-2">';
+
+      // Leaves table
+      if (path.leaves && path.leaves.length > 0) {
+        html += '<table class="table table-sm table-striped table-bordered mb-0">';
+        html += '<thead class="table-light"><tr>';
+        html += '<th style="width:40px;"></th>';
+        html += '<th>Leaf Path</th>';
+        html += '<th style="width:120px;">Description</th>';
+        html += '<th style="width:110px;">Counter Type</th>';
+        html += '<th style="width:80px;">Test Type</th>';
+        html += '<th style="width:80px;">Status</th>';
+        html += '</tr></thead><tbody>';
+
+        for (var l = 0; l < path.leaves.length; l++) {
+          var leaf = path.leaves[l];
+          var leafStatus = leaf.test_status === "PASSED"
+            ? '<span class="badge bg-success">PASSED</span>'
+            : '<span class="badge bg-danger">FAILED</span>';
+          var leafIcon = leaf.test_status === "PASSED"
+            ? '<i class="fas fa-check-circle text-success"></i>'
+            : '<i class="fas fa-times-circle text-danger"></i>';
+          var leafId = subId + '_leaf_' + l;
+
+          html += '<tr data-bs-toggle="collapse" data-bs-target="#' + leafId + '" style="cursor:pointer;" class="' + (leaf.test_status !== "PASSED" ? "table-danger" : "") + '">';
+          html += '<td class="text-center">' + leafIcon + '</td>';
+          html += '<td><code style="font-size:0.8em;">' + leaf.gnmi_leaf + '</code></td>';
+          html += '<td>' + (leaf.description || '') + '</td>';
+          html += '<td><span class="badge bg-light text-dark">' + (leaf.counter_type || '') + '</span></td>';
+          html += '<td>' + leaf.test_type + '</td>';
+          html += '<td>' + leafStatus + '</td>';
+          html += '</tr>';
+
+          // Expandable detail row
+          html += '<tr class="collapse" id="' + leafId + '"><td colspan="6" class="p-0">';
+          html += '<div class="p-3 bg-light">';
+
+          // Leaf meta info
+          html += '<div class="row mb-2">';
+          html += '<div class="col-md-4"><small class="text-muted">Specific Thresholds:</small> ' + (leaf.specific_thresholds ? 'Yes' : 'No') + '</div>';
+          html += '<div class="col-md-4"><small class="text-muted">Value Ratio:</small> ' + leaf.value_ratio + '</div>';
+          html += '<div class="col-md-4"><small class="text-muted">False Positive:</small> ' + leaf.false_positive + '</div>';
+          html += '</div>';
+
+          if (leaf.netconf_rpc) {
+            html += '<div class="mb-2"><small class="text-muted">Netconf RPC:</small> <code style="font-size:0.8em;">' + leaf.netconf_rpc + '</code></div>';
+          }
+          if (leaf.netconf_leaf) {
+            html += '<div class="mb-2"><small class="text-muted">Netconf Leaf:</small> <code style="font-size:0.8em;">' + leaf.netconf_leaf + '</code></div>';
+          }
+
+          // Test detail steps
+          if (leaf.test_detail && leaf.test_detail.length > 0) {
+            html += '<div class="mt-2"><small class="text-muted fw-bold">Test Steps:</small>';
+            html += '<ol class="mb-0 mt-1" style="font-size:0.85em;">';
+            for (var d = 0; d < leaf.test_detail.length; d++) {
+              var stepClass = leaf.test_detail[d].toLowerCase().indexOf('error') !== -1 || leaf.test_detail[d].toLowerCase().indexOf('fail') !== -1 || leaf.test_detail[d].toLowerCase().indexOf('not found') !== -1
+                ? 'text-danger' : 'text-dark';
+              html += '<li class="' + stepClass + '">' + leaf.test_detail[d] + '</li>';
+            }
+            html += '</ol></div>';
+          }
+
+          html += '</div>';
+          html += '</td></tr>';
+        }
+
+        html += '</tbody></table>';
+      } else {
+        html += '<p class="text-muted mb-0">No leaf results for this subscription.</p>';
+      }
+
+      html += '</div></div></div>';
+    }
+    html += '</div>';
+  } else {
+    html += '<div class="alert alert-info">No subscription results available for this job.</div>';
+  }
+
+  return html;
 }
 
 // Here is a header of CSV FILEs
