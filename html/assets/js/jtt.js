@@ -16,7 +16,7 @@ $(document).ready(function () {
   // Add Refresh All button next to the filter field
   var refreshBtn = '<button id="refreshAllJobs" class="btn btn-sm btn-outline-info ms-2" title="Refresh All Active Jobs">' +
     '<i class="fas fa-sync-alt"></i> Refresh All</button>';
-  $('#jttJobsTable_filter').append(refreshBtn);
+  $('#jttJobsTable_filter').css({'display': 'flex', 'align-items': 'center'}).append(refreshBtn);
 
   $('#refreshAllJobs').on('click', function () {
     refreshAllActiveJobs();
@@ -502,9 +502,9 @@ function buildDetailView(data) {
 
     // Filter buttons
     html += '<div class="btn-group btn-group-sm mb-2" role="group">';
-    html += '<button type="button" class="btn btn-outline-secondary active jtt-filter-btn" data-filter="all">All</button>';
-    html += '<button type="button" class="btn btn-outline-success jtt-filter-btn" data-filter="PASSED">Passed</button>';
-    html += '<button type="button" class="btn btn-outline-warning jtt-filter-btn" data-filter="PARTIAL">Partial</button>';
+    html += '<button type="button" class="btn btn-outline-secondary active jtt-filter-btn me-1" data-filter="all">All</button>';
+    html += '<button type="button" class="btn btn-outline-success jtt-filter-btn me-1" data-filter="PASSED">Passed</button>';
+    html += '<button type="button" class="btn btn-outline-warning jtt-filter-btn me-1" data-filter="PARTIAL">Partial</button>';
     html += '<button type="button" class="btn btn-outline-danger jtt-filter-btn" data-filter="FAILED">Failed</button>';
     html += '</div>';
 
