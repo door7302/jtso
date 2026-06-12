@@ -2455,7 +2455,7 @@ func routeJTTLaunch(c echo.Context) error {
 		logger.Log.Infof("JTT job launched for router %s with job ID %s", req.RouterName, jobID)
 
 		//Save the new job in the sqlite db jttjobs table
-		err = sqlite.AddJTTJob(jobID.JobID, jobName+" - "+req.RouterName, req.RouterName, jobID.Status)
+		err = sqlite.AddJTTJob(jobID.JobID, jobName+" - "+req.RouterName, jobID.Status, date)
 		if err != nil {
 			logger.Log.Errorf("Failed to save JTT job %s in DB - cancel it: %v", jobID.JobID, err)
 			// We should cancel the job on JTT if we fail to save it in DB to avoid orphan job, but for now we just log the error and continue
