@@ -854,7 +854,7 @@ func routeJTT(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "jtt.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
+	return c.Render(http.StatusOK, "jtt.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTTJobs": sqlite.ActiveJTTJobs})
 }
 
 /// ---------------------------------------------///

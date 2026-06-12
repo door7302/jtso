@@ -93,77 +93,39 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Static entries for look & feel validation -->
+                                {{range .JTTJobs}}
                                 <tr>
-                                    <td>06/10/2026 14:30</td>
-                                    <td>Interface Counters Test</td>
-                                    <td>550e8400-e29b-41d4-a716-446655440000</td>
-                                    <td><span class="badge bg-secondary">QUEUED</span></td>
+                                    <td>{{.Date}}</td>
+                                    <td>{{.Name}}</td>
+                                    <td>{{.JobID}}</td>
+                                    <td>
+                                        {{if eq .State "QUEUED"}}<span class="badge bg-secondary">QUEUED</span>
+                                        {{else if eq .State "IN-PROGRESS"}}<span class="badge bg-info text-dark">IN-PROGRESS</span>
+                                        {{else if eq .State "COMPLETED"}}<span class="badge bg-success">COMPLETED</span>
+                                        {{else if eq .State "FAILED"}}<span class="badge bg-danger">FAILED</span>
+                                        {{else if eq .State "CANCELED"}}<span class="badge bg-dark">CANCELED</span>
+                                        {{else}}<span class="badge bg-secondary">{{.State}}</span>
+                                        {{end}}
+                                    </td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-info" title="Update Status" onclick="updateJob('550e8400-e29b-41d4-a716-446655440000','Interface Counters Test', this)">
+                                        {{if or (eq .State "QUEUED") (eq .State "IN-PROGRESS")}}
+                                        <button class="btn btn-sm btn-outline-info" title="Update Status" onclick="updateJob('{{.JobID}}','{{.Name}}', this)">
                                             <i class="fas fa-sync-alt"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-warning ms-1" title="Cancel Job" onclick="cancelJob('550e8400-e29b-41d4-a716-446655440000','Interface Counters Test', this)">
+                                        <button class="btn btn-sm btn-outline-warning ms-1" title="Cancel Job" onclick="cancelJob('{{.JobID}}','{{.Name}}', this)">
                                             <i class="fas fa-ban"></i>
                                         </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>06/10/2026 13:15</td>
-                                    <td>BGP Neighbors Check</td>
-                                    <td>660f9500-f30c-52e5-b827-557766550111</td>
-                                    <td><span class="badge bg-info text-dark">IN-PROGRESS</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-info" title="Update Status" onclick="updateJob('660f9500-f30c-52e5-b827-557766550111','BGP Neighbors Check', this)">
-                                            <i class="fas fa-sync-alt"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-warning ms-1" title="Cancel Job" onclick="cancelJob('660f9500-f30c-52e5-b827-557766550111','BGP Neighbors Check', this)">
-                                            <i class="fas fa-ban"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>06/09/2026 10:00</td>
-                                    <td>LLDP Validation</td>
-                                    <td>770a0600-a41d-63f6-c938-668877660222</td>
-                                    <td><span class="badge bg-success">COMPLETED</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-primary" title="Show Result" onclick="showDetail('770a0600-a41d-63f6-c938-668877660222','LLDP Validation')">
+                                        {{else}}
+                                        <button class="btn btn-sm btn-outline-primary" title="Show Result" onclick="showDetail('{{.JobID}}','{{.Name}}')">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job" onclick="removeJob('770a0600-a41d-63f6-c938-668877660222','LLDP Validation', this)">
+                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job" onclick="removeJob('{{.JobID}}','{{.Name}}', this)">
                                             <i class="fas fa-trash"></i>
                                         </button>
+                                        {{end}}
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td>06/08/2026 09:45</td>
-                                    <td>QoS Queues Test</td>
-                                    <td>880b1700-b52e-74g7-d049-779988770333</td>
-                                    <td><span class="badge bg-danger">FAILED</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-primary" title="Show Result" onclick="showDetail('880b1700-b52e-74g7-d049-779988770333','QoS Queues Test')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job" onclick="removeJob('880b1700-b52e-74g7-d049-779988770333','QoS Queues Test', this)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>06/07/2026 16:20</td>
-                                    <td>Optics Power Levels</td>
-                                    <td>990c2800-c63f-85h8-e150-880099880444</td>
-                                    <td><span class="badge bg-dark">CANCELED</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-primary" title="Show Result" onclick="showDetail('990c2800-c63f-85h8-e150-880099880444','Optics Power Levels')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job" onclick="removeJob('990c2800-c63f-85h8-e150-880099880444','Optics Power Levels', this)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
+                                {{end}}
                             </tbody>
                         </table>
                     </div>

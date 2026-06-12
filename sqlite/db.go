@@ -115,6 +115,7 @@ var (
 	ActiveAdmin               Admin
 	ActiveKafkaConfig         KafkaConfig
 	ActiveCollectorParameters CollectorParameters
+	ActiveJTTJobs             []*JTTJob
 	SM                        *security.SecretManager
 )
 
@@ -972,6 +973,25 @@ func loadAllInternal(secretRotation bool) error {
 		ActiveCollectorParameters = CollectorParameters{Id: 0, MetricBatchSize: "5000", MetricBufferLimit: "100000", FlushInterval: "5s", FlushJitter: "0s"}
 	}
 
+	// Load JTT Jobs
+	ActiveJTTJobs = make([]*JTTJob, 0)
+	rows, err = db.Query("SELECT jobid, name, state, date FROM jttjobs;")
+	if err != nil {
+		// Table may not exist if JTT is not enabled, just skip
+		logger.Log.Debugf("JTT jobs table not available or error: %v", err)
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			j := &JTTJob{}
+			err = rows.Scan(&j.JobID, &j.Name, &j.State, &j.Date)
+			if err != nil {
+				logger.Log.Errorf("Error while parsing JTT jobs rows - err: %v", err)
+				break
+			}
+			ActiveJTTJobs = append(ActiveJTTJobs, j)
+		}
+	}
+
 	return nil
 }
 
@@ -987,7 +1007,7 @@ func AddJTTJob(jobID string, name string, state string, date string) error {
 		logger.Log.Errorf("Error while adding JTT job %s - err: %v", jobID, err)
 		return err
 	}
-	return nil
+	return loadAllInternal(false)
 }
 
 func UpdateJTTJob(jobID string, state string) error {
@@ -997,7 +1017,7 @@ func UpdateJTTJob(jobID string, state string) error {
 		logger.Log.Errorf("Error while updating JTT job %s - err: %v", jobID, err)
 		return err
 	}
-	return nil
+	return loadAllInternal(false)
 }
 
 func DelJTTJob(jobID string) error {
@@ -1007,7 +1027,7 @@ func DelJTTJob(jobID string) error {
 		logger.Log.Errorf("Error while deleting JTT job %s - err: %v", jobID, err)
 		return err
 	}
-	return nil
+	return loadAllInternal(false)
 }
 
 func GetJTTJobsByState(state string) ([]*JTTJob, error) {
