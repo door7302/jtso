@@ -22,12 +22,14 @@ $(document).ready(function () {
     refreshAllActiveJobs();
   });
 
-  $('#routerlist').multiselect({
-    includeSelectAllOption: true,
-    enableFiltering: true,
-    filterPlaceholder: 'Search...',
-    buttonWidth: '100%'
-  });
+  if ($.fn.multiselect) {
+    $('#routerlist').multiselect({
+      includeSelectAllOption: true,
+      enableFiltering: true,
+      filterPlaceholder: 'Search...',
+      buttonWidth: '100%'
+    });
+  }
 });
 
 // Badge mapping
@@ -594,7 +596,8 @@ function buildDetailView(data) {
           html += '</div>';
 
           if (leaf.netconf_rpc) {
-            html += '<div class="mb-2"><small class="jtt-detail-label">Netconf RPC:</small><pre class="mt-1 mb-0 p-2 jtt-detail-panel" style="font-size:0.8em;border-radius:4px;white-space:pre-wrap;">' + htmlEscape(leaf.netconf_rpc) + '</pre></div>';
+            html += '<div class="mb-2"><small class="jtt-detail-label">Netconf RPC:</small>';
+            html += '<div class="mt-1 p-2 jtt-detail-panel" style="font-size:0.8em;border-radius:4px;overflow-x:auto;"><code style="white-space:pre;">' + htmlEscape(leaf.netconf_rpc) + '</code></div></div>';
           }
           if (leaf.netconf_leaf) {
             html += '<div class="mb-2"><small class="jtt-detail-label">Netconf Leaf:</small> <code style="font-size:0.8em;">' + htmlEscape(leaf.netconf_leaf) + '</code></div>';
@@ -631,15 +634,13 @@ function buildDetailView(data) {
   // Bind events after DOM insertion (use setTimeout to ensure DOM is ready)
   setTimeout(function () {
     // Toggle +/- icon on leaf expand/collapse
-    $('.jtt-leaf-row').on('click', function () {
-      var icon = $(this).find('.jtt-expand-icon i');
-      var target = $(this).attr('data-bs-target');
-      $(target).on('shown.bs.collapse', function () {
-        icon.removeClass('fa-plus-square').addClass('fa-minus-square');
-      });
-      $(target).on('hidden.bs.collapse', function () {
-        icon.removeClass('fa-minus-square').addClass('fa-plus-square');
-      });
+    $('.jtt-leaf-detail').on('shown.bs.collapse', function () {
+      var leafRow = $(this).prev('.jtt-leaf-row');
+      leafRow.find('.jtt-expand-icon i').removeClass('fa-plus-square').addClass('fa-minus-square');
+    });
+    $('.jtt-leaf-detail').on('hidden.bs.collapse', function () {
+      var leafRow = $(this).prev('.jtt-leaf-row');
+      leafRow.find('.jtt-expand-icon i').removeClass('fa-minus-square').addClass('fa-plus-square');
     });
 
     // Summary chevron toggle
@@ -655,9 +656,11 @@ function buildDetailView(data) {
       $('.jtt-filter-btn').removeClass('active');
       $(this).addClass('active');
       var filter = $(this).data('filter');
+
+      // Filter leaf rows
       $('.jtt-leaf-row').each(function () {
         var status = $(this).data('status');
-        var detailRow = $($(this).attr('data-bs-target')).closest('tr');
+        var detailRow = $(this).next('.jtt-leaf-detail');
         if (filter === 'all' || status === filter) {
           $(this).show();
           detailRow.show();
@@ -665,7 +668,17 @@ function buildDetailView(data) {
           $(this).hide();
           detailRow.hide();
           // Collapse if open
-          $($(this).attr('data-bs-target')).collapse('hide');
+          detailRow.collapse('hide');
+        }
+      });
+
+      // Hide subscriptions with no visible leaves
+      $('#subsAccordion .accordion-item').each(function () {
+        var visibleLeaves = $(this).find('.jtt-leaf-row:visible').length;
+        if (visibleLeaves === 0 && filter !== 'all') {
+          $(this).hide();
+        } else {
+          $(this).show();
         }
       });
     });
