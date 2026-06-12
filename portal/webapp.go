@@ -844,6 +844,25 @@ func routeJTT(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
 
+	// Refresh state of active JTT jobs before rendering
+	if collectCfg.cfg.JTT.URL != "" {
+		client := jtt.NewClient(collectCfg.cfg.JTT)
+		for _, job := range sqlite.ActiveJTTJobs {
+			if job.State == "QUEUED" || job.State == "IN-PROGRESS" {
+				js, err := client.GetJobState(job.JobID)
+				if err != nil {
+					logger.Log.Debugf("Unable to refresh JTT job %s state: %v", job.JobID, err)
+					continue
+				}
+				if js.Status != job.State {
+					if err := sqlite.UpdateJTTJob(job.JobID, js.Status); err != nil {
+						logger.Log.Debugf("Unable to update JTT job %s in DB: %v", job.JobID, err)
+					}
+				}
+			}
+		}
+	}
+
 	// Get all routers from db
 	var lr []RouterDetails
 	lr = make([]RouterDetails, 0)

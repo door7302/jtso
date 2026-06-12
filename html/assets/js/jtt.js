@@ -13,6 +13,15 @@ $(document).ready(function () {
     ]
   });
 
+  // Add Refresh All button next to the filter field
+  var refreshBtn = '<button id="refreshAllJobs" class="btn btn-sm btn-outline-info ms-2" title="Refresh All Active Jobs">' +
+    '<i class="fas fa-sync-alt"></i> Refresh All</button>';
+  $('#jttJobsTable_filter').append(refreshBtn);
+
+  $('#refreshAllJobs').on('click', function () {
+    refreshAllActiveJobs();
+  });
+
   $('#routerlist').multiselect({
     includeSelectAllOption: true,
     enableFiltering: true,
@@ -43,6 +52,67 @@ function buildFinishedActions(jobId, name) {
     '<i class="fas fa-eye"></i></button>' +
     '<button class="btn btn-sm btn-outline-danger ms-1" title="Delete Job" onclick="removeJob(\'' + jobId + '\',\'' + name.replace(/'/g, "\\'") + '\', this)">' +
     '<i class="fas fa-trash"></i></button>';
+}
+
+// Refresh All Active Jobs
+function refreshAllActiveJobs() {
+  var table = $('#jttJobsTable').DataTable();
+  var activeRows = [];
+
+  table.rows().every(function () {
+    var data = this.data();
+    var stateText = $(data[3]).text().trim();
+    if (stateText === "QUEUED" || stateText === "IN-PROGRESS") {
+      activeRows.push({ row: this, jobId: data[2], name: data[1] });
+    }
+  });
+
+  if (activeRows.length === 0) {
+    alertify.message("No active jobs to refresh");
+    return;
+  }
+
+  waitingDialog.show();
+  var pending = activeRows.length;
+  var updated = 0;
+
+  for (var i = 0; i < activeRows.length; i++) {
+    (function (entry) {
+      $.ajax({
+        type: 'POST',
+        url: "/jttupdate",
+        data: JSON.stringify({ job_id: entry.jobId, name: entry.name }),
+        contentType: "application/json",
+        dataType: "json",
+        success: function (json) {
+          if (json.status == "OK") {
+            var newState = json.state;
+            var rowNode = $(entry.row.node());
+            var currentState = rowNode.find("td").eq(3).text().trim();
+            if (newState !== currentState) {
+              rowNode.find("td").eq(3).html(stateBadge[newState]);
+              if (newState === "COMPLETED" || newState === "FAILED" || newState === "CANCELED") {
+                rowNode.find("td").eq(4).html(buildFinishedActions(entry.jobId, entry.name));
+              }
+              updated++;
+            }
+          }
+          pending--;
+          if (pending === 0) {
+            waitingDialog.hide();
+            alertify.success("Refreshed " + activeRows.length + " job(s), " + updated + " updated");
+          }
+        },
+        error: function () {
+          pending--;
+          if (pending === 0) {
+            waitingDialog.hide();
+            alertify.success("Refreshed " + activeRows.length + " job(s), " + updated + " updated");
+          }
+        }
+      });
+    })(activeRows[i]);
+  }
 }
 
 // 0/ File Validation
