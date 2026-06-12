@@ -46,7 +46,7 @@
                             <label class="form-label">Select Router(s):</label>
                             <select id="routerlist" class="selectpicker" data-width="100%" data-actions-box="true" multiple>
                                 {{range .Rtrs}}
-                                <option value="{{.Shortname}}#{{.Hostname}}#{{.Model}}#{{.Family}}">{{.Shortname}}</option>
+                                <option value="{{.Shortname}}#{{.Hostname}}#{{.Model}}#{{.Family}}#{{.Version}}">{{.Shortname}}</option>
                                 {{end}}
                             </select>
                         </div>
@@ -55,12 +55,11 @@
                             <input class="form-control" type="file" id="jttTestFile" accept=".csv">
                         </div>
                     </div>
-                    <div class="alert alert-warning mt-3 mb-0" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        <strong>Note:</strong> One job will be created per router.
-                    </div>
                     <div class="text-center mt-3">
-                        <button class="btn btn-success" id="launchTest">
+                        <button class="btn btn-primary me-2" id="validateFile">
+                            <i class="fas fa-check-circle me-1"></i> File Validation
+                        </button>
+                        <button class="btn btn-success" id="launchTest" disabled>
                             <i class="fas fa-play me-1"></i> Launch Test
                         </button>
                     </div>
@@ -165,6 +164,32 @@
                                         </button>
                                     </td>
                                 </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSV Validation Errors Modal -->
+    <div class="modal fade" id="csvErrorsModal" tabindex="-1" aria-labelledby="csvErrorsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="csvErrorsModalLabel"><i class="fas fa-exclamation-triangle me-2"></i>CSV Validation Errors</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-sm">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th width="10%">Line</th>
+                                    <th>Error Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="csvErrorsTableBody">
                             </tbody>
                         </table>
                     </div>

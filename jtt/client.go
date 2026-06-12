@@ -38,7 +38,6 @@ type LeafResult struct {
 	Description        string   `json:"description"`
 	NetconfRpc         string   `json:"netconf_rpc"`
 	NetconfLeaf        string   `json:"netconf_leaf"`
-	SupportedModels    string   `json:"supported_models"`
 	CounterType        string   `json:"counter_type"`
 	SpecificThresholds bool     `json:"specific_thresholds"`
 	ValueRatio         int      `json:"value_ratio"`
@@ -103,7 +102,6 @@ type LeafInput struct {
 	Description        string `json:"description,omitempty"`
 	NetconfRpc         string `json:"netconf_rpc,omitempty"`
 	NetconfLeaf        string `json:"netconf_leaf,omitempty"`
-	SupportedModels    string `json:"supported_models,omitempty"`
 	CounterType        string `json:"counter_type,omitempty"`
 	SpecificThresholds bool   `json:"specific_thresholds,omitempty"`
 	ValueRatio         int    `json:"value_ratio,omitempty"`
