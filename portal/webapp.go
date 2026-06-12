@@ -2232,9 +2232,119 @@ func routeJTTLaunch(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "CSV file is empty"})
 	}
 
-	// TODO: parse CSV lines and forward request to JTT backend
+	// CSV FIELDS
+	// TEST_TYPE;PARENT_PATH;LEAF_PATH;COUNTER_TYPE;DESCRIPTION;CATEGORY;ORIGIN;INTERVAL_RATE;PARENT_NETCONF_RPC;LEAF_NETCONF_PATH;OVERRIDE_THRESHOLD;VALUE_CHECK_RATIO;FALSE_POSITIVE_ALLOWED;SUPPORTED_FAMILIES
+
+	csvEntries := make([]JTTCsvEntry, 0)
+
+	// Skip the header line (index 0) and parse data lines
+	for i := 1; i < len(r.CsvLines); i++ {
+		line := r.CsvLines[i]
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		cols := strings.Split(line, ";")
+		if len(cols) != 14 {
+			logger.Log.Errorf("JTT CSV line %d: expected 14 columns, got %d", i+1, len(cols))
+			continue
+		}
+
+		// Column 0: TEST_TYPE
+		testType, _ := strconv.Atoi(strings.TrimSpace(cols[0]))
+		if testType == 0 {
+			testType = 1
+		}
+
+		// Column 1: PARENT_PATH
+		parentPath := strings.TrimSpace(cols[1])
+		if parentPath != "" && !strings.HasPrefix(parentPath, "/") {
+			parentPath = "/" + parentPath
+		}
+		parentPath = strings.TrimSuffix(parentPath, "/")
+
+		// Column 2: LEAF_PATH
+		leafPath := strings.TrimSpace(cols[2])
+		if leafPath != "" && !strings.HasPrefix(leafPath, "/") {
+			leafPath = "/" + leafPath
+		}
+		leafPath = strings.TrimSuffix(leafPath, "/")
+
+		// Column 3: COUNTER_TYPE
+		counterType := strings.ToUpper(strings.TrimSpace(cols[3]))
+
+		// Column 4: DESCRIPTION
+		description := strings.TrimSpace(cols[4])
+
+		// Column 5: CATEGORY
+		category := strings.TrimSpace(cols[5])
+
+		// Column 6: ORIGIN
+		origin := strings.ToUpper(strings.TrimSpace(cols[6]))
+
+		// Column 7: INTERVAL_RATE
+		intervalRate, err := strconv.Atoi(strings.TrimSpace(cols[7]))
+		if err != nil {
+			intervalRate = 60
+		}
+
+		// Column 8: PARENT_NETCONF_RPC
+		parentNetconf := strings.TrimSpace(cols[8])
+
+		// Column 9: LEAF_NETCONF_PATH
+		leafNetconf := strings.TrimSpace(cols[9])
+		if leafNetconf != "" && !strings.HasPrefix(leafNetconf, "/") {
+			leafNetconf = "/" + leafNetconf
+		}
+		leafNetconf = strings.TrimSuffix(leafNetconf, "/")
+
+		// Column 10: OVERRIDE_THRESHOLD
+		overrideThld := strings.ToLower(strings.TrimSpace(cols[10])) == "yes"
+
+		// Column 11: VALUE_CHECK_RATIO
+		valueCheckRatio := 50
+		if v := strings.TrimSpace(cols[11]); v != "" {
+			if parsed, err := strconv.Atoi(v); err == nil {
+				valueCheckRatio = parsed
+			}
+		}
+
+		// Column 12: FALSE_POSITIVE_ALLOWED
+		falsePositiveAllowed := 20
+		if v := strings.TrimSpace(cols[12]); v != "" {
+			if parsed, err := strconv.Atoi(v); err == nil {
+				falsePositiveAllowed = parsed
+			}
+		}
+
+		// Column 13: SUPPORTED_FAMILIES
+		supportedFamilies := make(map[string]struct{})
+		for _, f := range strings.Split(cols[13], "|") {
+			key := strings.ToLower(strings.TrimSpace(f))
+			if key != "" {
+				supportedFamilies[key] = struct{}{}
+			}
+		}
+
+		csvEntries = append(csvEntries, JTTCsvEntry{
+			TestType:             testType,
+			ParentPath:           parentPath,
+			LeafPath:             leafPath,
+			CounterType:          counterType,
+			Description:          description,
+			Category:             category,
+			Origin:               origin,
+			IntervalRate:         intervalRate,
+			ParentNetconf:        parentNetconf,
+			LeafNetconf:          leafNetconf,
+			OverrideThld:         overrideThld,
+			ValueCheckRatio:      valueCheckRatio,
+			FalsePositiveAllowed: falsePositiveAllowed,
+			SupportedFamilies:    supportedFamilies,
+		})
+	}
+
+	logger.Log.Infof("JTT Launch request received - name: %s, routers: %d, csv entries: %d", r.Name, len(r.Routers), len(csvEntries))
 	date := time.Now().Format("01/02/2006 15:04")
-	logger.Log.Infof("JTT Launch request received - name: %s, csv lines: %d", r.Name, len(r.CsvLines))
 	return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "OK", Jobs: []JTTJobEntry{{Name: r.Name, Date: date}}})
 }
 

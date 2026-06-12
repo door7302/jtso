@@ -108,6 +108,12 @@ $('#launchTest').on('click', function () {
     return;
   }
 
+  var selectedRouters = $('#routerlist').val();
+  if (!selectedRouters || selectedRouters.length === 0) {
+    alertify.alert("JTT...", "Please select at least one router");
+    return;
+  }
+
   var file = fileInput.files[0];
   var reader = new FileReader();
   reader.onload = function (e) {
@@ -119,9 +125,22 @@ $('#launchTest').on('click', function () {
       return;
     }
 
+    var routers = [];
+    for (var r = 0; r < selectedRouters.length; r++) {
+      var parts = selectedRouters[r].split("#");
+      routers.push({
+        shortname: parts[0] || "",
+        hostname: parts[1] || "",
+        model: parts[2] || "",
+        family: parts[3] || "",
+        version: parts[4] || ""
+      });
+    }
+
     var dataToSend = {
       name: testName,
-      csv_lines: lines
+      csv_lines: lines,
+      routers: routers
     };
 
     waitingDialog.show();

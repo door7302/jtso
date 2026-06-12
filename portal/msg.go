@@ -176,8 +176,34 @@ type (
 	}
 
 	JTTLaunchRequest struct {
-		Name     string   `json:"name"`
-		CsvLines []string `json:"csv_lines"`
+		Name     string            `json:"name"`
+		CsvLines []string          `json:"csv_lines"`
+		Routers  []JTTLaunchRouter `json:"routers"`
+	}
+
+	JTTLaunchRouter struct {
+		Shortname string `json:"shortname"`
+		Hostname  string `json:"hostname"`
+		Model     string `json:"model"`
+		Family    string `json:"family"`
+		Version   string `json:"version"`
+	}
+
+	JTTCsvEntry struct {
+		TestType             int
+		ParentPath           string
+		LeafPath             string
+		CounterType          string
+		Description          string
+		Category             string
+		Origin               string
+		IntervalRate         int
+		ParentNetconf        string
+		LeafNetconf          string
+		OverrideThld         bool
+		ValueCheckRatio      int
+		FalsePositiveAllowed int
+		SupportedFamilies    map[string]struct{}
 	}
 
 	JTTJobRequest struct {
