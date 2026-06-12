@@ -1723,3 +1723,51 @@ footer p {
 .card .text-uppercase {
     letter-spacing: 0.05em;
 }
+
+/* ========================================
+   JTT DETAIL PANEL STYLES
+   ======================================== */
+
+.jtt-detail-panel {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-color);
+}
+
+.jtt-detail-label {
+    color: var(--text-secondary);
+}
+
+.jtt-detail-panel code {
+    color: var(--text-primary);
+}
+
+.jtt-detail-panel ol li {
+    color: var(--text-primary);
+}
+
+.jtt-expand-icon {
+    transition: transform 0.2s;
+}
+
+body.dark-mode .jtt-detail-panel {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    border-top: 1px solid #334155;
+}
+
+body.dark-mode .jtt-detail-panel code {
+    color: #93c5fd;
+}
+
+body.dark-mode .jtt-detail-label {
+    color: #94a3b8;
+}
+
+body.dark-mode .jtt-detail-panel ol li {
+    color: #e2e8f0;
+}
+
+body.dark-mode .jtt-detail-panel .text-danger {
+    color: #f87171 !important;
+}

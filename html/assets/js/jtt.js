@@ -439,10 +439,14 @@ function showDetail(jobId, name) {
 function buildDetailView(data) {
   var html = '';
 
-  // Global summary card
+  // Global summary card - collapsible
   var statusBadge = stateBadge[data.status] || '<span class="badge bg-secondary">' + data.status + '</span>';
   html += '<div class="card mb-3">';
-  html += '<div class="card-header"><strong><i class="fas fa-info-circle me-2"></i>Summary</strong></div>';
+  html += '<div class="card-header d-flex align-items-center" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#summaryCollapse">';
+  html += '<strong><i class="fas fa-info-circle me-2"></i>Summary</strong>';
+  html += '<i class="fas fa-chevron-down ms-auto" id="summaryChevron"></i>';
+  html += '</div>';
+  html += '<div class="collapse show" id="summaryCollapse">';
   html += '<div class="card-body">';
   html += '<table class="table table-sm table-bordered mb-0">';
   html += '<tbody>';
@@ -450,44 +454,61 @@ function buildDetailView(data) {
   html += '<tr><th>Status</th><td>' + statusBadge + '</td></tr>';
   html += '<tr><th>Device</th><td>' + data.device_name + '</td></tr>';
   html += '<tr><th>Model</th><td>' + (data.model || 'N/A') + '</td></tr>';
-  html += '<tr><th>Test Type</th><td>' + data.test_type + '</td></tr>';
   html += '<tr><th>Completed At</th><td>' + (data.completed_at || 'N/A') + '</td></tr>';
   if (data.error && data.error !== "") {
     html += '<tr><th>Error</th><td><span class="text-danger">' + data.error + '</span></td></tr>';
   }
   html += '</tbody></table>';
-  html += '</div></div>';
+  html += '</div></div></div>';
 
   // Per-subscription results
   if (data.listOfPaths && data.listOfPaths.length > 0) {
     // Compute global stats
-    var totalLeaves = 0, passedLeaves = 0, failedLeaves = 0;
+    var totalLeaves = 0, passedLeaves = 0, failedLeaves = 0, partialLeaves = 0;
     for (var p = 0; p < data.listOfPaths.length; p++) {
       var path = data.listOfPaths[p];
       if (path.leaves) {
         for (var l = 0; l < path.leaves.length; l++) {
           totalLeaves++;
           if (path.leaves[l].test_status === "PASSED") passedLeaves++;
+          else if (path.leaves[l].test_status === "PARTIAL") partialLeaves++;
           else failedLeaves++;
         }
       }
     }
 
     html += '<div class="card mb-3">';
-    html += '<div class="card-header"><strong><i class="fas fa-chart-bar me-2"></i>Test Results Overview</strong>';
-    html += '<span class="float-end">';
+    html += '<div class="card-header d-flex align-items-center">';
+    html += '<strong><i class="fas fa-chart-bar me-2"></i>Test Results Overview</strong>';
+    html += '<span class="ms-auto">';
     html += '<span class="badge bg-success me-1">' + passedLeaves + ' Passed</span>';
+    html += '<span class="badge bg-warning text-dark me-1">' + partialLeaves + ' Partial</span>';
     html += '<span class="badge bg-danger me-1">' + failedLeaves + ' Failed</span>';
     html += '<span class="badge bg-secondary">' + totalLeaves + ' Total</span>';
     html += '</span></div>';
-    html += '<div class="card-body p-0">';
+    html += '<div class="card-body">';
 
     // Progress bar
     var pctPass = totalLeaves > 0 ? Math.round((passedLeaves / totalLeaves) * 100) : 0;
-    html += '<div class="progress" style="height:6px;border-radius:0;">';
+    var pctPartial = totalLeaves > 0 ? Math.round((partialLeaves / totalLeaves) * 100) : 0;
+    var pctFail = 100 - pctPass - pctPartial;
+    html += '<div class="progress mb-3" style="height:8px;">';
     html += '<div class="progress-bar bg-success" style="width:' + pctPass + '%"></div>';
-    html += '<div class="progress-bar bg-danger" style="width:' + (100 - pctPass) + '%"></div>';
+    html += '<div class="progress-bar bg-warning" style="width:' + pctPartial + '%"></div>';
+    html += '<div class="progress-bar bg-danger" style="width:' + pctFail + '%"></div>';
     html += '</div>';
+
+    // Filter buttons
+    html += '<div class="btn-group btn-group-sm mb-2" role="group">';
+    html += '<button type="button" class="btn btn-outline-secondary active jtt-filter-btn" data-filter="all">All</button>';
+    html += '<button type="button" class="btn btn-outline-success jtt-filter-btn" data-filter="PASSED">Passed</button>';
+    html += '<button type="button" class="btn btn-outline-warning jtt-filter-btn" data-filter="PARTIAL">Partial</button>';
+    html += '<button type="button" class="btn btn-outline-danger jtt-filter-btn" data-filter="FAILED">Failed</button>';
+    html += '</div>';
+
+    // Export button
+    html += '<button class="btn btn-sm btn-outline-primary ms-2 mb-2" id="exportCsvBtn" title="Export to CSV"><i class="fas fa-file-csv me-1"></i>Export CSV</button>';
+
     html += '</div></div>';
 
     // Per subscription accordion
@@ -495,15 +516,16 @@ function buildDetailView(data) {
     for (var p = 0; p < data.listOfPaths.length; p++) {
       var path = data.listOfPaths[p];
       var subId = 'sub_' + p;
-      var subPassed = 0, subFailed = 0;
+      var subPassed = 0, subFailed = 0, subPartial = 0;
       if (path.leaves) {
         for (var l = 0; l < path.leaves.length; l++) {
           if (path.leaves[l].test_status === "PASSED") subPassed++;
+          else if (path.leaves[l].test_status === "PARTIAL") subPartial++;
           else subFailed++;
         }
       }
       var subTotal = (path.leaves ? path.leaves.length : 0);
-      var subBadgeClass = subFailed === 0 ? 'bg-success' : 'bg-danger';
+      var subBadgeClass = subFailed > 0 ? 'bg-danger' : (subPartial > 0 ? 'bg-warning text-dark' : 'bg-success');
 
       html += '<div class="accordion-item">';
       html += '<h2 class="accordion-header" id="heading_' + subId + '">';
@@ -525,57 +547,66 @@ function buildDetailView(data) {
         html += '<table class="table table-sm table-striped table-bordered mb-0">';
         html += '<thead class="table-light"><tr>';
         html += '<th style="width:40px;"></th>';
+        html += '<th style="width:30px;"></th>';
         html += '<th>Leaf Path</th>';
         html += '<th style="width:120px;">Description</th>';
         html += '<th style="width:110px;">Counter Type</th>';
-        html += '<th style="width:80px;">Test Type</th>';
         html += '<th style="width:80px;">Status</th>';
         html += '</tr></thead><tbody>';
 
         for (var l = 0; l < path.leaves.length; l++) {
           var leaf = path.leaves[l];
-          var leafStatus = leaf.test_status === "PASSED"
-            ? '<span class="badge bg-success">PASSED</span>'
-            : '<span class="badge bg-danger">FAILED</span>';
-          var leafIcon = leaf.test_status === "PASSED"
-            ? '<i class="fas fa-check-circle text-success"></i>'
-            : '<i class="fas fa-times-circle text-danger"></i>';
+          var leafStatusBadge, leafIcon, rowClass;
+          if (leaf.test_status === "PASSED") {
+            leafStatusBadge = '<span class="badge bg-success">PASSED</span>';
+            leafIcon = '<i class="fas fa-check-circle text-success"></i>';
+            rowClass = '';
+          } else if (leaf.test_status === "PARTIAL") {
+            leafStatusBadge = '<span class="badge bg-warning text-dark">PARTIAL</span>';
+            leafIcon = '<i class="fas fa-exclamation-circle text-warning"></i>';
+            rowClass = 'table-warning';
+          } else {
+            leafStatusBadge = '<span class="badge bg-danger">FAILED</span>';
+            leafIcon = '<i class="fas fa-times-circle text-danger"></i>';
+            rowClass = 'table-danger';
+          }
           var leafId = subId + '_leaf_' + l;
 
-          html += '<tr data-bs-toggle="collapse" data-bs-target="#' + leafId + '" style="cursor:pointer;" class="' + (leaf.test_status !== "PASSED" ? "table-danger" : "") + '">';
+          html += '<tr class="jtt-leaf-row ' + rowClass + '" data-status="' + leaf.test_status + '" data-bs-toggle="collapse" data-bs-target="#' + leafId + '" style="cursor:pointer;">';
           html += '<td class="text-center">' + leafIcon + '</td>';
+          html += '<td class="text-center jtt-expand-icon"><i class="fas fa-plus-square text-muted"></i></td>';
           html += '<td><code style="font-size:0.8em;">' + leaf.gnmi_leaf + '</code></td>';
           html += '<td>' + (leaf.description || '') + '</td>';
           html += '<td><span class="badge bg-light text-dark">' + (leaf.counter_type || '') + '</span></td>';
-          html += '<td>' + leaf.test_type + '</td>';
-          html += '<td>' + leafStatus + '</td>';
+          html += '<td>' + leafStatusBadge + '</td>';
           html += '</tr>';
 
-          // Expandable detail row
-          html += '<tr class="collapse" id="' + leafId + '"><td colspan="6" class="p-0">';
-          html += '<div class="p-3 bg-light">';
+          // Expandable detail row - dark-mode-friendly
+          html += '<tr class="collapse jtt-leaf-detail" id="' + leafId + '"><td colspan="6" class="p-0">';
+          html += '<div class="p-3 jtt-detail-panel">';
 
           // Leaf meta info
           html += '<div class="row mb-2">';
-          html += '<div class="col-md-4"><small class="text-muted">Specific Thresholds:</small> ' + (leaf.specific_thresholds ? 'Yes' : 'No') + '</div>';
-          html += '<div class="col-md-4"><small class="text-muted">Value Ratio:</small> ' + leaf.value_ratio + '</div>';
-          html += '<div class="col-md-4"><small class="text-muted">False Positive:</small> ' + leaf.false_positive + '</div>';
+          html += '<div class="col-md-3"><small class="jtt-detail-label">Specific Thresholds:</small> ' + (leaf.specific_thresholds ? 'Yes' : 'No') + '</div>';
+          html += '<div class="col-md-3"><small class="jtt-detail-label">Value Ratio:</small> ' + leaf.value_ratio + '</div>';
+          html += '<div class="col-md-3"><small class="jtt-detail-label">False Positive:</small> ' + leaf.false_positive + '</div>';
+          html += '<div class="col-md-3"><small class="jtt-detail-label">Test Type:</small> ' + leaf.test_type + '</div>';
           html += '</div>';
 
           if (leaf.netconf_rpc) {
-            html += '<div class="mb-2"><small class="text-muted">Netconf RPC:</small> <code style="font-size:0.8em;">' + leaf.netconf_rpc + '</code></div>';
+            html += '<div class="mb-2"><small class="jtt-detail-label">Netconf RPC:</small> <code style="font-size:0.8em;">' + leaf.netconf_rpc + '</code></div>';
           }
           if (leaf.netconf_leaf) {
-            html += '<div class="mb-2"><small class="text-muted">Netconf Leaf:</small> <code style="font-size:0.8em;">' + leaf.netconf_leaf + '</code></div>';
+            html += '<div class="mb-2"><small class="jtt-detail-label">Netconf Leaf:</small> <code style="font-size:0.8em;">' + leaf.netconf_leaf + '</code></div>';
           }
 
           // Test detail steps
           if (leaf.test_detail && leaf.test_detail.length > 0) {
-            html += '<div class="mt-2"><small class="text-muted fw-bold">Test Steps:</small>';
+            html += '<div class="mt-2"><small class="jtt-detail-label fw-bold">Test Steps:</small>';
             html += '<ol class="mb-0 mt-1" style="font-size:0.85em;">';
             for (var d = 0; d < leaf.test_detail.length; d++) {
               var stepClass = leaf.test_detail[d].toLowerCase().indexOf('error') !== -1 || leaf.test_detail[d].toLowerCase().indexOf('fail') !== -1 || leaf.test_detail[d].toLowerCase().indexOf('not found') !== -1
-                ? 'text-danger' : 'text-dark';
+                ? 'text-danger' : '';
               html += '<li class="' + stepClass + '">' + leaf.test_detail[d] + '</li>';
             }
             html += '</ol></div>';
@@ -597,7 +628,108 @@ function buildDetailView(data) {
     html += '<div class="alert alert-info">No subscription results available for this job.</div>';
   }
 
+  // Bind events after DOM insertion (use setTimeout to ensure DOM is ready)
+  setTimeout(function () {
+    // Toggle +/- icon on leaf expand/collapse
+    $('.jtt-leaf-row').on('click', function () {
+      var icon = $(this).find('.jtt-expand-icon i');
+      var target = $(this).attr('data-bs-target');
+      $(target).on('shown.bs.collapse', function () {
+        icon.removeClass('fa-plus-square').addClass('fa-minus-square');
+      });
+      $(target).on('hidden.bs.collapse', function () {
+        icon.removeClass('fa-minus-square').addClass('fa-plus-square');
+      });
+    });
+
+    // Summary chevron toggle
+    $('#summaryCollapse').on('shown.bs.collapse', function () {
+      $('#summaryChevron').removeClass('fa-chevron-right').addClass('fa-chevron-down');
+    });
+    $('#summaryCollapse').on('hidden.bs.collapse', function () {
+      $('#summaryChevron').removeClass('fa-chevron-down').addClass('fa-chevron-right');
+    });
+
+    // Filter buttons
+    $('.jtt-filter-btn').on('click', function () {
+      $('.jtt-filter-btn').removeClass('active');
+      $(this).addClass('active');
+      var filter = $(this).data('filter');
+      $('.jtt-leaf-row').each(function () {
+        var status = $(this).data('status');
+        var detailRow = $($(this).attr('data-bs-target')).closest('tr');
+        if (filter === 'all' || status === filter) {
+          $(this).show();
+          detailRow.show();
+        } else {
+          $(this).hide();
+          detailRow.hide();
+          // Collapse if open
+          $($(this).attr('data-bs-target')).collapse('hide');
+        }
+      });
+    });
+
+    // Export CSV
+    $('#exportCsvBtn').on('click', function () {
+      exportDetailCsv(data);
+    });
+  }, 100);
+
   return html;
+}
+
+function exportDetailCsv(data) {
+  var sep = ';';
+  var lines = [];
+  // Header
+  lines.push([
+    'Subscription', 'Interval', 'Origin', 'Category',
+    'Leaf Path', 'Description', 'Counter Type', 'Test Type',
+    'Netconf RPC', 'Netconf Leaf',
+    'Specific Thresholds', 'Value Ratio', 'False Positive',
+    'Test Status', 'Test Details'
+  ].join(sep));
+
+  if (data.listOfPaths) {
+    for (var p = 0; p < data.listOfPaths.length; p++) {
+      var path = data.listOfPaths[p];
+      if (path.leaves) {
+        for (var l = 0; l < path.leaves.length; l++) {
+          var leaf = path.leaves[l];
+          var details = (leaf.test_detail && leaf.test_detail.length > 0)
+            ? leaf.test_detail.join(' | ') : '';
+          lines.push([
+            csvEscape(path.subscription, sep), path.interval, csvEscape(path.origin || '', sep), csvEscape(path.category || '', sep),
+            csvEscape(leaf.gnmi_leaf, sep), csvEscape(leaf.description || '', sep), csvEscape(leaf.counter_type || '', sep), leaf.test_type,
+            csvEscape(leaf.netconf_rpc || '', sep), csvEscape(leaf.netconf_leaf || '', sep),
+            leaf.specific_thresholds ? 'Yes' : 'No', leaf.value_ratio, leaf.false_positive,
+            leaf.test_status, csvEscape(details, sep)
+          ].join(sep));
+        }
+      }
+    }
+  }
+
+  var csvContent = '\uFEFF' + lines.join('\r\n');
+  var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'jtt_result_' + data.job_id + '.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function csvEscape(value, sep) {
+  var str = String(value);
+  if (str.indexOf(sep) !== -1 || str.indexOf('"') !== -1 || str.indexOf('\n') !== -1) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
 }
 
 // Here is a header of CSV FILEs
