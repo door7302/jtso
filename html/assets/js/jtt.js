@@ -597,8 +597,7 @@ function buildDetailView(data) {
           html += '</div>';
 
           if (leaf.netconf_rpc) {
-            html += '<div class="mb-2 d-flex align-items-start"><small class="jtt-detail-label me-2" style="white-space:nowrap;">Netconf RPC:</small>';
-            html += '<div class="p-2 jtt-detail-panel flex-grow-1" style="font-size:0.8em;border-radius:4px;overflow-x:auto;"><code style="white-space:pre;">' + htmlEscape(leaf.netconf_rpc) + '</code></div></div>';
+            html += '<div class="mb-2"><small class="jtt-detail-label">Netconf RPC:</small> <code style="font-size:0.8em;">' + htmlEscape(leaf.netconf_rpc) + '</code></div>';
           }
           if (leaf.netconf_leaf) {
             html += '<div class="mb-2"><small class="jtt-detail-label">Netconf Leaf:</small> <code style="font-size:0.8em;">' + htmlEscape(leaf.netconf_leaf) + '</code></div>';
