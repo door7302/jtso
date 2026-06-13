@@ -61,6 +61,7 @@ type JobResult struct {
 	JobID       string       `json:"job_id"`
 	Status      string       `json:"status"`
 	DeviceName  string       `json:"device_name"`
+	Version     string       `json:"version"`
 	Error       string       `json:"error"`
 	CompletedAt string       `json:"completed_at"`
 	Model       string       `json:"model"`

@@ -456,6 +456,7 @@ function buildDetailView(data) {
   html += '<tr><th>Status</th><td>' + statusBadge + '</td></tr>';
   html += '<tr><th>Device</th><td>' + data.device_name + '</td></tr>';
   html += '<tr><th>Model</th><td>' + (data.model || 'N/A') + '</td></tr>';
+  html += '<tr><th>Version</th><td>' + (data.version || 'N/A') + '</td></tr>';
   html += '<tr><th>Completed At</th><td>' + (data.completed_at || 'N/A') + '</td></tr>';
   if (data.error && data.error !== "") {
     html += '<tr><th>Error</th><td><span class="text-danger">' + data.error + '</span></td></tr>';
@@ -596,8 +597,8 @@ function buildDetailView(data) {
           html += '</div>';
 
           if (leaf.netconf_rpc) {
-            html += '<div class="mb-2"><small class="jtt-detail-label">Netconf RPC:</small>';
-            html += '<div class="mt-1 p-2 jtt-detail-panel" style="font-size:0.8em;border-radius:4px;overflow-x:auto;"><code style="white-space:pre;">' + htmlEscape(leaf.netconf_rpc) + '</code></div></div>';
+            html += '<div class="mb-2 d-flex align-items-start"><small class="jtt-detail-label me-2" style="white-space:nowrap;">Netconf RPC:</small>';
+            html += '<div class="p-2 jtt-detail-panel flex-grow-1" style="font-size:0.8em;border-radius:4px;overflow-x:auto;"><code style="white-space:pre;">' + htmlEscape(leaf.netconf_rpc) + '</code></div></div>';
           }
           if (leaf.netconf_leaf) {
             html += '<div class="mb-2"><small class="jtt-detail-label">Netconf Leaf:</small> <code style="font-size:0.8em;">' + htmlEscape(leaf.netconf_leaf) + '</code></div>';
@@ -660,25 +661,26 @@ function buildDetailView(data) {
       // Filter leaf rows
       $('.jtt-leaf-row').each(function () {
         var status = $(this).data('status');
-        var detailRow = $(this).next('.jtt-leaf-detail');
+        var detailId = $(this).attr('data-bs-target');
+        var detailRow = $(detailId).closest('tr');
         if (filter === 'all' || status === filter) {
-          $(this).show();
-          detailRow.show();
+          $(this).removeClass('d-none');
+          detailRow.removeClass('d-none');
         } else {
-          $(this).hide();
-          detailRow.hide();
+          $(this).addClass('d-none');
+          detailRow.addClass('d-none');
           // Collapse if open
-          detailRow.collapse('hide');
+          $(detailId).collapse('hide');
         }
       });
 
       // Hide subscriptions with no visible leaves
       $('#subsAccordion .accordion-item').each(function () {
-        var visibleLeaves = $(this).find('.jtt-leaf-row:visible').length;
+        var visibleLeaves = $(this).find('.jtt-leaf-row:not(.d-none)').length;
         if (visibleLeaves === 0 && filter !== 'all') {
-          $(this).hide();
+          $(this).addClass('d-none');
         } else {
-          $(this).show();
+          $(this).removeClass('d-none');
         }
       });
     });
