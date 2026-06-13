@@ -14,9 +14,10 @@ $(document).ready(function () {
   });
 
   // Add Refresh All button next to the filter field
-  var refreshBtn = '<button id="refreshAllJobs" class="btn btn-sm btn-outline-info ms-2" title="Refresh All Active Jobs">' +
+  var refreshBtn = '<button id="refreshAllJobs" class="btn btn-sm btn-outline-info ms-2 mb-0" title="Refresh All Active Jobs">' +
     '<i class="fas fa-sync-alt"></i> Refresh All</button>';
   $('#jttJobsTable_filter').css({'display': 'flex', 'align-items': 'center'}).append(refreshBtn);
+  $('#jttJobsTable_filter label').css('margin-bottom', '0');
 
   $('#refreshAllJobs').on('click', function () {
     refreshAllActiveJobs();
