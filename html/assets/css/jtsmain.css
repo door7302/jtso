@@ -139,6 +139,11 @@ body {
     overflow-y: visible;
 }
 
+body.modal-open {
+    overflow-y: scroll !important;
+    padding-right: 0 !important;
+}
+
 body {
     visibility: hidden;
     font-family: var(--font-primary);
