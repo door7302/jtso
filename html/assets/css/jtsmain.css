@@ -929,6 +929,16 @@ select {
     width: 100% !important;
 }
 
+.bootstrap-select .dropdown-menu {
+    max-height: 300px !important;
+    overflow-y: auto !important;
+}
+
+.bootstrap-select .dropdown-menu .inner {
+    max-height: 280px !important;
+    overflow-y: auto !important;
+}
+
 .other-card p {
     font-family: var(--font-primary);
     color: var(--text-secondary);
@@ -1566,6 +1576,8 @@ body.dark-mode .jstree-default .jstree-anchor {
     border: 1px solid var(--border-primary) !important;
     border-radius: var(--radius-md) !important;
     box-shadow: var(--shadow-lg) !important;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .multiselect-container .multiselect-option {
