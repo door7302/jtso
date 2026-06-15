@@ -79,6 +79,7 @@
    DARK MODE VARIABLES
    ======================================== */
 
+html[data-bs-theme="dark"],
 body.dark-mode {
     --bg-primary: #0f1419;
     --bg-secondary: #1a2332;
@@ -129,12 +130,14 @@ body.dark-mode {
 
 html {
     max-width: 100%;
+    min-height: 100%;
     overflow-x: hidden;
     scrollbar-gutter: stable;
     background-color: var(--bg-primary);
 }
 
 body {
+    min-height: 100%;
     max-width: 100%;
     overflow-x: hidden;
     overflow-y: visible;
