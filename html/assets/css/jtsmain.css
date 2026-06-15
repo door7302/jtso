@@ -130,7 +130,7 @@ body.dark-mode {
 html {
     max-width: 100%;
     overflow-x: hidden;
-    overflow-y: scroll;
+    scrollbar-gutter: stable;
 }
 
 body {
@@ -140,7 +140,7 @@ body {
 }
 
 body.modal-open {
-    overflow-y: scroll !important;
+    overflow: auto !important;
     padding-right: 0 !important;
 }
 
@@ -932,11 +932,13 @@ select {
 .bootstrap-select .dropdown-menu {
     max-height: 300px !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
 .bootstrap-select .dropdown-menu .inner {
     max-height: 280px !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
 .other-card p {
@@ -1578,6 +1580,7 @@ body.dark-mode .jstree-default .jstree-anchor {
     box-shadow: var(--shadow-lg) !important;
     max-height: 300px;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .multiselect-container .multiselect-option {
