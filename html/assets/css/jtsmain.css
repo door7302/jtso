@@ -931,12 +931,23 @@ select {
 
 .bootstrap-select .dropdown-menu {
     max-height: 300px !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.bootstrap-select .dropdown-menu .bs-actionsbox {
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-primary);
 }
 
 .bootstrap-select .dropdown-menu .inner {
-    max-height: 280px !important;
+    flex: 1 1 auto;
+    max-height: none !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
 }
@@ -1612,11 +1623,12 @@ footer p {
 /* ========================================
    SCROLLBAR STYLING
    ======================================== */
-
+/*
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
+*/
 
 ::-webkit-scrollbar-track {
     background: var(--bg-secondary);
