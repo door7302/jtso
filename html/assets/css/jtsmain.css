@@ -131,6 +131,7 @@ html {
     max-width: 100%;
     overflow-x: hidden;
     scrollbar-gutter: stable;
+    background-color: var(--bg-primary);
 }
 
 body {
@@ -145,7 +146,6 @@ body.modal-open {
 }
 
 body {
-    visibility: hidden;
     font-family: var(--font-primary);
     background-color: var(--bg-primary);
     color: var(--text-primary);
@@ -153,11 +153,6 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color var(--transition-base), color var(--transition-base);
-}
-
-body.dark-mode,
-body.light-mode {
-    visibility: visible;
 }
 
 strong {
@@ -931,24 +926,22 @@ select {
 
 .bootstrap-select .dropdown-menu {
     max-height: 300px !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
 .bootstrap-select .dropdown-menu .bs-actionsbox {
-    flex-shrink: 0;
     position: sticky;
     top: 0;
     z-index: 1;
     background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-primary);
+    padding: 4px 8px;
+    margin: 0 -8px;
 }
 
 .bootstrap-select .dropdown-menu .inner {
-    flex: 1 1 auto;
     max-height: none !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
     overflow-x: hidden !important;
 }
 
