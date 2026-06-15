@@ -130,14 +130,14 @@ body.dark-mode {
 
 html {
     max-width: 100%;
-    min-height: 100%;
+    min-height: 100vh;
     overflow-x: hidden;
     scrollbar-gutter: stable;
     background-color: var(--bg-primary);
 }
 
 body {
-    min-height: 100%;
+    min-height: 100vh;
     max-width: 100%;
     overflow-x: hidden;
     overflow-y: visible;
