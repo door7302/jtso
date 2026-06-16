@@ -1906,9 +1906,7 @@ func routeGetTreeDoc(c echo.Context) error {
 				}
 				if strings.HasPrefix(fieldClean, pathClean) {
 					t.Fields = append(t.Fields, field)
-					break
 				}
-				found := false
 				for _, a := range t.Aliases {
 					cleanAlias := a
 					if strings.Contains(a, "[") && !strings.Contains(field, "[") {
@@ -1916,12 +1914,8 @@ func routeGetTreeDoc(c echo.Context) error {
 					}
 					if strings.HasPrefix(fieldClean, cleanAlias) {
 						t.Fields = append(t.Fields, field)
-						found = true
 						break
 					}
-				}
-				if found {
-					break
 				}
 			}
 		}
