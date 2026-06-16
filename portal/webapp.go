@@ -1889,13 +1889,18 @@ func routeGetTreeDoc(c echo.Context) error {
 					p.Aliases = append(p.Aliases, a.Prefixes...)
 					for _, i := range a.Prefixes {
 						// inherit Alias origin
-						p.Origin = findOrigin(i)
+						p.AliasOrigin = findOrigin(i)
 					}
 				}
 			}
 			tree.Paths = append(tree.Paths, *p)
 		}
 	}
+
+	// Sort paths: openconfig origin before native (descending order on Origin)
+	sort.Slice(tree.Paths, func(i, j int) bool {
+		return tree.Paths[i].Origin > tree.Paths[j].Origin
+	})
 
 	// create a map string of string
 	alreadyMapped := make(map[string]string)
@@ -1933,11 +1938,15 @@ func routeGetTreeDoc(c echo.Context) error {
 				}
 				for _, a := range t.Aliases {
 					cleanAlias := a
+					fieldClean := field
 					if strings.Contains(a, "[") && !strings.Contains(field, "[") {
 						cleanAlias = stripPathAttributes(a)
 					}
+					if strings.Contains(field, "[") && !strings.Contains(a, "[") {
+						fieldClean = stripPathAttributes(field)
+					}
 					if strings.HasPrefix(fieldClean, cleanAlias) {
-						if val, ok := alreadyMapped[field]; !ok {
+						if val, ok := alreadyMapped[field]; ok {
 							if val == cleanAlias {
 								break
 							}
@@ -1947,6 +1956,13 @@ func routeGetTreeDoc(c echo.Context) error {
 					}
 				}
 			}
+		}
+	}
+
+	// Overide the Origin for the fields that are in the alias list to have the same origin as the alias
+	for _, t := range tree.Paths {
+		if t.AliasOrigin != "" && t.Origin != t.AliasOrigin && t.AliasOrigin != "openconfig" {
+			t.Origin = t.AliasOrigin
 		}
 	}
 

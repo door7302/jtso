@@ -169,6 +169,7 @@ type (
 		IntervalOverridden bool     `json:"isoverridden"`
 		Aliases            []string `json:"aliases"`
 		Origin             string   `json:"origin"`
+		AliasOrigin        string   // Don't serialize this field, it's only used internally to determine the origin of the path when it's an alias
 		Fields             []string `json:"listOfFields"`
 	}
 
