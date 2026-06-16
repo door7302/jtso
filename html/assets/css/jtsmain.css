@@ -975,11 +975,13 @@ select {
 
 .settings-table .form-control {
     max-width: 400px;
+    margin-left: auto;
 }
 
 .settings-table .form-check-input {
     width: 1.25em;
     height: 1.25em;
+    float: right;
 }
 
 /* Form layout */
