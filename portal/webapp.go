@@ -737,7 +737,6 @@ func routeProfiles(c echo.Context) error {
 	la = make([]TabAsso, 0)
 
 	for _, r := range sqlite.AssoList {
-		logger.Log.Infof("Processing association for router %s with profiles %v", r.Shortname, r)
 		var asso string
 		for i, a := range r.Assos {
 			// Fix legacy naming
@@ -749,7 +748,6 @@ func routeProfiles(c echo.Context) error {
 				asso += a
 			}
 		}
-		logger.Log.Infof("Association for router %s: %s", r.Shortname, asso)
 		kafkaEnable := false
 		if r.Kafka == "yes" {
 			kafkaEnable = true
@@ -1899,6 +1897,9 @@ func routeGetTreeDoc(c echo.Context) error {
 		}
 	}
 
+	// create a map string of string
+	alreadyMapped := make(map[string]string)
+
 	for _, p := range newCfg.RenameList {
 		for _, e := range p.Entries {
 			if e.TypeRename != 1 {
@@ -1927,6 +1928,8 @@ func routeGetTreeDoc(c echo.Context) error {
 				}
 				if strings.HasPrefix(fieldClean, pathClean) {
 					t.Fields = append(t.Fields, field)
+					alreadyMapped[field] = t.Name
+
 				}
 				for _, a := range t.Aliases {
 					cleanAlias := a
@@ -1934,6 +1937,11 @@ func routeGetTreeDoc(c echo.Context) error {
 						cleanAlias = stripPathAttributes(a)
 					}
 					if strings.HasPrefix(fieldClean, cleanAlias) {
+						if val, ok := alreadyMapped[field]; !ok {
+							if val == cleanAlias {
+								break
+							}
+						}
 						t.Fields = append(t.Fields, field)
 						break
 					}
