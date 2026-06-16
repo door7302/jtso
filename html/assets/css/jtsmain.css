@@ -754,7 +754,7 @@ select {
     box-shadow: var(--shadow-lg);
     padding: 1.5rem;
     width: 90%;
-    max-width: 1400px;
+    max-width: 1900px;
     display: grid;
     grid-template-areas:
         "jtso jtso jtso"
@@ -888,7 +888,7 @@ select {
 .other-card {
     background-color: var(--bg-card);
     width: 90%;
-    max-width: none;
+    max-width: 1900px;
     font-family: var(--font-primary);
     color: var(--text-primary);
     border-radius: var(--radius-xl);
@@ -1007,7 +1007,7 @@ select {
 
 /* Card title section with icon */
 .container.mt-5 {
-    max-width: 1400px;
+    max-width: 1900px;
 }
 
 .container.mt-5 h1.h3 {
