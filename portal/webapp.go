@@ -1960,9 +1960,9 @@ func routeGetTreeDoc(c echo.Context) error {
 	}
 
 	// Overide the Origin for the fields that are in the alias list to have the same origin as the alias
-	for _, t := range tree.Paths {
-		if t.Origin != t.AliasOrigin && t.AliasOrigin == "openconfig" {
-			t.Origin = t.AliasOrigin
+	for i := range tree.Paths {
+		if tree.Paths[i].Origin != tree.Paths[i].AliasOrigin && tree.Paths[i].AliasOrigin == "openconfig" {
+			tree.Paths[i].Origin = tree.Paths[i].AliasOrigin
 		}
 	}
 
