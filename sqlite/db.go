@@ -33,6 +33,7 @@ type AssoEntry struct {
 	Id        int
 	Shortname string
 	Assos     []string
+	Kafka     string
 }
 
 type Cred struct {
@@ -172,7 +173,8 @@ func Init(f string, jttEnabled bool) error {
 		CREATE TABLE IF NOT EXISTS associations (
 		id INTEGER NOT NULL PRIMARY KEY,
 		name TEXT,
-		listing TEXT
+		listing TEXT,
+		kafka TEXT DEFAULT 'no'
 		);`
 
 	const createCred string = `
@@ -254,6 +256,8 @@ func Init(f string, jttEnabled bool) error {
 		logger.Log.Infof("Error while init DB %s Table associations - err: %v", f, err)
 		return err
 	}
+	// Migrate: add kafka column if missing from older schema
+	db.Exec("ALTER TABLE associations ADD COLUMN kafka TEXT DEFAULT 'no';")
 	if _, err := db.Exec(createCred); err != nil {
 		logger.Log.Infof("Error while init DB %s Table credentials - err: %v", f, err)
 		return err
@@ -484,13 +488,13 @@ func DelAsso(n string) error {
 	return loadAllInternal(false)
 }
 
-func AddAsso(n string, a []string) error {
+func AddAsso(n string, a []string, kafka string) error {
 
 	dbMu.Lock()
 	defer dbMu.Unlock()
 	// convert list to string
 	asso := strings.Join(a, "|")
-	if _, err := db.Exec("INSERT INTO associations VALUES(NULL,?,?);", n, asso); err != nil {
+	if _, err := db.Exec("INSERT INTO associations VALUES(NULL,?,?,?);", n, asso, kafka); err != nil {
 		logger.Log.Errorf("Error while adding router %s - err: %v", n, err)
 		return err
 	}
@@ -623,7 +627,7 @@ func loadAllInternal(secretRotation bool) error {
 	for rows.Next() {
 		i := AssoEntry{}
 		var tmpList string
-		err = rows.Scan(&i.Id, &i.Shortname, &tmpList)
+		err = rows.Scan(&i.Id, &i.Shortname, &tmpList, &i.Kafka)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing associations rows - err: %v", err)
 			return err

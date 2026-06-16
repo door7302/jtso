@@ -9,6 +9,7 @@ type (
 	TabAsso struct {
 		Shortname string `json:"shortname"`
 		Profiles  string `json:"profiles"`
+		Kafka     bool   `json:"kafka"`
 	}
 
 	LongRouter struct {
@@ -36,6 +37,7 @@ type (
 	AddProfile struct {
 		Shortname string   `json:"shortname"`
 		Profiles  []string `json:"profiles"`
+		Kafka     bool     `json:"kafka"`
 	}
 
 	DocProfile struct {

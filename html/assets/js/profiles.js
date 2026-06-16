@@ -16,7 +16,7 @@ $(document).ready(function () {
 });
 
 function showInfo() {
-  alertify.alert("JSTO...", "CSV file must include these following fields with the ';' separator:</br></br>[shortName];[profileName1];[profileName2];...</br>");
+  alertify.alert("JSTO...", "CSV file must include these following fields with the ';' separator and KafkaEnable = yes or no:</br></br>[shortName];KafkaEnable;[profileName1];[profileName2];...</br>");
 }
 
 function addAsso() {
@@ -37,9 +37,12 @@ function addAsso() {
     alertify.alert("JSTO...", "Please select at least one Profile in the list.");
   } else {
     raw_selected = raw_selected.slice(0, -3);
+    var kafkaCheckbox = kafkaEnabled ? document.getElementById("kafkaPublish") : null;
+    var kafkaPublish = kafkaCheckbox ? kafkaCheckbox.checked : false;
     var dataToSend = {
       "shortname": r,
-      "profiles": selected
+      "profiles": selected,
+      "kafka": kafkaPublish
     };
     waitingDialog.show();
     // send data
@@ -65,6 +68,7 @@ function addAsso() {
                     <button class="btn btn-danger" onclick="removeAsso('${r}', this)" style="margin-left: 5px;" type="submit">
                         <i class="fa fa-trash" style="font-size: 15px;"></i>
                     </button>
+                    ${kafkaPublish ? '<span class="badge bg-warning text-dark ms-1">Kafka</span>' : ''}
                 </div>
               `
             ]);
@@ -72,16 +76,24 @@ function addAsso() {
 
             waitingDialog.hide();
 
+            if (kafkaCheckbox) kafkaCheckbox.checked = false;
+
             alertify.success("Profile(s) have been successfulfy added to router " + r)
 
           } else {
             waitingDialog.hide();
+            
+            if (kafkaCheckbox) kafkaCheckbox.checked = false;
+
             alertify.alert("JSTO...", json.msg);
 
           }
         },
         error: function (xhr, ajaxOptions, thrownError) {
           waitingDialog.hide();
+
+          if (kafkaCheckbox) kafkaCheckbox.checked = false;
+
           alertify.alert("JSTO...", "Unexpected error");
 
         }

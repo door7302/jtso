@@ -64,6 +64,12 @@
                                 <option value="{{.}}">{{.}} profile</option>
                                 {{end}}
                             </select>
+                            {{if .KafkaEnable}}
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="kafkaPublish">
+                                <label class="form-check-label" for="kafkaPublish">Publish to Kafka as well?</label>
+                            </div>
+                            {{end}}
                         </div>
 
                         <div class="right-column">
@@ -112,6 +118,7 @@
                                     <button onclick="removeAsso('{{.Shortname}}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit">
                                         <i class="fa fa-trash" style="font-size: 15px;"></i>
                                     </button>
+                                    {{if eq .Kafka "yes"}}<span class="badge bg-warning text-dark ms-1">Kafka</span>{{end}}
                                 </td>
                             </tr>
                             {{end}}
@@ -131,6 +138,7 @@
     <script src="js/prism-toml.min.js"></script>
     <script src="js/profiles.js"></script>
     <script src="js/dark.js"></script>
+    <script>var kafkaEnabled = {{.KafkaEnable}};</script>
 
 </body>
 

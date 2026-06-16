@@ -748,9 +748,14 @@ func routeProfiles(c echo.Context) error {
 				asso += a
 			}
 		}
-		la = append(la, TabAsso{Shortname: r.Shortname, Profiles: asso})
+		kafkaEnable := false
+		if r.Kafka == "yes" {
+			kafkaEnable = true
+		}
+		la = append(la, TabAsso{Shortname: r.Shortname, Profiles: asso, Kafka: kafkaEnable})
 	}
-	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != ""})
+	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort,
+		"ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "KafkaEnable": sqlite.ActiveKafkaConfig.Enabled})
 }
 
 func routeDoc(c echo.Context) error {
@@ -958,8 +963,14 @@ func routeUploadProfileCsv(c echo.Context) error {
 			ap := new(AddProfile)
 			ap.Shortname = columns[0]
 			ap.Profiles = make([]string, 0)
+			if strings.ToLower(strings.TrimSpace(columns[1])) == "yes" {
+				ap.Kafka = true
+			} else {
+				ap.Kafka = false
+			}
+
 			assoMatch := false
-			for _, entry := range columns[1:] {
+			for _, entry := range columns[2:] {
 				// Check if profile exist in DB
 				entry = strings.TrimSpace(entry)
 				if entry == "" {
@@ -993,7 +1004,11 @@ func routeUploadProfileCsv(c echo.Context) error {
 				continue
 			}
 
-			err = sqlite.AddAsso(ap.Shortname, ap.Profiles)
+			kafkaStr := "no"
+			if ap.Kafka {
+				kafkaStr = "yes"
+			}
+			err = sqlite.AddAsso(ap.Shortname, ap.Profiles, kafkaStr)
 			if err != nil {
 				logger.Log.Errorf("Unable to profile(s) to router %s in DB: %v", ap.Shortname, err)
 				errorFound++
@@ -1287,7 +1302,11 @@ func routeAddProfile(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Incompatibility issue:</br></br>" + errString + "</br>Check Profile/Management menu for details..."})
 	}
 
-	err = sqlite.AddAsso(r.Shortname, r.Profiles)
+	kafkaVal := "no"
+	if r.Kafka {
+		kafkaVal = "yes"
+	}
+	err = sqlite.AddAsso(r.Shortname, r.Profiles, kafkaVal)
 	if err != nil {
 		logger.Log.Errorf("Unable to profile(s) to router %s in DB: %v", r.Shortname, err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to add profile(s) to router in DB"})
