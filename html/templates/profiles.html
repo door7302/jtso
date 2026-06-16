@@ -118,7 +118,7 @@
                                     <button onclick="removeAsso('{{.Shortname}}', this)" class="btn btn-danger" style="margin-left: 5px;" type="submit">
                                         <i class="fa fa-trash" style="font-size: 15px;"></i>
                                     </button>
-                                    {{if eq .Kafka "yes"}}<span class="badge bg-warning text-dark ms-1">Kafka</span>{{end}}
+                                    {{if .Kafka}}<span class="badge bg-warning text-dark ms-1">Kafka</span>{{end}}
                                 </td>
                             </tr>
                             {{end}}
