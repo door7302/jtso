@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -68,6 +69,8 @@ var reverseDictKafkaCodec = map[int]string{
 	3: "lz4",
 	4: "zstd",
 }
+
+var rePredicate *regexp.Regexp
 
 type WebApp struct {
 	listen string
@@ -156,6 +159,8 @@ func New(cfg *config.ConfigContainer) *WebApp {
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
+
+	rePredicate = regexp.MustCompile(`\[([^=\]]+)=([^\]]*)\]`)
 
 	// return app
 	return &WebApp{
@@ -1279,7 +1284,7 @@ func routeAddProfile(c echo.Context) error {
 
 	if !valid {
 		logger.Log.Errorf("Router %s is not compatible with one or more profiles", r.Shortname)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Incompatibility issue:</br></br>" + errString + "</br>Check Doc menu for details..."})
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Incompatibility issue:</br></br>" + errString + "</br>Check Profile/Management menu for details..."})
 	}
 
 	err = sqlite.AddAsso(r.Shortname, r.Profiles)
@@ -1775,6 +1780,53 @@ func findOrigin(path string) string {
 	return "openconfig"
 }
 
+// Leading slash is consumed; slashes inside [...] are not treated as separators.
+func splitPathNodes(path string) []string {
+	// Strip leading slash
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+
+	var nodes []string
+	depth := 0
+	start := 0
+
+	for i := 0; i < len(path); i++ {
+		switch path[i] {
+		case '[':
+			depth++
+		case ']':
+			depth--
+		case '/':
+			if depth == 0 {
+				nodes = append(nodes, path[start:i])
+				start = i + 1
+			}
+		}
+	}
+	// Last segment
+	if start < len(path) {
+		nodes = append(nodes, path[start:])
+	}
+
+	return nodes
+}
+
+// StripPathAttributes removes predicates from an XPath and returns the clean path
+func stripPathAttributes(path string) string {
+	// Split into nodes manually, respecting brackets
+	nodes := splitPathNodes(path)
+	cleanParts := make([]string, 0, len(nodes))
+
+	for _, node := range nodes {
+		// Remove predicates to get the clean node name
+		clean := rePredicate.ReplaceAllString(node, "")
+		cleanParts = append(cleanParts, clean)
+	}
+
+	return "/" + strings.Join(cleanParts, "/")
+}
+
 func routeGetTreeDoc(c echo.Context) error {
 	var err error
 
@@ -1843,13 +1895,26 @@ func routeGetTreeDoc(c echo.Context) error {
 
 			for i := range tree.Paths {
 				t := &tree.Paths[i]
-				if strings.HasPrefix(field, t.Name) {
+				// here we should verify first if there is attributes or not
+				fieldClean := field
+				pathClean := t.Name
+				if strings.Contains(field, "[") && !strings.Contains(t.Name, "[") {
+					fieldClean = stripPathAttributes(field)
+				}
+				if !strings.Contains(field, "[") && strings.Contains(t.Name, "[") {
+					pathClean = stripPathAttributes(t.Name)
+				}
+				if strings.HasPrefix(fieldClean, pathClean) {
 					t.Fields = append(t.Fields, field)
 					break
 				}
 				found := false
 				for _, a := range t.Aliases {
-					if strings.HasPrefix(field, a) {
+					cleanAlias := a
+					if strings.Contains(a, "[") && !strings.Contains(field, "[") {
+						cleanAlias = stripPathAttributes(a)
+					}
+					if strings.HasPrefix(fieldClean, cleanAlias) {
 						t.Fields = append(t.Fields, field)
 						found = true
 						break
