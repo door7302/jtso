@@ -876,6 +876,13 @@ select {
    OTHER PAGES - CARD LAYOUTS
    ======================================== */
 
+.page-header {
+    width: 90%;
+    max-width: 1900px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
 .other-div {
     font-family: var(--font-primary);
     display: flex;
