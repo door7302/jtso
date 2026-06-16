@@ -714,6 +714,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	profileSetToProfilesFilename := make(map[string][]string)
 	profileSetToProfilesName := make(map[string][]string)
 	profileSetIndex := make(map[string]uint32)
+	profileSetKafka := make(map[string]bool)
 
 	// Map to store collections (family → collection → Collection struct)
 	Collections = make(map[string]map[string]sqlite.Collection)
@@ -746,16 +747,12 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// -----------------------------------------------------------------------------------------------------
 	// Build a lookup map for router profiles from AssoList
 	// -----------------------------------------------------------------------------------------------------
-	routerProfiles := make(map[string][]string) // key: Shortname → value: Profile List
+	routerProfiles := make(map[string]sqlite.AssoEntry) // key: Shortname → value: Profile List
 	for _, asso := range sqlite.AssoList {
-		// Create a new slice with the same length as asso.Assos
-		assosCopy := make([]string, len(asso.Assos))
-		// Copy the contents of asso.Assos into the new slice
-		copy(assosCopy, asso.Assos)
-		routerProfiles[asso.Shortname] = assosCopy
+		routerProfiles[asso.Shortname] = *asso
 	}
 
-	// -----------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------‡-------------------------
 	// Create the collection - based on Routers which are associated to profiles
 	// -----------------------------------------------------------------------------------------------------
 	for _, rtr := range sqlite.RtrList {
@@ -772,9 +769,14 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		}
 
 		// check if version is assigned to a profile and save file name
-		profilesFilename := make([]string, len(profileKeys))
-		profilesName := make([]string, len(profileKeys))
-		for i, p := range profileKeys {
+		profilesFilename := make([]string, len(profileKeys.Assos))
+		profilesName := make([]string, len(profileKeys.Assos))
+		profileKafka := false
+		if profileKeys.Kafka == "yes" {
+			profileKafka = true
+		}
+
+		for i, p := range profileKeys.Assos {
 
 			// bypass unknown profile
 			_, ok := ActiveProfiles[p]
@@ -831,15 +833,15 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			}
 
 			if savedVersion != "" {
-				profileKeys[i] = p + "_" + savedVersion
+				profileKeys.Assos[i] = p + "_" + savedVersion
 			} else {
 				// Reset entry if there is no filename found
-				profileKeys[i] = ""
+				profileKeys.Assos[i] = ""
 			}
 		}
 
 		// Sort profiles for uniqueness
-		sort.Strings(profileKeys)
+		sort.Strings(profileKeys.Assos)
 
 		// Create a unique profile key (string format for map indexing)
 		profileKey := fmt.Sprintf("%s_%v", rtr.Family, profileKeys)
@@ -849,10 +851,12 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			profileSetIndex[profileKey] = hashStringFNV(profileKey)
 			profileSetToProfilesFilename[profileKey] = profilesFilename
 			profileSetToProfilesName[profileKey] = profilesName
+			profileSetKafka[profileKey] = profileKafka
 		}
 
 		// Store the router in the corresponding profile set
 		profileSetToRouters[profileKey] = append(profileSetToRouters[profileKey], rtr)
+		profileSetKafka[profileKey] = profileSetKafka[profileKey] || profileKafka
 	}
 
 	// Finally the construction of  the collections map
@@ -877,6 +881,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			ProfilesName: profilesName,
 			ProfilesConf: profilesFilename,
 			Routers:      routers,
+			Kafka:        profileSetKafka[profileKey],
 		}
 
 	}
@@ -893,6 +898,11 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			logger.Log.Info("     Routers part of the collection:")
 			for _, r := range collection.Routers {
 				logger.Log.Infof("       -%s", r.Hostname)
+			}
+			if collection.Kafka {
+				logger.Log.Info("     Kafka output: enabled")
+			} else {
+				logger.Log.Info("     Kafka output: disabled")
 			}
 		}
 	}
@@ -1004,7 +1014,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				}
 			}
 			// Add Kafka output if needed
-			if sqlite.ActiveKafkaConfig.Enabled == 1 {
+			if sqlite.ActiveKafkaConfig.Enabled == 1 && collection.Kafka {
 				// split list of brokers thanks to comma separator and trim spaces
 				brokers := strings.Split(sqlite.ActiveKafkaConfig.Brokers, ",")
 				s := make([]string, 0)

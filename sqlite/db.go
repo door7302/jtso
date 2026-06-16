@@ -27,6 +27,7 @@ type Collection struct {
 	ProfilesName []string
 	ProfilesConf []string
 	Routers      []*RtrEntry
+	Kafka        bool
 }
 
 type AssoEntry struct {
