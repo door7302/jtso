@@ -59,7 +59,7 @@ function addAsso() {
 
             table.row.add([
               r,
-              raw_selected,
+              raw_selected + (kafkaPublish ? ' <span class="badge bg-warning text-dark ms-1">Kafka</span>' : ''),
                `
                 <div class="d-xxl-flex justify-content-xxl-center">
                     <button class="btn btn-success" onclick="getConfig('${r}', this)" style="margin-left: 5px;" type="button">
@@ -68,7 +68,6 @@ function addAsso() {
                     <button class="btn btn-danger" onclick="removeAsso('${r}', this)" style="margin-left: 5px;" type="submit">
                         <i class="fa fa-trash" style="font-size: 15px;"></i>
                     </button>
-                    ${kafkaPublish ? '<span class="badge bg-warning text-dark ms-1">Kafka</span>' : ''}
                 </div>
               `
             ]);
