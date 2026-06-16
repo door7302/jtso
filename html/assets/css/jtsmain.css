@@ -887,8 +887,8 @@ select {
 
 .other-card {
     background-color: var(--bg-card);
-    width: 95%;
-    max-width: 1400px;
+    width: 90%;
+    max-width: none;
     font-family: var(--font-primary);
     color: var(--text-primary);
     border-radius: var(--radius-xl);
