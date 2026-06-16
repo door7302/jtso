@@ -749,7 +749,14 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// -----------------------------------------------------------------------------------------------------
 	routerProfiles := make(map[string]sqlite.AssoEntry) // key: Shortname → value: Profile List
 	for _, asso := range sqlite.AssoList {
-		routerProfiles[asso.Shortname] = *asso
+		assosCopy := make([]string, len(asso.Assos))
+		copy(assosCopy, asso.Assos)
+		routerProfiles[asso.Shortname] = sqlite.AssoEntry{
+			Id:        asso.Id,
+			Shortname: asso.Shortname,
+			Assos:     assosCopy,
+			Kafka:     asso.Kafka,
+		}
 	}
 
 	// ----------------------------------------------------------------------------‡-------------------------
