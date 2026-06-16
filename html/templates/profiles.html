@@ -110,7 +110,7 @@
                             {{range .Assos}}
                             <tr>
                                 <td>{{.Shortname}}</td>
-                                <td>{{.Profiles}} {{if and .Kafka .KafkaEnable}}<span class="badge bg-warning text-dark ms-1">Kafka</span>{{end}}</td>
+                                <td>{{.Profiles}} {{if and $.KafkaEnable .Kafka}}<span class="badge bg-warning text-dark ms-1">Kafka</span>{{end}}</td>
                                 <td class="d-xxl-flex justify-content-xxl-center">
                                     <button onclick="getConfig('{{.Shortname}}', this)" class="btn btn-success" style="margin-left: 5px;" type="button">
                                         <i class="fa fa-file" style="font-size: 15px;"></i>
