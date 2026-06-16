@@ -737,6 +737,7 @@ func routeProfiles(c echo.Context) error {
 	la = make([]TabAsso, 0)
 
 	for _, r := range sqlite.AssoList {
+		logger.Log.Debugf("Processing association for router %s with profiles %v", r.Shortname, r)
 		var asso string
 		for i, a := range r.Assos {
 			// Fix legacy naming
@@ -748,6 +749,7 @@ func routeProfiles(c echo.Context) error {
 				asso += a
 			}
 		}
+		logger.Log.Debugf("Association for router %s: %s", r.Shortname, asso)
 		kafkaEnable := false
 		if r.Kafka == "yes" {
 			kafkaEnable = true
