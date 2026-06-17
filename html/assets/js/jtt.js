@@ -13,16 +13,6 @@ $(document).ready(function () {
     ]
   });
 
-  // Add Refresh All button next to the filter field
-  var refreshBtn = '<button id="refreshAllJobs" class="btn btn-sm btn-outline-info ms-2 mb-0" title="Refresh All Active Jobs">' +
-    '<i class="fas fa-sync-alt"></i> Refresh All</button>';
-  $('#jttJobsTable_filter').css({'display': 'flex', 'align-items': 'center'}).append(refreshBtn);
-  $('#jttJobsTable_filter label').css('margin-bottom', '0');
-
-  $('#refreshAllJobs').on('click', function () {
-    refreshAllActiveJobs();
-  });
-
   if ($.fn.multiselect) {
     $('#routerlist').multiselect({
       includeSelectAllOption: true,
@@ -46,6 +36,26 @@ var stateBadge = {
   "CANCELED": '<span class="badge bg-dark">CANCELED</span>'
 };
 
+var jttDownAlertShown = false;
+var jttPluginRunning = false;
+
+function showJTTPluginDownAlertOnce() {
+  if (jttDownAlertShown) {
+    return;
+  }
+  jttDownAlertShown = true;
+
+  var alertMsg = 'Lost communication with JTT plugin (RED state).<br><br>' +
+    'Please make sure the JTT plugin is running.<br>' +
+    'Also check logs: /var/log/jtso.log';
+
+  if (typeof alertify !== 'undefined' && alertify.alert) {
+    alertify.alert('JTT Communication Lost', alertMsg);
+  } else {
+    window.alert('Lost communication with JTT plugin (RED state). Please make sure the JTT plugin is running and check /var/log/jtso.log');
+  }
+}
+
 // JTT Plugin State Check Function
 function checkJTTPluginState() {
   $.ajax({
@@ -56,19 +66,25 @@ function checkJTTPluginState() {
       var stateIndicator = $('#jttStateIndicator');
       if (json.status === "OK" && json.plugin_running) {
         // JTT is running
+        jttPluginRunning = true;
         stateIndicator.removeClass('jtt-state-loading jtt-state-error').addClass('jtt-state-running');
         stateIndicator.attr('title', 'JTT Plugin State: Running (Status: ' + json.message + ')');
+        refreshAllActiveJobs(true);
       } else {
         // JTT is not running or error
+        jttPluginRunning = false;
         stateIndicator.removeClass('jtt-state-loading jtt-state-running').addClass('jtt-state-error');
         stateIndicator.attr('title', 'JTT Plugin State: Not Running (Error: ' + (json.message || 'Unknown error') + ')');
+        showJTTPluginDownAlertOnce();
       }
     },
     error: function () {
       // Error getting state - mark as error
+      jttPluginRunning = false;
       var stateIndicator = $('#jttStateIndicator');
       stateIndicator.removeClass('jtt-state-loading jtt-state-running').addClass('jtt-state-error');
       stateIndicator.attr('title', 'JTT Plugin State: Error (Unable to connect)');
+      showJTTPluginDownAlertOnce();
     }
   });
 }
@@ -89,7 +105,12 @@ function buildFinishedActions(jobId, name) {
 }
 
 // Refresh All Active Jobs
-function refreshAllActiveJobs() {
+function refreshAllActiveJobs(silent) {
+  if (!jttPluginRunning) {
+    return;
+  }
+
+  var quietMode = !!silent;
   var table = $('#jttJobsTable').DataTable();
   var activeRows = [];
 
@@ -102,11 +123,15 @@ function refreshAllActiveJobs() {
   });
 
   if (activeRows.length === 0) {
-    alertify.message("No active jobs to refresh");
+    if (!quietMode) {
+      alertify.message("No active jobs to refresh");
+    }
     return;
   }
 
-  waitingDialog.show();
+  if (!quietMode) {
+    waitingDialog.show();
+  }
   var pending = activeRows.length;
   var updated = 0;
 
@@ -133,15 +158,19 @@ function refreshAllActiveJobs() {
           }
           pending--;
           if (pending === 0) {
-            waitingDialog.hide();
-            alertify.success("Refreshed " + activeRows.length + " job(s), " + updated + " updated");
+            if (!quietMode) {
+              waitingDialog.hide();
+              alertify.success("Refreshed " + activeRows.length + " job(s), " + updated + " updated");
+            }
           }
         },
         error: function () {
           pending--;
           if (pending === 0) {
-            waitingDialog.hide();
-            alertify.success("Refreshed " + activeRows.length + " job(s), " + updated + " updated");
+            if (!quietMode) {
+              waitingDialog.hide();
+              alertify.success("Refreshed " + activeRows.length + " job(s), " + updated + " updated");
+            }
           }
         }
       });
