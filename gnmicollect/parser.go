@@ -368,7 +368,7 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	}
 	// manage corner case where the base is the leaf itself
 	if info.Leaf == "." {
-		info.Leaf = removePredicates(strings.Join(segments, "/"))
+		info.Leaf = "/" + removePredicates(strings.Join(segments, "/"))
 	}
 	return info
 }
