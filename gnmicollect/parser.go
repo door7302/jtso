@@ -367,7 +367,10 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 			info.Keys = append(info.Keys, keyPath)
 		}
 	}
-
+	// manage corner case where the base is the leaf itself
+	if info.Leaf == "." {
+		info.Leaf = removePredicates(strings.Join(segments, "/"))
+	}
 	return info
 }
 
@@ -407,9 +410,9 @@ func findBaseIndex(segments, base []string) int {
 		match := true
 		for j := range base {
 			noAttribSeg := removePredicates(segments[i+j])
-			if noAttribSeg != base[j] {
+			noAttribBase := removePredicates(base[j])
+			if noAttribSeg != noAttribBase {
 				match = false
-				logger.Log.Infof("DEBUG: Segment mismatch at index %d: '%s' (no predicates: '%s') != base '%s'", i+j, segments[i+j], noAttribSeg, base[j])
 				break
 			}
 		}
