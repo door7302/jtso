@@ -547,7 +547,7 @@ function buildDetailView(data) {
     html += '<span class="ms-auto">';
     html += '<span class="badge bg-success me-1">' + passedLeaves + ' Passed</span>';
     html += '<span class="badge bg-warning text-dark me-1">' + partialLeaves + ' Partial</span>';
-    html += '<span class="badge bg-danger me-1">' + failedLeaves + ' Failed</span>';
+    html += '<span class="badge bg-danger text-dark me-1">' + failedLeaves + ' Failed</span>';
     html += '<span class="badge bg-secondary">' + totalLeaves + ' Total</span>';
     html += '</span></div>';
     html += '<div class="card-body">';
@@ -628,21 +628,22 @@ function buildDetailView(data) {
           } else if (leaf.test_status === "PARTIAL") {
             leafStatusBadge = '<span class="badge bg-warning text-dark">PARTIAL</span>';
             leafIcon = '<i class="fas fa-exclamation-circle text-warning"></i>';
-            rowClass = 'table-warning';
+            rowClass = 'table-warning text-dark';
           } else {
-            leafStatusBadge = '<span class="badge bg-danger">FAILED</span>';
+            leafStatusBadge = '<span class="badge bg-danger text-dark">FAILED</span>';
             leafIcon = '<i class="fas fa-times-circle text-danger"></i>';
-            rowClass = 'table-danger';
+            rowClass = 'table-danger text-dark';
           }
           var leafId = subId + '_leaf_' + l;
+          var tdClass = (leaf.test_status === "FAILED" || leaf.test_status === "PARTIAL") ? ' text-dark' : '';
 
           html += '<tr class="jtt-leaf-row ' + rowClass + '" data-status="' + leaf.test_status + '" data-bs-toggle="collapse" data-bs-target="#' + leafId + '" style="cursor:pointer;">';
-          html += '<td class="text-center">' + leafIcon + '</td>';
-          html += '<td class="text-center jtt-expand-icon"><i class="fas fa-plus-square text-muted"></i></td>';
-          html += '<td><code style="font-size:0.8em;">' + leaf.gnmi_leaf + '</code></td>';
-          html += '<td>' + (leaf.description || '') + '</td>';
-          html += '<td><span class="badge bg-light text-dark">' + (leaf.counter_type || '') + '</span></td>';
-          html += '<td>' + leafStatusBadge + '</td>';
+          html += '<td class="text-center' + tdClass + '">' + leafIcon + '</td>';
+          html += '<td class="text-center jtt-expand-icon' + tdClass + '"><i class="fas fa-plus-square text-muted"></i></td>';
+          html += '<td' + tdClass + '><code style="font-size:0.8em;">' + leaf.gnmi_leaf + '</code></td>';
+          html += '<td' + tdClass + '>' + (leaf.description || '') + '</td>';
+          html += '<td' + tdClass + '><span class="badge bg-light text-dark">' + (leaf.counter_type || '') + '</span></td>';
+          html += '<td' + tdClass + '>' + leafStatusBadge + '</td>';
           html += '</tr>';
 
           // Expandable detail row - dark-mode-friendly
