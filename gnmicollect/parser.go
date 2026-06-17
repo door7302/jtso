@@ -339,13 +339,12 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	}
 
 	leafParts := []string{}
-	xpathIsLeaf := false
+	//xpathIsLeaf := false
 
 	if start == 0 {
 		// add empty root node
 		leafParts = append(leafParts, "")
 	} else {
-		if 
 		// otherwise add relative position
 		leafParts = append(leafParts, ".")
 	}
@@ -410,7 +409,7 @@ func findBaseIndex(segments, base []string) int {
 			noAttribSeg := removePredicates(segments[i+j])
 			if noAttribSeg != base[j] {
 				match = false
-				logger.Log.Infof("DEBUG: Segment mismatch at index %d: '%s' (no predicates: '%s') != base '%s'", i+j, segments[i+j], noAttribSeg, base[j])	
+				logger.Log.Infof("DEBUG: Segment mismatch at index %d: '%s' (no predicates: '%s') != base '%s'", i+j, segments[i+j], noAttribSeg, base[j])
 				break
 			}
 		}
