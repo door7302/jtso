@@ -239,6 +239,12 @@ type (
 		Msg    string      `json:"msg,omitempty"`
 		Data   interface{} `json:"data,omitempty"`
 	}
+
+	ReplyJTTPluginState struct {
+		Status        string `json:"status"`
+		PluginRunning bool   `json:"plugin_running"`
+		Message       string `json:"message,omitempty"`
+	}
 )
 
 func (a ByShortname) Len() int           { return len(a) }

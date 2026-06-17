@@ -31,6 +31,10 @@ $(document).ready(function () {
       buttonWidth: '100%'
     });
   }
+
+  // Check JTT plugin state on page load and every minute
+  checkJTTPluginState();
+  setInterval(checkJTTPluginState, 60000); // 60000 ms = 1 minute
 });
 
 // Badge mapping
@@ -41,6 +45,33 @@ var stateBadge = {
   "FAILED": '<span class="badge bg-danger">FAILED</span>',
   "CANCELED": '<span class="badge bg-dark">CANCELED</span>'
 };
+
+// JTT Plugin State Check Function
+function checkJTTPluginState() {
+  $.ajax({
+    type: 'GET',
+    url: "/jttpluginstate",
+    dataType: "json",
+    success: function (json) {
+      var stateIndicator = $('#jttStateIndicator');
+      if (json.status === "OK" && json.plugin_running) {
+        // JTT is running
+        stateIndicator.removeClass('jtt-state-loading jtt-state-error').addClass('jtt-state-running');
+        stateIndicator.attr('title', 'JTT Plugin State: Running (Status: ' + json.message + ')');
+      } else {
+        // JTT is not running or error
+        stateIndicator.removeClass('jtt-state-loading jtt-state-running').addClass('jtt-state-error');
+        stateIndicator.attr('title', 'JTT Plugin State: Not Running (Error: ' + (json.message || 'Unknown error') + ')');
+      }
+    },
+    error: function () {
+      // Error getting state - mark as error
+      var stateIndicator = $('#jttStateIndicator');
+      stateIndicator.removeClass('jtt-state-loading jtt-state-running').addClass('jtt-state-error');
+      stateIndicator.attr('title', 'JTT Plugin State: Error (Unable to connect)');
+    }
+  });
+}
 
 // Action buttons builders
 function buildActiveActions(jobId, name) {

@@ -156,6 +156,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/jttupdate", routeJTTUpdate)
 	wapp.POST("/jttdelete", routeJTTDelete)
 	wapp.POST("/jttdetail", routeJTTDetail)
+	wapp.GET("/jttpluginstate", routeJTTPluginState)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
@@ -2684,4 +2685,22 @@ func routeJTTDetail(c echo.Context) error {
 
 	logger.Log.Infof("JTT Detail request - job_id: %s, name: %s, status: %s", r.JobID, r.Name, jr.Status)
 	return c.JSON(http.StatusOK, ReplyJTTDetail{Status: "OK", Data: jr})
+}
+
+func routeJTTPluginState(c echo.Context) error {
+	if collectCfg.cfg.JTT.URL == "" {
+		return c.JSON(http.StatusOK, ReplyJTTPluginState{Status: "ERROR", PluginRunning: false, Message: "JTT plugin not configured"})
+	}
+
+	client := jtt.NewClient(collectCfg.cfg.JTT)
+	state, err := client.GetState()
+	if err != nil {
+		logger.Log.Debugf("Unable to get JTT plugin state: %v", err)
+		return c.JSON(http.StatusOK, ReplyJTTPluginState{Status: "ERROR", PluginRunning: false, Message: "Unable to retrieve state from JTT plugin"})
+	}
+
+	// Check if the status is "running" or similar
+	isRunning := state.Status == "running" || state.Status == "RUNNING" || state.Status == "ok" || state.Status == "OK"
+
+	return c.JSON(http.StatusOK, ReplyJTTPluginState{Status: "OK", PluginRunning: isRunning, Message: state.Status})
 }

@@ -14,6 +14,53 @@
     <link rel="stylesheet" href="css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="css/bootstrap-multiselect.css">
     <link rel="stylesheet" href="css/bootstrap-icons.css">
+    <style>
+        .jtt-state-indicator {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-left: 12px;
+            vertical-align: middle;
+            animation: pulse 2s infinite;
+        }
+        
+        .jtt-state-running {
+            background-color: #28a745;
+            box-shadow: 0 0 8px rgba(40, 167, 69, 0.7);
+        }
+        
+        .jtt-state-error {
+            background-color: #dc3545;
+            box-shadow: 0 0 8px rgba(220, 53, 69, 0.7);
+        }
+        
+        .jtt-state-loading {
+            background-color: #ffc107;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.7);
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 8px currentColor;
+            }
+            50% {
+                box-shadow: 0 0 16px currentColor;
+            }
+            100% {
+                box-shadow: 0 0 8px currentColor;
+            }
+        }
+        
+        .jtt-state-indicator.jtt-state-loading {
+            animation: pulse 1.5s infinite;
+        }
+        
+        .jtt-state-indicator.jtt-state-running,
+        .jtt-state-indicator.jtt-state-error {
+            animation: pulse 2s infinite;
+        }
+    </style>
 </head>
 
 <body>
@@ -24,6 +71,7 @@
         <div class="d-flex align-items-center mb-4">
             <i class="fas fa-vial fa-lg text-primary me-2"></i>
             <h1 class="h3 mb-0">Telemetry Tester Plugin</h1>
+            <span id="jttStateIndicator" class="jtt-state-indicator jtt-state-loading" title="JTT Plugin State: Loading..."></span>
         </div>
     </div>
 
