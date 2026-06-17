@@ -1818,3 +1818,15 @@ body.dark-mode .jtt-detail-panel ol li {
 body.dark-mode .jtt-detail-panel .text-danger {
     color: #f87171 !important;
 }
+
+/* JTT leaf rows: keep text/code readable on warning/danger backgrounds in dark mode only */
+html[data-bs-theme="dark"] .jtt-leaf-row.table-warning td,
+html[data-bs-theme="dark"] .jtt-leaf-row.table-warning td *,
+html[data-bs-theme="dark"] .jtt-leaf-row.table-danger td,
+html[data-bs-theme="dark"] .jtt-leaf-row.table-danger td *,
+body.dark-mode .jtt-leaf-row.table-warning td,
+body.dark-mode .jtt-leaf-row.table-warning td *,
+body.dark-mode .jtt-leaf-row.table-danger td,
+body.dark-mode .jtt-leaf-row.table-danger td * {
+    color: #000000 !important;
+}
