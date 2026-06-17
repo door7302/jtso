@@ -333,7 +333,6 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 
 	// ---------- 2) Leaf computation (predicate-free)
 	start := findBaseIndex(segments, baseSegments)
-	logger.Log.Infof("DEBUG: Base segments: %v, XPath segments: %v, start index for leaf: %d", baseSegments, segments, start)
 	if start < 0 || start > len(segments) {
 		start = len(segments)
 	}
