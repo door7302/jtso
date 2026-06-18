@@ -10,7 +10,7 @@ import (
 )
 
 // this is config displayed on the main page
-const JTSO_VERSION string = "1.1.2"
+const JTSO_VERSION string = "1.2.0"
 
 type PortalConfig struct {
 	Https          bool
@@ -49,6 +49,18 @@ type EnricherConfig struct {
 	Workers  int
 }
 
+type PluginConfig struct {
+	Name   string
+	Params map[string]interface{}
+}
+
+type JTTConfig struct {
+	URL       string
+	UseSSL    bool
+	ClientCrt string
+	ClientKey string
+}
+
 type ConfigContainer struct {
 	Kapacitor  *KapacitorConfig
 	Chronograf *ChronografConfig
@@ -57,6 +69,8 @@ type ConfigContainer struct {
 	Portal     *PortalConfig
 	Netconf    *NetconfConfig
 	Gnmi       *GnmiConfig
+	Plugins    *[]PluginConfig
+	JTT        *JTTConfig
 }
 
 func NewConfigContainer(f string) *ConfigContainer {
@@ -85,7 +99,7 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("modules.portal.server_crt", "")
 	viper.SetDefault("modules.portal.server_key", "")
 	viper.SetDefault("modules.portal.port", 8082)
-	viper.SetDefault("modules.portal.browsertimeout", 40)
+	viper.SetDefault("modules.portal.browsertimeout", 30)
 	viper.SetDefault("modules.portal.use_fancytree", true)
 	viper.SetDefault("modules.portal.hide_origin", true)
 
@@ -100,6 +114,15 @@ func NewConfigContainer(f string) *ConfigContainer {
 
 	// Set default value for gnmi
 	viper.SetDefault("protocols.gnmi.port", 9339)
+
+	// Plugins are optional, default to empty list
+	viper.SetDefault("plugins", []PluginConfig{})
+
+	// Set default values for JTT plugin
+	viper.SetDefault("plugins.jtt.url", "")
+	viper.SetDefault("plugins.jtt.use_ssl", false)
+	viper.SetDefault("plugins.jtt.client_crt", "client.crt")
+	viper.SetDefault("plugins.jtt.client_key", "client.key")
 
 	return &ConfigContainer{
 		Grafana: &GrafanaConfig{
@@ -131,6 +154,13 @@ func NewConfigContainer(f string) *ConfigContainer {
 		},
 		Gnmi: &GnmiConfig{
 			Port: viper.GetInt("protocols.gnmi.port"),
+		},
+		Plugins: &[]PluginConfig{},
+		JTT: &JTTConfig{
+			URL:       viper.GetString("plugins.jtt.url"),
+			UseSSL:    viper.GetBool("plugins.jtt.use_ssl"),
+			ClientCrt: viper.GetString("plugins.jtt.client_crt"),
+			ClientKey: viper.GetString("plugins.jtt.client_key"),
 		},
 	}
 }

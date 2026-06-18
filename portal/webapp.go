@@ -2,6 +2,7 @@ package portal
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"jtso/container"
 	"jtso/gnmicollect"
 	"jtso/influx"
+	"jtso/jtt"
 	"jtso/logger"
 	"jtso/maker"
 	"jtso/netconf"
@@ -20,7 +22,9 @@ import (
 	"jtso/worker"
 	"net/http"
 	"os"
+	"path/filepath"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -65,6 +69,8 @@ var reverseDictKafkaCodec = map[int]string{
 	3: "lz4",
 	4: "zstd",
 }
+
+var rePredicate *regexp.Regexp
 
 type WebApp struct {
 	listen string
@@ -115,6 +121,8 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.GET("/browser.html", routeBrowse)
 	wapp.GET("/stats.html", routeStats)
 	wapp.GET("/ondemand.html", routeOndemand)
+	wapp.GET("/schema.html", routeSchema)
+	wapp.GET("/jtt.html", routeJTT)
 
 	// GET API routes
 	wapp.GET("/stream", routeStream)
@@ -138,9 +146,22 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/gettree", routeGetTreeDoc)
 	wapp.POST("/intervalmgmt", routeIntervalMgt)
 	wapp.POST("/ondemandmgt", routeOnDemandMgt)
+	wapp.GET("/downloadyang", routeDownloadYang)
+	wapp.GET("/listschemas", routeListSchemas)
+	wapp.GET("/getschema", routeGetSchema)
+
+	// JTT Plugin routes
+	wapp.POST("/jttlaunch", routeJTTLaunch)
+	wapp.POST("/jttcancel", routeJTTCancel)
+	wapp.POST("/jttupdate", routeJTTUpdate)
+	wapp.POST("/jttdelete", routeJTTDelete)
+	wapp.POST("/jttdetail", routeJTTDetail)
+	wapp.GET("/jttpluginstate", routeJTTPluginState)
 
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
+
+	rePredicate = regexp.MustCompile(`\[([^=\]]+)=([^\]]*)\]`)
 
 	// return app
 	return &WebApp{
@@ -410,6 +431,23 @@ func checkCompatibility(r *AddProfile, fam string, version string) (bool, string
 /// ----------------- PAGE ----------------------///
 /// ---------------------------------------------///
 
+// getJTSVersion reads the installed OpenJTS version from the version file.
+// Returns "N/A" if the file cannot be read.
+func getJTSVersion() string {
+	file_jts, err := os.Open(PATH_JTS_VERS)
+	if err != nil {
+		return "N/A"
+	}
+	defer file_jts.Close()
+	scanner := bufio.NewScanner(file_jts)
+	if scanner.Scan() {
+		if v := scanner.Text(); v != "" {
+			return v
+		}
+	}
+	return "N/A"
+}
+
 func routeIndex(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
@@ -618,23 +656,7 @@ func routeIndex(c echo.Context) error {
 
 	// Retrieve module's version
 	jtsoVersion := config.JTSO_VERSION
-	jtsVersion := "N/A"
-
-	// Open the OpenJTS version's file
-	file_jts, err := os.Open(PATH_JTS_VERS)
-	if err != nil {
-		logger.Log.Errorf("Unable to open %s file: %v", PATH_JTS_VERS, err)
-	} else {
-		defer file_jts.Close()
-		scanner := bufio.NewScanner(file_jts)
-		if scanner.Scan() {
-			jtsVersion = scanner.Text()
-		}
-		// Check for any errors during scanning
-		if err := scanner.Err(); err != nil {
-			logger.Log.Errorf("Unable to parse %s file: %v", PATH_JTS_VERS, err)
-		}
-	}
+	jtsVersion := getJTSVersion()
 
 	// get the Telegraf version -
 	teleVersion := container.GetVersionLabel("jts_telegraf")
@@ -645,14 +667,15 @@ func routeIndex(c echo.Context) error {
 		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVEVO": numVEVO, "NumONDEMAND": numONDEMAND,
 		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
 		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VEVODebug": VEVODebug, "ONDEMANDDebug": ONDEMANDDebug,
-		"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion})
+		"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion,
+		"JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 func routeStats(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	chronografPort := collectCfg.cfg.Chronograf.Port
 
-	return c.Render(http.StatusOK, "stats.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "stats.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeRouters(c echo.Context) error {
@@ -669,7 +692,7 @@ func routeRouters(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeSettings(c echo.Context) error {
@@ -684,7 +707,7 @@ func routeSettings(c echo.Context) error {
 		"KafkaTopic": sqlite.ActiveKafkaConfig.Topic, "KafkaVersion": sqlite.ActiveKafkaConfig.Version,
 		"KafkaFormat": sqlite.ActiveKafkaConfig.Format, "KafkaCompression": reverseDictKafkaCodec[sqlite.ActiveKafkaConfig.Compression],
 		"KafkaMessageSize": sqlite.ActiveKafkaConfig.MessageSize,
-		"GrafanaPort":      grafanaPort, "ChronografPort": chronografPort})
+		"GrafanaPort":      grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeProfiles(c echo.Context) error {
@@ -727,9 +750,14 @@ func routeProfiles(c echo.Context) error {
 				asso += a
 			}
 		}
-		la = append(la, TabAsso{Shortname: r.Shortname, Profiles: asso})
+		kafkaEnable := false
+		if r.Kafka == "yes" {
+			kafkaEnable = true
+		}
+		la = append(la, TabAsso{Shortname: r.Shortname, Profiles: asso, Kafka: kafkaEnable})
 	}
-	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort,
+		"ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "KafkaEnable": sqlite.ActiveKafkaConfig.Enabled, "JTS_VERS": getJTSVersion()})
 }
 
 func routeDoc(c echo.Context) error {
@@ -747,7 +775,7 @@ func routeDoc(c echo.Context) error {
 	association.ProfileLock.Unlock()
 	sort.Strings(lp)
 
-	return c.Render(http.StatusOK, "pmanagement.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort})
+	return c.Render(http.StatusOK, "pmanagement.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeOndemand(c echo.Context) error {
@@ -772,7 +800,38 @@ func routeOndemand(c echo.Context) error {
 	// sort it
 	sort.Strings(lc)
 
-	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": ondemand.CC, "ConfigList": lc})
+	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": ondemand.CC, "ConfigList": lc, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
+}
+
+func routeSchema(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
+
+	// Get all routers from db
+	var lr []RouterDetails
+	lr = make([]RouterDetails, 0)
+
+	for _, r := range sqlite.RtrList {
+		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
+	}
+	// sort it
+	sort.Sort(ByShortname(lr))
+
+	// Get the list of available schemas - Analyse the director YANG_PATH and extract the list of subfolders which represent the different schemas
+	var ls []string
+	ls = make([]string, 0)
+	files, err := os.ReadDir(netconf.YANG_PATH)
+	if err != nil {
+		logger.Log.Errorf("Unable to read YANG_PATH directory: %v", err)
+	} else {
+		for _, file := range files {
+			if file.IsDir() {
+				ls = append(ls, file.Name())
+			}
+		}
+	}
+
+	return c.Render(http.StatusOK, "schema.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "Rtrs": lr, "SchemaFolders": ls, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeBrowse(c echo.Context) error {
@@ -790,7 +849,43 @@ func routeBrowse(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "UseFancyTree": useFancy})
+	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "UseFancyTree": useFancy, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
+}
+
+func routeJTT(c echo.Context) error {
+	grafanaPort := collectCfg.cfg.Grafana.Port
+	chronografPort := collectCfg.cfg.Chronograf.Port
+
+	// Refresh state of active JTT jobs before rendering
+	if collectCfg.cfg.JTT.URL != "" {
+		client := jtt.NewClient(collectCfg.cfg.JTT)
+		for _, job := range sqlite.ActiveJTTJobs {
+			if job.State == "QUEUED" || job.State == "IN-PROGRESS" {
+				js, err := client.GetJobState(job.JobID)
+				if err != nil {
+					logger.Log.Debugf("Unable to refresh JTT job %s state: %v", job.JobID, err)
+					continue
+				}
+				if js.Status != job.State {
+					if err := sqlite.UpdateJTTJob(job.JobID, js.Status); err != nil {
+						logger.Log.Debugf("Unable to update JTT job %s in DB: %v", job.JobID, err)
+					}
+				}
+			}
+		}
+	}
+
+	// Get all routers from db
+	var lr []RouterDetails
+	lr = make([]RouterDetails, 0)
+
+	for _, r := range sqlite.RtrList {
+		lr = append(lr, RouterDetails{Hostname: r.Hostname, Shortname: r.Shortname, Family: r.Family, Model: r.Model, Version: r.Version})
+	}
+	// sort it
+	sort.Sort(ByShortname(lr))
+
+	return c.Render(http.StatusOK, "jtt.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTTJobs": sqlite.ActiveJTTJobs, "JTS_VERS": getJTSVersion()})
 }
 
 /// ---------------------------------------------///
@@ -870,8 +965,14 @@ func routeUploadProfileCsv(c echo.Context) error {
 			ap := new(AddProfile)
 			ap.Shortname = columns[0]
 			ap.Profiles = make([]string, 0)
+			if strings.ToLower(strings.TrimSpace(columns[1])) == "yes" {
+				ap.Kafka = true
+			} else {
+				ap.Kafka = false
+			}
+
 			assoMatch := false
-			for _, entry := range columns[1:] {
+			for _, entry := range columns[2:] {
 				// Check if profile exist in DB
 				entry = strings.TrimSpace(entry)
 				if entry == "" {
@@ -905,7 +1006,11 @@ func routeUploadProfileCsv(c echo.Context) error {
 				continue
 			}
 
-			err = sqlite.AddAsso(ap.Shortname, ap.Profiles)
+			kafkaStr := "no"
+			if ap.Kafka {
+				kafkaStr = "yes"
+			}
+			err = sqlite.AddAsso(ap.Shortname, ap.Profiles, kafkaStr)
 			if err != nil {
 				logger.Log.Errorf("Unable to profile(s) to router %s in DB: %v", ap.Shortname, err)
 				errorFound++
@@ -1196,10 +1301,14 @@ func routeAddProfile(c echo.Context) error {
 
 	if !valid {
 		logger.Log.Errorf("Router %s is not compatible with one or more profiles", r.Shortname)
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Incompatibility issue:</br></br>" + errString + "</br>Check Doc menu for details..."})
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Incompatibility issue:</br></br>" + errString + "</br>Check Profile/Management menu for details..."})
 	}
 
-	err = sqlite.AddAsso(r.Shortname, r.Profiles)
+	kafkaVal := "no"
+	if r.Kafka {
+		kafkaVal = "yes"
+	}
+	err = sqlite.AddAsso(r.Shortname, r.Profiles, kafkaVal)
 	if err != nil {
 		logger.Log.Errorf("Unable to profile(s) to router %s in DB: %v", r.Shortname, err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to add profile(s) to router in DB"})
@@ -1212,6 +1321,131 @@ func routeAddProfile(c echo.Context) error {
 	go association.ConfigueStack(collectCfg.cfg, fam)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router's Profile(s) updated"})
 
+}
+
+func routeDownloadYang(c echo.Context) error {
+	// SSE endpoint: stream progress to browser
+	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+	c.Response().Header().Set("Cache-Control", "no-cache")
+	c.Response().Header().Set("Connection", "keep-alive")
+	c.Response().Flush()
+
+	sendEvent := func(event string, data string) {
+		fmt.Fprintf(c.Response().Writer, "event: %s\ndata: %s\n\n", event, data)
+		c.Response().Flush()
+	}
+
+	hostname := c.QueryParam("hostname")
+	shortname := c.QueryParam("shortname")
+	model := c.QueryParam("model")
+	version := c.QueryParam("version")
+	force := c.QueryParam("force") == "true"
+
+	if hostname == "" || model == "" || version == "" {
+		sendEvent("error", "Missing required parameters")
+		return nil
+	}
+
+	//create folder name base on the model and version of the router - all in upper case and space replaced by underscore
+	folderName := fmt.Sprintf("%s_%s", strings.ToUpper(model), strings.ToUpper(version))
+	folderName = strings.ReplaceAll(folderName, " ", "_")
+
+	// check if the folder already exists (use YANG_PATH of netconf package + foldername)
+	if _, err := os.Stat(netconf.YANG_PATH + folderName); !os.IsNotExist(err) {
+		if force {
+			logger.Log.Infof("Folder %s already exists but force flag is set. Removing existing folder.", folderName)
+			sendEvent("progress", "Removing existing folder "+folderName+"...")
+			if err := os.RemoveAll(netconf.YANG_PATH + folderName); err != nil {
+				logger.Log.Errorf("Unable to remove existing folder %s: %v", folderName, err)
+				sendEvent("error", "Unable to remove existing folder: "+err.Error())
+				return nil
+			}
+		} else {
+			logger.Log.Infof("Folder %s already exists. No need to download the yang schema", folderName)
+			sendEvent("folder", folderName)
+			sendEvent("done", "Folder "+folderName+" already exists. No need to download the yang schema")
+			return nil
+		}
+	}
+
+	logger.Log.Infof("Folder %s does not exist. Create it and download the yang schema", folderName)
+	sendEvent("progress", "Starting YANG schema download...")
+
+	// Create the exclude list for the yang schema download
+	var excludeList = []string{"junos-rpc", "junos-conf"}
+
+	// Progress callback sends SSE events
+	progressFn := func(phase string, current int, total int, name string) {
+		msg := fmt.Sprintf("%s [%d/%d] %s", phase, current, total, name)
+		sendEvent("progress", msg)
+	}
+
+	// call netconf API to download the schema and store it in the right folder
+	yangFiles, convertFiles, err := netconf.DownloadYangSchemas(hostname, collectCfg.cfg.Netconf.Port, sqlite.ActiveCred.NetconfUser, sqlite.ActiveCred.NetconfPwd, excludeList, folderName, progressFn)
+	if err != nil {
+		logger.Log.Errorf("Unable to download yang schema for router %s: %v", shortname, err)
+		sendEvent("error", "Unable to download yang schema for the router: "+err.Error())
+		return nil
+	}
+
+	result := fmt.Sprintf("Successfully downloaded %d schemas.", yangFiles)
+	logger.Log.Infof("Yang schema for router %s downloaded in folder %s - %d files, %d converted", shortname, folderName, yangFiles, convertFiles)
+	sendEvent("folder", folderName)
+	sendEvent("done", result)
+	return nil
+}
+
+func routeListSchemas(c echo.Context) error {
+	folder := c.QueryParam("folder")
+	if folder == "" {
+		return c.JSON(http.StatusOK, ReplySchemas{Status: "NOK", Msg: "Missing folder parameter"})
+	}
+
+	// Sanitize folder name to prevent directory traversal
+	folder = filepath.Base(folder)
+	dirPath := filepath.Join(netconf.YANG_PATH, folder)
+
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		logger.Log.Errorf("Unable to read schema folder %s: %v", folder, err)
+		return c.JSON(http.StatusOK, ReplySchemas{Status: "NOK", Msg: "Unable to read schema folder"})
+	}
+
+	schemas := make([]string, 0)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if strings.HasSuffix(name, ".json") {
+			schemas = append(schemas, strings.TrimSuffix(name, ".json"))
+		}
+	}
+	sort.Strings(schemas)
+
+	return c.JSON(http.StatusOK, ReplySchemas{Status: "OK", Schemas: schemas})
+}
+
+func routeGetSchema(c echo.Context) error {
+	folder := c.QueryParam("folder")
+	schema := c.QueryParam("schema")
+	if folder == "" || schema == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Missing folder or schema parameter"})
+	}
+
+	// Sanitize to prevent directory traversal
+	folder = filepath.Base(folder)
+	schema = filepath.Base(schema)
+	filePath := filepath.Join(netconf.YANG_PATH, folder, schema+".json")
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		logger.Log.Errorf("Unable to read schema file %s: %v", filePath, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to read schema file"})
+	}
+
+	// Return raw JSON content as-is (it's already valid JSON array)
+	return c.JSONBlob(http.StatusOK, data)
 }
 
 func routeSearchPath(c echo.Context) error {
@@ -1247,6 +1481,11 @@ func routeSearchPath(c echo.Context) error {
 	gnmicollect.StreamObj.Path = r.Xpath
 	gnmicollect.StreamObj.Merger = r.Merge
 	gnmicollect.StreamObj.StopStreaming = make(chan struct{})
+	if r.Timeout >= 10 && r.Timeout <= 600 {
+		gnmicollect.StreamObj.Timeout = r.Timeout
+	} else {
+		gnmicollect.StreamObj.Timeout = collectCfg.cfg.Portal.BrowserTimeout
+	}
 
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Streaming well started."})
 }
@@ -1294,13 +1533,22 @@ func routeStream(c echo.Context) error {
 		gnmicollect.StreamObj.Writer = c.Response().Writer
 		gnmicollect.StreamObj.Ticker = time.Now()
 		gnmicollect.StreamObj.ForceFlush = true
+		// Create a cancellable context for the goroutine
+		ctx, cancel := context.WithCancel(c.Request().Context())
+		gnmicollect.StreamObj.Ctx = ctx
+		gnmicollect.StreamObj.Cancel = cancel
 		// launch parser
-		go gnmicollect.GnmiSample(collectCfg.cfg.Portal.BrowserTimeout, collectCfg.cfg.Portal.HideOrigin)
+		logger.Log.Info("Start data collection and streaming to the browser...")
+		go gnmicollect.GnmiSample(collectCfg.cfg.Portal.HideOrigin)
+		logger.Log.Info("Data collection and streaming well started...")
 		// loop until the end
 		for {
 			select {
 			case <-c.Request().Context().Done():
-				// Client disconnected - clean up
+				// Client disconnected - cancel the goroutine context
+				cancel()
+				// Wait for the goroutine to finish
+				<-gnmicollect.StreamObj.StopStreaming
 				gnmicollect.StreamObj.Stream = 0
 				logger.Log.Info("Client disconnected, stopping stream")
 				return nil
@@ -1313,8 +1561,8 @@ func routeStream(c echo.Context) error {
 				// depending on the error report:
 				errString := gnmicollect.StreamObj.Error.Error()
 
-				// Normal end
-				if strings.Contains(errString, "context canceled") {
+				// Normal end or too much data received (browser timeout protection)
+				if strings.Contains(errString, "context canceled") || strings.Contains(errString, "too much data received") {
 
 					gnmicollect.StreamData("End of the subscription. Close gNMI session", "OK")
 					logger.Log.Debug("Generate payload based on the Tree")
@@ -1342,7 +1590,14 @@ func routeStream(c echo.Context) error {
 						logger.Log.Debug("Marshall the result: success")
 						// Convert the JSON data to a string
 						jsonString := string(jsonData)
-						gnmicollect.StreamData("End of the collection.", "END", jsonString)
+
+						if strings.Contains(errString, "too much data received") {
+							gnmicollect.StreamData("End of the collection.", "OK")
+							gnmicollect.StreamData(`<div class="alert alert-warning d-flex align-items-center" role="alert"><i class="bi bi-exclamation-triangle-fill text-danger me-2" style="font-size:1.5rem;"></i><span>High-volume sensor. Incomplete data. Increase timeout.</span></div>`, "END", jsonString)
+						} else {
+							gnmicollect.StreamData("End of the collection.", "END", jsonString)
+						}
+
 						// saved the XPATH raw list in a static file
 						keys := make([]string, 0, len(gnmicollect.StreamObj.XpathList))
 						for key := range gnmicollect.StreamObj.XpathList {
@@ -1365,6 +1620,7 @@ func routeStream(c echo.Context) error {
 							}
 						}
 					}
+					// Any other error
 				} else {
 					logger.Log.Errorf("Unexpected gnmi error: %v", errString)
 					gnmicollect.StreamData(fmt.Sprintf("Unexpected gnmi error: %s", errString), "ERROR")
@@ -1545,6 +1801,53 @@ func findOrigin(path string) string {
 	return "openconfig"
 }
 
+// Leading slash is consumed; slashes inside [...] are not treated as separators.
+func splitPathNodes(path string) []string {
+	// Strip leading slash
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+
+	var nodes []string
+	depth := 0
+	start := 0
+
+	for i := 0; i < len(path); i++ {
+		switch path[i] {
+		case '[':
+			depth++
+		case ']':
+			depth--
+		case '/':
+			if depth == 0 {
+				nodes = append(nodes, path[start:i])
+				start = i + 1
+			}
+		}
+	}
+	// Last segment
+	if start < len(path) {
+		nodes = append(nodes, path[start:])
+	}
+
+	return nodes
+}
+
+// StripPathAttributes removes predicates from an XPath and returns the clean path
+func stripPathAttributes(path string) string {
+	// Split into nodes manually, respecting brackets
+	nodes := splitPathNodes(path)
+	cleanParts := make([]string, 0, len(nodes))
+
+	for _, node := range nodes {
+		// Remove predicates to get the clean node name
+		clean := rePredicate.ReplaceAllString(node, "")
+		cleanParts = append(cleanParts, clean)
+	}
+
+	return "/" + strings.Join(cleanParts, "/")
+}
+
 func routeGetTreeDoc(c echo.Context) error {
 	var err error
 
@@ -1588,13 +1891,21 @@ func routeGetTreeDoc(c echo.Context) error {
 					p.Aliases = append(p.Aliases, a.Prefixes...)
 					for _, i := range a.Prefixes {
 						// inherit Alias origin
-						p.Origin = findOrigin(i)
+						p.AliasOrigin = findOrigin(i)
 					}
 				}
 			}
 			tree.Paths = append(tree.Paths, *p)
 		}
 	}
+
+	// Sort paths: openconfig origin before native (descending order on Origin)
+	sort.Slice(tree.Paths, func(i, j int) bool {
+		return tree.Paths[i].Origin > tree.Paths[j].Origin
+	})
+
+	// create a map string of string
+	alreadyMapped := make(map[string]string)
 
 	for _, p := range newCfg.RenameList {
 		for _, e := range p.Entries {
@@ -1613,22 +1924,47 @@ func routeGetTreeDoc(c echo.Context) error {
 
 			for i := range tree.Paths {
 				t := &tree.Paths[i]
-				if strings.HasPrefix(field, t.Name) {
-					t.Fields = append(t.Fields, field)
-					break
+				// here we should verify first if there is attributes or not
+				fieldClean := field
+				pathClean := t.Name
+				if strings.Contains(field, "[") && !strings.Contains(t.Name, "[") {
+					fieldClean = stripPathAttributes(field)
 				}
-				found := false
+				if !strings.Contains(field, "[") && strings.Contains(t.Name, "[") {
+					pathClean = stripPathAttributes(t.Name)
+				}
+				if strings.HasPrefix(fieldClean, pathClean) {
+					t.Fields = append(t.Fields, field)
+					alreadyMapped[field] = t.Name
+
+				}
 				for _, a := range t.Aliases {
-					if strings.HasPrefix(field, a) {
+					cleanAlias := a
+					fieldClean := field
+					if strings.Contains(a, "[") && !strings.Contains(field, "[") {
+						cleanAlias = stripPathAttributes(a)
+					}
+					if strings.Contains(field, "[") && !strings.Contains(a, "[") {
+						fieldClean = stripPathAttributes(field)
+					}
+					if strings.HasPrefix(fieldClean, cleanAlias) {
+						if val, ok := alreadyMapped[field]; ok {
+							if val == cleanAlias {
+								break
+							}
+						}
 						t.Fields = append(t.Fields, field)
-						found = true
 						break
 					}
 				}
-				if found {
-					break
-				}
 			}
+		}
+	}
+
+	// Overide the Origin for the fields that are in the alias list to have the same origin as the alias
+	for i := range tree.Paths {
+		if tree.Paths[i].Origin != tree.Paths[i].AliasOrigin && tree.Paths[i].AliasOrigin == "openconfig" {
+			tree.Paths[i].Origin = tree.Paths[i].AliasOrigin
 		}
 	}
 
@@ -2002,4 +2338,370 @@ func routeInfluxMgt(c echo.Context) error {
 	default:
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown InfluxDB action"})
 	}
+}
+
+/// ---------------------------------------------///
+/// --------------- JTT Plugin ------------------///
+/// ---------------------------------------------///
+
+func routeJTTLaunch(c echo.Context) error {
+	r := new(JTTLaunchRequest)
+	if err := c.Bind(r); err != nil {
+		logger.Log.Errorf("Unable to parse JTT launch request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the request"})
+	}
+	if r.Name == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Test name cannot be empty"})
+	}
+	if len(r.CsvLines) == 0 {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "CSV file is empty"})
+	}
+
+	// CSV FIELDS
+	// TEST_TYPE;PARENT_PATH;LEAF_PATH;COUNTER_TYPE;DESCRIPTION;CATEGORY;ORIGIN;INTERVAL_RATE;PARENT_NETCONF_RPC;LEAF_NETCONF_PATH;OVERRIDE_THRESHOLD;VALUE_CHECK_RATIO;FALSE_POSITIVE_ALLOWED;SUPPORTED_FAMILIES
+
+	csvEntries := make([]JTTCsvEntry, 0)
+
+	// Skip the header line (index 0) and parse data lines
+	for i := 1; i < len(r.CsvLines); i++ {
+		line := r.CsvLines[i]
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		cols := strings.Split(line, ";")
+		if len(cols) != 14 {
+			logger.Log.Errorf("JTT CSV line %d: expected 14 columns, got %d", i+1, len(cols))
+			continue
+		}
+
+		// Column 0: TEST_TYPE
+		testType, _ := strconv.Atoi(strings.TrimSpace(cols[0]))
+		if testType == 0 {
+			testType = 1
+		}
+
+		// Column 1: PARENT_PATH
+		parentPath := strings.TrimSpace(cols[1])
+		if parentPath != "" && !strings.HasPrefix(parentPath, "/") {
+			parentPath = "/" + parentPath
+		}
+		parentPath = strings.TrimSuffix(parentPath, "/")
+
+		// Column 2: LEAF_PATH
+		leafPath := strings.TrimSpace(cols[2])
+		if leafPath != "" && !strings.HasPrefix(leafPath, "/") {
+			leafPath = "/" + leafPath
+		}
+		leafPath = strings.TrimSuffix(leafPath, "/")
+
+		// Column 3: COUNTER_TYPE
+		counterType := strings.ToUpper(strings.TrimSpace(cols[3]))
+
+		// Column 4: DESCRIPTION
+		description := strings.TrimSpace(cols[4])
+
+		// Column 5: CATEGORY
+		category := strings.TrimSpace(cols[5])
+
+		// Column 6: ORIGIN
+		origin := strings.ToUpper(strings.TrimSpace(cols[6]))
+
+		// Column 7: INTERVAL_RATE
+		intervalRate, err := strconv.Atoi(strings.TrimSpace(cols[7]))
+		if err != nil {
+			intervalRate = 60
+		}
+
+		// Column 8: PARENT_NETCONF_RPC
+		parentNetconf := strings.TrimSpace(cols[8])
+
+		// Column 9: LEAF_NETCONF_PATH
+		leafNetconf := strings.TrimSpace(cols[9])
+		if leafNetconf != "" && !strings.HasPrefix(leafNetconf, "/") {
+			leafNetconf = "/" + leafNetconf
+		}
+		leafNetconf = strings.TrimSuffix(leafNetconf, "/")
+
+		// Column 10: OVERRIDE_THRESHOLD
+		overrideThld := strings.ToLower(strings.TrimSpace(cols[10])) == "yes"
+
+		// Column 11: VALUE_CHECK_RATIO
+		valueCheckRatio := 50
+		if v := strings.TrimSpace(cols[11]); v != "" {
+			if parsed, err := strconv.Atoi(v); err == nil {
+				valueCheckRatio = parsed
+			}
+		}
+
+		// Column 12: FALSE_POSITIVE_ALLOWED
+		falsePositiveAllowed := 20
+		if v := strings.TrimSpace(cols[12]); v != "" {
+			if parsed, err := strconv.Atoi(v); err == nil {
+				falsePositiveAllowed = parsed
+			}
+		}
+
+		// Column 13: SUPPORTED_FAMILIES
+		supportedFamilies := make(map[string]struct{})
+		for _, f := range strings.Split(cols[13], "|") {
+			key := strings.ToLower(strings.TrimSpace(f))
+			if key != "" {
+				supportedFamilies[key] = struct{}{}
+			}
+		}
+
+		csvEntries = append(csvEntries, JTTCsvEntry{
+			TestType:             testType,
+			ParentPath:           parentPath,
+			LeafPath:             leafPath,
+			CounterType:          counterType,
+			Description:          description,
+			Category:             category,
+			Origin:               origin,
+			IntervalRate:         intervalRate,
+			ParentNetconf:        parentNetconf,
+			LeafNetconf:          leafNetconf,
+			OverrideThld:         overrideThld,
+			ValueCheckRatio:      valueCheckRatio,
+			FalsePositiveAllowed: falsePositiveAllowed,
+			SupportedFamilies:    supportedFamilies,
+		})
+	}
+
+	// Build one NewJobRequest per router
+	jobRequests := make([]*jtt.NewJobRequest, 0, len(r.Routers))
+
+	// Job name
+	jobName := r.Name
+
+	for _, rtr := range r.Routers {
+		// Filter CSV entries by supported families for this router
+		family := strings.ToLower(strings.TrimSpace(rtr.Family))
+
+		// Group entries by ParentPath to build XPathInput list
+		type pathKey struct {
+			path     string
+			interval int
+			category string
+			origin   string
+		}
+		pathOrder := make([]pathKey, 0)
+		pathMap := make(map[pathKey][]jtt.LeafInput)
+
+		for _, entry := range csvEntries {
+			// Check if this router's family is in the supported families
+			if _, ok := entry.SupportedFamilies[family]; !ok {
+				continue
+			}
+
+			key := pathKey{
+				path:     entry.ParentPath,
+				interval: entry.IntervalRate,
+				category: entry.Category,
+				origin:   entry.Origin,
+			}
+
+			leaf := jtt.LeafInput{
+				GnmiLeaf:           entry.LeafPath,
+				Description:        entry.Description,
+				NetconfRpc:         entry.ParentNetconf,
+				NetconfLeaf:        entry.LeafNetconf,
+				CounterType:        entry.CounterType,
+				SpecificThresholds: entry.OverrideThld,
+				ValueRatio:         entry.ValueCheckRatio,
+				FalsePositive:      entry.FalsePositiveAllowed,
+				TestType:           entry.TestType,
+			}
+
+			if _, exists := pathMap[key]; !exists {
+				pathOrder = append(pathOrder, key)
+			}
+			pathMap[key] = append(pathMap[key], leaf)
+		}
+
+		// Skip router if no matching entries
+		if len(pathOrder) == 0 {
+			continue
+		}
+
+		// Build XPaths list
+		xpaths := make([]jtt.XPathInput, 0, len(pathOrder))
+		for _, key := range pathOrder {
+			xpaths = append(xpaths, jtt.XPathInput{
+				Subscription: key.path,
+				Interval:     key.interval,
+				Category:     key.category,
+				Origin:       key.origin,
+				Leaves:       pathMap[key],
+			})
+		}
+
+		req := &jtt.NewJobRequest{
+			RouterName:          rtr.Hostname,
+			Model:               rtr.Model,
+			XPaths:              xpaths,
+			TestType:            0,
+			ForceSchemaDownload: false,
+			NetconfCfg: &jtt.NetconfCfg{
+				User:    sqlite.ActiveCred.NetconfUser,
+				Pwd:     sqlite.ActiveCred.NetconfPwd,
+				Port:    collectCfg.cfg.Netconf.Port,
+				Timeout: collectCfg.cfg.Netconf.RpcTimeout,
+			},
+			GnmiCfg: &jtt.GnmiCfg{
+				User:        sqlite.ActiveCred.GnmiUser,
+				Pwd:         sqlite.ActiveCred.GnmiPwd,
+				Port:        collectCfg.cfg.Gnmi.Port,
+				Insecure:    sqlite.ActiveCred.UseTls == "no",
+				SkipVerify:  sqlite.ActiveCred.SkipVerify == "yes",
+				ClientTls:   sqlite.ActiveCred.ClientTls == "yes",
+				HideOrigin:  collectCfg.cfg.Portal.HideOrigin,
+				MergeLeaves: false,
+				StreamMode:  "sample",
+			},
+		}
+		jobRequests = append(jobRequests, req)
+	}
+
+	//
+	jobResults := make([]JTTJobEntry, 0, len(jobRequests))
+	client := jtt.NewClient(collectCfg.cfg.JTT)
+
+	// Launch jobs in sequencial - no need of goroutine - JTT will queued jobs
+	oneGood := false
+	for _, req := range jobRequests {
+		jobID, err := client.NewJob(req)
+		date := time.Now().Format("01/02/2006 15:04")
+		if err != nil {
+			logger.Log.Errorf("Failed to launch JTT job for router %s: %v", req.RouterName, err)
+			jobResults = append(jobResults, JTTJobEntry{JobID: "", Status: "FAILED", Name: req.RouterName, Error: err.Error(), Date: date})
+			continue
+		}
+		logger.Log.Infof("JTT job launched for router %s with job ID %s", req.RouterName, jobID)
+
+		//Save the new job in the sqlite db jttjobs table
+		err = sqlite.AddJTTJob(jobID.JobID, jobName+" - "+req.RouterName, jobID.Status, date)
+		if err != nil {
+			logger.Log.Errorf("Failed to save JTT job %s in DB - cancel it: %v", jobID.JobID, err)
+			// We should cancel the job on JTT if we fail to save it in DB to avoid orphan job, but for now we just log the error and continue
+			_, err = client.CancelJob(jobID.JobID)
+			if err != nil {
+				logger.Log.Errorf("Failed to cancel JTT job %s after DB save failure: %v", jobID.JobID, err)
+			} else {
+				logger.Log.Infof("JTT job %s has been canceled due to DB save failure", jobID.JobID)
+			}
+			jobResults = append(jobResults, JTTJobEntry{JobID: "", Status: "WATCHDOG", Name: req.RouterName, Error: fmt.Sprintf("Job canceled due to DB save failure: %v", err), Date: date})
+
+		} else {
+			jobResults = append(jobResults, JTTJobEntry{JobID: jobID.JobID, Status: jobID.Status, Name: jobName + " - " + req.RouterName, Error: "", Date: date})
+			logger.Log.Infof("JTT Launch request received - name: %s, routers: %d, csv entries: %d, jobs: %d", jobName+" - "+req.RouterName, len(r.Routers), len(csvEntries), len(jobRequests))
+			oneGood = true
+		}
+	}
+	if oneGood {
+		return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "OK", Jobs: jobResults})
+	} else {
+		return c.JSON(http.StatusOK, ReplyJTTLaunch{Status: "NOK", Jobs: jobResults})
+	}
+}
+
+func routeJTTCancel(c echo.Context) error {
+	r := new(JTTJobRequest)
+	if err := c.Bind(r); err != nil {
+		logger.Log.Errorf("Unable to parse JTT cancel request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the request"})
+	}
+	if r.JobID == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
+	}
+
+	client := jtt.NewClient(collectCfg.cfg.JTT)
+	_, err := client.CancelJob(r.JobID)
+	if err != nil {
+		logger.Log.Errorf("Unable to cancel JTT job %s (%s): %v", r.JobID, r.Name, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to cancel the job on JTT backend"})
+	}
+
+	logger.Log.Infof("JTT job %s (%s) has been successfully canceled", r.JobID, r.Name)
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Job canceled"})
+}
+
+func routeJTTUpdate(c echo.Context) error {
+	r := new(JTTJobRequest)
+	if err := c.Bind(r); err != nil {
+		logger.Log.Errorf("Unable to parse JTT update request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the request"})
+	}
+	if r.JobID == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
+	}
+
+	client := jtt.NewClient(collectCfg.cfg.JTT)
+	js, err := client.GetJobState(r.JobID)
+	if err != nil {
+		logger.Log.Errorf("Unable to get JTT job state for %s (%s): %v", r.JobID, r.Name, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve job state from JTT"})
+	}
+
+	logger.Log.Infof("JTT Update request - job_id: %s, name: %s, state: %s", r.JobID, r.Name, js.Status)
+	return c.JSON(http.StatusOK, ReplyJTTUpdate{Status: "OK", State: js.Status})
+}
+
+func routeJTTDelete(c echo.Context) error {
+	r := new(JTTJobRequest)
+	if err := c.Bind(r); err != nil {
+		logger.Log.Errorf("Unable to parse JTT delete request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the request"})
+	}
+	if r.JobID == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
+	}
+
+	err := sqlite.DelJTTJob(r.JobID)
+	if err != nil {
+		logger.Log.Errorf("Unable to delete JTT job %s (%s) from DB: %v", r.JobID, r.Name, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete the job from DB"})
+	}
+
+	logger.Log.Infof("JTT job %s (%s) has been successfully deleted", r.JobID, r.Name)
+	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Job deleted"})
+}
+
+func routeJTTDetail(c echo.Context) error {
+	r := new(JTTJobRequest)
+	if err := c.Bind(r); err != nil {
+		logger.Log.Errorf("Unable to parse JTT detail request: %v", err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the request"})
+	}
+	if r.JobID == "" {
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Job ID is required"})
+	}
+
+	client := jtt.NewClient(collectCfg.cfg.JTT)
+	jr, err := client.GetJobResult(r.JobID)
+	if err != nil {
+		logger.Log.Errorf("Unable to get JTT job result for %s (%s): %v", r.JobID, r.Name, err)
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to retrieve job result from JTT"})
+	}
+
+	logger.Log.Infof("JTT Detail request - job_id: %s, name: %s, status: %s", r.JobID, r.Name, jr.Status)
+	return c.JSON(http.StatusOK, ReplyJTTDetail{Status: "OK", Data: jr})
+}
+
+func routeJTTPluginState(c echo.Context) error {
+	if collectCfg.cfg.JTT.URL == "" {
+		return c.JSON(http.StatusOK, ReplyJTTPluginState{Status: "ERROR", PluginRunning: false, Message: "JTT plugin not configured"})
+	}
+
+	client := jtt.NewClient(collectCfg.cfg.JTT)
+	state, err := client.GetState()
+	if err != nil {
+		logger.Log.Debugf("Unable to get JTT plugin state: %v", err)
+		return c.JSON(http.StatusOK, ReplyJTTPluginState{Status: "ERROR", PluginRunning: false, Message: "Unable to retrieve state from JTT plugin"})
+	}
+
+	// Check if the status is "running" or similar
+	isRunning := state.Status == "running" || state.Status == "RUNNING" || state.Status == "ok" || state.Status == "OK"
+
+	return c.JSON(http.StatusOK, ReplyJTTPluginState{Status: "OK", PluginRunning: isRunning, Message: state.Status})
 }

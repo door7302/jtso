@@ -114,7 +114,7 @@ function renderCards(paths) {
       const empty = document.createElement("div");
       empty.className = "pill-empty";
       if (p.aliases && p.aliases.length) {
-        empty.textContent = "Check Alias instead.";
+        empty.textContent = "Fields are part of the path alias. Check Alias instead.";
       } else {
         empty.textContent = "No fields for this path.";
       }

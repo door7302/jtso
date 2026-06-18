@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <script>((d)=>{const t=localStorage.getItem('dark-mode')==='true'?'dark':'light';d.setAttribute('data-bs-theme',t);d.style.colorScheme=t;})(document.documentElement);</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>OpenJTS - Yang Schema Explorer</title>
+    <link rel="stylesheet" href="css/myfonts.css">
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-icons.css">
+    <link rel="stylesheet" href="fonts/fontawesome-all.min.css">
+    <link rel="stylesheet" href="css/alertify.min.css">
+    <link rel="stylesheet" href="css/bootstrap-multiselect.css">
+    <link rel="stylesheet" href="css/flip.min.css">
+    <link rel="stylesheet" href="css/jtsmain.css">
+    <style>.spin { animation: spin 1s linear infinite; } @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
+    {{if .UseFancyTree}}
+    <link rel="stylesheet" href="css/jquery-ui.css">
+    <link rel="stylesheet" href="css/ui.fancytree.min.css">
+    {{else}}
+        <link rel="stylesheet" href="css/jstree.css">
+        {{end}}
+
+</head>
+
+<body>
+
+    {{template "navbar" .}}
+
+    <div class="page-header mt-5">
+        <div class="d-flex align-items-center mb-4">
+            <i class="fas fa-search fa-lg text-success me-2"></i>
+            <h1 class="h3 mb-0">Yang Schema Explorer</h1>
+        </div>
+    </div>
+
+    <div class="other-div" id="downloadDiv">
+        <div class="card other-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Download Yang Schemas</h4>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#downloadCardBody" aria-expanded="true" aria-controls="downloadCardBody" id="downloadCollapseBtn">
+                        <i class="bi bi-dash"></i>
+                    </button>
+                </div>
+                <div class="collapse show mt-3" id="downloadCardBody">
+                <form>
+
+                    <label class="form-label">Select a Router:</label>
+
+                    <select id="router" class="selectpicker" data-width="100%">
+                        {{range .Rtrs}}
+                        <option value="{{.Shortname}}#{{.Hostname}}#{{.Model}}#{{.Version}}#{{.Family}}">{{.Shortname}}</option>
+                        {{end}}
+                    </select>
+
+                </form>
+                <div class="alert alert-warning mt-3 mb-0" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    <strong>Prerequisites:</strong> Ensure the following configuration is applied on the router before downloading:<br>
+                    <code>set system services netconf netconf-monitoring netconf-state-schemas retrieve-standard-yang-modules</code><br>
+                    <code>set system services netconf netconf-monitoring netconf-state-schemas retrieve-custom-yang-modules</code><br>
+                    <small class="text-muted">The full download process may take a few minutes depending on the number of schemas.</small>
+                </div>
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="forceDownload">
+                    <label class="form-check-label" for="forceDownload">Force Download</label>
+                </div>
+                <div class="d-flex justify-content-center align-items-center">
+                    <input class="btn btn-success" type="submit" value="Download" name="download" id="download" style="margin: 10px;margin-right: 0;margin-bottom: 0;margin-left: 0;">
+                </div>
+                <div id="download-progress" class="mt-3" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+    <div class="other-div">
+        <div class="card other-card">
+            <h4 class="card-title">Schema Navigator</h4>
+            <form>
+                <label class="form-label">Select one of the available schema folders:</label>
+                <select id="schemaFolder" class="selectpicker" data-width="100%">
+                    {{range .SchemaFolders}}
+                    <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+            </form>
+            <div class="d-flex justify-content-center align-items-center mt-3">
+                <button type="button" class="btn btn-success" id="loadSchemas">Load</button>
+            </div>
+            <br/>
+            <div id="navigator">
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Schema Detail Modal -->
+    <div class="modal fade" id="schemaModal" tabindex="-1" aria-labelledby="schemaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width:85%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="schemaModalLabel">Schema Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="showDesc">
+                            <label class="form-check-label" for="showDesc">Description</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="showType">
+                            <label class="form-check-label" for="showType">Type</label>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success" id="exportCsv">
+                            <i class="bi bi-download"></i> Export CSV
+                        </button>
+                    </div>
+                    <table class="table table-sm table-striped" id="schemaTable">
+                        <thead>
+                            <tr>
+                                <th style="width:65%;">XPath <input type="text" class="form-control form-control-sm mt-1" id="filterXpath" placeholder="Filter..."></th>
+                                <th class="col-desc" style="width:25%;">Description <input type="text" class="form-control form-control-sm mt-1" id="filterDesc" placeholder="Filter..."></th>
+                                <th class="col-type" style="width:10%;">Type <input type="text" class="form-control form-control-sm mt-1" id="filterType" placeholder="Filter..."></th>
+                            </tr>
+                        </thead>
+                        <tbody id="schemaTableBody">
+                        </tbody>
+                    </table>
+                    <div id="schemaCount" class="text-muted small mt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/jquery-3.6.4.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="js/alertify.min.js"></script>
+    <script src="js/bootstrap-waitingfor.min.js"></script>
+    <script src="js/bootstrap-multiselect.js"></script>
+    <script src="js/dark.js"></script>
+    <script src="js/schema.js"></script>
+    <script>
+        const downloadCollapse = document.getElementById('downloadCardBody');
+        const downloadBtn = document.getElementById('downloadCollapseBtn');
+        downloadCollapse.addEventListener('shown.bs.collapse', function() {
+            downloadBtn.innerHTML = '<i class="bi bi-dash"></i>';
+        });
+        downloadCollapse.addEventListener('hidden.bs.collapse', function() {
+            downloadBtn.innerHTML = '<i class="bi bi-plus"></i>';
+        });
+    </script>
+</body>
+
+</html>

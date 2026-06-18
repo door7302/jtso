@@ -1,0 +1,97 @@
+{{define "navbar"}}
+<nav class="navbar navbar-light navbar-expand-md py-3">
+    <div class="container">
+        <img src="img/logo-new.png" width="300" height="50">
+        <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-2">
+            <span class="visually-hidden">Toggle navigation</span>
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navcol-2">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="routers.html">Routers</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" data-bs-toggle="dropdown">Profiles</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="profiles.html">Associations</a></li>
+                        <li><a class="dropdown-item" href="pmanagement.html">Management</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.GrafanaPort}} + '/?orgId=1', '_blank')">Grafana</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="toolsDropdown" data-bs-toggle="dropdown">Tools</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="browser.html">gNMI Browser</a></li>
+                        <li><a class="dropdown-item" href="schema.html">Yang Schema Explorer</a></li>
+                        <li><a class="dropdown-item" href="ondemand.html">On-demand Graph</a></li>
+                        {{if .JTTEnabled}}<li><a class="dropdown-item" href="jtt.html">JTT Plugin</a></li>{{end}}
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">Admin</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="settings.html">Settings</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/chronograf/data-explorer', '_blank')">Manage InfluxDB</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="window.open(window.location.protocol + '//' + window.location.hostname + ':' + {{.ChronografPort}} + '/sources/0/tickscripts', '_blank')">Manage Tick scripts</a></li>
+                        <li><a class="dropdown-item" href="stats.html">Stack Util. & Logs</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="form-check form-switch ms-3">
+                <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+                <label class="form-check-label" for="darkModeSwitch"><i class="fas fa-moon"></i></label>
+            </div>
+            <span id="openjts-update-anchor"></span>
+        </div>
+    </div>
+</nav>
+<script>
+(function() {
+    var currentVersion = '{{.JTS_VERS}}';
+    if (!currentVersion || currentVersion === 'N/A') return;
+
+    function parseVer(v) {
+        var m = v.replace(/^v/, '').match(/^(\d+)\.(\d+)\.(\d+)/);
+        if (!m) return null;
+        return [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)];
+    }
+
+    function isNewer(latest, current) {
+        for (var i = 0; i < 3; i++) {
+            if (latest[i] > current[i]) return true;
+            if (latest[i] < current[i]) return false;
+        }
+        return false;
+    }
+
+    fetch('https://api.github.com/repos/door7302/openjts/releases/latest', {cache: 'no-store'})
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+        .then(function(data) {
+            var latestTag = data && data.tag_name;
+            if (!latestTag) return;
+            var latest = parseVer(latestTag);
+            var current = parseVer(currentVersion);
+            if (!latest || !current) return;
+            if (isNewer(latest, current)) {
+                var anchor = document.getElementById('openjts-update-anchor');
+                if (!anchor) return;
+                var badge = document.createElement('a');
+                badge.href = 'https://door7302.github.io/openjts/update/';
+                badge.target = '_blank';
+                badge.title = 'New version ' + latestTag + ' available (current: ' + currentVersion + ')';
+                badge.className = 'ms-3 badge bg-warning text-dark text-decoration-none';
+                badge.style.cssText = 'font-size:0.75rem; padding:0.4em 0.7em;';
+                badge.innerHTML = '<i class="fas fa-arrow-circle-up me-1"></i>Update available';
+                anchor.replaceWith(badge);
+            }
+        })
+        .catch(function() { /* silently ignore network/API errors */ });
+})();
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.documentElement.classList.add('jtso-ready');
+    if(localStorage.getItem('dark-mode')==='true'){document.getElementById('darkModeSwitch').checked=true;}
+  });
+</script>
+{{end}}

@@ -52,6 +52,7 @@ type Streamer struct {
 	Router        string
 	Port          int
 	Merger        bool
+	Timeout       int
 	Ticker        time.Time
 	ForceFlush    bool
 	Result        *TreeNode
@@ -61,6 +62,8 @@ type Streamer struct {
 	XpathCpt      int
 	XpathList     map[string]struct{}
 	StopStreaming chan struct{}
+	Ctx           context.Context
+	Cancel        context.CancelFunc
 }
 
 type OnceRequest struct {
@@ -115,6 +118,15 @@ func ToJSON(data map[string]interface{}) string {
 }
 
 func StreamData(m string, s string, payload ...string) {
+	// Check if context is canceled (client disconnected)
+	if StreamObj.Ctx != nil {
+		select {
+		case <-StreamObj.Ctx.Done():
+			return
+		default:
+		}
+	}
+
 	var pl string
 	if len(payload) == 0 {
 		pl = ""
@@ -326,6 +338,8 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 	}
 
 	leafParts := []string{}
+	//xpathIsLeaf := false
+
 	if start == 0 {
 		// add empty root node
 		leafParts = append(leafParts, "")
@@ -352,7 +366,10 @@ func extractFieldTag(base, xpath string, hideOrigin bool) XPathInfo {
 			info.Keys = append(info.Keys, keyPath)
 		}
 	}
-
+	// manage corner case where the base is the leaf itself
+	if info.Leaf == "." {
+		info.Leaf = "/" + removePredicates(strings.Join(segments, "/"))
+	}
 	return info
 }
 
@@ -392,7 +409,8 @@ func findBaseIndex(segments, base []string) int {
 		match := true
 		for j := range base {
 			noAttribSeg := removePredicates(segments[i+j])
-			if noAttribSeg != base[j] {
+			noAttribBase := removePredicates(base[j])
+			if noAttribSeg != noAttribBase {
 				match = false
 				break
 			}
@@ -469,9 +487,9 @@ func parseXpath(xpath string, value string, merge bool, hideOrigin bool) error {
 	return nil
 }
 
-func GnmiSample(timeout int, hideOrigin bool) {
+func GnmiSample(hideOrigin bool) {
 
-	logger.Log.Infof("Start gNMI SAMPLE subscription for router %s and xpath %s (timeout is %d)", StreamObj.Router, StreamObj.Path, timeout)
+	logger.Log.Infof("Start gNMI SAMPLE subscription for router %s and xpath %s (timeout is %d)", StreamObj.Router, StreamObj.Path, StreamObj.Timeout)
 	StreamData(fmt.Sprintf("Start gNMI subscription for router %s and xpath %s", StreamObj.Router, StreamObj.Path), "OK")
 
 	// Init global variable
@@ -546,7 +564,7 @@ func GnmiSample(timeout int, hideOrigin bool) {
 	}
 	StreamData("gNMI Target created", "OK")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(StreamObj.Ctx)
 	defer cancel()
 	err = tg.CreateGNMIClient(ctx)
 	if err != nil {
@@ -566,7 +584,7 @@ func GnmiSample(timeout int, hideOrigin bool) {
 		api.Subscription(
 			api.Path(StreamObj.Path),
 			api.SubscriptionMode("sample"),
-			api.SampleInterval(15*time.Second),
+			api.SampleInterval(time.Duration(StreamObj.Timeout)*time.Second),
 		))
 	if err != nil {
 		logger.Log.Errorf("Unable to create gNMI subscription: %v", err)
@@ -579,13 +597,24 @@ func GnmiSample(timeout int, hideOrigin bool) {
 
 	go tg.Subscribe(ctx, subReq, "sub1")
 
+	forceStopCh := make(chan struct{})
 	go func() {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(time.Duration(timeout) * time.Second):
+		case <-time.After(time.Duration(15+StreamObj.Timeout) * time.Second):
 			logger.Log.Infof("End of the subscription timer")
 			tg.StopSubscription("sub1")
+			// Safety: if StopSubscription doesn't trigger subErrChan (e.g. huge buffered data),
+			// force cancel context after a grace period to unblock the loop
+			select {
+			case <-StreamObj.StopStreaming:
+				// Already exited normally
+			case <-time.After(10 * time.Second):
+				logger.Log.Warn("StopSubscription did not terminate the loop, forcing context cancel")
+				close(forceStopCh)
+				cancel()
+			}
 		}
 	}()
 
@@ -595,6 +624,20 @@ func GnmiSample(timeout int, hideOrigin bool) {
 	StreamObj.ForceFlush = false
 	for {
 		select {
+		case <-ctx.Done():
+			StreamObj.ForceFlush = true
+			// Determine if this was a force-stop (too much data) or a client disconnect
+			select {
+			case <-forceStopCh:
+				logger.Log.Warn("Context done due to too much data received, forcing stop")
+				StreamObj.Error = fmt.Errorf("Context done due to too much data received, forcing stop")
+			default:
+				logger.Log.Infof("Context done, client disconnected: %v", ctx.Err())
+				StreamObj.Error = ctx.Err()
+			}
+			StreamObj.Result = root
+			close(StreamObj.StopStreaming)
+			return
 		case rsp := <-subRspChan:
 			r, _ := formatters.ResponsesFlat(rsp.Response)
 			for k, v := range r {
@@ -604,7 +647,6 @@ func GnmiSample(timeout int, hideOrigin bool) {
 		case gnmiErr := <-subErrChan:
 			//traverseTree(root)
 			StreamObj.ForceFlush = true
-			logger.Log.Infof("End of the subscription after timeout exprired - status of the end: %v", gnmiErr.Err.Error())
 			StreamObj.Error = gnmiErr.Err
 			time.Sleep(1 * time.Second)
 			StreamObj.Result = root
@@ -757,7 +799,6 @@ Loop:
 
 	rootAlias := &TrieNode{}
 	for _, k := range fieldKeys {
-		logger.Log.Infof("DEBUG: Field extracted: %s with tags %v", k, fieldMap[k])
 		f := Field{
 			Name:        k,
 			Monitor:     false,
@@ -769,7 +810,6 @@ Loop:
 
 		// to detect alias then
 		Insert(rootAlias, o.Path, k)
-		logger.Log.Infof("DEBUG: Inserted in Trie with base %s and xpath %s", o.Path, k)
 	}
 
 	// Provision Alias if found out.

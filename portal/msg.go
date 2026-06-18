@@ -9,6 +9,7 @@ type (
 	TabAsso struct {
 		Shortname string `json:"shortname"`
 		Profiles  string `json:"profiles"`
+		Kafka     bool   `json:"kafka"`
 	}
 
 	LongRouter struct {
@@ -20,6 +21,7 @@ type (
 		Shortname string `json:"shortname"`
 		Xpath     string `json:"xpath"`
 		Merge     bool   `json:"merge"`
+		Timeout   int    `json:"timeout"`
 	}
 
 	RouterDetails struct {
@@ -35,6 +37,7 @@ type (
 	AddProfile struct {
 		Shortname string   `json:"shortname"`
 		Profiles  []string `json:"profiles"`
+		Kafka     bool     `json:"kafka"`
 	}
 
 	DocProfile struct {
@@ -91,6 +94,12 @@ type (
 	ReplyTree struct {
 		Status string   `json:"status"`
 		Tree   TreeView `json:"tree"`
+	}
+
+	ReplySchemas struct {
+		Status  string   `json:"status"`
+		Msg     string   `json:"msg,omitempty"`
+		Schemas []string `json:"schemas,omitempty"`
 	}
 
 	Setting struct {
@@ -160,12 +169,81 @@ type (
 		IntervalOverridden bool     `json:"isoverridden"`
 		Aliases            []string `json:"aliases"`
 		Origin             string   `json:"origin"`
+		AliasOrigin        string   // Don't serialize this field, it's only used internally to determine the origin of the path when it's an alias
 		Fields             []string `json:"listOfFields"`
 	}
 
 	TreeView struct {
 		RootName string     `json:"rootName"`
 		Paths    []TreePath `json:"listOfPaths"`
+	}
+
+	JTTLaunchRequest struct {
+		Name     string            `json:"name"`
+		CsvLines []string          `json:"csv_lines"`
+		Routers  []JTTLaunchRouter `json:"routers"`
+	}
+
+	JTTLaunchRouter struct {
+		Shortname string `json:"shortname"`
+		Hostname  string `json:"hostname"`
+		Model     string `json:"model"`
+		Family    string `json:"family"`
+		Version   string `json:"version"`
+	}
+
+	JTTCsvEntry struct {
+		TestType             int
+		ParentPath           string
+		LeafPath             string
+		CounterType          string
+		Description          string
+		Category             string
+		Origin               string
+		IntervalRate         int
+		ParentNetconf        string
+		LeafNetconf          string
+		OverrideThld         bool
+		ValueCheckRatio      int
+		FalsePositiveAllowed int
+		SupportedFamilies    map[string]struct{}
+	}
+
+	JTTJobRequest struct {
+		JobID string `json:"job_id"`
+		Name  string `json:"name"`
+	}
+
+	JTTJobEntry struct {
+		JobID  string `json:"job_id"`
+		Name   string `json:"name"`
+		Status string `json:"status"`
+		Date   string `json:"date"`
+		Error  string `json:"error,omitempty"`
+	}
+
+	ReplyJTTLaunch struct {
+		Status string        `json:"status"`
+		Msg    string        `json:"msg,omitempty"`
+		Jobs   []JTTJobEntry `json:"jobs,omitempty"`
+	}
+
+	ReplyJTTUpdate struct {
+		Status string `json:"status"`
+		Msg    string `json:"msg,omitempty"`
+		State  string `json:"state,omitempty"`
+	}
+
+	ReplyJTTDetail struct {
+		Status string      `json:"status"`
+		Msg    string      `json:"msg,omitempty"`
+		Data   interface{} `json:"data,omitempty"`
+	}
+
+	ReplyJTTPluginState struct {
+		Status        string `json:"status"`
+		PluginRunning bool   `json:"plugin_running"`
+		Message       string `json:"message,omitempty"`
 	}
 )
 

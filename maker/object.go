@@ -467,8 +467,8 @@ const RateTemplate = `
   period = "10m"
   suffix = "_rate"
   factor = 1.0
-  retention = "1h"
-  delta_min = "10s"
+  retention = "30m"
+  delta_min = "2s"
   fields = [
   {{- range $index, $name := .Fields}}
   {{- if $index}},{{end}}
@@ -515,7 +515,7 @@ const MonitoringTemplate = `
   measurement = "ALARMING"
   tag_name = "ALARM_TYPE"
   period = "10m"
-  retention = "1h"
+  retention = "30m"
   {{range .Probes}}
   [[processors.monitoring.probe]]
     alarm_name = "{{.Name}}"

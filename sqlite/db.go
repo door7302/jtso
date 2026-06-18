@@ -27,12 +27,14 @@ type Collection struct {
 	ProfilesName []string
 	ProfilesConf []string
 	Routers      []*RtrEntry
+	Kafka        bool
 }
 
 type AssoEntry struct {
 	Id        int
 	Shortname string
 	Assos     []string
+	Kafka     string
 }
 
 type Cred struct {
@@ -98,6 +100,13 @@ type KafkaConfig struct {
 	MessageSize int
 }
 
+type JTTJob struct {
+	JobID string
+	Name  string
+	State string
+	Date  string
+}
+
 var (
 	db                        *sql.DB
 	dbMu                      *sync.Mutex
@@ -108,12 +117,13 @@ var (
 	ActiveAdmin               Admin
 	ActiveKafkaConfig         KafkaConfig
 	ActiveCollectorParameters CollectorParameters
+	ActiveJTTJobs             []*JTTJob
 	SM                        *security.SecretManager
 )
 
 const SECRET_STORE string = "/data"
 
-func Init(f string) error {
+func Init(f string, jttEnabled bool) error {
 	var err error
 	var secretChange bool
 	err = nil
@@ -164,7 +174,8 @@ func Init(f string) error {
 		CREATE TABLE IF NOT EXISTS associations (
 		id INTEGER NOT NULL PRIMARY KEY,
 		name TEXT,
-		listing TEXT
+		listing TEXT,
+		kafka TEXT DEFAULT 'no'
 		);`
 
 	const createCred string = `
@@ -230,6 +241,14 @@ func Init(f string) error {
 		flush_jitter TEXT
 		);`
 
+	const createJTTJobs string = `
+		CREATE TABLE IF NOT EXISTS jttjobs (
+		jobid TEXT NOT NULL PRIMARY KEY,
+		name TEXT NOT NULL,
+		state TEXT NOT NULL,
+		date TEXT NOT NULL DEFAULT ''
+		);`
+
 	if _, err := db.Exec(createRtr); err != nil {
 		logger.Log.Infof("Error while init DB %s Table routers - err: %v", f, err)
 		return err
@@ -238,6 +257,8 @@ func Init(f string) error {
 		logger.Log.Infof("Error while init DB %s Table associations - err: %v", f, err)
 		return err
 	}
+	// Migrate: add kafka column if missing from older schema
+	db.Exec("ALTER TABLE associations ADD COLUMN kafka TEXT DEFAULT 'no';")
 	if _, err := db.Exec(createCred); err != nil {
 		logger.Log.Infof("Error while init DB %s Table credentials - err: %v", f, err)
 		return err
@@ -257,6 +278,12 @@ func Init(f string) error {
 	if _, err := db.Exec(createCollector); err != nil {
 		logger.Log.Infof("Error while init DB %s Table collector_parameters - err: %v", f, err)
 		return err
+	}
+	if jttEnabled {
+		if _, err := db.Exec(createJTTJobs); err != nil {
+			logger.Log.Infof("Error while init DB %s Table jttjobs - err: %v", f, err)
+			return err
+		}
 	}
 
 	err = LoadAll(secretChange)
@@ -462,13 +489,13 @@ func DelAsso(n string) error {
 	return loadAllInternal(false)
 }
 
-func AddAsso(n string, a []string) error {
+func AddAsso(n string, a []string, kafka string) error {
 
 	dbMu.Lock()
 	defer dbMu.Unlock()
 	// convert list to string
 	asso := strings.Join(a, "|")
-	if _, err := db.Exec("INSERT INTO associations VALUES(NULL,?,?);", n, asso); err != nil {
+	if _, err := db.Exec("INSERT INTO associations VALUES(NULL,?,?,?);", n, asso, kafka); err != nil {
 		logger.Log.Errorf("Error while adding router %s - err: %v", n, err)
 		return err
 	}
@@ -601,7 +628,7 @@ func loadAllInternal(secretRotation bool) error {
 	for rows.Next() {
 		i := AssoEntry{}
 		var tmpList string
-		err = rows.Scan(&i.Id, &i.Shortname, &tmpList)
+		err = rows.Scan(&i.Id, &i.Shortname, &tmpList, &i.Kafka)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing associations rows - err: %v", err)
 			return err
@@ -951,10 +978,81 @@ func loadAllInternal(secretRotation bool) error {
 		ActiveCollectorParameters = CollectorParameters{Id: 0, MetricBatchSize: "5000", MetricBufferLimit: "100000", FlushInterval: "5s", FlushJitter: "0s"}
 	}
 
+	// Load JTT Jobs
+	ActiveJTTJobs = make([]*JTTJob, 0)
+	rows, err = db.Query("SELECT jobid, name, state, date FROM jttjobs;")
+	if err != nil {
+		// Table may not exist if JTT is not enabled, just skip
+		logger.Log.Debugf("JTT jobs table not available or error: %v", err)
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			j := &JTTJob{}
+			err = rows.Scan(&j.JobID, &j.Name, &j.State, &j.Date)
+			if err != nil {
+				logger.Log.Errorf("Error while parsing JTT jobs rows - err: %v", err)
+				break
+			}
+			ActiveJTTJobs = append(ActiveJTTJobs, j)
+		}
+	}
+
 	return nil
 }
 
 func CloseDb() error {
 	logger.Log.Info("Closing database.")
 	return db.Close()
+}
+
+func AddJTTJob(jobID string, name string, state string, date string) error {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	if _, err := db.Exec("INSERT INTO jttjobs VALUES(?,?,?,?);", jobID, name, state, date); err != nil {
+		logger.Log.Errorf("Error while adding JTT job %s - err: %v", jobID, err)
+		return err
+	}
+	return loadAllInternal(false)
+}
+
+func UpdateJTTJob(jobID string, state string) error {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	if _, err := db.Exec("UPDATE jttjobs SET state=? WHERE jobid=?;", state, jobID); err != nil {
+		logger.Log.Errorf("Error while updating JTT job %s - err: %v", jobID, err)
+		return err
+	}
+	return loadAllInternal(false)
+}
+
+func DelJTTJob(jobID string) error {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	if _, err := db.Exec("DELETE FROM jttjobs WHERE jobid=?;", jobID); err != nil {
+		logger.Log.Errorf("Error while deleting JTT job %s - err: %v", jobID, err)
+		return err
+	}
+	return loadAllInternal(false)
+}
+
+func GetJTTJobsByState(state string) ([]*JTTJob, error) {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	jobs := make([]*JTTJob, 0)
+	rows, err := db.Query("SELECT jobid, name, state, date FROM jttjobs WHERE state=?;", state)
+	if err != nil {
+		logger.Log.Errorf("Error while selecting JTT jobs - err: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		j := &JTTJob{}
+		err = rows.Scan(&j.JobID, &j.Name, &j.State, &j.Date)
+		if err != nil {
+			logger.Log.Errorf("Error while parsing JTT jobs rows - err: %v", err)
+			return nil, err
+		}
+		jobs = append(jobs, j)
+	}
+	return jobs, nil
 }

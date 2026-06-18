@@ -554,7 +554,7 @@ function save() {
             function () {
                 // Cancel clicked
                 waitingDialog.hide();
-                alertify.message('Operation cancelled');
+                alertify.message('Operation canceled');
             }
         ).setHeader('JSTO...');
 }
