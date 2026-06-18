@@ -41,14 +41,7 @@
                 <input class="form-check-input" type="checkbox" id="darkModeSwitch">
                 <label class="form-check-label" for="darkModeSwitch"><i class="fas fa-moon"></i></label>
             </div>
-            <a id="openjts-update-badge"
-               href="https://door7302.github.io/openjts/update/"
-               target="_blank"
-               title=""
-               class="ms-3 badge bg-warning text-dark text-decoration-none"
-               style="display:none; font-size:0.75rem; padding:0.4em 0.7em;">
-                <i class="fas fa-arrow-circle-up me-1"></i>Update available
-            </a>
+            <span id="openjts-update-anchor"></span>
         </div>
     </div>
 </nav>
@@ -80,11 +73,16 @@
             var current = parseVer(currentVersion);
             if (!latest || !current) return;
             if (isNewer(latest, current)) {
-                var badge = document.getElementById('openjts-update-badge');
-                if (badge) {
-                    badge.title = 'New version ' + latestTag + ' available (current: ' + currentVersion + ')';
-                    badge.style.display = '';
-                }
+                var anchor = document.getElementById('openjts-update-anchor');
+                if (!anchor) return;
+                var badge = document.createElement('a');
+                badge.href = 'https://door7302.github.io/openjts/update/';
+                badge.target = '_blank';
+                badge.title = 'New version ' + latestTag + ' available (current: ' + currentVersion + ')';
+                badge.className = 'ms-3 badge bg-warning text-dark text-decoration-none';
+                badge.style.cssText = 'font-size:0.75rem; padding:0.4em 0.7em;';
+                badge.innerHTML = '<i class="fas fa-arrow-circle-up me-1"></i>Update available';
+                anchor.replaceWith(badge);
             }
         })
         .catch(function() { /* silently ignore network/API errors */ });
