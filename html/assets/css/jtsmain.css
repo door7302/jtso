@@ -134,6 +134,11 @@ html {
     overflow-x: hidden;
     scrollbar-gutter: stable;
     background-color: var(--bg-primary);
+    visibility: hidden;
+}
+
+html.jtso-ready {
+    visibility: visible;
 }
 
 body {

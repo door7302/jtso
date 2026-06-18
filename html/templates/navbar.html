@@ -88,5 +88,10 @@
         .catch(function() { /* silently ignore network/API errors */ });
 })();
 </script>
-<script>if(localStorage.getItem('dark-mode')==='true'){document.getElementById('darkModeSwitch').checked=true;}</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.documentElement.classList.add('jtso-ready');
+    if(localStorage.getItem('dark-mode')==='true'){document.getElementById('darkModeSwitch').checked=true;}
+  });
+</script>
 {{end}}
