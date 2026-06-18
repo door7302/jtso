@@ -41,8 +41,54 @@
                 <input class="form-check-input" type="checkbox" id="darkModeSwitch">
                 <label class="form-check-label" for="darkModeSwitch"><i class="fas fa-moon"></i></label>
             </div>
+            <a id="openjts-update-badge"
+               href="https://door7302.github.io/openjts/update/"
+               target="_blank"
+               title=""
+               class="ms-3 badge bg-warning text-dark text-decoration-none"
+               style="display:none; font-size:0.75rem; padding:0.4em 0.7em;">
+                <i class="fas fa-arrow-circle-up me-1"></i>Update available
+            </a>
         </div>
     </div>
 </nav>
+<script>
+(function() {
+    var currentVersion = '{{.JTS_VERS}}';
+    if (!currentVersion || currentVersion === 'N/A') return;
+
+    function parseVer(v) {
+        var m = v.replace(/^v/, '').match(/^(\d+)\.(\d+)\.(\d+)/);
+        if (!m) return null;
+        return [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)];
+    }
+
+    function isNewer(latest, current) {
+        for (var i = 0; i < 3; i++) {
+            if (latest[i] > current[i]) return true;
+            if (latest[i] < current[i]) return false;
+        }
+        return false;
+    }
+
+    fetch('https://api.github.com/repos/door7302/openjts/releases/latest', {cache: 'no-store'})
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+        .then(function(data) {
+            var latestTag = data && data.tag_name;
+            if (!latestTag) return;
+            var latest = parseVer(latestTag);
+            var current = parseVer(currentVersion);
+            if (!latest || !current) return;
+            if (isNewer(latest, current)) {
+                var badge = document.getElementById('openjts-update-badge');
+                if (badge) {
+                    badge.title = 'New version ' + latestTag + ' available (current: ' + currentVersion + ')';
+                    badge.style.display = '';
+                }
+            }
+        })
+        .catch(function() { /* silently ignore network/API errors */ });
+})();
+</script>
 <script>if(localStorage.getItem('dark-mode')==='true'){document.getElementById('darkModeSwitch').checked=true;}</script>
 {{end}}
