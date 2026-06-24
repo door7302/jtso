@@ -819,7 +819,7 @@ const PrometheusTemplate = `
 ###############################################################################
 #                            PROMETHEUS OUTPUT PLUGIN                         #
 ###############################################################################
-{{range .}}[[processors.filter]]
+{{range .}}[[processors.filtering]]
   order = {{.Order}}
   fieldpass = [
   {{- range $index, $name := .Fieldpass}}
