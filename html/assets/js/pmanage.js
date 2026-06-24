@@ -149,7 +149,6 @@ function updateDoc() {
   var desc = document.getElementById("profileDesc");
   var tele = document.getElementById("profileTele");
   var graf = document.getElementById("profileGraf");
-  var kapa = document.getElementById("profileKapa");
   var descpanel = document.getElementById("descpanel");
 
   
@@ -158,7 +157,6 @@ function updateDoc() {
     desc.innerHTML = "Please select a profile...";
     tele.innerHTML = "";
     graf.innerHTML = "";
-    kapa.innerHTML = "";
     descpanel.classList.add("d-none");
     $('#modifyI').hide();
     $('#resetI').hide();
@@ -183,7 +181,6 @@ function updateDoc() {
             desc.innerHTML = json.desc.trim();
             tele.innerHTML = json.tele.trim();
             graf.innerHTML = json.graf.trim();
-            kapa.innerHTML = json.kapa.trim();
             descpanel.classList.remove("d-none");
             $('#modifyI').show();
             $('#resetI').show();

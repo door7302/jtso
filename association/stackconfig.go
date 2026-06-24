@@ -8,7 +8,6 @@ import (
 	"io"
 	"jtso/config"
 	"jtso/container"
-	"jtso/kapacitor"
 	"jtso/logger"
 	"jtso/maker"
 	"jtso/ondemand"
@@ -356,7 +355,8 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		ConverterList:  make([]maker.Converter, 0),  //Order = 200
 		EnrichmentList: make([]maker.Enrichment, 0), //Order = 300
 		RateList:       make([]maker.Rate, 0),       //Order = 400
-		InfluxList:     make([]maker.InfluxOutput, 0),
+		//InfluxList:     make([]maker.InfluxOutput, 0),
+		PrometheusList: make([]maker.PrometheusOutput, 0),
 		KafkaList:      make([]maker.KafkaOutput, 0),
 	}
 
@@ -396,7 +396,10 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	gnmi := new(maker.GnmiInput)
 	converter := new(maker.Converter)
 	rate := new(maker.Rate)
-	influx := new(maker.InfluxOutput)
+	// to_remove_later
+	//influx := new(maker.InfluxOutput)
+
+	prometheus := new(maker.PrometheusOutput)
 	rename := new(maker.Rename)
 
 	// Retrieve some common flags
@@ -421,8 +424,12 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	gnmi.SkipVerify = skip
 	gnmi.Subs = make([]maker.Subscription, 0)
 
-	influx.Retention = "autogen"
-	influx.Fieldpass = make([]string, 0)
+	// to_remove_later
+	//influx.Retention = "autogen"
+	//influx.Fieldpass = make([]string, 0)
+
+	prometheus.Order = 10000
+	prometheus.Fieldpass = make([]string, 0)
 
 	// Simple set to track duplicated tags / fields
 	uniqueTagsGlobal := make(map[string]string)
@@ -594,9 +601,15 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			}
 			if f.Rate {
 				gfnaV.Field = finalField + "_rate"
-				influx.Fieldpass = append(influx.Fieldpass, finalField+"_rate")
+				// to_remove_later
+				//influx.Fieldpass = append(influx.Fieldpass, finalField+"_rate")
+
+				prometheus.Fieldpass = append(prometheus.Fieldpass, finalField+"_rate")
 			} else {
-				influx.Fieldpass = append(influx.Fieldpass, finalField)
+				// to_remove_later
+				//influx.Fieldpass = append(influx.Fieldpass, finalField)
+
+				prometheus.Fieldpass = append(prometheus.Fieldpass, finalField)
 			}
 			row.Panels = append(row.Panels, gfnaV)
 		}
@@ -628,7 +641,10 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	if rate.Order != 0 {
 		telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
 	}
-	telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
+	// to_remove_later
+	//telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
+
+	telegrafOnDemand.PrometheusList = append(telegrafOnDemand.PrometheusList, *prometheus)
 
 	// Add Kafka output if needed
 	if sqlite.ActiveKafkaConfig.Enabled == 1 {
@@ -646,7 +662,10 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			MessageSize:      sqlite.ActiveKafkaConfig.MessageSize,
 			CompressionCodec: sqlite.ActiveKafkaConfig.Compression,
 			// inherit some fields from influx output if not specified in kafka config
-			Fieldpass: telegrafOnDemand.InfluxList[0].Fieldpass,
+
+			// to_remove_later
+			// Fieldpass: telegrafOnDemand.InfluxList[0].Fieldpass,
+			Fieldpass: telegrafOnDemand.PrometheusList[0].Fieldpass,
 		})
 
 		logger.Log.Info("Kafka output added to the telegraf Ondemand config")
@@ -1037,7 +1056,10 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					MessageSize:      sqlite.ActiveKafkaConfig.MessageSize,
 					CompressionCodec: sqlite.ActiveKafkaConfig.Compression,
 					// inherit some fields from influx output if not specified in kafka config
-					Fieldpass: mergedCfg.InfluxList[0].Fieldpass,
+
+					// to_remove_later
+					// Fieldpass: mergedCfg.InfluxList[0].Fieldpass,
+					Fieldpass: mergedCfg.PrometheusList[0].Fieldpass,
 				})
 
 				logger.Log.Infof("Kafka output added to the telegraf config of the collection %s", id)
@@ -1138,70 +1160,73 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// -----------------------------------------------------------------------------------------------------
 	// Create the list of Active Kapacitor script
 	// -----------------------------------------------------------------------------------------------------
-	var kapaStart, kapaStop, kapaAll []string
-	kapaStart = make([]string, 0)
-	kapaStop = make([]string, 0)
-	kapaAll = make([]string, 0)
-	for _, v := range Collections {
-		for _, c := range v {
-			for _, p := range c.ProfilesName {
-				// bypass unknown profile
-				_, ok := ActiveProfiles[p]
-				if !ok {
-					logger.Log.Errorf("Kapacitor update - Unknown profile detected: %s - skip it", p)
-					continue
-				}
-				for _, d := range ActiveProfiles[p].Definition.KapaCfg {
-					fileKapa := ACTIVE_PROFILES + p + "/" + d
-					to_add := true
-					for _, a := range kapaAll {
-						if a == fileKapa {
-							to_add = false
-							break
+	// to_reove_later
+	/*
+		var kapaStart, kapaStop, kapaAll []string
+		kapaStart = make([]string, 0)
+		kapaStop = make([]string, 0)
+		kapaAll = make([]string, 0)
+		for _, v := range Collections {
+			for _, c := range v {
+				for _, p := range c.ProfilesName {
+					// bypass unknown profile
+					_, ok := ActiveProfiles[p]
+					if !ok {
+						logger.Log.Errorf("Kapacitor update - Unknown profile detected: %s - skip it", p)
+						continue
+					}
+					for _, d := range ActiveProfiles[p].Definition.KapaCfg {
+						fileKapa := ACTIVE_PROFILES + p + "/" + d
+						to_add := true
+						for _, a := range kapaAll {
+							if a == fileKapa {
+								to_add = false
+								break
+							}
 						}
-					}
-					if to_add {
-						// kapaAll is to compare with ActiveTick later to delete unwanted tick scripts
-						kapaAll = append(kapaAll, fileKapa)
-					}
-					found := false
-					for i, _ := range kapacitor.ActiveTick {
-						if i == fileKapa {
-							found = true
-							break
+						if to_add {
+							// kapaAll is to compare with ActiveTick later to delete unwanted tick scripts
+							kapaAll = append(kapaAll, fileKapa)
 						}
-					}
-					// if kapa script not already active
-					if !found {
-						kapaStart = append(kapaStart, fileKapa)
+						found := false
+						for i, _ := range kapacitor.ActiveTick {
+							if i == fileKapa {
+								found = true
+								break
+							}
+						}
+						// if kapa script not already active
+						if !found {
+							kapaStart = append(kapaStart, fileKapa)
+						}
 					}
 				}
 			}
 		}
-	}
-	// check now those that need to be deleted
-	for i, _ := range kapacitor.ActiveTick {
-		found := false
-		for _, v := range kapaAll {
-			if i == v {
-				found = true
-				break
+		// check now those that need to be deleted
+		for i, _ := range kapacitor.ActiveTick {
+			found := false
+			for _, v := range kapaAll {
+				if i == v {
+					found = true
+					break
+				}
+			}
+			if !found {
+				kapaStop = append(kapaStop, i)
 			}
 		}
-		if !found {
-			kapaStop = append(kapaStop, i)
+
+		// remove non active Kapascript
+		if len(kapaStop) > 0 {
+			kapacitor.DeleteTick(kapaStop)
 		}
-	}
 
-	// remove non active Kapascript
-	if len(kapaStop) > 0 {
-		kapacitor.DeleteTick(kapaStop)
-	}
-
-	// Enable active scripts
-	if len(kapaStart) > 0 {
-		kapacitor.StartTick(kapaStart)
-	}
+		// Enable active scripts
+		if len(kapaStart) > 0 {
+			kapacitor.StartTick(kapaStart)
+		}
+	*/
 
 	// Restart grafana
 	container.RestartContainer("grafana")

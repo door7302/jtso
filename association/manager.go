@@ -43,7 +43,6 @@ type DefProfile struct {
 	Version     int      `json:"version"`
 	Description string   `json:"description"`
 	TelCfg      Telegraf `json:"telegraf"`
-	KapaCfg     []string `json:"kapacitor"`
 	GrafaCfg    []string `json:"grafana"`
 }
 

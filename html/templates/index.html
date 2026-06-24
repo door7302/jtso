@@ -106,24 +106,11 @@
                 </div>
             </div>
 
-            <div class="card influx" style="--box-color: #{{.Influx}};">
-                <h3>Influx DB</h3>
+            <div class="card prometheus" style="--box-color: #{{.Prometheus}};">
+                <h3>Prometheus</h3>
                 <div class="button-container">
                     <button class="button" onclick="emptydb()">Clear database</button>
-                    <button class="button" onclick="changeRP()">Change Retention</button>
-                </div>
-                <img class="docker-logo" src="img/docker.png" alt="Docker">
-            </div>
-
-            <div class="card kapacitor" style="--box-color: #{{.Kapacitor}};">
-                <h3>Kapacitor</h3>
-                <img class="docker-logo" src="img/docker.png" alt="Docker">
-            </div>
-
-            <div class="card chronograf" style="--box-color: #{{.Chronograf}};">
-                <h3>Chronograf</h3>
-                <div class="button-container">
-                    <button class="button" onclick="window.open('http://' + window.location.hostname + ':' + {{.ChronografPort}} + '/?orgId=1', '_blank')">Open</button>
+        
                 </div>
                 <img class="docker-logo" src="img/docker.png" alt="Docker">
             </div>

@@ -7,23 +7,24 @@ package maker
 // ---------------------------------------------------- //
 
 type TelegrafConfig struct {
-	GnmiList       []GnmiInput    `json:"gnmi_inputs"`
-	NetconfList    []NetconfInput `json:"netconf_inputs"`
-	CloneList      []Clone        `json:"clone_list"`
-	PivotList      []Pivot        `json:"pivot_list"`
-	RenameList     []Rename       `json:"rename_list"`
-	XreducerList   []Xreducer     `json:"xreducer_list"`
-	ConverterList  []Converter    `json:"converter_list"`
-	EnrichmentList []Enrichment   `json:"enrichment_list"`
-	RateList       []Rate         `json:"rate_list"`
-	MonitoringList []Monitoring   `json:"monitoring_list"`
-	FilteringList  []Filtering    `json:"filtering_list"`
-	EnumList       []Enum         `json:"enum_list"`
-	RegexList      []Regex        `json:"regex_list"`
-	StringsList    []Strings      `json:"strings_list"`
-	FileList       []FileOutput   `json:"file_outputs"`
-	InfluxList     []InfluxOutput `json:"influx_outputs"`
-	KafkaList      []KafkaOutput  `json:"kafka_outputs"`
+	GnmiList       []GnmiInput        `json:"gnmi_inputs"`
+	NetconfList    []NetconfInput     `json:"netconf_inputs"`
+	CloneList      []Clone            `json:"clone_list"`
+	PivotList      []Pivot            `json:"pivot_list"`
+	RenameList     []Rename           `json:"rename_list"`
+	XreducerList   []Xreducer         `json:"xreducer_list"`
+	ConverterList  []Converter        `json:"converter_list"`
+	EnrichmentList []Enrichment       `json:"enrichment_list"`
+	RateList       []Rate             `json:"rate_list"`
+	MonitoringList []Monitoring       `json:"monitoring_list"`
+	FilteringList  []Filtering        `json:"filtering_list"`
+	EnumList       []Enum             `json:"enum_list"`
+	RegexList      []Regex            `json:"regex_list"`
+	StringsList    []Strings          `json:"strings_list"`
+	FileList       []FileOutput       `json:"file_outputs"`
+	InfluxList     []InfluxOutput     `json:"influx_outputs"`
+	KafkaList      []KafkaOutput      `json:"kafka_outputs"`
+	PrometheusList []PrometheusOutput `json:"prometheus_outputs"`
 }
 
 // ---------------------------------------------------- //
@@ -800,5 +801,36 @@ const KafkaTemplate = `
       "{{$name}}"
   {{- end}}
   ]
+{{end}}
+`
+
+// ---------------------------------------------------- //
+// Prometheus Output plugin
+// ---------------------------------------------------- //
+
+type PrometheusOutput struct {
+	Order     int      // don't expose it
+	Fieldpass []string `json:"fieldpass"`
+}
+
+// Go Template Receive a list of PrometheusOutput (we should only have one) = PrometheusList
+
+const PrometheusTemplate = `
+###############################################################################
+#                            PROMETHEUS OUTPUT PLUGIN                         #
+###############################################################################
+{{range .}}[[processors.filter]]
+  order = {{.Order}}
+  fieldpass = [
+  {{- range $index, $name := .Fieldpass}}
+  {{- if $index}},{{end}}
+      "{{$name}}"
+  {{- end}}
+  ]
+
+[[outputs.prometheus_client]]
+  listen = ":9273"
+  path = "/jts_metrics"
+  metric_version = 2
 {{end}}
 `

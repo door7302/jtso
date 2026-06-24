@@ -8,8 +8,6 @@ import (
 	"jtso/config"
 	"jtso/container"
 	_ "jtso/gnmicollect"
-	"jtso/influx"
-	"jtso/kapacitor"
 	"jtso/logger"
 	_ "jtso/output"
 	"jtso/portal"
@@ -60,20 +58,23 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Clean all kapacitor tasks
-	maxAttempts := Cfg.Kapacitor.BootTimeout
-	for i := 1; i <= maxAttempts; i++ {
-		if kapacitor.IsKapaRun() {
-			logger.Log.Info("Kapacitor module is up and running")
-			// Clean all kapacitor tasks
-			logger.Log.Info("Start cleaning all active Kapacitor tasks")
-			kapacitor.CleanKapa()
-			break
+	// to_remove_later
+	/*
+		maxAttempts := Cfg.Kapacitor.BootTimeout
+		for i := 1; i <= maxAttempts; i++ {
+			if kapacitor.IsKapaRun() {
+				logger.Log.Info("Kapacitor module is up and running")
+				// Clean all kapacitor tasks
+				logger.Log.Info("Start cleaning all active Kapacitor tasks")
+				kapacitor.CleanKapa()
+				break
+			}
+			time.Sleep(1 * time.Second)
+			if i == maxAttempts {
+				logger.Log.Error("Unable to clean Kapacitor tasks. Make sure Kapacitor container is running")
+			}
 		}
-		time.Sleep(1 * time.Second)
-		if i == maxAttempts {
-			logger.Log.Error("Unable to clean Kapacitor tasks. Make sure Kapacitor container is running")
-		}
-	}
+	*/
 
 	// Init the sqliteDB
 	//err = sqlite.Init("./jtso.db")
@@ -149,20 +150,23 @@ func main() {
 	}()
 
 	// Check if influxdb retention policy is equal to the default value, if not set it.
-	currentRP, _ := influx.GetRetentionPolicyDuration()
-	equal, err := influx.RetentionDurationEqual(currentRP, sqlite.ActiveAdmin.RPDuration)
-	if err != nil {
-		logger.Log.Errorf("Error while comparing influxdb retention policy duration: %v", err)
-	}
-	if !equal {
-		logger.Log.Infof("Change the influxdb retention policy duration from %s to %s", currentRP, sqlite.ActiveAdmin.RPDuration)
-		err := influx.AlterRetentionPolicyDuration(sqlite.ActiveAdmin.RPDuration)
+	// to_remove_later
+	/*
+		currentRP, _ := influx.GetRetentionPolicyDuration()
+		equal, err := influx.RetentionDurationEqual(currentRP, sqlite.ActiveAdmin.RPDuration)
 		if err != nil {
-			logger.Log.Errorf("Error while modifying influxdb retention policy duration: %v", err)
+			logger.Log.Errorf("Error while comparing influxdb retention policy duration: %v", err)
 		}
-	} else {
-		logger.Log.Infof("Retention Policy of influxDB is configured well with duration set to: %s", sqlite.ActiveAdmin.RPDuration)
-	}
+		if !equal {
+			logger.Log.Infof("Change the influxdb retention policy duration from %s to %s", currentRP, sqlite.ActiveAdmin.RPDuration)
+			err := influx.AlterRetentionPolicyDuration(sqlite.ActiveAdmin.RPDuration)
+			if err != nil {
+				logger.Log.Errorf("Error while modifying influxdb retention policy duration: %v", err)
+			}
+		} else {
+			logger.Log.Infof("Retention Policy of influxDB is configured well with duration set to: %s", sqlite.ActiveAdmin.RPDuration)
+		}
+	*/
 
 	// Waiting exit
 	c := make(chan os.Signal, 1)

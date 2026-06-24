@@ -78,7 +78,6 @@ type (
 		Desc   string `json:"desc"`
 		Tele   string `json:"tele"`
 		Graf   string `json:"graf"`
-		Kapa   string `json:"kapa"`
 	}
 
 	ReplyOnDemandProfile struct {
@@ -123,7 +122,7 @@ type (
 		KafkaMessageSize  int    `json:"kafkamessagesize"`
 	}
 
-	InfluxMgt struct {
+	PrometheusMgt struct {
 		Action string `json:"action"`
 		Data   string `json:"data"`
 	}

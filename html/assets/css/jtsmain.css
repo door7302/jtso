@@ -763,9 +763,9 @@ select {
     display: grid;
     grid-template-areas:
         "jtso jtso jtso"
-        "telegraf influx influx"
-        "telegraf influx influx"
-        "telegraf kapacitor chronograf"
+        "telegraf prometheus prometheus"
+        "telegraf prometheus prometheus"
+        "telegraf grafana grafana"
         "telegraf grafana grafana";
     grid-template-columns: 2fr 1fr 1fr;
     gap: 1.25rem;
@@ -779,16 +779,8 @@ select {
     grid-area: telegraf;
 }
 
-.influx {
-    grid-area: influx;
-}
-
-.kapacitor {
-    grid-area: kapacitor;
-}
-
-.chronograf {
-    grid-area: chronograf;
+.prometheus {
+    grid-area: prometheus;
 }
 
 .grafana {
@@ -1668,9 +1660,7 @@ footer p {
         grid-template-areas:
             "jtso"
             "telegraf"
-            "influx"
-            "kapacitor"
-            "chronograf"
+            "prometheus"
             "grafana";
         grid-template-columns: 1fr;
         width: 95%;

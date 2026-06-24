@@ -12,12 +12,12 @@ import (
 	"jtso/config"
 	"jtso/container"
 	"jtso/gnmicollect"
-	"jtso/influx"
 	"jtso/jtt"
 	"jtso/logger"
 	"jtso/maker"
 	"jtso/netconf"
 	"jtso/ondemand"
+	"jtso/prometheus"
 	"jtso/sqlite"
 	"jtso/worker"
 	"net/http"
@@ -136,8 +136,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/addprofile", routeAddProfile)
 	wapp.POST("/delprofile", routeShortNameRouter)
 	wapp.POST("/updatesettings", routeUptSettings)
-	wapp.POST("/updatedoc", routeUptDoc)
-	wapp.POST("/influxmgt", routeInfluxMgt)
+	wapp.POST("/prometheusmgt", routePrometheusMgt)
 	wapp.POST("/searchxpath", routeSearchPath)
 	wapp.POST("/updatedebug", routeUpdateDebug)
 	wapp.POST("/uploadrtrcsv", routeUploadRtrCsv)
@@ -450,9 +449,8 @@ func getJTSVersion() string {
 
 func routeIndex(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	chronografPort := collectCfg.cfg.Chronograf.Port
 
-	influx, grafana, kapacitor, jtso, chronograf := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
+	prometheus, grafana, jtso := "f8cecc", "f8cecc", "f8cecc"
 
 	// Telegraf Containers
 	// Physical devices
@@ -580,17 +578,9 @@ func routeIndex(c echo.Context) error {
 			if container.State == "running" {
 				grafana = "ccffcc"
 			}
-		case "/kapacitor":
+		case "/prometheus":
 			if container.State == "running" {
-				kapacitor = "ccffcc"
-			}
-		case "/chronograf":
-			if container.State == "running" {
-				chronograf = "ccffcc"
-			}
-		case "/influxdb":
-			if container.State == "running" {
-				influx = "ccffcc"
+				prometheus = "ccffcc"
 			}
 		case "/jtso":
 			if container.State == "running" {
@@ -663,24 +653,22 @@ func routeIndex(c echo.Context) error {
 
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "TeleEx": teleEx, "TeleQfx": teleQfx, "TeleSrx": teleSrx,
 		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVevo": teleVevo, "TeleOnDemand": teleOnDemand,
-		"Grafana": grafana, "Kapacitor": kapacitor, "Chronograf": chronograf, "Influx": influx, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
+		"Grafana": grafana, "Prometheus": prometheus, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
 		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVEVO": numVEVO, "NumONDEMAND": numONDEMAND,
 		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
 		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VEVODebug": VEVODebug, "ONDEMANDDebug": ONDEMANDDebug,
-		"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion,
+		"GrafanaPort": grafanaPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion,
 		"JTTEnabled": collectCfg.cfg.JTT.URL != ""})
 }
 
 func routeStats(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	chronografPort := collectCfg.cfg.Chronograf.Port
 
-	return c.Render(http.StatusOK, "stats.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
+	return c.Render(http.StatusOK, "stats.html", map[string]interface{}{"GrafanaPort": grafanaPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeRouters(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	chronografPort := collectCfg.cfg.Chronograf.Port
 
 	// Get all routers from db
 	var lr []RouterDetails
@@ -692,12 +680,11 @@ func routeRouters(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
+	return c.Render(http.StatusOK, "routers.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeSettings(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	chronografPort := collectCfg.cfg.Chronograf.Port
 	return c.Render(http.StatusOK, "settings.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser,
 		"Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd,
 		"Usetls": sqlite.ActiveCred.UseTls, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTls,
@@ -707,12 +694,11 @@ func routeSettings(c echo.Context) error {
 		"KafkaTopic": sqlite.ActiveKafkaConfig.Topic, "KafkaVersion": sqlite.ActiveKafkaConfig.Version,
 		"KafkaFormat": sqlite.ActiveKafkaConfig.Format, "KafkaCompression": reverseDictKafkaCodec[sqlite.ActiveKafkaConfig.Compression],
 		"KafkaMessageSize": sqlite.ActiveKafkaConfig.MessageSize,
-		"GrafanaPort":      grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
+		"GrafanaPort":      grafanaPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeProfiles(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	chronografPort := collectCfg.cfg.Chronograf.Port
 	// Get all routers from db
 	var lr []RouterDetails
 	var lp []string
@@ -756,13 +742,11 @@ func routeProfiles(c echo.Context) error {
 		}
 		la = append(la, TabAsso{Shortname: r.Shortname, Profiles: asso, Kafka: kafkaEnable})
 	}
-	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort,
-		"ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "KafkaEnable": sqlite.ActiveKafkaConfig.Enabled, "JTS_VERS": getJTSVersion()})
+	return c.Render(http.StatusOK, "profiles.html", map[string]interface{}{"Rtrs": lr, "Assos": la, "Profiles": lp, "GrafanaPort": grafanaPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "KafkaEnable": sqlite.ActiveKafkaConfig.Enabled, "JTS_VERS": getJTSVersion()})
 }
 
 func routeDoc(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	chronografPort := collectCfg.cfg.Chronograf.Port
 	// Get all profiles
 	var lp []string
 
@@ -775,12 +759,11 @@ func routeDoc(c echo.Context) error {
 	association.ProfileLock.Unlock()
 	sort.Strings(lp)
 
-	return c.Render(http.StatusOK, "pmanagement.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
+	return c.Render(http.StatusOK, "pmanagement.html", map[string]interface{}{"Profiles": lp, "GrafanaPort": grafanaPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeOndemand(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	chronografPort := collectCfg.cfg.Chronograf.Port
 
 	// Get all routers from db
 	lr := make([]RouterDetails, 0)
@@ -800,12 +783,11 @@ func routeOndemand(c echo.Context) error {
 	// sort it
 	sort.Strings(lc)
 
-	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "CurrentContext": ondemand.CC, "ConfigList": lc, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
+	return c.Render(http.StatusOK, "ondemand.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "CurrentContext": ondemand.CC, "ConfigList": lc, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeSchema(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	chronografPort := collectCfg.cfg.Chronograf.Port
 
 	// Get all routers from db
 	var lr []RouterDetails
@@ -831,12 +813,11 @@ func routeSchema(c echo.Context) error {
 		}
 	}
 
-	return c.Render(http.StatusOK, "schema.html", map[string]interface{}{"GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "Rtrs": lr, "SchemaFolders": ls, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
+	return c.Render(http.StatusOK, "schema.html", map[string]interface{}{"GrafanaPort": grafanaPort, "Rtrs": lr, "SchemaFolders": ls, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeBrowse(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	chronografPort := collectCfg.cfg.Chronograf.Port
 	useFancy := collectCfg.cfg.Portal.FancyTree
 
 	// Get all routers from db
@@ -849,12 +830,11 @@ func routeBrowse(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "UseFancyTree": useFancy, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
+	return c.Render(http.StatusOK, "browser.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "UseFancyTree": useFancy, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTS_VERS": getJTSVersion()})
 }
 
 func routeJTT(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
-	chronografPort := collectCfg.cfg.Chronograf.Port
 
 	// Refresh state of active JTT jobs before rendering
 	if collectCfg.cfg.JTT.URL != "" {
@@ -885,7 +865,7 @@ func routeJTT(c echo.Context) error {
 	// sort it
 	sort.Sort(ByShortname(lr))
 
-	return c.Render(http.StatusOK, "jtt.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "ChronografPort": chronografPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTTJobs": sqlite.ActiveJTTJobs, "JTS_VERS": getJTSVersion()})
+	return c.Render(http.StatusOK, "jtt.html", map[string]interface{}{"Rtrs": lr, "GrafanaPort": grafanaPort, "JTTEnabled": collectCfg.cfg.JTT.URL != "", "JTTJobs": sqlite.ActiveJTTJobs, "JTS_VERS": getJTSVersion()})
 }
 
 /// ---------------------------------------------///
@@ -1256,10 +1236,10 @@ func routeDelRouter(c echo.Context) error {
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete router from DB"})
 	}
 	if ln != "" {
-		err = influx.DropRouter(ln)
+		err = prometheus.DropRouter(ln)
 		if err != nil {
-			logger.Log.Errorf("Unable to delete router from InfluxDB: %v", err)
-			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete router from InfluxDB"})
+			logger.Log.Errorf("Unable to delete router from Prometheus: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to delete router from Prometheus"})
 		}
 	}
 	logger.Log.Infof("Router %s has been successfully removed", r.Shortname)
@@ -2028,18 +2008,21 @@ func routeUptDoc(c echo.Context) error {
 		teleHTML = "No Telegraf configuration attached to this profile"
 	}
 
-	kapa := ""
-	for i, v := range p.Definition.KapaCfg {
-		if i == len(p.Definition.KapaCfg)-1 {
-			kapa += "Script: " + v
-		} else {
-			kapa += "Script: " + v + "</br>"
-		}
+	// to_remove_later
+	/*
+		kapa := ""
+		for i, v := range p.Definition.KapaCfg {
+			if i == len(p.Definition.KapaCfg)-1 {
+				kapa += "Script: " + v
+			} else {
+				kapa += "Script: " + v + "</br>"
+			}
 
-	}
-	if kapa == "" {
-		kapa = "No Kapacitor script attached to this profile"
-	}
+		}
+		if kapa == "" {
+			kapa = "No Kapacitor script attached to this profile"
+		}
+	*/
 
 	graf := ""
 	for i, v := range p.Definition.GrafaCfg {
@@ -2053,7 +2036,7 @@ func routeUptDoc(c echo.Context) error {
 	if graf == "" {
 		graf = "No Grafana Dashboards attached to this profile"
 	}
-	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Desc: p.Definition.Description, Tele: teleHTML, Graf: graf, Kapa: kapa})
+	return c.JSON(http.StatusOK, ReplyDoc{Status: "OK", Desc: p.Definition.Description, Tele: teleHTML, Graf: graf})
 }
 
 func routeOnDemandMgt(c echo.Context) error {
@@ -2101,10 +2084,10 @@ func routeOnDemandMgt(c echo.Context) error {
 		ondemand.CC.CurrentProfile = profile
 		return c.JSON(http.StatusOK, ReplyOnDemandProfile{Status: "OK", Profile: profile})
 	case "clear":
-		err := influx.DropMeasurement("ONDEMAND")
+		err := prometheus.DropMeasurement("ONDEMAND")
 		if err != nil {
-			logger.Log.Errorf("Unable to clear the ONDEMAND Influx measurement: %v", err)
-			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to clear the ONDEMAND Influx measurement"})
+			logger.Log.Errorf("Unable to clear the ONDEMAND Prometheus measurement: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to clear the ONDEMAND Prometheus measurement"})
 		}
 		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "ONDEMAND measurement has been cleared"})
 	case "export":
@@ -2302,41 +2285,27 @@ func generateProfileInterval(p string) (error, ReplyInterval) {
 	return nil, ri
 }
 
-func routeInfluxMgt(c echo.Context) error {
+func routePrometheusMgt(c echo.Context) error {
 	var err error
 
-	r := new(InfluxMgt)
+	r := new(PrometheusMgt)
 
 	err = c.Bind(r)
 	if err != nil {
-		logger.Log.Errorf("Unable to parse Post request for managing influxDB: %v", err)
+		logger.Log.Errorf("Unable to parse Post request for managing Prometheus: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to parse the data"})
 	}
 
 	switch r.Action {
 	case "emptydb":
-		err = influx.EmptyDB()
+		err = prometheus.EmptyDB()
 		if err != nil {
 			logger.Log.Errorf("Unable to empty the database: %v", err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to empty the database"})
 		}
-		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "InfluxDB has been successfully empty"})
-	case "changeduration":
-		duration := strings.ToLower(r.Data)
-		err = influx.AlterRetentionPolicyDuration(duration)
-		if err != nil {
-			logger.Log.Errorf("Unable to change the retention policy duration of the database: %v", err)
-			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to change the database's retention duration."})
-		}
-		// update value in db.
-		err = sqlite.UpdateRpDuration(duration)
-		if err != nil {
-			logger.Log.Errorf("Unable to change the retention policy duration in the sql DB: %v", err)
-			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to save the database's retention duration in the sql DB."})
-		}
-		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "InfluxDB Retention Duration has been successfully changed"})
+		return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Prometheus has been successfully empty"})
 	default:
-		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown InfluxDB action"})
+		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unknown Prometheus action"})
 	}
 }
 

@@ -24,6 +24,7 @@ var order = map[string]int{
 	"converter":  190,
 	"rate":       210,
 	"monitoring": 230,
+	"prometheus": 10000,
 }
 
 func LoadConfig(filePath string) (*TelegrafConfig, error) {
@@ -539,6 +540,18 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 				mergeUniqueInPlaceString(&config.KafkaList[0].Fieldpass, entry.KafkaList[0].Fieldpass)
 			}
 		}
+
+		//---------------------------------------------------------------
+		// Optimise Prometheus output plugin
+		//---------------------------------------------------------------
+		if len(entry.PrometheusList) > 0 {
+			if len(config.PrometheusList) == 0 {
+				config.PrometheusList = append([]PrometheusOutput{}, entry.PrometheusList...)
+			} else {
+				// We merge fieldpass - we support today only one Prometheus Output that explains the [0]
+				mergeUniqueInPlaceString(&config.PrometheusList[0].Fieldpass, entry.PrometheusList[0].Fieldpass)
+			}
+		}
 	}
 
 	// Last step is to optimize Gnmi subscriptions
@@ -669,6 +682,26 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 			err = t.Execute(&result, config.KafkaList)
 			if err != nil {
 				logger.Log.Errorf("Unable to generate Kafka	 toml payload - err: %v", err)
+			} else {
+				footer += result.String()
+				hasOutput = true
+			}
+		}
+	}
+
+	// Manage Prometheus Output
+	if len(config.PrometheusList) > 0 {
+		t, err := template.New("prometheusTemplate").Parse(PrometheusTemplate)
+		if err != nil {
+			logger.Log.Errorf("Error parsing Prometheus template: %v", err)
+		} else {
+			var result bytes.Buffer
+			// Override the order of the Prometheus output plugin to ensure it is last in the configuration
+			config.PrometheusList[0].Order = order["prometheus"]
+
+			err = t.Execute(&result, config.PrometheusList)
+			if err != nil {
+				logger.Log.Errorf("Unable to generate Prometheus toml payload - err: %v", err)
 			} else {
 				footer += result.String()
 				hasOutput = true
