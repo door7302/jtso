@@ -135,6 +135,7 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	wapp.POST("/resetrouter", routeResetRouter)
 	wapp.POST("/addprofile", routeAddProfile)
 	wapp.POST("/delprofile", routeShortNameRouter)
+	wapp.POST("/updatedoc", routeUptDoc)
 	wapp.POST("/updatesettings", routeUptSettings)
 	wapp.POST("/prometheusmgt", routePrometheusMgt)
 	wapp.POST("/searchxpath", routeSearchPath)
