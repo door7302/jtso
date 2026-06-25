@@ -31,6 +31,7 @@
                     <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-bs-toggle="dropdown">Admin</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="settings.html">Settings</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="window.open('http//' + window.location.hostname + ':' + {{.PromLens}} + '/?orgId=1', '_blank')">Admin Prometheus DB</a></li>
                         <li><a class="dropdown-item" href="stats.html">Stack Util. & Logs</a></li>
                     </ul>
                 </li>
