@@ -46,6 +46,9 @@ var PathMap = map[string]string{
 
 var Collections map[string]map[string]sqlite.Collection
 
+// baseExcludeDash lists the Grafana dashboards that must never be removed during cleanup
+var baseExcludeDash = []string{"home.json", "ondemand.json", "prometheus.json"}
+
 func hashStringFNV(input string) uint32 {
 	hasher := fnv.New32a()
 	hasher.Write([]byte(input))
@@ -1093,9 +1096,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	// create the list of active profile dashboard name and copy the new version of each dashboard
 	// -----------------------------------------------------------------------------------------------------
 	var excludeDash []string
-	excludeDash = make([]string, 0)
-	excludeDash = append(excludeDash, "home.json")
-	excludeDash = append(excludeDash, "ondemand.json")
+	excludeDash = append(excludeDash, baseExcludeDash...)
 	for _, v := range Collections {
 		for _, c := range v {
 			for _, p := range c.ProfilesName {
