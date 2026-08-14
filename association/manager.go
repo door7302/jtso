@@ -98,11 +98,14 @@ func PeriodicCheck(cfg *config.ConfigContainer) {
 	dir, err := os.Open(PROFILES)
 	if err != nil {
 		logger.Log.Errorf("Unable to open %s directory: %v", PROFILES, err)
+		ProfileLock.Unlock()
 		return
 	}
+	defer dir.Close()
 	files, err := dir.ReadDir(0)
 	if err != nil {
 		logger.Log.Errorf("Unable to read %s directory: %v", PROFILES, err)
+		ProfileLock.Unlock()
 		return
 	}
 
