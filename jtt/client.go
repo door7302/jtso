@@ -9,6 +9,7 @@ import (
 	"jtso/config"
 	"jtso/logger"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -147,8 +148,22 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-// NewClient creates a new JTT API client from the JTT config
+var (
+	sharedClient *Client
+	clientOnce   sync.Once
+)
+
+// NewClient returns the shared JTT API client. The client (and its underlying
+// http.Transport connection pool) is created once and reused across all calls
+// so sockets are not leaked on every request.
 func NewClient(cfg *config.JTTConfig) *Client {
+	clientOnce.Do(func() {
+		sharedClient = buildClient(cfg)
+	})
+	return sharedClient
+}
+
+func buildClient(cfg *config.JTTConfig) *Client {
 	transport := &http.Transport{}
 
 	if cfg.UseSSL {
