@@ -37,6 +37,7 @@ var PathMap = map[string]string{
 	"qfx":      "/var/shared/telegraf/qfx/telegraf.d/",
 	"srx":      "/var/shared/telegraf/srx/telegraf.d/",
 	"crpd":     "/var/shared/telegraf/crpd/telegraf.d/",
+	"csrx":     "/var/shared/telegraf/csrx/telegraf.d/",
 	"cptx":     "/var/shared/telegraf/cptx/telegraf.d/",
 	"vmx":      "/var/shared/telegraf/vmx/telegraf.d/",
 	"vsrx":     "/var/shared/telegraf/vsrx/telegraf.d/",
@@ -54,7 +55,7 @@ func hashStringFNV(input string) uint32 {
 }
 
 func ChangeTelegrafTuning(batchSize string, bufferLimit string, flushInterval string, flushJitter string) error {
-	instances := []string{"mx", "ptx", "acx", "ex", "qfx", "srx", "crpd", "cptx", "vmx", "vsrx", "vjunos", "vevo", "ondemand"}
+	instances := []string{"mx", "ptx", "acx", "ex", "qfx", "srx", "crpd", "csrx", "cptx", "vmx", "vsrx", "vjunos", "vevo", "ondemand"}
 	logger.Log.Infof("Changing telegraf tuning with batch size %s, buffer limit %s, flush interval %s and flush jitter %s", batchSize, bufferLimit, flushInterval, flushJitter)
 
 	batchRegex := regexp.MustCompile(`^\s*metric_batch_size\s*=\s*\d*\s*$`)
@@ -173,6 +174,8 @@ func ManageDebug(instance string) error {
 		currentState = sqlite.ActiveAdmin.SRXDebug
 	case "crpd":
 		currentState = sqlite.ActiveAdmin.CRPDDebug
+	case "csrx":
+		currentState = sqlite.ActiveAdmin.CSRXDebug
 	case "cptx":
 		currentState = sqlite.ActiveAdmin.CPTXDebug
 	case "vmx":
@@ -721,7 +724,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// create the slice for which families we have to reconfigure the stack
 	if family == "all" {
-		families = make([]string, 13)
+		families = make([]string, 14)
 
 		families[0] = "mx"
 		families[1] = "ptx"
@@ -738,6 +741,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		families[10] = "vjunos"
 		families[11] = "vevo"
 		families[12] = "ondemand"
+		families[13] = "csrx"
 
 	} else {
 		families = make([]string, 1)
@@ -809,6 +813,8 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				filenameList = ActiveProfiles[p].Definition.TelCfg.SrxCfg
 			case "crpd":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.CrpdCfg
+			case "csrx":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.CcsrxCfg
 			case "cptx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.CptxCfg
 			case "vmx":
