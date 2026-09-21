@@ -2037,7 +2037,7 @@ func routeUptDoc(c echo.Context) error {
 	renderTele(&tele, "QFX", "qfx", p.Definition.TelCfg.QfxCfg, r.Profile)
 	renderTele(&tele, "SRX", "srx", p.Definition.TelCfg.SrxCfg, r.Profile)
 	renderTele(&tele, "CRPD", "crpd", p.Definition.TelCfg.CrpdCfg, r.Profile)
-	renderTele(&tele, "CSRX", "csrx", p.Definition.TelCfg.CsrxCfg, r.Profile)
+	renderTele(&tele, "CSRX", "csrx", p.Definition.TelCfg.CcsrxCfg, r.Profile)
 	renderTele(&tele, "CPTX", "cptx", p.Definition.TelCfg.CptxCfg, r.Profile)
 	renderTele(&tele, "VMX", "vmx", p.Definition.TelCfg.VmxCfg, r.Profile)
 	renderTele(&tele, "VSRX", "vsrx", p.Definition.TelCfg.VsrxCfg, r.Profile)
