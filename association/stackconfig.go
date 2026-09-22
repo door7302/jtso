@@ -453,9 +453,21 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		if e.Interval == 0 {
 			mode = "on_change"
 		}
+
+		origin := ""
+		subPath := e.Path
+		for _, o := range []string{"genstate", "openconfig", "juniper"} {
+			if strings.HasPrefix(e.Path, o+":") {
+				origin = o
+				subPath = strings.TrimPrefix(e.Path, o+":")
+				break
+			}
+		}
+
 		sub := maker.Subscription{
 			Name:     "ONDEMAND",
-			Path:     strings.TrimSuffix(e.Path, "/"),
+			Path:     strings.TrimSuffix(subPath, "/"),
+			Origin:   origin,
 			Mode:     mode,
 			Interval: e.Interval,
 		}

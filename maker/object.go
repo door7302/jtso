@@ -31,8 +31,9 @@ type TelegrafConfig struct {
 // ---------------------------------------------------- //
 
 type Subscription struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
+	Name   string `json:"name"`
+	Path   string `json:"path"`
+	Origin string `json:"origin"`
 	// sample or on_change
 	Mode string `json:"mode"`
 	// in sec
@@ -103,6 +104,9 @@ const GnmiInputTemplate = `
     [[inputs.gnmi.subscription]]
       name = "{{.Name}}"
       path = "{{.Path}}"
+      {{- if .Origin}}
+      origin = "{{.Origin}}"
+      {{- end}}
       subscription_mode = "{{.Mode}}"
       sample_interval = "{{.Interval}}s"
   {{end}}
