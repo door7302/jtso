@@ -574,6 +574,13 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			if len(tagsToAlias) >= 3 {
 				tagsToAlias = tagsToAlias[:len(tagsToAlias)-3]
 			}
+			// No tag: fall back to the field name so Grafana doesn't show the raw series name
+			if tagsToAlias == "" {
+				tagsToAlias = finalField
+				if f.Rate {
+					tagsToAlias += "_rate"
+				}
+			}
 
 			// auto detect some unit
 			unit := "none"
