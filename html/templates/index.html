@@ -69,9 +69,14 @@
                         <div class="kpi-box kpi-grey" style="background-color: {{.SRXDebug}};" id="SRX" onclick="enableDebug(this)">D</div>
                     </div>
                     <div class="telegraf-sub-box" style="background: linear-gradient(to bottom, white, #{{.TeleCrpd}});">
-                        CPRD Instance
+                        CRPD Instance
                         <div class="kpi-box kpi-blue">{{.NumCRPD}}</div>
                         <div class="kpi-box kpi-grey" style="background-color: {{.CRPDDebug}};" id="CRPD" onclick="enableDebug(this)">D</div>
+                    </div>
+                    <div class="telegraf-sub-box" style="background: linear-gradient(to bottom, white, #{{.TeleCsrx}});">
+                        CSRX Instance
+                        <div class="kpi-box kpi-blue">{{.NumCSRX}}</div>
+                        <div class="kpi-box kpi-grey" style="background-color: {{.CSRXDebug}};" id="CSRX" onclick="enableDebug(this)">D</div>
                     </div>
                     <div class="telegraf-sub-box" style="background: linear-gradient(to bottom, white, #{{.TeleCptx}});">
                         CPTX Instance

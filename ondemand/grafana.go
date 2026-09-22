@@ -205,8 +205,8 @@ const GrafanaTemplate = `
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
-      },
-      {{range $index3, $element3 := .Variables}}{{if $index3}},{{end}}
+      }
+      {{range $index3, $element3 := .Variables}},
       {
         "current": {},
         "datasource": {

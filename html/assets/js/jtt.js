@@ -824,7 +824,7 @@ function htmlEscape(str) {
 // If array is empty, the CSV is valid
 function validateCSV(lines) {
   var errors = [];
-  var SUPPORTED_FAMILIES = ["MX", "PTX", "ACX", "EX", "QFX", "SRX", "CRPD", "CPTX", "VMX", "VSRX", "VJUNOS", "VEVO"];
+  var SUPPORTED_FAMILIES = ["MX", "PTX", "ACX", "EX", "QFX", "SRX", "CRPD", "CPTX", "VMX", "VSRX", "VJUNOS", "VEVO", "CSRX"];
 
   if (lines.length === 0) {
     errors.push({ line: 0, message: "CSV file is empty" });

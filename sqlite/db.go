@@ -61,6 +61,7 @@ type Admin struct {
 	// Native Container devices
 	CRPDDebug int
 	CPTXDebug int
+	CSRXDebug int
 	// VM devices
 	VMXDebug    int
 	VSRXDebug   int
@@ -208,7 +209,8 @@ func Init(f string, jttEnabled bool) error {
 		vevodebug INTEGER,
 		ondemanddebug INTEGER,
 		rpduration TEXT,
-		ondemandconf TEXT
+		ondemandconf TEXT,
+		csrxdebug INTEGER
 		);`
 
 	const createTelegraf string = `
@@ -560,7 +562,7 @@ func UpdateDebugMode(instance string, debug int) error {
 	// Validate instance against allowlist to prevent SQL injection
 	allowedInstances := map[string]bool{
 		"mx": true, "ptx": true, "acx": true, "ex": true,
-		"qfx": true, "srx": true, "crpd": true, "cptx": true,
+		"qfx": true, "srx": true, "crpd": true, "cptx": true, "csrx": true,
 		"vmx": true, "vsrx": true, "vjunos": true, "vevo": true,
 		"ondemand": true,
 	}
@@ -831,13 +833,13 @@ func loadAllInternal(secretRotation bool) error {
 	i = rows.Next()
 	if !i {
 		// nothing in the DB regarding administration  - add default one
-		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, influx.DefaultRetention, ""); err != nil {
+		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, influx.DefaultRetention, "", 0); err != nil {
 			logger.Log.Errorf("Error while adding default administration - err: %v", err)
 			return err
 		}
 	} else {
 		// Manage new fields: rpduration and ondemanddebug
-		colExists, colExists2, colExists3 := false, false, false
+		colExists, colExists2, colExists3, colExists4 := false, false, false, false
 		rows, err := db.Query("PRAGMA table_info(administration);")
 		if err != nil {
 			logger.Log.Errorf("Error while checking table info - err: %v", err)
@@ -861,6 +863,9 @@ func loadAllInternal(secretRotation bool) error {
 			if name == "ondemandconf" {
 				colExists3 = true
 			}
+			if name == "csrxdebug" {
+				colExists4 = true
+			}
 
 		}
 		rows.Close()
@@ -882,6 +887,13 @@ func loadAllInternal(secretRotation bool) error {
 			_, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemandconf INTEGER DEFAULT 0;")
 			if err != nil {
 				logger.Log.Errorf("Error adding ondemandconf column - err: %v", err)
+				return err
+			}
+		}
+		if !colExists4 {
+			_, err := db.Exec("ALTER TABLE administration ADD COLUMN csrxdebug INTEGER DEFAULT 0;")
+			if err != nil {
+				logger.Log.Errorf("Error adding csrxdebug column - err: %v", err)
 				return err
 			}
 		}
@@ -911,6 +923,7 @@ func loadAllInternal(secretRotation bool) error {
 		&ActiveAdmin.ONDEMANDDebug,
 		&ActiveAdmin.RPDuration,
 		&ActiveAdmin.OndemandConfig,
+		&ActiveAdmin.CSRXDebug,
 	)
 	if err != nil {
 		logger.Log.Errorf("Error while parsing administration rows - err: %v", err)
