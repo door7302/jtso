@@ -182,6 +182,25 @@ func migrateAdministration() error {
 			return err
 		}
 	}
+
+	// Older releases inserted defaults positionally against a column order shifted by ALTER TABLE,
+	// so values like '30d' may sit in an INTEGER column and ondemandconf may hold 0 instead of ''.
+	sanitize := []string{
+		"UPDATE administration SET ondemandconf = '' WHERE typeof(ondemandconf) != 'text' OR ondemandconf = '0';",
+	}
+	for _, c := range strings.Split(adminColumns, ", ") {
+		if c == "id" || c == "ondemandconf" {
+			continue
+		}
+		sanitize = append(sanitize, "UPDATE administration SET "+c+" = 0 WHERE typeof("+c+") != 'integer';")
+	}
+	for _, s := range sanitize {
+		if _, err := db.Exec(s); err != nil {
+			logger.Log.Errorf("Error while sanitizing administration data - err: %v", err)
+			return err
+		}
+	}
+
 	if _, ok := cols["rpduration"]; !ok {
 		return nil
 	}
