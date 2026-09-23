@@ -10,7 +10,7 @@ import (
 )
 
 // this is config displayed on the main page
-const JtsoVersion string = "1.3.0"
+const JtsoVersion string = "1.3.999"
 
 type PortalConfig struct {
 	HTTPS          bool
