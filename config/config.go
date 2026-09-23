@@ -10,10 +10,10 @@ import (
 )
 
 // this is config displayed on the main page
-const JTSO_VERSION string = "1.3.0"
+const JtsoVersion string = "1.3.0"
 
 type PortalConfig struct {
-	Https          bool
+	HTTPS          bool
 	ServerCrt      string
 	ServerKey      string
 	Port           int
@@ -26,17 +26,9 @@ type GrafanaConfig struct {
 	Port int
 }
 
-type KapacitorConfig struct {
-	BootTimeout int
-}
-
-type ChronografConfig struct {
-	Port int
-}
-
 type NetconfConfig struct {
 	Port       int
-	RpcTimeout int
+	RPCTimeout int
 }
 
 type GnmiConfig struct {
@@ -62,15 +54,13 @@ type JTTConfig struct {
 }
 
 type ConfigContainer struct {
-	Kapacitor  *KapacitorConfig
-	Chronograf *ChronografConfig
-	Grafana    *GrafanaConfig
-	Enricher   *EnricherConfig
-	Portal     *PortalConfig
-	Netconf    *NetconfConfig
-	Gnmi       *GnmiConfig
-	Plugins    *[]PluginConfig
-	JTT        *JTTConfig
+	Grafana  *GrafanaConfig
+	Enricher *EnricherConfig
+	Portal   *PortalConfig
+	Netconf  *NetconfConfig
+	Gnmi     *GnmiConfig
+	Plugins  *[]PluginConfig
+	JTT      *JTTConfig
 }
 
 func NewConfigContainer(f string) *ConfigContainer {
@@ -87,12 +77,6 @@ func NewConfigContainer(f string) *ConfigContainer {
 
 	// Ser default value for grafana
 	viper.SetDefault("modules.grafana.port", 8080)
-
-	// Ser default value for chronograf
-	viper.SetDefault("modules.chronograf.port", 8081)
-
-	// Ser default value for kapacitor
-	viper.SetDefault("modules.kapacitor.timeout", 15)
 
 	// Ser default value for portal
 	viper.SetDefault("modules.portal.https", false)
@@ -128,15 +112,9 @@ func NewConfigContainer(f string) *ConfigContainer {
 		Grafana: &GrafanaConfig{
 			Port: viper.GetInt("modules.grafana.port"),
 		},
-		Chronograf: &ChronografConfig{
-			Port: viper.GetInt("modules.chronograf.port"),
-		},
-		Kapacitor: &KapacitorConfig{
-			BootTimeout: viper.GetInt("modules.kapacitor.timeout"),
-		},
 		Portal: &PortalConfig{
 			Port:           viper.GetInt("modules.portal.port"),
-			Https:          viper.GetBool("modules.portal.https"),
+			HTTPS:          viper.GetBool("modules.portal.https"),
 			ServerCrt:      viper.GetString("modules.portal.server_crt"),
 			ServerKey:      viper.GetString("modules.portal.server_key"),
 			BrowserTimeout: viper.GetInt("modules.portal.browsertimeout"),
@@ -150,7 +128,7 @@ func NewConfigContainer(f string) *ConfigContainer {
 		},
 		Netconf: &NetconfConfig{
 			Port:       viper.GetInt("protocols.netconf.port"),
-			RpcTimeout: viper.GetInt("protocols.netconf.rpc_timeout"),
+			RPCTimeout: viper.GetInt("protocols.netconf.rpc_timeout"),
 		},
 		Gnmi: &GnmiConfig{
 			Port: viper.GetInt("protocols.gnmi.port"),

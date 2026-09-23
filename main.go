@@ -36,7 +36,7 @@ const banner = `
  █████     ██    ███████  ██████  
 `
 
-const DBPATH = "/etc/jtso/jtso.db"
+const DBPath = "/etc/jtso/jtso.db"
 
 func main() {
 	var err error
@@ -49,7 +49,7 @@ func main() {
 	defer logger.HandlePanic()
 
 	logger.Log.Info(banner)
-	logger.Log.Infof("JTSO version: %s", config.JTSO_VERSION)
+	logger.Log.Infof("JTSO version: %s", config.JtsoVersion)
 
 	// Create New Config container
 	Cfg := config.NewConfigContainer(ConfigFile)
@@ -57,28 +57,9 @@ func main() {
 	// Create a shared Context with cancel function
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Clean all kapacitor tasks
-	// to_remove_later
-	/*
-		maxAttempts := Cfg.Kapacitor.BootTimeout
-		for i := 1; i <= maxAttempts; i++ {
-			if kapacitor.IsKapaRun() {
-				logger.Log.Info("Kapacitor module is up and running")
-				// Clean all kapacitor tasks
-				logger.Log.Info("Start cleaning all active Kapacitor tasks")
-				kapacitor.CleanKapa()
-				break
-			}
-			time.Sleep(1 * time.Second)
-			if i == maxAttempts {
-				logger.Log.Error("Unable to clean Kapacitor tasks. Make sure Kapacitor container is running")
-			}
-		}
-	*/
-
 	// Init the sqliteDB
 	//err = sqlite.Init("./jtso.db")
-	err = sqlite.Init(DBPATH, Cfg.JTT.URL != "")
+	err = sqlite.Init(DBPath, Cfg.JTT.URL != "")
 	if err != nil {
 		logger.Log.Errorf("unable to open DB... panic...: %v", err)
 		panic(err)
@@ -87,7 +68,7 @@ func main() {
 
 	// init the webapp
 	webapp := portal.New(Cfg)
-	if Cfg.Portal.Https {
+	if Cfg.Portal.HTTPS {
 		logger.Log.Infof("Start HTTPS Server - listen to %d", Cfg.Portal.Port)
 	} else {
 		logger.Log.Infof("Start HTTP Server  - listen to %d", Cfg.Portal.Port)
@@ -148,25 +129,6 @@ func main() {
 			}
 		}
 	}()
-
-	// Check if influxdb retention policy is equal to the default value, if not set it.
-	// to_remove_later
-	/*
-		currentRP, _ := influx.GetRetentionPolicyDuration()
-		equal, err := influx.RetentionDurationEqual(currentRP, sqlite.ActiveAdmin.RPDuration)
-		if err != nil {
-			logger.Log.Errorf("Error while comparing influxdb retention policy duration: %v", err)
-		}
-		if !equal {
-			logger.Log.Infof("Change the influxdb retention policy duration from %s to %s", currentRP, sqlite.ActiveAdmin.RPDuration)
-			err := influx.AlterRetentionPolicyDuration(sqlite.ActiveAdmin.RPDuration)
-			if err != nil {
-				logger.Log.Errorf("Error while modifying influxdb retention policy duration: %v", err)
-			}
-		} else {
-			logger.Log.Infof("Retention Policy of influxDB is configured well with duration set to: %s", sqlite.ActiveAdmin.RPDuration)
-		}
-	*/
 
 	// Waiting exit
 	c := make(chan os.Signal, 1)

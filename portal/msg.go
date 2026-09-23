@@ -19,7 +19,7 @@ type (
 
 	SearchPath struct {
 		Shortname string `json:"shortname"`
-		Xpath     string `json:"xpath"`
+		XPath     string `json:"xpath"`
 		Merge     bool   `json:"merge"`
 		Timeout   int    `json:"timeout"`
 	}
@@ -106,9 +106,9 @@ type (
 		NetconfPwd        string `json:"netpwd"`
 		GnmiUser          string `json:"gnmiuser"`
 		GnmiPwd           string `json:"gnmipwd"`
-		UseTls            string `json:"usetls"`
+		UseTLS            string `json:"usetls"`
 		SkipVerify        string `json:"skipverify"`
-		ClientTls         string `json:"clienttls"`
+		ClientTLS         string `json:"clienttls"`
 		MetricBatchSize   string `json:"metricbatchsize"`
 		MetricBufferLimit string `json:"metricbufferlimit"`
 		FlushInterval     string `json:"flushinterval"`

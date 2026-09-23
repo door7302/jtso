@@ -3,7 +3,6 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
-	"jtso/influx"
 	"jtso/logger"
 	"jtso/security"
 	"os"
@@ -14,7 +13,7 @@ import (
 )
 
 type RtrEntry struct {
-	Id        int
+	ID        int
 	Hostname  string
 	Shortname string
 	Family    string
@@ -31,26 +30,26 @@ type Collection struct {
 }
 
 type AssoEntry struct {
-	Id        int
+	ID        int
 	Shortname string
 	Assos     []string
 	Kafka     string
 }
 
 type Cred struct {
-	Id          int
+	ID          int
 	NetconfUser string
 	NetconfPwd  string
 	GnmiUser    string
 	GnmiPwd     string
-	UseTls      string
+	UseTLS      string
 	SkipVerify  string
-	ClientTls   string
+	ClientTLS   string
 	PasswordVer int // 0 = cleartext, 1 = encrypted
 }
 
 type Admin struct {
-	Id int
+	ID int
 	// HW devices
 	MXDebug  int
 	PTXDebug int
@@ -68,8 +67,6 @@ type Admin struct {
 	VEVODebug   int
 	// On demand instance
 	ONDEMANDDebug int
-	// Influx retention policy (RP) duration
-	RPDuration string
 	//Ondemand config file name empty when stopped
 	OndemandConfig string
 }
@@ -82,7 +79,7 @@ type TelemetryInterval struct {
 }
 
 type CollectorParameters struct {
-	Id                int
+	ID                int
 	MetricBatchSize   string
 	MetricBufferLimit string
 	FlushInterval     string
@@ -90,7 +87,7 @@ type CollectorParameters struct {
 }
 
 type KafkaConfig struct {
-	Id          int
+	ID          int
 	Enabled     int
 	Brokers     string
 	Topic       string
@@ -121,7 +118,7 @@ var (
 	SM                        *security.SecretManager
 )
 
-const SECRET_STORE string = "/data"
+const SecretStorePath string = "/data"
 
 func Init(f string, jttEnabled bool) error {
 	var err error
@@ -153,7 +150,7 @@ func Init(f string, jttEnabled bool) error {
 	}
 
 	// Initialize SecretManager
-	SM, secretChange, err = security.NewSecretManager(SECRET_STORE)
+	SM, secretChange, err = security.NewSecretManager(SecretStorePath)
 	if err != nil {
 		logger.Log.Errorf("Error initializing SecretManager: %v", err)
 		return err
@@ -207,7 +204,6 @@ func Init(f string, jttEnabled bool) error {
 		vjunosdebug INTEGER,
 		vevodebug INTEGER,
 		ondemanddebug INTEGER,
-		rpduration TEXT,
 		ondemandconf TEXT
 		);`
 
@@ -581,17 +577,6 @@ func UpdateDebugMode(instance string, debug int) error {
 	return loadAllInternal(false)
 }
 
-func UpdateRpDuration(duration string) error {
-	dbMu.Lock()
-	defer dbMu.Unlock()
-	// update the debug value for the instance
-	if _, err := db.Exec("UPDATE administration SET rpduration=? WHERE id=0;", duration); err != nil {
-		logger.Log.Errorf("Error while updating the RP duration - err: %v", err)
-		return err
-	}
-	return loadAllInternal(false)
-}
-
 func LoadAll(secretRotation bool) error {
 	dbMu.Lock()
 	defer dbMu.Unlock()
@@ -610,7 +595,7 @@ func loadAllInternal(secretRotation bool) error {
 	defer rows.Close()
 	for rows.Next() {
 		i := RtrEntry{}
-		err = rows.Scan(&i.Id, &i.Hostname, &i.Shortname, &i.Family, &i.Model, &i.Version, &i.Profile)
+		err = rows.Scan(&i.ID, &i.Hostname, &i.Shortname, &i.Family, &i.Model, &i.Version, &i.Profile)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing routers rows - err: %v", err)
 			return err
@@ -628,7 +613,7 @@ func loadAllInternal(secretRotation bool) error {
 	for rows.Next() {
 		i := AssoEntry{}
 		var tmpList string
-		err = rows.Scan(&i.Id, &i.Shortname, &tmpList, &i.Kafka)
+		err = rows.Scan(&i.ID, &i.Shortname, &tmpList, &i.Kafka)
 		if err != nil {
 			logger.Log.Errorf("Error while parsing associations rows - err: %v", err)
 			return err
@@ -669,7 +654,7 @@ func loadAllInternal(secretRotation bool) error {
 		logger.Log.Errorf("Error encrypting default gnmi password - err: %v", err)
 		return err
 	}
-	ActiveCred = Cred{Id: 0, NetconfUser: "lab", NetconfPwd: encNetPwd, GnmiUser: "lab", GnmiPwd: encGnmiPwd, UseTls: "no", SkipVerify: "yes", ClientTls: "no", PasswordVer: 1}
+	ActiveCred = Cred{ID: 0, NetconfUser: "lab", NetconfPwd: encNetPwd, GnmiUser: "lab", GnmiPwd: encGnmiPwd, UseTLS: "no", SkipVerify: "yes", ClientTLS: "no", PasswordVer: 1}
 
 	rows, err = db.Query("SELECT * FROM credentials;")
 	if err != nil {
@@ -680,7 +665,7 @@ func loadAllInternal(secretRotation bool) error {
 	i := rows.Next()
 	if !i {
 		// nothing in the DB regarding credential - add default one
-		if _, err := db.Exec("INSERT INTO credentials VALUES(?,?,?,?,?,?,?,?,?);", 0, ActiveCred.NetconfUser, ActiveCred.NetconfPwd, ActiveCred.GnmiUser, ActiveCred.GnmiPwd, ActiveCred.UseTls, ActiveCred.SkipVerify, ActiveCred.ClientTls, ActiveCred.PasswordVer); err != nil {
+		if _, err := db.Exec("INSERT INTO credentials VALUES(?,?,?,?,?,?,?,?,?);", 0, ActiveCred.NetconfUser, ActiveCred.NetconfPwd, ActiveCred.GnmiUser, ActiveCred.GnmiPwd, ActiveCred.UseTLS, ActiveCred.SkipVerify, ActiveCred.ClientTLS, ActiveCred.PasswordVer); err != nil {
 			logger.Log.Errorf("Error while adding default credential - err: %v", err)
 			return err
 		}
@@ -752,14 +737,14 @@ func loadAllInternal(secretRotation bool) error {
 	defer rows.Close()
 	rows.Next()
 	err = rows.Scan(
-		&ActiveCred.Id,
+		&ActiveCred.ID,
 		&ActiveCred.NetconfUser,
 		&ActiveCred.NetconfPwd,
 		&ActiveCred.GnmiUser,
 		&ActiveCred.GnmiPwd,
-		&ActiveCred.UseTls,
+		&ActiveCred.UseTLS,
 		&ActiveCred.SkipVerify,
-		&ActiveCred.ClientTls,
+		&ActiveCred.ClientTLS,
 		&ActiveCred.PasswordVer,
 	)
 	if err != nil {
@@ -831,12 +816,12 @@ func loadAllInternal(secretRotation bool) error {
 	i = rows.Next()
 	if !i {
 		// nothing in the DB regarding administration  - add default one
-		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, influx.DefaultRetention, ""); err != nil {
+		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ""); err != nil {
 			logger.Log.Errorf("Error while adding default administration - err: %v", err)
 			return err
 		}
 	} else {
-		// Manage new fields: rpduration and ondemanddebug
+		// Manage schema changes: ondemanddebug / ondemandconf added, rpduration (InfluxDB legacy) removed
 		colExists, colExists2, colExists3 := false, false, false
 		rows, err := db.Query("PRAGMA table_info(administration);")
 		if err != nil {
@@ -871,10 +856,10 @@ func loadAllInternal(secretRotation bool) error {
 				return err
 			}
 		}
-		if !colExists2 {
-			_, err := db.Exec("ALTER TABLE administration ADD COLUMN rpduration TEXT DEFAULT '" + influx.DefaultRetention + "';")
+		if colExists2 {
+			_, err := db.Exec("ALTER TABLE administration DROP COLUMN rpduration;")
 			if err != nil {
-				logger.Log.Errorf("Error adding rpduration column - err: %v", err)
+				logger.Log.Errorf("Error dropping legacy rpduration column - err: %v", err)
 				return err
 			}
 		}
@@ -895,7 +880,7 @@ func loadAllInternal(secretRotation bool) error {
 	defer rows.Close()
 	rows.Next()
 	err = rows.Scan(
-		&ActiveAdmin.Id,
+		&ActiveAdmin.ID,
 		&ActiveAdmin.MXDebug,
 		&ActiveAdmin.PTXDebug,
 		&ActiveAdmin.ACXDebug,
@@ -909,7 +894,6 @@ func loadAllInternal(secretRotation bool) error {
 		&ActiveAdmin.VJUNOSDebug,
 		&ActiveAdmin.VEVODebug,
 		&ActiveAdmin.ONDEMANDDebug,
-		&ActiveAdmin.RPDuration,
 		&ActiveAdmin.OndemandConfig,
 	)
 	if err != nil {
@@ -927,7 +911,7 @@ func loadAllInternal(secretRotation bool) error {
 	i = rows.Next()
 	if i {
 		err = rows.Scan(
-			&ActiveKafkaConfig.Id,
+			&ActiveKafkaConfig.ID,
 			&ActiveKafkaConfig.Enabled,
 			&ActiveKafkaConfig.Brokers,
 			&ActiveKafkaConfig.Topic,
@@ -946,7 +930,7 @@ func loadAllInternal(secretRotation bool) error {
 			logger.Log.Errorf("Error while adding default kafka config - err: %v", err)
 			return err
 		}
-		ActiveKafkaConfig = KafkaConfig{Id: 0, Enabled: 0, Brokers: "localhost:9092", Topic: "jtso_topic", Format: "json", Version: "2.7.0", Compression: 0, MessageSize: 1000000}
+		ActiveKafkaConfig = KafkaConfig{ID: 0, Enabled: 0, Brokers: "localhost:9092", Topic: "jtso_topic", Format: "json", Version: "2.7.0", Compression: 0, MessageSize: 1000000}
 	}
 
 	ActiveCollectorParameters = CollectorParameters{}
@@ -959,7 +943,7 @@ func loadAllInternal(secretRotation bool) error {
 	i = rows.Next()
 	if i {
 		err = rows.Scan(
-			&ActiveCollectorParameters.Id,
+			&ActiveCollectorParameters.ID,
 			&ActiveCollectorParameters.MetricBatchSize,
 			&ActiveCollectorParameters.MetricBufferLimit,
 			&ActiveCollectorParameters.FlushInterval,
@@ -975,7 +959,7 @@ func loadAllInternal(secretRotation bool) error {
 			logger.Log.Errorf("Error while adding default collector parameters - err: %v", err)
 			return err
 		}
-		ActiveCollectorParameters = CollectorParameters{Id: 0, MetricBatchSize: "5000", MetricBufferLimit: "100000", FlushInterval: "5s", FlushJitter: "0s"}
+		ActiveCollectorParameters = CollectorParameters{ID: 0, MetricBatchSize: "5000", MetricBufferLimit: "100000", FlushInterval: "5s", FlushJitter: "0s"}
 	}
 
 	// Load JTT Jobs

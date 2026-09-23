@@ -4,8 +4,25 @@ import (
 	"bytes"
 	"fmt"
 	"jtso/logger"
+	"regexp"
 	"text/template"
 )
+
+// Same sanitization rules as telegraf outputs.prometheus_client (metric_version = 2)
+var (
+	promInvalidMetricChars = regexp.MustCompile(`[^a-zA-Z0-9_:]`)
+	promInvalidLabelChars  = regexp.MustCompile(`[^a-zA-Z0-9_]`)
+)
+
+// PromMetricName returns the Prometheus metric name telegraf produces for a measurement field
+func PromMetricName(measurement, field string) string {
+	return promInvalidMetricChars.ReplaceAllString(measurement+"_"+field, "_")
+}
+
+// PromLabelName returns the Prometheus label name telegraf produces for a tag
+func PromLabelName(tag string) string {
+	return promInvalidLabelChars.ReplaceAllString(tag, "_")
+}
 
 type Variable struct {
 	VariableName string
@@ -15,6 +32,7 @@ type Variable struct {
 type Panel struct {
 	Alias   string
 	Field   string
+	Metric  string
 	Unit    string
 	TagCode string
 	Info    string
@@ -69,7 +87,7 @@ const GrafanaTemplate = `
 	  {{range $index2, $element2 := $element.Panels}}{{if $index2}},{{end}}
         {
           "datasource": {
-            "type": "influxdb",
+            "type": "prometheus",
             "uid": "jtsuid"
           },
           "description": "",
@@ -154,21 +172,15 @@ const GrafanaTemplate = `
           "repeatDirection": "h",
           "targets": [
             {
-              "alias": "{{$element2.Alias}}",
               "datasource": {
-                "type": "influxdb",
+                "type": "prometheus",
                 "uid": "jtsuid"
               },
-              "groupBy": [],
-              "measurement": "ONDEMAND",
-              "orderByTime": "ASC",
-              "policy": "default",
-              "query": "SELECT \"{{$element2.Field}}\" FROM \"ONDEMAND\" WHERE \"device\"=~ /^$device$/ AND $timeFilter {{$element2.TagCode}} GROUP BY *",
-              "rawQuery": true,
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [],
-              "tags": []
+              "editorMode": "code",
+              "expr": "{{$element2.Metric}}{device=~\"$device\"{{$element2.TagCode}}}",
+              "legendFormat": "{{if $element2.Alias}}{{$element2.Alias}}{{else}}__auto{{end}}",
+              "range": true,
+              "refId": "A"
             }
           ],
           "title": "ROUTER: $device - FIELD: {{$element2.Field}}",
@@ -189,17 +201,21 @@ const GrafanaTemplate = `
       {
         "current": {},
         "datasource": {
-          "type": "influxdb",
+          "type": "prometheus",
           "uid": "jtsuid"
         },
-        "definition": "show tag values from ONDEMAND with key=\"device\"",
+        "definition": "label_values({__name__=~\"ONDEMAND_.*\"}, device)",
         "hide": 0,
         "includeAll": true,
         "label": "Router",
         "multi": true,
         "name": "device",
         "options": [],
-        "query": "show tag values from ONDEMAND with key=\"device\"",
+        "query": {
+          "qryType": 1,
+          "query": "label_values({__name__=~\"ONDEMAND_.*\"}, device)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
@@ -210,17 +226,21 @@ const GrafanaTemplate = `
       {
         "current": {},
         "datasource": {
-          "type": "influxdb",
+          "type": "prometheus",
           "uid": "jtsuid"
         },
-        "definition": "show tag values from ONDEMAND with key=\"{{$element3.VariableName}}\" where \"device\" = '$device'",
+        "definition": "label_values({__name__=~\"ONDEMAND_.*\", device=~\"$device\"}, {{$element3.VariableName}})",
         "hide": 0,
         "includeAll": true,
         "label": "{{$element3.LabelName}}",
         "multi": true,
         "name":  "{{$element3.VariableName}}",
         "options": [],
-        "query": "show tag values from ONDEMAND with key=\"{{$element3.VariableName}}\" where \"device\" = '$device'",
+        "query": {
+          "qryType": 1,
+          "query": "label_values({__name__=~\"ONDEMAND_.*\", device=~\"$device\"}, {{$element3.VariableName}})",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,

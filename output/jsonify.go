@@ -72,50 +72,50 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 	}
 
 	for _, phy := range rd.IfList.Physicals {
-		phy_name := strings.Trim(phy.Name, "\n")
+		phyName := strings.Trim(phy.Name, "\n")
 		// Keep only WAN ports
-		if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") || strings.Contains(phy_name, "ae") || strings.Contains(phy_name, "lt-") || strings.Contains(phy_name, "ps-") || strings.Contains(phy_name, "fti-") || strings.Contains(phy_name, "gr-") {
+		if strings.Contains(phyName, "et-") || strings.Contains(phyName, "xe-") || strings.Contains(phyName, "ge-") || strings.Contains(phyName, "ae") || strings.Contains(phyName, "lt-") || strings.Contains(phyName, "ps-") || strings.Contains(phyName, "fti-") || strings.Contains(phyName, "gr-") {
 
-			_, ok := m.Meta[rd.Family][rd.RtrName][phy_name]
+			_, ok := m.Meta[rd.Family][rd.RtrName][phyName]
 			if !ok {
-				m.Meta[rd.Family][rd.RtrName][phy_name] = make(map[string]string)
+				m.Meta[rd.Family][rd.RtrName][phyName] = make(map[string]string)
 			}
 			//Default description TAG
-			m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = "Unknown"
-			if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
-				m.Meta[rd.Family][rd.RtrName][phy_name]["port_name"] = phy_name[3:] + " - Unknown"
-				if strings.Contains(phy_name, ":") {
-					m.Meta[rd.Family][rd.RtrName][phy_name]["channel"] = "yes"
+			m.Meta[rd.Family][rd.RtrName][phyName]["DESC"] = "Unknown"
+			if strings.Contains(phyName, "et-") || strings.Contains(phyName, "xe-") || strings.Contains(phyName, "ge-") {
+				m.Meta[rd.Family][rd.RtrName][phyName]["port_name"] = phyName[3:] + " - Unknown"
+				if strings.Contains(phyName, ":") {
+					m.Meta[rd.Family][rd.RtrName][phyName]["channel"] = "yes"
 				} else {
-					m.Meta[rd.Family][rd.RtrName][phy_name]["channel"] = "no"
+					m.Meta[rd.Family][rd.RtrName][phyName]["channel"] = "no"
 				}
 			}
 
-			m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy_name + " - " + "Unknown"
+			m.Meta[rd.Family][rd.RtrName][phyName]["LINKNAME"] = phyName + " - " + "Unknown"
 
 			// Add also the parent LAG name if physical interface is a child link.
-			val, ok := rd.LacpDigest.LacpMap[phy_name]
+			val, ok := rd.LacpDigest.LacpMap[phyName]
 			if ok {
-				m.Meta[rd.Family][rd.RtrName][phy_name]["LAG"] = val
+				m.Meta[rd.Family][rd.RtrName][phyName]["LAG"] = val
 			}
 
 			// check if PHY port has a description
 			// ADD physical description if present
 			for _, phy2 := range rd.IfDesc.Physicals {
-				phy2_name := strings.Trim(phy2.Name, "\n")
-				phy2_desc := strings.Trim(phy2.Desc, "\n")
+				phy2Name := strings.Trim(phy2.Name, "\n")
+				phy2Desc := strings.Trim(phy2.Desc, "\n")
 
-				if phy2_name == phy_name && phy2_desc != "" {
+				if phy2Name == phyName && phy2Desc != "" {
 
-					m.Meta[rd.Family][rd.RtrName][phy_name]["LINKNAME"] = phy2_name + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
-					m.Meta[rd.Family][rd.RtrName][phy_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
+					m.Meta[rd.Family][rd.RtrName][phyName]["LINKNAME"] = phy2Name + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy2Desc, " ", "", -1), "-", "_", -1))
+					m.Meta[rd.Family][rd.RtrName][phyName]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(phy2Desc, " ", "", -1), "-", "_", -1))
 
 					//add to the map
-					if len(phy_name) > 3 {
+					if len(phyName) > 3 {
 
-						if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
-							m.Meta[rd.Family][rd.RtrName][phy_name]["port_name"] = phy_name[3:] + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
-							mapDesc[phy_name[3:]] = strings.ToUpper(strings.Replace(strings.Replace(phy2_desc, " ", "", -1), "-", "_", -1))
+						if strings.Contains(phyName, "et-") || strings.Contains(phyName, "xe-") || strings.Contains(phyName, "ge-") {
+							m.Meta[rd.Family][rd.RtrName][phyName]["port_name"] = phyName[3:] + " - " + strings.ToUpper(strings.Replace(strings.Replace(phy2Desc, " ", "", -1), "-", "_", -1))
+							mapDesc[phyName[3:]] = strings.ToUpper(strings.Replace(strings.Replace(phy2Desc, " ", "", -1), "-", "_", -1))
 						}
 					}
 
@@ -126,13 +126,13 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 
 	// ADD logical description
 	for _, lgl := range rd.IfDesc.Logicals {
-		lgl_name := strings.Trim(lgl.Name, "\n")
-		lgl_desc := strings.Trim(lgl.Desc, "\n")
-		_, ok := m.Meta[rd.Family][rd.RtrName][lgl_name]
+		lglName := strings.Trim(lgl.Name, "\n")
+		lglDesc := strings.Trim(lgl.Desc, "\n")
+		_, ok := m.Meta[rd.Family][rd.RtrName][lglName]
 		if !ok {
-			m.Meta[rd.Family][rd.RtrName][lgl_name] = make(map[string]string)
+			m.Meta[rd.Family][rd.RtrName][lglName] = make(map[string]string)
 		}
-		m.Meta[rd.Family][rd.RtrName][lgl_name]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(lgl_desc, " ", "", -1), "-", "_", -1))
+		m.Meta[rd.Family][rd.RtrName][lglName]["DESC"] = strings.ToUpper(strings.Replace(strings.Replace(lglDesc, " ", "", -1), "-", "_", -1))
 	}
 
 	// add HW info
@@ -244,14 +244,14 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 									m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
 									// Try to find channelized port
 									for _, phy := range rd.IfList.Physicals {
-										phy_name := strings.Trim(phy.Name, "\n")
+										phyName := strings.Trim(phy.Name, "\n")
 										// Keep only WAN ports
-										if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
-											suffix := phy_name[3:]
+										if strings.Contains(phyName, "et-") || strings.Contains(phyName, "xe-") || strings.Contains(phyName, "ge-") {
+											suffix := phyName[3:]
 											if suffix == key || strings.HasPrefix(suffix, key+":") {
-												if strings.Contains(phy_name, ":") {
+												if strings.Contains(phyName, ":") {
 													// Extract the channel after the :
-													parts := strings.Split(phy_name, ":")
+													parts := strings.Split(phyName, ":")
 													if len(parts) > 1 {
 														// Update CAGE info
 														m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "yes"
@@ -275,24 +275,24 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 														}
 														m.Meta[rd.Family][rd.RtrName][channelizedKey]["OPTIC_DESC"] = opticDesc
 														portDesc = "Unknown"
-														if len(phy_name) > 3 {
-															cageDesc, ok := mapDesc[phy_name[3:]]
+														if len(phyName) > 3 {
+															cageDesc, ok := mapDesc[phyName[3:]]
 															if ok {
 																portDesc = cageDesc
 															}
 														}
-														m.Meta[rd.Family][rd.RtrName][channelizedKey]["LINKNAME"] = phy_name + " - " + portDesc
+														m.Meta[rd.Family][rd.RtrName][channelizedKey]["LINKNAME"] = phyName + " - " + portDesc
 													}
 												} else {
 													// Update the cage info for non channelized port
 													portDesc := "Unknown"
-													if len(phy_name) > 3 {
-														cageDesc, ok := mapDesc[phy_name[3:]]
+													if len(phyName) > 3 {
+														cageDesc, ok := mapDesc[phyName[3:]]
 														if ok {
 															portDesc = cageDesc
 														}
 													}
-													m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = phy_name + " - " + portDesc
+													m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = phyName + " - " + portDesc
 													m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "no"
 													m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
 												}
@@ -321,14 +321,14 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 							m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
 							// Try to find channelized port
 							for _, phy := range rd.IfList.Physicals {
-								phy_name := strings.Trim(phy.Name, "\n")
+								phyName := strings.Trim(phy.Name, "\n")
 								// Keep only WAN ports
-								if strings.Contains(phy_name, "et-") || strings.Contains(phy_name, "xe-") || strings.Contains(phy_name, "ge-") {
-									suffix := phy_name[3:]
+								if strings.Contains(phyName, "et-") || strings.Contains(phyName, "xe-") || strings.Contains(phyName, "ge-") {
+									suffix := phyName[3:]
 									if suffix == key || strings.HasPrefix(suffix, key+":") {
-										if strings.Contains(phy_name, ":") {
+										if strings.Contains(phyName, ":") {
 											// Extract the channel after the :
-											parts := strings.Split(phy_name, ":")
+											parts := strings.Split(phyName, ":")
 											if len(parts) > 1 {
 												// Update CAGE info
 												m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "yes"
@@ -351,24 +351,24 @@ func (m *Metadata) UpdateMeta(rd *xml.RawData) error {
 												}
 												m.Meta[rd.Family][rd.RtrName][channelizedKey]["OPTIC_DESC"] = opticDesc
 												portDesc = "Unknown"
-												if len(phy_name) > 3 {
-													cageDesc, ok := mapDesc[phy_name[3:]]
+												if len(phyName) > 3 {
+													cageDesc, ok := mapDesc[phyName[3:]]
 													if ok {
 														portDesc = cageDesc
 													}
 												}
-												m.Meta[rd.Family][rd.RtrName][channelizedKey]["LINKNAME"] = phy_name + " - " + portDesc
+												m.Meta[rd.Family][rd.RtrName][channelizedKey]["LINKNAME"] = phyName + " - " + portDesc
 											}
 										} else {
 											// Update the cage info for non channelized port
 											portDesc := "Unknown"
-											if len(phy_name) > 3 {
-												cageDesc, ok := mapDesc[phy_name[3:]]
+											if len(phyName) > 3 {
+												cageDesc, ok := mapDesc[phyName[3:]]
 												if ok {
 													portDesc = cageDesc
 												}
 											}
-											m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = phy_name + " - " + portDesc
+											m.Meta[rd.Family][rd.RtrName][key]["LINKNAME"] = phyName + " - " + portDesc
 											m.Meta[rd.Family][rd.RtrName][key]["HAS_CHANNEL"] = "no"
 											m.Meta[rd.Family][rd.RtrName][key]["OPTIC_DESC"] = opticDesc
 										}

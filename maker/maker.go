@@ -506,18 +506,6 @@ func OptimizeConf(listOfConf []*TelegrafConfig) *TelegrafConfig {
 		}
 
 		//---------------------------------------------------------------
-		// Optimise Influx output plugin
-		//---------------------------------------------------------------
-		if len(entry.InfluxList) > 0 {
-			if len(config.InfluxList) == 0 {
-				config.InfluxList = append([]InfluxOutput{}, entry.InfluxList...)
-			} else {
-				// We merge fieldpass - we support today only one Influx Output that explains the [0]
-				mergeUniqueInPlaceString(&config.InfluxList[0].Fieldpass, entry.InfluxList[0].Fieldpass)
-			}
-		}
-
-		//---------------------------------------------------------------
 		// Optimise File output plugin : no optimization
 		//---------------------------------------------------------------
 		if len(entry.FileList) > 0 {
@@ -637,22 +625,6 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 			} else {
 				header += result.String()
 				hasInput = true
-			}
-		}
-	}
-	// Manage Influx Output
-	if len(config.InfluxList) > 0 {
-		t, err := template.New("influxTemplate").Parse(InfluxTemplate)
-		if err != nil {
-			logger.Log.Errorf("Error parsing Influx template: %v", err)
-		} else {
-			var result bytes.Buffer
-			err = t.Execute(&result, config.InfluxList)
-			if err != nil {
-				logger.Log.Errorf("Unable to generate Influx toml payload - err: %v", err)
-			} else {
-				footer += result.String()
-				hasOutput = true
 			}
 		}
 	}

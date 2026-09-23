@@ -22,7 +22,6 @@ type TelegrafConfig struct {
 	RegexList      []Regex            `json:"regex_list"`
 	StringsList    []Strings          `json:"strings_list"`
 	FileList       []FileOutput       `json:"file_outputs"`
-	InfluxList     []InfluxOutput     `json:"influx_outputs"`
 	KafkaList      []KafkaOutput      `json:"kafka_outputs"`
 	PrometheusList []PrometheusOutput `json:"prometheus_outputs"`
 }
@@ -49,9 +48,9 @@ type GnmiInput struct {
 	Rtrs         []string
 	Username     string
 	Password     string
-	UseTls       bool
+	UseTLS       bool
 	SkipVerify   bool
-	UseTlsClient bool
+	UseTLSClient bool
 	Aliases      []Alias        `json:"aliases"`
 	Subs         []Subscription `json:"subscriptions"`
 }
@@ -71,7 +70,7 @@ const GnmiInputTemplate = `
       ]
 
   username = "{{.Username}}"
-  password = "{{.Password}}" {{if .UseTls}}
+  password = "{{.Password}}" {{if .UseTLS}}
   ## enable client-side TLS and define CA to authenticate the device
   enable_tls = true
   tls_ca = "/var/cert/RootCA.crt"
@@ -79,7 +78,7 @@ const GnmiInputTemplate = `
   # tls_min_version = "TLS12" {{if .SkipVerify}}
   ## Use TLS but skip chain & host verification
   insecure_skip_verify = true {{end}}
-  {{if .UseTlsClient}}
+  {{if .UseTLSClient}}
   ## define client-side TLS certificate & key to authenticate to the device
   tls_cert = "/var/cert/client.crt"
   tls_key = "/var/cert/client.key" {{end}}
@@ -710,35 +709,6 @@ const StringTemplate = `
   [[processors.strings.uppercase]] {{end}} {{if eq .StrType 0}}
     tag = "{{.Data}}" {{else}}
     field = "{{.Data}}" {{end}} {{end}}
-{{end}}
-`
-
-// ---------------------------------------------------- //
-// Influx Output plugin
-// ---------------------------------------------------- //
-
-type InfluxOutput struct {
-	Retention string
-	Fieldpass []string `json:"fieldpass"`
-}
-
-// Go Template Receive a list of InfluxOutput (we should only have one) = InfluxList
-
-const InfluxTemplate = `
-###############################################################################
-#                              INFLUX OUTPUT PLUGIN                           #
-###############################################################################
-{{range .}}[[outputs.influxdb]]
-  database="jtsdb"
-  urls = ["http://influxdb:8086"]
-  timeout = "20s"
-  retention_policy = "{{.Retention}}"
-  fieldpass = [
-  {{- range $index, $name := .Fieldpass}}
-  {{- if $index}},{{end}}
-      "{{$name}}"
-  {{- end}}
-  ]
 {{end}}
 `
 

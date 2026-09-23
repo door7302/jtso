@@ -40,7 +40,7 @@ type (
 var CC CurrentContext
 
 const (
-	PATH_ONDEMAND string = "/var/ondemand/"
+	OndemandPath string = "/var/ondemand/"
 )
 
 func init() {
@@ -59,10 +59,10 @@ func Load(f string) (error, RunningProfile) {
 
 	logger.Log.Infof("Load Ondemand configuration %s", f)
 
-	filePath := filepath.Join(PATH_ONDEMAND, f)
+	filePath := filepath.Join(OndemandPath, f)
 	// Prevent path traversal
 	cleanPath := filepath.Clean(filePath)
-	if !strings.HasPrefix(cleanPath, filepath.Clean(PATH_ONDEMAND)) {
+	if !strings.HasPrefix(cleanPath, filepath.Clean(OndemandPath)) {
 		return fmt.Errorf("invalid file path: path traversal detected"), RunningProfile{}
 	}
 
@@ -83,10 +83,10 @@ func Load(f string) (error, RunningProfile) {
 func Save(f string, profile RunningProfile) error {
 	logger.Log.Infof("Save Ondemand configuration %s", f)
 
-	filePath := filepath.Join(PATH_ONDEMAND, f)
+	filePath := filepath.Join(OndemandPath, f)
 	// Prevent path traversal
 	cleanPath := filepath.Clean(filePath)
-	if !strings.HasPrefix(cleanPath, filepath.Clean(PATH_ONDEMAND)) {
+	if !strings.HasPrefix(cleanPath, filepath.Clean(OndemandPath)) {
 		return fmt.Errorf("invalid file path: path traversal detected")
 	}
 
@@ -107,9 +107,9 @@ func ListConfigs() ([]string, error) {
 	var configs []string
 
 	// Read directory entries
-	entries, err := os.ReadDir(PATH_ONDEMAND)
+	entries, err := os.ReadDir(OndemandPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read directory %s: %w", PATH_ONDEMAND, err)
+		return nil, fmt.Errorf("failed to read directory %s: %w", OndemandPath, err)
 	}
 
 	for _, entry := range entries {

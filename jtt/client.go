@@ -37,7 +37,7 @@ type JobState struct {
 type LeafResult struct {
 	GnmiLeaf           string   `json:"gnmi_leaf"`
 	Description        string   `json:"description"`
-	NetconfRpc         string   `json:"netconf_rpc"`
+	NetconfRPC         string   `json:"netconf_rpc"`
 	NetconfLeaf        string   `json:"netconf_leaf"`
 	CounterType        string   `json:"counter_type"`
 	SpecificThresholds bool     `json:"specific_thresholds"`
@@ -82,7 +82,7 @@ type GnmiCfg struct {
 	Port        int    `json:"port,omitempty"`
 	Insecure    bool   `json:"insecure,omitempty"`
 	SkipVerify  bool   `json:"skip_verify,omitempty"`
-	ClientTls   bool   `json:"client_tls,omitempty"`
+	ClientTLS   bool   `json:"client_tls,omitempty"`
 	User        string `json:"user,omitempty"`
 	Pwd         string `json:"pwd,omitempty"`
 	HideOrigin  bool   `json:"hide_origin,omitempty"`
@@ -102,7 +102,7 @@ type NetconfCfg struct {
 type LeafInput struct {
 	GnmiLeaf           string `json:"gnmi_leaf"`
 	Description        string `json:"description,omitempty"`
-	NetconfRpc         string `json:"netconf_rpc,omitempty"`
+	NetconfRPC         string `json:"netconf_rpc,omitempty"`
 	NetconfLeaf        string `json:"netconf_leaf,omitempty"`
 	CounterType        string `json:"counter_type,omitempty"`
 	SpecificThresholds bool   `json:"specific_thresholds,omitempty"`

@@ -49,7 +49,7 @@ func Collect(cfg *config.ConfigContainer) {
 					Pwd:     sqlite.ActiveCred.NetconfPwd,
 					Family:  rtr.Family,
 					Port:    cfg.Netconf.Port,
-					Timeout: cfg.Netconf.RpcTimeout,
+					Timeout: cfg.Netconf.RPCTimeout,
 					Wg:      wg,
 					Jsonify: output.MyMeta,
 				})

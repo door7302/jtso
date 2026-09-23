@@ -21,7 +21,7 @@ import (
 	"github.com/openconfig/gnmic/pkg/formatters"
 )
 
-const PATH_CERT string = "/var/shared/telegraf/cert/"
+const CertPath string = "/var/shared/telegraf/cert/"
 
 var root *TreeNode
 var global []string
@@ -30,7 +30,7 @@ var StreamObj *Streamer
 
 // Will deprecate TreeJS in further release
 type TreeJs struct {
-	Id     string `json:"id"`
+	ID     string `json:"id"`
 	Parent string `json:"parent"`
 	Text   string `json:"text"`
 	Icon   string `json:"icon"`
@@ -59,8 +59,8 @@ type Streamer struct {
 	Flusher       http.Flusher
 	Writer        http.ResponseWriter
 	Error         error
-	XpathCpt      int
-	XpathList     map[string]struct{}
+	XPathCpt      int
+	XPathList     map[string]struct{}
 	StopStreaming chan struct{}
 	Ctx           context.Context
 	Cancel        context.CancelFunc
@@ -201,7 +201,7 @@ func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}
 		if reflect.TypeOf(v).Kind() == reflect.Map {
 			newkey := genUUID()
 			entry = TreeJs{
-				Id:     newkey,
+				ID:     newkey,
 				Parent: parentKey,
 				Text:   k,
 				Icon:   "fas fa-search-plus",
@@ -215,7 +215,7 @@ func PrintTree(node map[string]interface{}, indent int, o map[string]interface{}
 			o[k] = v
 			//fmt.Printf("%s+ %s: %s\n", strings.Repeat("  ", indent), k, fmt.Sprint(v))
 			entry = TreeJs{
-				Id:     genUUID(),
+				ID:     genUUID(),
 				Parent: parentKey,
 				Text:   fmt.Sprintf("%s = %s", k, fmt.Sprint(v)),
 				Icon:   "fas fa-sign-out-alt",
@@ -240,7 +240,7 @@ func TraverseTree(node *TreeNode, parentKey string, j *[]TreeJs) {
 		newkey := genUUID()
 
 		entry = TreeJs{
-			Id:     newkey,
+			ID:     newkey,
 			Parent: parentKey,
 			Text:   path,
 			Icon:   "fas fa-search-plus",
@@ -433,11 +433,11 @@ func parseXpath(xpath string, value string, merge bool, hideOrigin bool) error {
 	lpath := advancedSplit(xpath, merge, hideOrigin)
 	xpathKey := strings.Join(lpath, "/")
 	// increment counter and save the Xpath
-	_, ok := StreamObj.XpathList[xpathKey]
+	_, ok := StreamObj.XPathList[xpathKey]
 	if !ok {
-		StreamObj.XpathCpt += 1
-		StreamObj.XpathList[strings.Join(lpath, "/")] = struct{}{}
-		StreamData(fmt.Sprintf("%d", StreamObj.XpathCpt), "XPATH")
+		StreamObj.XPathCpt += 1
+		StreamObj.XPathList[strings.Join(lpath, "/")] = struct{}{}
+		StreamData(fmt.Sprintf("%d", StreamObj.XPathCpt), "XPATH")
 	}
 	// Old method to share XPATH
 	// StreamData(fmt.Sprintf("XPATH Extracted: %s", strings.Join(lpath, "/")), "OK")
@@ -502,13 +502,13 @@ func GnmiSample(hideOrigin bool) {
 	tls := false
 	skip := false
 	clienttls := false
-	if sqlite.ActiveCred.UseTls == "yes" {
+	if sqlite.ActiveCred.UseTLS == "yes" {
 		tls = true
 	}
 	if sqlite.ActiveCred.SkipVerify == "yes" {
 		skip = true
 	}
-	if sqlite.ActiveCred.ClientTls == "yes" {
+	if sqlite.ActiveCred.ClientTLS == "yes" {
 		clienttls = true
 	}
 
@@ -523,9 +523,9 @@ func GnmiSample(hideOrigin bool) {
 				api.Password(sqlite.ActiveCred.GnmiPwd),
 				api.SkipVerify(skip),
 				api.Insecure(false),
-				api.TLSCA(PATH_CERT+"RootCA.crt"),
-				api.TLSCert(PATH_CERT+"client.crt"),
-				api.TLSKey(PATH_CERT+"client.key"),
+				api.TLSCA(CertPath+"RootCA.crt"),
+				api.TLSCert(CertPath+"client.crt"),
+				api.TLSKey(CertPath+"client.key"),
 			)
 
 		} else {
@@ -538,7 +538,7 @@ func GnmiSample(hideOrigin bool) {
 				api.Password(sqlite.ActiveCred.GnmiPwd),
 				api.SkipVerify(skip),
 				api.Insecure(false),
-				api.TLSCA(PATH_CERT+"RootCA.crt"),
+				api.TLSCA(CertPath+"RootCA.crt"),
 			)
 
 		}
@@ -670,13 +670,13 @@ func GnmiOnDemand(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 	tls := false
 	skip := false
 	clienttls := false
-	if sqlite.ActiveCred.UseTls == "yes" {
+	if sqlite.ActiveCred.UseTLS == "yes" {
 		tls = true
 	}
 	if sqlite.ActiveCred.SkipVerify == "yes" {
 		skip = true
 	}
-	if sqlite.ActiveCred.ClientTls == "yes" {
+	if sqlite.ActiveCred.ClientTLS == "yes" {
 		clienttls = true
 	}
 
@@ -690,9 +690,9 @@ func GnmiOnDemand(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 				api.Password(sqlite.ActiveCred.GnmiPwd),
 				api.SkipVerify(skip),
 				api.Insecure(false),
-				api.TLSCA(PATH_CERT+"RootCA.crt"),
-				api.TLSCert(PATH_CERT+"client.crt"),
-				api.TLSKey(PATH_CERT+"client.key"),
+				api.TLSCA(CertPath+"RootCA.crt"),
+				api.TLSCert(CertPath+"client.crt"),
+				api.TLSKey(CertPath+"client.key"),
 			)
 
 		} else {
@@ -704,7 +704,7 @@ func GnmiOnDemand(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 				api.Password(sqlite.ActiveCred.GnmiPwd),
 				api.SkipVerify(skip),
 				api.Insecure(false),
-				api.TLSCA(PATH_CERT+"RootCA.crt"),
+				api.TLSCA(CertPath+"RootCA.crt"),
 			)
 
 		}
@@ -836,13 +836,13 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 	tls := false
 	skip := false
 	clienttls := false
-	if sqlite.ActiveCred.UseTls == "yes" {
+	if sqlite.ActiveCred.UseTLS == "yes" {
 		tls = true
 	}
 	if sqlite.ActiveCred.SkipVerify == "yes" {
 		skip = true
 	}
-	if sqlite.ActiveCred.ClientTls == "yes" {
+	if sqlite.ActiveCred.ClientTLS == "yes" {
 		clienttls = true
 	}
 
@@ -856,9 +856,9 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 				api.Password(sqlite.ActiveCred.GnmiPwd),
 				api.SkipVerify(skip),
 				api.Insecure(false),
-				api.TLSCA(PATH_CERT+"RootCA.crt"),
-				api.TLSCert(PATH_CERT+"client.crt"),
-				api.TLSKey(PATH_CERT+"client.key"),
+				api.TLSCA(CertPath+"RootCA.crt"),
+				api.TLSCert(CertPath+"client.crt"),
+				api.TLSKey(CertPath+"client.key"),
 			)
 
 		} else {
@@ -870,7 +870,7 @@ func GnmiOnce(o OnceRequest, hideOrigin bool) (error, OnceReply) {
 				api.Password(sqlite.ActiveCred.GnmiPwd),
 				api.SkipVerify(skip),
 				api.Insecure(false),
-				api.TLSCA(PATH_CERT+"RootCA.crt"),
+				api.TLSCA(CertPath+"RootCA.crt"),
 			)
 
 		}

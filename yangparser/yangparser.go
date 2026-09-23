@@ -14,7 +14,7 @@ import (
 // FlatPath represents a single YANG leaf path with its metadata.
 type FlatPath struct {
 	ReadOnly bool   `json:"read_only"`
-	Xpath    string `json:"xpath"`
+	XPath    string `json:"xpath"`
 	XDesc    string `json:"xdesc"`
 	XType    string `json:"xtype"`
 }
@@ -194,7 +194,7 @@ func traverseEntry(e *yang.Entry, currentPath string, parentConfig yang.TriState
 		if config == yang.TSFalse {
 			fp := FlatPath{
 				ReadOnly: true,
-				Xpath:    leafPath,
+				XPath:    leafPath,
 				XDesc:    e.Description,
 			}
 			if withType {

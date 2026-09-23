@@ -21,11 +21,11 @@ import (
 )
 
 const (
-	TELEGRAF_ROOT_PATH string = "/var/shared/telegraf/"
-	PATH_GRAFANA       string = "/var/shared/grafana/dashboards/"
-	PROFILES           string = "/var/profiles/"
-	ACTIVE_PROFILES    string = "/var/active_profiles/"
-	ONDEMAND_DASH      string = "/var/shared/grafana/dashboards/ondemand.json"
+	TelegrafRootPath   string = "/var/shared/telegraf/"
+	GrafanaPath        string = "/var/shared/grafana/dashboards/"
+	ProfilesPath       string = "/var/profiles/"
+	ActiveProfilesPath string = "/var/active_profiles/"
+	OndemandDashPath   string = "/var/shared/grafana/dashboards/ondemand.json"
 )
 
 var PathMap = map[string]string{
@@ -65,7 +65,7 @@ func ChangeTelegrafTuning(batchSize string, bufferLimit string, flushInterval st
 	flushJitterRegex := regexp.MustCompile(`^\s*flush_jitter\s*=\s*"[^"]*"\s*$`)
 
 	for _, instance := range instances {
-		filePath := TELEGRAF_ROOT_PATH + instance + "/telegraf.conf"
+		filePath := TelegrafRootPath + instance + "/telegraf.conf"
 
 		// Read the file
 		file, err := os.Open(filePath)
@@ -113,7 +113,7 @@ func ChangeTelegrafTuning(batchSize string, bufferLimit string, flushInterval st
 
 func changeTelegrafDebug(instance string, debug int) error {
 	// for enable debug we need to change telegraf.conf and set debug = false
-	filePath := TELEGRAF_ROOT_PATH + instance + "/telegraf.conf"
+	filePath := TelegrafRootPath + instance + "/telegraf.conf"
 
 	// Read the file
 	file, err := os.Open(filePath)
@@ -329,9 +329,9 @@ func StopOndemand(p string) error {
 		oneError = true
 	}
 
-	err = os.Remove(ONDEMAND_DASH)
+	err = os.Remove(OndemandDashPath)
 	if err != nil {
-		logger.Log.Errorf("Unable to delete grafana ondemand dashboard %s: %v", ONDEMAND_DASH, err)
+		logger.Log.Errorf("Unable to delete grafana ondemand dashboard %s: %v", OndemandDashPath, err)
 		oneError = true
 	}
 
@@ -358,7 +358,6 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		ConverterList:  make([]maker.Converter, 0),  //Order = 200
 		EnrichmentList: make([]maker.Enrichment, 0), //Order = 300
 		RateList:       make([]maker.Rate, 0),       //Order = 400
-		//InfluxList:     make([]maker.InfluxOutput, 0),
 		PrometheusList: make([]maker.PrometheusOutput, 0),
 		KafkaList:      make([]maker.KafkaOutput, 0),
 	}
@@ -399,9 +398,6 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	gnmi := new(maker.GnmiInput)
 	converter := new(maker.Converter)
 	rate := new(maker.Rate)
-	// to_remove_later
-	//influx := new(maker.InfluxOutput)
-
 	prometheus := new(maker.PrometheusOutput)
 	rename := new(maker.Rename)
 
@@ -409,27 +405,23 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	tls := false
 	skip := false
 	clienttls := false
-	if sqlite.ActiveCred.UseTls == "yes" {
+	if sqlite.ActiveCred.UseTLS == "yes" {
 		tls = true
 	}
 	if sqlite.ActiveCred.SkipVerify == "yes" {
 		skip = true
 	}
-	if sqlite.ActiveCred.ClientTls == "yes" {
+	if sqlite.ActiveCred.ClientTLS == "yes" {
 		clienttls = true
 	}
 
 	gnmi.Rtrs = rendRtrs
 	gnmi.Username = sqlite.ActiveCred.GnmiUser
 	gnmi.Password = sqlite.ActiveCred.GnmiPwd
-	gnmi.UseTls = tls
-	gnmi.UseTlsClient = clienttls
+	gnmi.UseTLS = tls
+	gnmi.UseTLSClient = clienttls
 	gnmi.SkipVerify = skip
 	gnmi.Subs = make([]maker.Subscription, 0)
-
-	// to_remove_later
-	//influx.Retention = "autogen"
-	//influx.Fieldpass = make([]string, 0)
 
 	prometheus.Order = 10000
 	prometheus.Fieldpass = make([]string, 0)
@@ -561,8 +553,9 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 				}
 
 				// Build tag strings for panel (from second loop)
-				tagsToAlias += "$tag_" + finalTag + " - "
-				tagCode += `AND \"` + finalTag + `\"=~/^.*${` + finalTag + `:regex}.*$/`
+				promTag := ondemand.PromLabelName(finalTag)
+				tagsToAlias += "{{" + promTag + "}} - "
+				tagCode += `, ` + promTag + `=~\".*${` + promTag + `:regex}.*\"`
 			}
 
 			// Finalize tags string
@@ -604,16 +597,11 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			}
 			if f.Rate {
 				gfnaV.Field = finalField + "_rate"
-				// to_remove_later
-				//influx.Fieldpass = append(influx.Fieldpass, finalField+"_rate")
-
 				prometheus.Fieldpass = append(prometheus.Fieldpass, finalField+"_rate")
 			} else {
-				// to_remove_later
-				//influx.Fieldpass = append(influx.Fieldpass, finalField)
-
 				prometheus.Fieldpass = append(prometheus.Fieldpass, finalField)
 			}
+			gfnaV.Metric = ondemand.PromMetricName("ONDEMAND", gfnaV.Field)
 			row.Panels = append(row.Panels, gfnaV)
 		}
 		grafanaDash.Paths = append(grafanaDash.Paths, row)
@@ -623,7 +611,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 
 		// Grafana variable (from first loop)
 		gfnaV := ondemand.Variable{
-			VariableName: k,
+			VariableName: ondemand.PromLabelName(k),
 			LabelName:    k,
 		}
 		grafanaDash.Variables = append(grafanaDash.Variables, gfnaV)
@@ -644,9 +632,6 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	if rate.Order != 0 {
 		telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
 	}
-	// to_remove_later
-	//telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
-
 	telegrafOnDemand.PrometheusList = append(telegrafOnDemand.PrometheusList, *prometheus)
 
 	// Add Kafka output if needed
@@ -664,10 +649,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			Version:          sqlite.ActiveKafkaConfig.Version,
 			MessageSize:      sqlite.ActiveKafkaConfig.MessageSize,
 			CompressionCodec: sqlite.ActiveKafkaConfig.Compression,
-			// inherit some fields from influx output if not specified in kafka config
-
-			// to_remove_later
-			// Fieldpass: telegrafOnDemand.InfluxList[0].Fieldpass,
+			// inherit fieldpass from prometheus output if not specified in kafka config
 			Fieldpass: telegrafOnDemand.PrometheusList[0].Fieldpass,
 		})
 
@@ -701,9 +683,9 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		logger.Log.Errorf("Unable to render the grafana ondemand dashboard from profile %s: %v", profile.Name, err)
 		return err
 	}
-	file, err = os.Create(ONDEMAND_DASH)
+	file, err = os.Create(OndemandDashPath)
 	if err != nil {
-		logger.Log.Errorf("Unable to open the grafana ondemand dashboard file %s: %v", ONDEMAND_DASH, err)
+		logger.Log.Errorf("Unable to open the grafana ondemand dashboard file %s: %v", OndemandDashPath, err)
 		return err
 	}
 	defer file.Close()
@@ -711,7 +693,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	// Write text to the file
 	_, err = file.WriteString(grafanaConfig)
 	if err != nil {
-		logger.Log.Errorf("Unable to write the grafana ondemand dashboard file %s: %v", ONDEMAND_DASH, err)
+		logger.Log.Errorf("Unable to write the grafana ondemand dashboard file %s: %v", OndemandDashPath, err)
 		return err
 	}
 
@@ -774,7 +756,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		assosCopy := make([]string, len(asso.Assos))
 		copy(assosCopy, asso.Assos)
 		routerProfiles[asso.Shortname] = sqlite.AssoEntry{
-			Id:        asso.Id,
+			ID:        asso.ID,
 			Shortname: asso.Shortname,
 			Assos:     assosCopy,
 			Kafka:     asso.Kafka,
@@ -975,7 +957,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			// create a new collection of config before optimisation
 			telegrafCfgList = make([]*maker.TelegrafConfig, 0)
 			for index, file := range collection.ProfilesConf {
-				fullPath := ACTIVE_PROFILES + collection.ProfilesName[index] + "/" + file
+				fullPath := ActiveProfilesPath + collection.ProfilesName[index] + "/" + file
 				newCfg, err := maker.LoadConfig(fullPath)
 				if err != nil {
 					continue
@@ -1006,13 +988,13 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			tls := false
 			skip := false
 			clienttls := false
-			if sqlite.ActiveCred.UseTls == "yes" {
+			if sqlite.ActiveCred.UseTLS == "yes" {
 				tls = true
 			}
 			if sqlite.ActiveCred.SkipVerify == "yes" {
 				skip = true
 			}
-			if sqlite.ActiveCred.ClientTls == "yes" {
+			if sqlite.ActiveCred.ClientTLS == "yes" {
 				clienttls = true
 			}
 
@@ -1030,8 +1012,8 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					mergedCfg.GnmiList[i].Rtrs = rendRtrs
 					mergedCfg.GnmiList[i].Username = sqlite.ActiveCred.GnmiUser
 					mergedCfg.GnmiList[i].Password = sqlite.ActiveCred.GnmiPwd
-					mergedCfg.GnmiList[i].UseTls = tls
-					mergedCfg.GnmiList[i].UseTlsClient = clienttls
+					mergedCfg.GnmiList[i].UseTLS = tls
+					mergedCfg.GnmiList[i].UseTLSClient = clienttls
 					mergedCfg.GnmiList[i].SkipVerify = skip
 				}
 			}
@@ -1058,10 +1040,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					Version:          sqlite.ActiveKafkaConfig.Version,
 					MessageSize:      sqlite.ActiveKafkaConfig.MessageSize,
 					CompressionCodec: sqlite.ActiveKafkaConfig.Compression,
-					// inherit some fields from influx output if not specified in kafka config
-
-					// to_remove_later
-					// Fieldpass: mergedCfg.InfluxList[0].Fieldpass,
+					// inherit fieldpass from prometheus output if not specified in kafka config
 					Fieldpass: mergedCfg.PrometheusList[0].Fieldpass,
 				})
 
@@ -1108,12 +1087,12 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				}
 				for _, d := range ActiveProfiles[p].Definition.GrafaCfg {
 					excludeDash = append(excludeDash, d)
-					source, err := os.Open(ACTIVE_PROFILES + p + "/" + d) //open the source file
+					source, err := os.Open(ActiveProfilesPath + p + "/" + d) //open the source file
 					if err != nil {
 						logger.Log.Errorf("Unable to open the source dashboard %s - err: %v", d, err)
 						continue
 					}
-					destination, err := os.Create(PATH_GRAFANA + d) //create the destination file
+					destination, err := os.Create(GrafanaPath + d) //create the destination file
 					if err != nil {
 						logger.Log.Errorf("Unable to open the destination dashboard %s - err: %v", d, err)
 						source.Close()
@@ -1133,14 +1112,14 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	}
 
 	// Now clean grafana dashbord directory and keep only dashbords related to active profiles
-	readDirectory, _ = os.Open(PATH_GRAFANA)
+	readDirectory, _ = os.Open(GrafanaPath)
 	allFiles, _ := readDirectory.Readdir(0)
 	readDirectory.Close()
 	for f := range allFiles {
 		file := allFiles[f]
 
 		fileName := file.Name()
-		filePath := PATH_GRAFANA + fileName
+		filePath := GrafanaPath + fileName
 
 		// exclude home dashboard and active dashboards profile
 		found := false
@@ -1157,77 +1136,6 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			}
 		}
 	}
-
-	// -----------------------------------------------------------------------------------------------------
-	// Create the list of Active Kapacitor script
-	// -----------------------------------------------------------------------------------------------------
-	// to_reove_later
-	/*
-		var kapaStart, kapaStop, kapaAll []string
-		kapaStart = make([]string, 0)
-		kapaStop = make([]string, 0)
-		kapaAll = make([]string, 0)
-		for _, v := range Collections {
-			for _, c := range v {
-				for _, p := range c.ProfilesName {
-					// bypass unknown profile
-					_, ok := ActiveProfiles[p]
-					if !ok {
-						logger.Log.Errorf("Kapacitor update - Unknown profile detected: %s - skip it", p)
-						continue
-					}
-					for _, d := range ActiveProfiles[p].Definition.KapaCfg {
-						fileKapa := ACTIVE_PROFILES + p + "/" + d
-						to_add := true
-						for _, a := range kapaAll {
-							if a == fileKapa {
-								to_add = false
-								break
-							}
-						}
-						if to_add {
-							// kapaAll is to compare with ActiveTick later to delete unwanted tick scripts
-							kapaAll = append(kapaAll, fileKapa)
-						}
-						found := false
-						for i, _ := range kapacitor.ActiveTick {
-							if i == fileKapa {
-								found = true
-								break
-							}
-						}
-						// if kapa script not already active
-						if !found {
-							kapaStart = append(kapaStart, fileKapa)
-						}
-					}
-				}
-			}
-		}
-		// check now those that need to be deleted
-		for i, _ := range kapacitor.ActiveTick {
-			found := false
-			for _, v := range kapaAll {
-				if i == v {
-					found = true
-					break
-				}
-			}
-			if !found {
-				kapaStop = append(kapaStop, i)
-			}
-		}
-
-		// remove non active Kapascript
-		if len(kapaStop) > 0 {
-			kapacitor.DeleteTick(kapaStop)
-		}
-
-		// Enable active scripts
-		if len(kapaStart) > 0 {
-			kapacitor.StartTick(kapaStart)
-		}
-	*/
 
 	// Restart grafana
 	container.RestartContainer("grafana")

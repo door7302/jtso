@@ -14,7 +14,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-const YANG_PATH = "/var/yang/"
+const YangPath = "/var/yang/"
 
 // schemaList represents the NETCONF monitoring schemas response
 type schemaList struct {
@@ -96,8 +96,8 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 	logger.Log.Infof("[%s] Found %d schemas on device", router, len(allSchemas))
 
 	// Create output directory
-	if err := os.MkdirAll(YANG_PATH+outputDir, 0755); err != nil {
-		return 0, 0, fmt.Errorf("unable to create output directory %s: %w", YANG_PATH+outputDir, err)
+	if err := os.MkdirAll(YangPath+outputDir, 0755); err != nil {
+		return 0, 0, fmt.Errorf("unable to create output directory %s: %w", YangPath+outputDir, err)
 	}
 
 	// Step 2: Download each schema (filtering out excluded ones)
@@ -122,7 +122,7 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 			progress("download", dlIndex, totalDownload, s.Identifier)
 		}
 
-		err := downloadSingleSchema(session, s.Identifier, YANG_PATH+outputDir)
+		err := downloadSingleSchema(session, s.Identifier, YangPath+outputDir)
 		if err != nil {
 			logger.Log.Warnf("[%s] Failed to download schema %s: %v", router, s.Identifier, err)
 			continue
@@ -130,7 +130,7 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 
 		downloaded++
 	}
-	logger.Log.Infof("[%s] Successfully downloaded %d YANG schemas to %s", router, downloaded, YANG_PATH+outputDir)
+	logger.Log.Infof("[%s] Successfully downloaded %d YANG schemas to %s", router, downloaded, YangPath+outputDir)
 
 	// Exclude augmentation/deviation files from standalone export
 	// (they are used internally by yangparser.Export to enrich parent modules)
@@ -138,7 +138,7 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 
 	// Step 3 / Create the flat xpaths JSON file for all downloaded schemas
 	// Use a single Exporter to avoid re-scanning the directory for each file
-	exporter, err := yangparser.NewExporter(YANG_PATH + outputDir)
+	exporter, err := yangparser.NewExporter(YangPath + outputDir)
 	if err != nil {
 		logger.Log.Warnf("[%s] Failed to create YANG exporter: %v", router, err)
 		return downloaded, 0, nil
@@ -166,7 +166,7 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 		}
 
 		// Generate the flat path JSON file from the downloaded schema
-		yangFile := filepath.Join(YANG_PATH+outputDir, s.Identifier+".yang")
+		yangFile := filepath.Join(YangPath+outputDir, s.Identifier+".yang")
 		if err := exporter.Export(yangFile, true); err != nil {
 			logger.Log.Warnf("[%s] Failed to generate flat paths for %s: %v", router, s.Identifier, err)
 			continue
@@ -174,7 +174,7 @@ func DownloadYangSchemas(router string, port int, username string, password stri
 		converted++
 	}
 
-	logger.Log.Infof("[%s] Successfully converted %d YANG schemas to %s", router, converted, YANG_PATH+outputDir)
+	logger.Log.Infof("[%s] Successfully converted %d YANG schemas to %s", router, converted, YangPath+outputDir)
 	return downloaded, converted, nil
 }
 

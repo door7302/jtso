@@ -35,10 +35,10 @@ import (
 )
 
 const (
-	PATH_RAW      string = "/html/assets/rawfiles/"
-	PATH_CERT     string = "/var/cert/"
-	PATH_JTS_VERS string = "/etc/jtso/openjts.version"
-	PROPERTIES    string = "/components/component/properties/property"
+	RawFilesPath    string = "/html/assets/rawfiles/"
+	CertPath        string = "/var/cert/"
+	JtsVersionPath  string = "/etc/jtso/openjts.version"
+	PropertiesXPath string = "/components/component/properties/property"
 )
 
 const teleItemTpl = `
@@ -172,8 +172,8 @@ func New(cfg *config.ConfigContainer) *WebApp {
 }
 
 func (w *WebApp) Run() {
-	if collectCfg.cfg.Portal.Https {
-		if err := w.app.StartTLS(w.listen, PATH_CERT+collectCfg.cfg.Portal.ServerCrt, PATH_CERT+collectCfg.cfg.Portal.ServerKey); err != http.ErrServerClosed {
+	if collectCfg.cfg.Portal.HTTPS {
+		if err := w.app.StartTLS(w.listen, CertPath+collectCfg.cfg.Portal.ServerCrt, CertPath+collectCfg.cfg.Portal.ServerKey); err != http.ErrServerClosed {
 			logger.Log.Errorf("Unable to start HTTPS server: %v", err)
 			panic(err)
 		}
@@ -434,12 +434,12 @@ func checkCompatibility(r *AddProfile, fam string, version string) (bool, string
 // getJTSVersion reads the installed OpenJTS version from the version file.
 // Returns "N/A" if the file cannot be read.
 func getJTSVersion() string {
-	file_jts, err := os.Open(PATH_JTS_VERS)
+	fileJts, err := os.Open(JtsVersionPath)
 	if err != nil {
 		return "N/A"
 	}
-	defer file_jts.Close()
-	scanner := bufio.NewScanner(file_jts)
+	defer fileJts.Close()
+	scanner := bufio.NewScanner(fileJts)
 	if scanner.Scan() {
 		if v := scanner.Text(); v != "" {
 			return v
@@ -457,7 +457,7 @@ func routeIndex(c echo.Context) error {
 	// Physical devices
 	teleMx, telePtx, teleAcx, teleEx, teleQfx, teleSrx := "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc", "f8cecc"
 	numMX, numPTX, numACX, numEX, numQFX, numSRX := 0, 0, 0, 0, 0, 0
-	MXDebug, PTXDebug, ACXDdebug, EXDebug, QFXDebug, SRXDebug := "grey", "grey", "grey", "grey", "grey", "grey"
+	MXDebug, PTXDebug, ACXDebug, EXDebug, QFXDebug, SRXDebug := "grey", "grey", "grey", "grey", "grey", "grey"
 
 	// Native Container devices
 	teleCrpd, teleCptx := "f8cecc", "f8cecc"
@@ -485,7 +485,7 @@ func routeIndex(c echo.Context) error {
 		PTXDebug = "red"
 	}
 	if sqlite.ActiveAdmin.ACXDebug == 1 {
-		ACXDdebug = "red"
+		ACXDebug = "red"
 	}
 	if sqlite.ActiveAdmin.EXDebug == 1 {
 		EXDebug = "red"
@@ -646,7 +646,7 @@ func routeIndex(c echo.Context) error {
 	}
 
 	// Retrieve module's version
-	jtsoVersion := config.JTSO_VERSION
+	jtsoVersion := config.JtsoVersion
 	jtsVersion := getJTSVersion()
 
 	// get the Telegraf version -
@@ -656,7 +656,7 @@ func routeIndex(c echo.Context) error {
 		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVevo": teleVevo, "TeleOnDemand": teleOnDemand,
 		"Grafana": grafana, "Prometheus": prometheus, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
 		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVEVO": numVEVO, "NumONDEMAND": numONDEMAND,
-		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDdebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
+		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
 		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VEVODebug": VEVODebug, "ONDEMANDDebug": ONDEMANDDebug,
 		"GrafanaPort": grafanaPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion,
 		"JTTEnabled": collectCfg.cfg.JTT.URL != ""})
@@ -688,7 +688,7 @@ func routeSettings(c echo.Context) error {
 	grafanaPort := collectCfg.cfg.Grafana.Port
 	return c.Render(http.StatusOK, "settings.html", map[string]interface{}{"Netuser": sqlite.ActiveCred.NetconfUser,
 		"Netpwd": sqlite.ActiveCred.NetconfPwd, "Gnmiuser": sqlite.ActiveCred.GnmiUser, "Gnmipwd": sqlite.ActiveCred.GnmiPwd,
-		"Usetls": sqlite.ActiveCred.UseTls, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTls,
+		"Usetls": sqlite.ActiveCred.UseTLS, "Skipverify": sqlite.ActiveCred.SkipVerify, "Clienttls": sqlite.ActiveCred.ClientTLS,
 		"MetricBatchSize": sqlite.ActiveCollectorParameters.MetricBatchSize, "MetricBufferLimit": sqlite.ActiveCollectorParameters.MetricBufferLimit,
 		"FlushInterval": strings.Replace(sqlite.ActiveCollectorParameters.FlushInterval, "s", "", -1), "FlushJitter": strings.Replace(sqlite.ActiveCollectorParameters.FlushJitter, "s", "", -1),
 		"KafkaEnable": sqlite.ActiveKafkaConfig.Enabled, "KafkaBrokers": sqlite.ActiveKafkaConfig.Brokers,
@@ -803,9 +803,9 @@ func routeSchema(c echo.Context) error {
 	// Get the list of available schemas - Analyse the director YANG_PATH and extract the list of subfolders which represent the different schemas
 	var ls []string
 	ls = make([]string, 0)
-	files, err := os.ReadDir(netconf.YANG_PATH)
+	files, err := os.ReadDir(netconf.YangPath)
 	if err != nil {
-		logger.Log.Errorf("Unable to read YANG_PATH directory: %v", err)
+		logger.Log.Errorf("Unable to read YangPath directory: %v", err)
 	} else {
 		for _, file := range files {
 			if file.IsDir() {
@@ -1331,12 +1331,12 @@ func routeDownloadYang(c echo.Context) error {
 	folderName := fmt.Sprintf("%s_%s", strings.ToUpper(model), strings.ToUpper(version))
 	folderName = strings.ReplaceAll(folderName, " ", "_")
 
-	// check if the folder already exists (use YANG_PATH of netconf package + foldername)
-	if _, err := os.Stat(netconf.YANG_PATH + folderName); !os.IsNotExist(err) {
+	// check if the folder already exists (use YangPath of netconf package + foldername)
+	if _, err := os.Stat(netconf.YangPath + folderName); !os.IsNotExist(err) {
 		if force {
 			logger.Log.Infof("Folder %s already exists but force flag is set. Removing existing folder.", folderName)
 			sendEvent("progress", "Removing existing folder "+folderName+"...")
-			if err := os.RemoveAll(netconf.YANG_PATH + folderName); err != nil {
+			if err := os.RemoveAll(netconf.YangPath + folderName); err != nil {
 				logger.Log.Errorf("Unable to remove existing folder %s: %v", folderName, err)
 				sendEvent("error", "Unable to remove existing folder: "+err.Error())
 				return nil
@@ -1384,7 +1384,7 @@ func routeListSchemas(c echo.Context) error {
 
 	// Sanitize folder name to prevent directory traversal
 	folder = filepath.Base(folder)
-	dirPath := filepath.Join(netconf.YANG_PATH, folder)
+	dirPath := filepath.Join(netconf.YangPath, folder)
 
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
@@ -1417,7 +1417,7 @@ func routeGetSchema(c echo.Context) error {
 	// Sanitize to prevent directory traversal
 	folder = filepath.Base(folder)
 	schema = filepath.Base(schema)
-	filePath := filepath.Join(netconf.YANG_PATH, folder, schema+".json")
+	filePath := filepath.Join(netconf.YangPath, folder, schema+".json")
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -1440,8 +1440,8 @@ func routeSearchPath(c echo.Context) error {
 	// change the streamer state to pending stream API request
 	gnmicollect.StreamObj.Stream = 1
 	// reinit counter and xpath bucket
-	gnmicollect.StreamObj.XpathCpt = 0
-	gnmicollect.StreamObj.XpathList = make(map[string]struct{})
+	gnmicollect.StreamObj.XPathCpt = 0
+	gnmicollect.StreamObj.XPathList = make(map[string]struct{})
 
 	r := new(SearchPath)
 	err = c.Bind(r)
@@ -1459,7 +1459,7 @@ func routeSearchPath(c echo.Context) error {
 	}
 	gnmicollect.StreamObj.Router = h
 	gnmicollect.StreamObj.Port = collectCfg.cfg.Gnmi.Port
-	gnmicollect.StreamObj.Path = r.Xpath
+	gnmicollect.StreamObj.Path = r.XPath
 	gnmicollect.StreamObj.Merger = r.Merge
 	gnmicollect.StreamObj.StopStreaming = make(chan struct{})
 	if r.Timeout >= 10 && r.Timeout <= 600 {
@@ -1580,13 +1580,13 @@ func routeStream(c echo.Context) error {
 						}
 
 						// saved the XPATH raw list in a static file
-						keys := make([]string, 0, len(gnmicollect.StreamObj.XpathList))
-						for key := range gnmicollect.StreamObj.XpathList {
+						keys := make([]string, 0, len(gnmicollect.StreamObj.XPathList))
+						for key := range gnmicollect.StreamObj.XPathList {
 							keys = append(keys, key)
 						}
 						sort.Strings(keys)
 						// Open file for writing
-						file, err := os.Create(PATH_RAW + "xpaths-result.txt")
+						file, err := os.Create(RawFilesPath + "xpaths-result.txt")
 						if err != nil {
 							logger.Log.Errorf("Error creating the xpath raw output file: %v", err)
 						} else {
@@ -1710,11 +1710,11 @@ func routeUptSettings(c echo.Context) error {
 		logger.Log.Errorf("Unable to parse Post request for updating Settings: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update Settings"})
 	}
-	if r.UseTls != sqlite.ActiveCred.UseTls || r.SkipVerify != sqlite.ActiveCred.SkipVerify || r.ClientTls != sqlite.ActiveCred.ClientTls || r.NetconfUser != sqlite.ActiveCred.NetconfUser || r.NetconfPwd != sqlite.ActiveCred.NetconfPwd || r.GnmiUser != sqlite.ActiveCred.GnmiUser || r.GnmiPwd != sqlite.ActiveCred.GnmiPwd {
+	if r.UseTLS != sqlite.ActiveCred.UseTLS || r.SkipVerify != sqlite.ActiveCred.SkipVerify || r.ClientTLS != sqlite.ActiveCred.ClientTLS || r.NetconfUser != sqlite.ActiveCred.NetconfUser || r.NetconfPwd != sqlite.ActiveCred.NetconfPwd || r.GnmiUser != sqlite.ActiveCred.GnmiUser || r.GnmiPwd != sqlite.ActiveCred.GnmiPwd {
 		somethingChange = true
 	}
 
-	err = sqlite.UpdateCredentials(r.NetconfUser, r.NetconfPwd, r.GnmiUser, r.GnmiPwd, r.UseTls, r.SkipVerify, r.ClientTls)
+	err = sqlite.UpdateCredentials(r.NetconfUser, r.NetconfPwd, r.GnmiUser, r.GnmiPwd, r.UseTLS, r.SkipVerify, r.ClientTLS)
 	if err != nil {
 		logger.Log.Errorf("Unable to update credentials: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update credentials"})
@@ -1839,7 +1839,7 @@ func routeGetTreeDoc(c echo.Context) error {
 		logger.Log.Errorf("Unable to parse Post request for displaying sensors tree: %v", err)
 		return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to display sensors tree"})
 	}
-	fullPath := association.ACTIVE_PROFILES + r.Profile + "/" + r.Config
+	fullPath := association.ActiveProfilesPath + r.Profile + "/" + r.Config
 
 	newCfg, err := maker.LoadConfig(fullPath)
 	if err != nil {
@@ -1897,9 +1897,9 @@ func routeGetTreeDoc(c echo.Context) error {
 			field := e.From
 			if !strings.Contains(e.From, "/") {
 				if e.From == "value" {
-					field = PROPERTIES + "/state/value"
+					field = PropertiesXPath + "/state/value"
 				} else {
-					field = PROPERTIES + "[name=" + e.From + "]/state/value"
+					field = PropertiesXPath + "[name=" + e.From + "]/state/value"
 				}
 			}
 
@@ -2008,22 +2008,6 @@ func routeUptDoc(c echo.Context) error {
 	if teleHTML == "" {
 		teleHTML = "No Telegraf configuration attached to this profile"
 	}
-
-	// to_remove_later
-	/*
-		kapa := ""
-		for i, v := range p.Definition.KapaCfg {
-			if i == len(p.Definition.KapaCfg)-1 {
-				kapa += "Script: " + v
-			} else {
-				kapa += "Script: " + v + "</br>"
-			}
-
-		}
-		if kapa == "" {
-			kapa = "No Kapacitor script attached to this profile"
-		}
-	*/
 
 	graf := ""
 	for i, v := range p.Definition.GrafaCfg {
@@ -2231,7 +2215,7 @@ func generateProfileInterval(p string) (error, ReplyInterval) {
 			platform := strings.ToLower(strings.TrimSuffix(val.Type().Field(i).Name, "Cfg"))
 			for j := 0; j < field.Len(); j++ {
 				cfg := field.Index(j).Interface().(association.Config)
-				fullPath := association.ACTIVE_PROFILES + p + "/" + cfg.Config
+				fullPath := association.ActiveProfilesPath + p + "/" + cfg.Config
 				newCfg, err := maker.LoadConfig(fullPath)
 				if err != nil {
 					logger.Log.Errorf("Unable to load telegraf config %s: %v", fullPath, err)
@@ -2474,7 +2458,7 @@ func routeJTTLaunch(c echo.Context) error {
 			leaf := jtt.LeafInput{
 				GnmiLeaf:           entry.LeafPath,
 				Description:        entry.Description,
-				NetconfRpc:         entry.ParentNetconf,
+				NetconfRPC:         entry.ParentNetconf,
 				NetconfLeaf:        entry.LeafNetconf,
 				CounterType:        entry.CounterType,
 				SpecificThresholds: entry.OverrideThld,
@@ -2516,15 +2500,15 @@ func routeJTTLaunch(c echo.Context) error {
 				User:    sqlite.ActiveCred.NetconfUser,
 				Pwd:     sqlite.ActiveCred.NetconfPwd,
 				Port:    collectCfg.cfg.Netconf.Port,
-				Timeout: collectCfg.cfg.Netconf.RpcTimeout,
+				Timeout: collectCfg.cfg.Netconf.RPCTimeout,
 			},
 			GnmiCfg: &jtt.GnmiCfg{
 				User:        sqlite.ActiveCred.GnmiUser,
 				Pwd:         sqlite.ActiveCred.GnmiPwd,
 				Port:        collectCfg.cfg.Gnmi.Port,
-				Insecure:    sqlite.ActiveCred.UseTls == "no",
+				Insecure:    sqlite.ActiveCred.UseTLS == "no",
 				SkipVerify:  sqlite.ActiveCred.SkipVerify == "yes",
-				ClientTls:   sqlite.ActiveCred.ClientTls == "yes",
+				ClientTLS:   sqlite.ActiveCred.ClientTLS == "yes",
 				HideOrigin:  collectCfg.cfg.Portal.HideOrigin,
 				MergeLeaves: false,
 				StreamMode:  "sample",
