@@ -670,8 +670,7 @@ function buildDetailView(data) {
             html += '<div class="mt-2"><small class="jtt-detail-label fw-bold">Test Steps:</small>';
             html += '<ol class="mb-0 mt-1" style="font-size:0.85em;">';
             for (var d = 0; d < leaf.test_detail.length; d++) {
-              var stepClass = leaf.test_detail[d].toLowerCase().indexOf('error') !== -1 || leaf.test_detail[d].toLowerCase().indexOf('fail') !== -1 || leaf.test_detail[d].toLowerCase().indexOf('not found') !== -1
-                ? 'text-danger' : '';
+              var stepClass = stepHasFailureKeyword(leaf.test_detail[d]) ? 'text-danger' : '';
               html += '<li class="' + stepClass + '">' + leaf.test_detail[d] + '</li>';
             }
             html += '</ol></div>';
@@ -814,6 +813,13 @@ function htmlEscape(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+// Path-like tokens (anything containing a "/") are ignored so leaves such as
+// /interfaces/interface/state/counters/in-errors don't count as a failure
+function stepHasFailureKeyword(step) {
+  var text = String(step).replace(/\S*\/\S*/g, ' ').toLowerCase();
+  return text.indexOf('error') !== -1 || text.indexOf('fail') !== -1 || text.indexOf('not found') !== -1;
 }
 
 // Here is a header of CSV FILEs
