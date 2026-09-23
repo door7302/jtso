@@ -120,6 +120,100 @@ var (
 
 const SecretStorePath string = "/data"
 
+// adminColumns is the canonical column order of the administration table and must match Admin scanning
+const adminColumns = "id, mxdebug, ptxdebug, acxdebug, exdebug, qfxdebug, srxdebug, crpddebug, cptxdebug, vmxdebug, vsrxdebug, vjunosdebug, vevodebug, ondemanddebug, ondemandconf"
+
+const createAdmin string = `
+		CREATE TABLE IF NOT EXISTS administration (
+		id INTEGER NOT NULL PRIMARY KEY,
+		mxdebug INTEGER,
+		ptxdebug INTEGER,
+		acxdebug INTEGER,
+		exdebug INTEGER,
+		qfxdebug INTEGER,
+		srxdebug INTEGER,
+		crpddebug INTEGER,
+		cptxdebug INTEGER,
+		vmxdebug INTEGER,
+		vsrxdebug INTEGER,
+		vjunosdebug INTEGER,
+		vevodebug INTEGER,
+		ondemanddebug INTEGER,
+		ondemandconf TEXT
+		);`
+
+// tableColumns returns the set of column names of a table
+func tableColumns(table string) (map[string]struct{}, error) {
+	rows, err := db.Query("PRAGMA table_info(" + table + ");")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	cols := make(map[string]struct{})
+	for rows.Next() {
+		var cid, notnull, pk int
+		var name, ctype string
+		var dfltValue interface{}
+		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
+			return nil, err
+		}
+		cols[name] = struct{}{}
+	}
+	return cols, rows.Err()
+}
+
+// migrateAdministration upgrades the administration table created by older JTSO releases.
+// It must run before any reader is open on the table.
+func migrateAdministration() error {
+	cols, err := tableColumns("administration")
+	if err != nil {
+		logger.Log.Errorf("Error while checking administration table info - err: %v", err)
+		return err
+	}
+	if _, ok := cols["ondemanddebug"]; !ok {
+		if _, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemanddebug INTEGER DEFAULT 0;"); err != nil {
+			logger.Log.Errorf("Error adding ondemanddebug column - err: %v", err)
+			return err
+		}
+	}
+	if _, ok := cols["ondemandconf"]; !ok {
+		if _, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemandconf TEXT DEFAULT '';"); err != nil {
+			logger.Log.Errorf("Error adding ondemandconf column - err: %v", err)
+			return err
+		}
+	}
+	if _, ok := cols["rpduration"]; !ok {
+		return nil
+	}
+
+	logger.Log.Info("Migrating administration table: removing legacy InfluxDB rpduration column")
+	if _, err := db.Exec("ALTER TABLE administration DROP COLUMN rpduration;"); err == nil {
+		return nil
+	} else {
+		// DROP COLUMN requires SQLite >= 3.35: fall back to rebuilding the table
+		logger.Log.Warnf("DROP COLUMN failed (%v) - rebuilding administration table", err)
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	steps := []string{
+		strings.Replace(createAdmin, "administration", "administration_new", 1),
+		"INSERT INTO administration_new (" + adminColumns + ") SELECT " + adminColumns + " FROM administration;",
+		"DROP TABLE administration;",
+		"ALTER TABLE administration_new RENAME TO administration;",
+	}
+	for _, s := range steps {
+		if _, err := tx.Exec(s); err != nil {
+			tx.Rollback()
+			logger.Log.Errorf("Error while rebuilding administration table - err: %v", err)
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 func Init(f string, jttEnabled bool) error {
 	var err error
 	var secretChange bool
@@ -188,25 +282,6 @@ func Init(f string, jttEnabled bool) error {
 		passwordver INTEGER
 		);`
 
-	const createAdmin string = `
-		CREATE TABLE IF NOT EXISTS administration (
-		id INTEGER NOT NULL PRIMARY KEY,
-		mxdebug INTEGER,
-		ptxdebug INTEGER,
-		acxdebug INTEGER,
-		exdebug INTEGER,
-		qfxdebug INTEGER,
-		srxdebug INTEGER,
-		crpddebug INTEGER,
-		cptxdebug INTEGER,
-		vmxdebug INTEGER,
-		vsrxdebug INTEGER,
-		vjunosdebug INTEGER,
-		vevodebug INTEGER,
-		ondemanddebug INTEGER,
-		ondemandconf TEXT
-		);`
-
 	const createTelegraf string = `
 		CREATE TABLE IF NOT EXISTS telegraf (
 		profile TEXT NOT NULL,
@@ -261,6 +336,9 @@ func Init(f string, jttEnabled bool) error {
 	}
 	if _, err := db.Exec(createAdmin); err != nil {
 		logger.Log.Infof("Error while init DB %s Table administration - err: %v", f, err)
+		return err
+	}
+	if err := migrateAdministration(); err != nil {
 		return err
 	}
 	if _, err := db.Exec(createTelegraf); err != nil {
@@ -807,7 +885,7 @@ func loadAllInternal(secretRotation bool) error {
 	}
 
 	ActiveAdmin = Admin{}
-	rows, err = db.Query("SELECT * FROM administration;")
+	rows, err = db.Query("SELECT " + adminColumns + " FROM administration;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting administration - err: %v", err)
 		return err
@@ -816,63 +894,12 @@ func loadAllInternal(secretRotation bool) error {
 	i = rows.Next()
 	if !i {
 		// nothing in the DB regarding administration  - add default one
-		if _, err := db.Exec("INSERT INTO administration VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ""); err != nil {
+		if _, err := db.Exec("INSERT INTO administration ("+adminColumns+") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ""); err != nil {
 			logger.Log.Errorf("Error while adding default administration - err: %v", err)
 			return err
 		}
-	} else {
-		// Manage schema changes: ondemanddebug / ondemandconf added, rpduration (InfluxDB legacy) removed
-		colExists, colExists2, colExists3 := false, false, false
-		rows, err := db.Query("PRAGMA table_info(administration);")
-		if err != nil {
-			logger.Log.Errorf("Error while checking table info - err: %v", err)
-			return err
-		}
-		for rows.Next() {
-			var cid int
-			var name, ctype string
-			var notnull, pk int
-			var dfltValue interface{}
-			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
-				logger.Log.Errorf("Error scanning table_info - err: %v", err)
-				return err
-			}
-			if name == "ondemanddebug" {
-				colExists = true
-			}
-			if name == "rpduration" {
-				colExists2 = true
-			}
-			if name == "ondemandconf" {
-				colExists3 = true
-			}
-
-		}
-		rows.Close()
-		if !colExists {
-			_, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemanddebug INTEGER DEFAULT 0;")
-			if err != nil {
-				logger.Log.Errorf("Error adding ondemanddebug column - err: %v", err)
-				return err
-			}
-		}
-		if colExists2 {
-			_, err := db.Exec("ALTER TABLE administration DROP COLUMN rpduration;")
-			if err != nil {
-				logger.Log.Errorf("Error dropping legacy rpduration column - err: %v", err)
-				return err
-			}
-		}
-		if !colExists3 {
-			_, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemandconf INTEGER DEFAULT 0;")
-			if err != nil {
-				logger.Log.Errorf("Error adding ondemandconf column - err: %v", err)
-				return err
-			}
-		}
-		// End of the specific piece of code managing new fields
 	}
-	rows, err = db.Query("SELECT * FROM administration;")
+	rows, err = db.Query("SELECT " + adminColumns + " FROM administration;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting administration - err: %v", err)
 		return err
