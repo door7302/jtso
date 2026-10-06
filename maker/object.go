@@ -1,5 +1,7 @@
 package maker
 
+import "encoding/json"
+
 // ---------------------------------------------------- //
 // ---------------------------------------------------- //
 // A FULL CONFIG
@@ -580,9 +582,29 @@ const FilteringTemplate = `
 // Enum Processor
 // ---------------------------------------------------- //
 
+// TomlValue keeps the raw JSON literal (string, integer, float or bool)
+// so it is rendered with the same type in the TOML output.
+type TomlValue json.RawMessage
+
+func (v *TomlValue) UnmarshalJSON(b []byte) error {
+	*v = append((*v)[:0], b...)
+	return nil
+}
+
+func (v TomlValue) MarshalJSON() ([]byte, error) {
+	if len(v) == 0 {
+		return []byte("null"), nil
+	}
+	return v, nil
+}
+
+func (v TomlValue) String() string {
+	return string(v)
+}
+
 type Mapping struct {
-	In  string `json:"in"`
-	Out string `json:"out"`
+	In  TomlValue `json:"in"`
+	Out TomlValue `json:"out"`
 }
 type EnumEntry struct {
 	// 0 = tag - 1 = field
@@ -620,7 +642,7 @@ const EnumTemplate = `
     dest = "{{.Dest}}" {{end}} {{if .Maps}}
     [processors.enum.mapping.value_mappings]
       {{range .Maps}}
-      "{{.In}}" = "{{.Out}}" {{end}}
+      {{.In}} = {{.Out}} {{end}}
     {{end}} {{end}}
 {{end}}
 `
