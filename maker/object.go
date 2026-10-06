@@ -585,9 +585,11 @@ type Mapping struct {
 	Out string `json:"out"`
 }
 type EnumEntry struct {
-	Tag  string    `json:"tag"`
-	Dest string    `json:"dest"`
-	Maps []Mapping `json:"maps"`
+	// 0 = tag - 1 = field
+	EnumType int       `json:"type"`
+	Key      string    `json:"key"`
+	Dest     string    `json:"dest"`
+	Maps     []Mapping `json:"maps"`
 }
 
 type Enum struct {
@@ -612,13 +614,14 @@ const EnumTemplate = `
   {{- end}}
   ]
   {{range .Entries}}
-  [[processors.enum.mapping]]
-    tag = "{{.Tag}}"
-	dest = "{{.Dest}}" {{if .Maps}}  
-	[processors.enum.mapping.value_mappings]
+  [[processors.enum.mapping]] {{if eq .EnumType 0}}
+    tag = "{{.Key}}" {{else}}
+    field = "{{.Key}}" {{end}} {{if ne .Dest ""}}
+    dest = "{{.Dest}}" {{end}} {{if .Maps}}
+    [processors.enum.mapping.value_mappings]
       {{range .Maps}}
       "{{.In}}" = "{{.Out}}" {{end}}
-	{{end}} {{end}}
+    {{end}} {{end}}
 {{end}}
 `
 
