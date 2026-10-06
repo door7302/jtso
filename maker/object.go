@@ -805,5 +805,6 @@ const PrometheusTemplate = `
   listen = ":9273"
   path = "/jts_metrics"
   metric_version = 2
+  string_as_label = true
 {{end}}
 `
