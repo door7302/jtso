@@ -996,7 +996,18 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			if len(mergedCfg.PrometheusList) > 0 {
 				// Append all the fields from all the Prometheus output to the promTelegrafCfg
 				for _, prom := range mergedCfg.PrometheusList {
-					promTelegrafCfg.Fieldpass = append(promTelegrafCfg.Fieldpass, prom.Fieldpass...)
+					// We should avoid duplicates in the Fieldpass list
+					// Avoid duplicates
+					existing := make(map[string]struct{})
+					for _, f := range promTelegrafCfg.Fieldpass {
+						existing[f] = struct{}{}
+					}
+					for _, f := range prom.Fieldpass {
+						if _, found := existing[f]; !found {
+							promTelegrafCfg.Fieldpass = append(promTelegrafCfg.Fieldpass, f)
+							existing[f] = struct{}{}
+						}
+					}
 				}
 				// remove all Prometheus outputs from the merged configuration
 				mergedCfg.PrometheusList = make([]maker.PrometheusOutput, 0)
