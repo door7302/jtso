@@ -925,7 +925,15 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 	var readDirectory *os.File
 	var err error
 	for _, f := range families {
+		// Initialize the Prometheus Telegraf configuration
+		// One single config to all collections of a given family
+		promTelegrafCfg := maker.PrometheusOutput{
+			Order:     10000,
+			Fieldpass: make([]string, 0),
+		}
+
 		path, exists := PathMap[f]
+
 		if !exists {
 			logger.Log.Errorf("Unknown router family: %s", f)
 			continue
@@ -984,6 +992,16 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			// Create one unique config based on the list of configs
 			mergedCfg := maker.OptimizeConf(telegrafCfgList)
 
+			// Now extract prometheus output if it exists
+			if len(mergedCfg.PrometheusList) > 0 {
+				// Append all the fields from all the Prometheus output to the promTelegrafCfg
+				for _, prom := range mergedCfg.PrometheusList {
+					promTelegrafCfg.Fieldpass = append(promTelegrafCfg.Fieldpass, prom.Fieldpass...)
+				}
+				// remove all Prometheus outputs from the merged configuration
+				mergedCfg.PrometheusList = make([]maker.PrometheusOutput, 0)
+			}
+
 			// Retrieve some common flags
 			tls := false
 			skip := false
@@ -1041,7 +1059,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					MessageSize:      sqlite.ActiveKafkaConfig.MessageSize,
 					CompressionCodec: sqlite.ActiveKafkaConfig.Compression,
 					// inherit fieldpass from prometheus output if not specified in kafka config
-					Fieldpass: mergedCfg.PrometheusList[0].Fieldpass,
+					Fieldpass: promTelegrafCfg.Fieldpass,
 				})
 
 				logger.Log.Infof("Kafka output added to the telegraf config of the collection %s", id)
@@ -1067,6 +1085,26 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 				continue
 			}
 
+		}
+		// now, we should render prometheus config in a standalone file
+		if len(promTelegrafCfg.Fieldpass) > 0 {
+			promCfg := &maker.TelegrafConfig{
+				PrometheusList: []maker.PrometheusOutput{promTelegrafCfg},
+			}
+			promPayload, err := maker.RenderConf(promCfg)
+			if err == nil {
+				promSavedName := path + "prometheus.conf"
+				promFile, err := os.Create(promSavedName)
+				if err == nil {
+					_, err = promFile.WriteString(*promPayload)
+					promFile.Close()
+					if err != nil {
+						logger.Log.Errorf("Error writing to file %s: %v", promSavedName, err)
+					}
+				} else {
+					logger.Log.Errorf("Unable to open the target rendering file %s - err: %v", promSavedName, err)
+				}
+			}
 		}
 
 	}
