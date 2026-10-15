@@ -1017,7 +1017,7 @@ func routeUploadProfileCsv(c echo.Context) error {
 
 	// update the stack for the right families
 	for _, f := range familyToUpdate {
-		go association.ConfigueStack(collectCfg.cfg, f)
+		go association.ConfigureStack(collectCfg.cfg, f)
 	}
 
 	logger.Log.Info("A CSV file for provisioning profile has been uploaded and injested")
@@ -1299,7 +1299,7 @@ func routeAddProfile(c echo.Context) error {
 
 	go worker.Collect(collectCfg.cfg)
 	// update the stack for the right family
-	go association.ConfigueStack(collectCfg.cfg, fam)
+	go association.ConfigureStack(collectCfg.cfg, fam)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router's Profile(s) updated"})
 
 }
@@ -1330,6 +1330,12 @@ func routeDownloadYang(c echo.Context) error {
 	//create folder name base on the model and version of the router - all in upper case and space replaced by underscore
 	folderName := fmt.Sprintf("%s_%s", strings.ToUpper(model), strings.ToUpper(version))
 	folderName = strings.ReplaceAll(folderName, " ", "_")
+
+	// folder name is derived from user input: never let it escape YangPath
+	if strings.ContainsAny(folderName, `/\`) || strings.Contains(folderName, "..") {
+		sendEvent("error", "Invalid model or version")
+		return nil
+	}
 
 	// check if the folder already exists (use YangPath of netconf package + foldername)
 	if _, err := os.Stat(netconf.YangPath + folderName); !os.IsNotExist(err) {
@@ -1695,7 +1701,7 @@ func routeShortNameRouter(c echo.Context) error {
 		}
 	}
 	// update the stack for the right family
-	go association.ConfigueStack(collectCfg.cfg, fam)
+	go association.ConfigureStack(collectCfg.cfg, fam)
 	return c.JSON(http.StatusOK, Reply{Status: "OK", Msg: "Router Profile deleted"})
 
 }
@@ -1722,7 +1728,10 @@ func routeUptSettings(c echo.Context) error {
 
 	if r.MetricBatchSize != sqlite.ActiveCollectorParameters.MetricBatchSize || r.MetricBufferLimit != sqlite.ActiveCollectorParameters.MetricBufferLimit || r.FlushInterval != sqlite.ActiveCollectorParameters.FlushInterval || r.FlushJitter != sqlite.ActiveCollectorParameters.FlushJitter {
 		somethingChange = true
-		association.ChangeTelegrafTuning(r.MetricBatchSize, r.MetricBufferLimit, r.FlushInterval, r.FlushJitter)
+		if err := association.ChangeTelegrafTuning(r.MetricBatchSize, r.MetricBufferLimit, r.FlushInterval, r.FlushJitter); err != nil {
+			logger.Log.Errorf("Unable to update telegraf tuning: %v", err)
+			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to update collector parameters: " + err.Error()})
+		}
 	}
 
 	err = sqlite.UpdateCollectorParameters(r.MetricBatchSize, r.MetricBufferLimit, r.FlushInterval, r.FlushJitter)
@@ -1745,7 +1754,7 @@ func routeUptSettings(c echo.Context) error {
 	// Check if we need to restart some components
 	if somethingChange {
 		// Restart in background all the collectors to apply new credentials and/or Kafka configuration
-		go association.ConfigueStack(collectCfg.cfg, "all")
+		go association.ConfigureStack(collectCfg.cfg, "all")
 		logger.Log.Info("Restart all the collectors to apply new settings")
 
 		if ondemand.CC.Run {
@@ -2061,7 +2070,7 @@ func routeOnDemandMgt(c echo.Context) error {
 		}
 		return c.JSON(http.StatusOK, ReplyGnmiOnce{Status: "OK", Data: onceRep})
 	case "load":
-		err, profile := ondemand.Load(r.Data)
+		profile, err := ondemand.Load(r.Data)
 		if err != nil {
 			logger.Log.Errorf("Unable to load the profile %s: %v", r.Data, err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to open the on-demand profile"})
@@ -2081,7 +2090,7 @@ func routeOnDemandMgt(c echo.Context) error {
 		}
 
 		// Load the profile (returns struct)
-		err, profile := ondemand.Load(r.Data)
+		profile, err := ondemand.Load(r.Data)
 		if err != nil {
 			logger.Log.Errorf("Unable to load the profile %s: %v", r.Data, err)
 			return c.JSON(http.StatusOK, Reply{Status: "NOK", Msg: "Unable to open the on-demand profile"})

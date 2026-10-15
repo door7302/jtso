@@ -684,7 +684,7 @@ func LoadAll(secretRotation bool) error {
 // Caller must hold dbMu.Lock().
 func loadAllInternal(secretRotation bool) error {
 	RtrList = make([]*RtrEntry, 0)
-	rows, err := db.Query("SELECT * FROM routers;")
+	rows, err := db.Query("SELECT id, name, short, family, model, version, profile FROM routers;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting routers - err: %v", err)
 		return err
@@ -701,7 +701,7 @@ func loadAllInternal(secretRotation bool) error {
 	}
 
 	AssoList = make([]*AssoEntry, 0)
-	rows, err = db.Query("SELECT * FROM associations;")
+	rows, err = db.Query("SELECT id, name, listing, kafka FROM associations;")
 	if err != nil {
 		logger.Log.Errorf("Error while selecting associations - err: %v", err)
 		return err

@@ -17,6 +17,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 	"unicode"
 )
 
@@ -44,7 +46,13 @@ var PathMap = map[string]string{
 	"ondemand": "/var/shared/telegraf/ondemand/telegraf.d/",
 }
 
+// Families lists every Telegraf instance, in the order used when reconfiguring "all"
+var Families = []string{"mx", "ptx", "acx", "ex", "qfx", "srx", "crpd", "cptx", "vmx", "vsrx", "vjunos", "vevo", "ondemand"}
+
 var Collections map[string]map[string]sqlite.Collection
+
+// stackMu serializes stack reconfigurations: they rewrite shared files and the Collections map
+var stackMu sync.Mutex
 
 // baseExcludeDash lists the Grafana dashboards that must never be removed during cleanup
 var baseExcludeDash = []string{"home.json", "ondemand.json", "prometheus.json"}
@@ -55,8 +63,40 @@ func hashStringFNV(input string) uint32 {
 	return hasher.Sum32()
 }
 
+// validateFileName rejects names that could escape the target directory
+func validateFileName(name string) error {
+	if name == "" || strings.ContainsAny(name, `/\`) || strings.Contains(name, "..") {
+		return fmt.Errorf("invalid name %q", name)
+	}
+	return nil
+}
+
+// splitBrokers splits a comma separated broker list and trims spaces
+func splitBrokers(list string) []string {
+	brokers := make([]string, 0)
+	for _, b := range strings.Split(list, ",") {
+		if b = strings.TrimSpace(b); b != "" {
+			brokers = append(brokers, b)
+		}
+	}
+	return brokers
+}
+
 func ChangeTelegrafTuning(batchSize string, bufferLimit string, flushInterval string, flushJitter string) error {
-	instances := []string{"mx", "ptx", "acx", "ex", "qfx", "srx", "crpd", "cptx", "vmx", "vsrx", "vjunos", "vevo", "ondemand"}
+	if v, err := strconv.Atoi(batchSize); err != nil || v <= 0 {
+		return fmt.Errorf("invalid metric_batch_size %q", batchSize)
+	}
+	if v, err := strconv.Atoi(bufferLimit); err != nil || v <= 0 {
+		return fmt.Errorf("invalid metric_buffer_limit %q", bufferLimit)
+	}
+	if _, err := time.ParseDuration(flushInterval); err != nil {
+		return fmt.Errorf("invalid flush_interval %q", flushInterval)
+	}
+	if _, err := time.ParseDuration(flushJitter); err != nil {
+		return fmt.Errorf("invalid flush_jitter %q", flushJitter)
+	}
+
+	instances := Families
 	logger.Log.Infof("Changing telegraf tuning with batch size %s, buffer limit %s, flush interval %s and flush jitter %s", batchSize, bufferLimit, flushInterval, flushJitter)
 
 	batchRegex := regexp.MustCompile(`^\s*metric_batch_size\s*=\s*\d*\s*$`)
@@ -99,7 +139,7 @@ func ChangeTelegrafTuning(batchSize string, bufferLimit string, flushInterval st
 		file.Close()
 
 		// Write the updated content back to the file
-		err = os.WriteFile(filePath, []byte(strings.Join(updatedLines, "\n")), 0644)
+		err = os.WriteFile(filePath, []byte(strings.Join(updatedLines, "\n")+"\n"), 0644)
 		if err != nil {
 			logger.Log.Errorf("Error while saving the file %s: %v", filePath, err)
 			return err
@@ -145,7 +185,7 @@ func changeTelegrafDebug(instance string, debug int) error {
 	}
 
 	// Write the updated content back to the file
-	err = os.WriteFile(filePath, []byte(strings.Join(updatedLines, "\n")), 0644)
+	err = os.WriteFile(filePath, []byte(strings.Join(updatedLines, "\n")+"\n"), 0644)
 	if err != nil {
 		logger.Log.Errorf("Error while saving the file %s: %v", filePath, err)
 		return err
@@ -248,13 +288,6 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 			operator = searchVersion[0:2]
 			searchVersion = searchVersion[2:]
 		}
-		// PRefer Contains for ==
-		// Find out if routerVersion can be reduced
-		// r, _ := regexp.Compile(searchVersion + "*")
-		// result := r.FindString(routerVersion)
-		// if result != "" {
-		//	routerVersion = result
-		// }
 		switch operator {
 		case "==":
 			if len(searchVersion) <= len(routerVersion)+3 {
@@ -320,6 +353,14 @@ func getLastTwoNodes(path string) string {
 }
 
 func StopOndemand(p string) error {
+	if err := validateFileName(p); err != nil {
+		logger.Log.Errorf("Unable to stop ondemand collection: %v", err)
+		return err
+	}
+
+	stackMu.Lock()
+	defer stackMu.Unlock()
+
 	savedName := PathMap["ondemand"] + "ondemand_" + p + ".conf"
 	oneError := false
 
@@ -349,6 +390,14 @@ func StopOndemand(p string) error {
 }
 
 func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProfile) error {
+	if err := validateFileName(profile.Name); err != nil {
+		logger.Log.Errorf("Unable to configure ondemand collection: %v", err)
+		return err
+	}
+
+	stackMu.Lock()
+	defer stackMu.Unlock()
+
 	logger.Log.Infof("Time to reconfigure JTS components for the Ondemand profile %s", profile.Name)
 
 	//ondemand telegraf config
@@ -636,14 +685,8 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 
 	// Add Kafka output if needed
 	if sqlite.ActiveKafkaConfig.Enabled == 1 {
-		// split list of brokers thanks to comma separator and trim spaces
-		brokers := strings.Split(sqlite.ActiveKafkaConfig.Brokers, ",")
-		s := make([]string, 0)
-		for _, b := range brokers {
-			s = append(s, strings.TrimSpace(b))
-		}
 		telegrafOnDemand.KafkaList = append(telegrafOnDemand.KafkaList, maker.KafkaOutput{
-			Brokers:          brokers,
+			Brokers:          splitBrokers(sqlite.ActiveKafkaConfig.Brokers),
 			Topic:            sqlite.ActiveKafkaConfig.Topic,
 			Format:           sqlite.ActiveKafkaConfig.Format,
 			Version:          sqlite.ActiveKafkaConfig.Version,
@@ -707,11 +750,12 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 	return nil
 }
 
-func ConfigueStack(cfg *config.ConfigContainer, family string) error {
+func ConfigureStack(cfg *config.ConfigContainer, family string) error {
+	stackMu.Lock()
+	defer stackMu.Unlock()
 
 	logger.Log.Infof("Time to reconfigure JTS components for family %s", family)
 
-	//var temp *template.Template
 	var families []string
 
 	profileSetToRouters := make(map[string][]*sqlite.RtrEntry)
@@ -725,28 +769,15 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 
 	// create the slice for which families we have to reconfigure the stack
 	if family == "all" {
-		families = make([]string, 13)
-
-		families[0] = "mx"
-		families[1] = "ptx"
-		families[2] = "acx"
-		families[3] = "ex"
-		families[4] = "qfx"
-		families[5] = "srx"
-
-		families[6] = "crpd"
-		families[7] = "cptx"
-
-		families[8] = "vmx"
-		families[9] = "vsrx"
-		families[10] = "vjunos"
-		families[11] = "vevo"
-		families[12] = "ondemand"
-
+		families = append([]string(nil), Families...)
 	} else {
-		families = make([]string, 1)
-		families[0] = family
+		families = []string{family}
 	}
+
+	// Retrieve some common flags
+	tls := sqlite.ActiveCred.UseTLS == "yes"
+	skip := sqlite.ActiveCred.SkipVerify == "yes"
+	clienttls := sqlite.ActiveCred.ClientTLS == "yes"
 
 	// -----------------------------------------------------------------------------------------------------
 	// Build a lookup map for router profiles from AssoList
@@ -992,16 +1023,16 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			// Create one unique config based on the list of configs
 			mergedCfg := maker.OptimizeConf(telegrafCfgList)
 
-			// Now extract prometheus output if it exists
+			// Move the Prometheus outputs of this collection into the family-wide promTelegrafCfg
+			// collectionFieldpass keeps the fields of this collection only (used by the Kafka output)
+			collectionFieldpass := make([]string, 0)
 			if len(mergedCfg.PrometheusList) > 0 {
-				// Append all the fields from all the Prometheus output to the promTelegrafCfg
+				existing := make(map[string]struct{})
+				for _, f := range promTelegrafCfg.Fieldpass {
+					existing[f] = struct{}{}
+				}
 				for _, prom := range mergedCfg.PrometheusList {
-					// We should avoid duplicates in the Fieldpass list
-					// Avoid duplicates
-					existing := make(map[string]struct{})
-					for _, f := range promTelegrafCfg.Fieldpass {
-						existing[f] = struct{}{}
-					}
+					collectionFieldpass = append(collectionFieldpass, prom.Fieldpass...)
 					for _, f := range prom.Fieldpass {
 						if _, found := existing[f]; !found {
 							promTelegrafCfg.Fieldpass = append(promTelegrafCfg.Fieldpass, f)
@@ -1009,22 +1040,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 						}
 					}
 				}
-				// remove all Prometheus outputs from the merged configuration
 				mergedCfg.PrometheusList = make([]maker.PrometheusOutput, 0)
-			}
-
-			// Retrieve some common flags
-			tls := false
-			skip := false
-			clienttls := false
-			if sqlite.ActiveCred.UseTLS == "yes" {
-				tls = true
-			}
-			if sqlite.ActiveCred.SkipVerify == "yes" {
-				skip = true
-			}
-			if sqlite.ActiveCred.ClientTLS == "yes" {
-				clienttls = true
+			} else {
+				logger.Log.Warnf("No Prometheus output found in the profiles of the collection %s", id)
 			}
 
 			// create the list of rtr with port
@@ -1055,22 +1073,15 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 			}
 			// Add Kafka output if needed
 			if sqlite.ActiveKafkaConfig.Enabled == 1 && collection.Kafka {
-				// split list of brokers thanks to comma separator and trim spaces
-				brokers := strings.Split(sqlite.ActiveKafkaConfig.Brokers, ",")
-				s := make([]string, 0)
-				for _, b := range brokers {
-					s = append(s, strings.TrimSpace(b))
-				}
-
 				mergedCfg.KafkaList = append(mergedCfg.KafkaList, maker.KafkaOutput{
-					Brokers:          brokers,
+					Brokers:          splitBrokers(sqlite.ActiveKafkaConfig.Brokers),
 					Topic:            sqlite.ActiveKafkaConfig.Topic,
 					Format:           sqlite.ActiveKafkaConfig.Format,
 					Version:          sqlite.ActiveKafkaConfig.Version,
 					MessageSize:      sqlite.ActiveKafkaConfig.MessageSize,
 					CompressionCodec: sqlite.ActiveKafkaConfig.Compression,
 					// inherit fieldpass from prometheus output if not specified in kafka config
-					Fieldpass: promTelegrafCfg.Fieldpass,
+					Fieldpass: collectionFieldpass,
 				})
 
 				logger.Log.Infof("Kafka output added to the telegraf config of the collection %s", id)

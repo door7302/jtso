@@ -112,7 +112,7 @@ func main() {
 	association.PeriodicCheck(Cfg)
 
 	go worker.Collect(Cfg)
-	go association.ConfigueStack(Cfg, "all")
+	go association.ConfigureStack(Cfg, "all")
 
 	// create a ticker to refresh the docker statistics
 	ticker3 := time.NewTicker(1 * time.Minute)

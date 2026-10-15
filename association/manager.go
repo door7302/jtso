@@ -239,27 +239,6 @@ func PeriodicCheck(cfg *config.ConfigContainer) {
 					continue
 				}
 
-				// Legacy code - will be removed further.
-				//
-				// Copy cheatsheet image in the right assets directories
-				// source, err := os.Open(ActiveProfilesPath + filename + "/" + entry.Definition.Cheatsheet) //open the source file
-				// if err != nil {
-				// 	logger.Log.Errorf("Unable to open the Cheatsheet file %s - err: %v", entry.Definition.Cheatsheet, err)
-				// 	continue
-				// }
-				// defer source.Close()
-				// destination, err := os.Create("html/assets/img/" + entry.Definition.Cheatsheet) //create the destination file
-				// if err != nil {
-				// 	logger.Log.Errorf("Unable to open the destination Cheatsheet %s - err: %v", entry.Definition.Cheatsheet, err)
-				// 	continue
-				// }
-				// defer destination.Close()
-				// _, err = io.Copy(destination, source) //copy the contents of source to destination file
-				// if err != nil {
-				// 	logger.Log.Errorf("Unable to update the Cheatsheet %s - err: %v", entry.Definition.Cheatsheet, err)
-				// 	continue
-				// }
-
 				ActiveProfiles[filename] = entry
 				logger.Log.Infof("New profile %s detected and added to active profiles", filename)
 			}
@@ -286,7 +265,7 @@ func PeriodicCheck(cfg *config.ConfigContainer) {
 
 		for _, family := range needRestart {
 			logger.Log.Infof("Need to restart the stack for %s family", family)
-			go ConfigueStack(cfg, family)
+			go ConfigureStack(cfg, family)
 		}
 	}
 	logger.Log.Debug("End of the periodic update of the profiles db")

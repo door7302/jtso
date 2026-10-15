@@ -54,7 +54,7 @@ func init() {
 	}
 }
 
-func Load(f string) (error, RunningProfile) {
+func Load(f string) (RunningProfile, error) {
 	var profile RunningProfile
 
 	logger.Log.Infof("Load Ondemand configuration %s", f)
@@ -63,21 +63,21 @@ func Load(f string) (error, RunningProfile) {
 	// Prevent path traversal
 	cleanPath := filepath.Clean(filePath)
 	if !strings.HasPrefix(cleanPath, filepath.Clean(OndemandPath)) {
-		return fmt.Errorf("invalid file path: path traversal detected"), RunningProfile{}
+		return RunningProfile{}, fmt.Errorf("invalid file path: path traversal detected")
 	}
 
 	data, err := os.ReadFile(cleanPath + ".json")
 	if err != nil {
-		return fmt.Errorf("failed to read file %s: %w", filePath, err), RunningProfile{}
+		return RunningProfile{}, fmt.Errorf("failed to read file %s: %w", filePath, err)
 	}
 
 	// Unmarshal JSON into RunningProfile struct
 	err = json.Unmarshal(data, &profile)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal JSON: %w", err), RunningProfile{}
+		return RunningProfile{}, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 
-	return nil, profile
+	return profile, nil
 }
 
 func Save(f string, profile RunningProfile) error {
