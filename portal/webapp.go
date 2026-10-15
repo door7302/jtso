@@ -161,6 +161,12 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	collectCfg = new(collectInfo)
 	collectCfg.cfg = cfg
 
+	// MCP server (Streamable HTTP) exposing inventory / profile / association tools
+	if cfg.Portal.MCP {
+		wapp.Any(MCPPath, echo.WrapHandler(newMCPHandler()))
+		logger.Log.Infof("MCP server enabled on %s", MCPPath)
+	}
+
 	rePredicate = regexp.MustCompile(`\[([^=\]]+)=([^\]]*)\]`)
 
 	// return app

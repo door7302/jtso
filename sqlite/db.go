@@ -106,7 +106,7 @@ type JTTJob struct {
 
 var (
 	db                        *sql.DB
-	dbMu                      *sync.Mutex
+	dbMu                      sync.Mutex
 	RtrList                   []*RtrEntry
 	AssoList                  []*AssoEntry
 	ActiveInterval            []*TelemetryInterval
@@ -119,6 +119,53 @@ var (
 )
 
 const SecretStorePath string = "/data"
+
+// Routers returns a snapshot of the router inventory, safe to iterate while the DB is reloaded
+func Routers() []*RtrEntry {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	return append([]*RtrEntry(nil), RtrList...)
+}
+
+// Associations returns a snapshot of the router/profile associations, safe to iterate while the DB is reloaded
+func Associations() []*AssoEntry {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+	return append([]*AssoEntry(nil), AssoList...)
+}
+
+// DebugFor returns the telegraf debug flag (0/1) of a telegraf instance (family name or "ondemand")
+func (a Admin) DebugFor(instance string) int {
+	switch strings.ToLower(instance) {
+	case "mx":
+		return a.MXDebug
+	case "ptx":
+		return a.PTXDebug
+	case "acx":
+		return a.ACXDebug
+	case "ex":
+		return a.EXDebug
+	case "qfx":
+		return a.QFXDebug
+	case "srx":
+		return a.SRXDebug
+	case "crpd":
+		return a.CRPDDebug
+	case "cptx":
+		return a.CPTXDebug
+	case "vmx":
+		return a.VMXDebug
+	case "vsrx":
+		return a.VSRXDebug
+	case "vjunos":
+		return a.VJUNOSDebug
+	case "vevo":
+		return a.VEVODebug
+	case "ondemand":
+		return a.ONDEMANDDebug
+	}
+	return 0
+}
 
 // adminColumns is the canonical column order of the administration table and must match Admin scanning
 const adminColumns = "id, mxdebug, ptxdebug, acxdebug, exdebug, qfxdebug, srxdebug, crpddebug, cptxdebug, vmxdebug, vsrxdebug, vjunosdebug, vevodebug, ondemanddebug, ondemandconf"
@@ -237,7 +284,6 @@ func Init(f string, jttEnabled bool) error {
 	var err error
 	var secretChange bool
 	err = nil
-	dbMu = new(sync.Mutex)
 	// check if db filename exist - if not create empty file
 	if _, err := os.Stat(f); os.IsNotExist(err) {
 		file, err := os.Create(f)

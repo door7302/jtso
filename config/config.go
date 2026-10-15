@@ -20,6 +20,7 @@ type PortalConfig struct {
 	BrowserTimeout int
 	FancyTree      bool
 	HideOrigin     bool
+	MCP            bool
 }
 
 type GrafanaConfig struct {
@@ -86,6 +87,7 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("modules.portal.browsertimeout", 30)
 	viper.SetDefault("modules.portal.use_fancytree", true)
 	viper.SetDefault("modules.portal.hide_origin", true)
+	viper.SetDefault("modules.portal.mcp", false)
 
 	// Ser default value for enricher
 	viper.SetDefault("modules.enricher.folder", "/var/metadata/")
@@ -120,6 +122,7 @@ func NewConfigContainer(f string) *ConfigContainer {
 			BrowserTimeout: viper.GetInt("modules.portal.browsertimeout"),
 			FancyTree:      viper.GetBool("modules.portal.use_fancytree"),
 			HideOrigin:     viper.GetBool("modules.portal.hide_origin"),
+			MCP:            viper.GetBool("modules.portal.mcp"),
 		},
 		Enricher: &EnricherConfig{
 			Folder:   viper.GetString("modules.enricher.folder"),

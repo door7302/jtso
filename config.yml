@@ -17,6 +17,7 @@ modules:
     server_crt: ""
     server_key: ""
     port: 80
+    mcp: true
 plugins:
   jtt:
     url: ""

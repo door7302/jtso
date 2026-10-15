@@ -103,8 +103,16 @@ func collectStats(cli *client.Client, ctr container.Summary, resultChan chan<- m
 }
 
 func GetContainerLogs(containerName string) ([]string, error) {
+	return GetContainerLogsTail(containerName, 200)
+}
+
+// GetContainerLogsTail returns the last `tail` log lines (stdout + stderr) of a container
+func GetContainerLogsTail(containerName string, tail int) ([]string, error) {
 	var logLines []string
 	logLines = make([]string, 0)
+	if tail <= 0 {
+		tail = 200
+	}
 
 	// Open Docker API
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
@@ -139,7 +147,7 @@ func GetContainerLogs(containerName string) ([]string, error) {
 	options := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
-		Tail:       fmt.Sprintf("%d", 200),
+		Tail:       fmt.Sprintf("%d", tail),
 	}
 
 	logs, err := cli.ContainerLogs(ctx, containerID, options)
@@ -211,18 +219,30 @@ func GetContainerStats() {
 }
 
 func ListContainers() []container.Summary {
+	containers, _ := listContainers(false)
+	return containers
+}
+
+// ListAllContainers also returns stopped containers
+func ListAllContainers() ([]container.Summary, error) {
+	return listContainers(true)
+}
+
+func listContainers(all bool) ([]container.Summary, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		logger.Log.Errorf("Unable to open Docker session: %v", err)
+		return nil, err
 	}
 	defer cli.Close()
 
-	containers, err := cli.ContainerList(context.Background(), container.ListOptions{})
+	containers, err := cli.ContainerList(context.Background(), container.ListOptions{All: all})
 	if err != nil {
 		logger.Log.Errorf("Unable to list container state: %v", err)
+		return nil, err
 	}
 	logger.Log.Debug("List of containers has been retrieved")
-	return containers
+	return containers, nil
 }
 
 func RestartContainer(name string) error {
