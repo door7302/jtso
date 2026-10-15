@@ -164,7 +164,13 @@ func New(cfg *config.ConfigContainer) *WebApp {
 	// MCP server (Streamable HTTP) exposing inventory / profile / association tools
 	if cfg.Portal.MCP {
 		wapp.Any(MCPPath, echo.WrapHandler(newMCPHandler()))
-		logger.Log.Infof("MCP server enabled on %s", MCPPath)
+		scheme := "http"
+		if cfg.Portal.HTTPS {
+			scheme = "https"
+		}
+		logger.Log.Infof("MCP server enabled - Streamable HTTP endpoint %s://<host>:%d%s", scheme, cfg.Portal.Port, MCPPath)
+	} else {
+		logger.Log.Info("MCP server disabled (set modules.portal.mcp: true to enable it)")
 	}
 
 	rePredicate = regexp.MustCompile(`\[([^=\]]+)=([^\]]*)\]`)
