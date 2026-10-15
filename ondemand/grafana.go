@@ -88,7 +88,7 @@ const GrafanaTemplate = `
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "jtsuid"
+            "uid": "jtsuid2"
           },
           "description": "",
           "fieldConfig": {
@@ -174,7 +174,7 @@ const GrafanaTemplate = `
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "jtsuid"
+                "uid": "jtsuid2"
               },
               "editorMode": "code",
               "expr": "{{$element2.Metric}}{device=~\"$device\"{{$element2.TagCode}}}",
@@ -202,7 +202,7 @@ const GrafanaTemplate = `
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "jtsuid"
+          "uid": "jtsuid2"
         },
         "definition": "label_values({__name__=~\"ONDEMAND_.*\"}, device)",
         "hide": 0,
@@ -227,7 +227,7 @@ const GrafanaTemplate = `
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "jtsuid"
+          "uid": "jtsuid2"
         },
         "definition": "label_values({__name__=~\"ONDEMAND_.*\", device=~\"$device\"}, {{$element3.VariableName}})",
         "hide": 0,
