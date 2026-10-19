@@ -3,7 +3,6 @@ package maker
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"jtso/logger"
 	"os"
 	"reflect"
@@ -591,9 +590,6 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 	var payload string
 	var footer string
 
-	// Check a config has at least one Input and one Ouput
-	hasInput, hasOutput := false, false
-
 	// Manage Gnmi Input
 
 	if len(config.GnmiList) > 0 {
@@ -607,7 +603,6 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				logger.Log.Errorf("Unable to generate Gnmi toml payload - err: %v", err)
 			} else {
 				header += result.String()
-				hasInput = true
 			}
 		}
 	}
@@ -623,7 +618,6 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				logger.Log.Errorf("Unable to generate Netconf toml payload - err: %v", err)
 			} else {
 				header += result.String()
-				hasInput = true
 			}
 		}
 	}
@@ -639,7 +633,6 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				logger.Log.Errorf("Unable to generate Influx toml payload - err: %v", err)
 			} else {
 				footer += result.String()
-				hasOutput = true
 			}
 		}
 	}
@@ -655,7 +648,6 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				logger.Log.Errorf("Unable to generate File toml payload - err: %v", err)
 			} else {
 				footer += result.String()
-				hasOutput = true
 			}
 		}
 	}
@@ -671,15 +663,8 @@ func RenderConf(config *TelegrafConfig) (*string, error) {
 				logger.Log.Errorf("Unable to generate Kafka	 toml payload - err: %v", err)
 			} else {
 				footer += result.String()
-				hasOutput = true
 			}
 		}
-	}
-
-	// Stop if no input or output have been generated
-	if !hasInput || !hasOutput {
-		logger.Log.Error("Unable to continue - no Input and Output plugins found or generated")
-		return nil, errors.New("Unable to continue - no Input and Output plugins found or generated")
 	}
 
 	// Manage Clone Processor
