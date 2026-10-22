@@ -653,7 +653,9 @@ func newMCPServer() *mcp.Server {
 			"('all' is the fallback, a specific constraint like '>=22.2' wins), plus grafana dashboards. " +
 			"Use get_profile_config to see what a template collects (gNMI paths, NETCONF RPCs), how it is processed and what is exported, " +
 			"compare_profile_configs to diff two families or versions, and search_profiles to find which profile collects a given sensor. " +
-			"These tools read the installed profiles live, so answers always reflect the profiles currently deployed.",
+			"These tools read the installed profiles live, so answers always reflect the profiles currently deployed. " +
+			"Collected values are in Prometheus as MEASUREMENT_field (see exported_fields of get_profile_config, or list_metrics); " +
+			"read them with query_metrics, filtering on the router shortname and tags such as if_name.",
 	})
 
 	readOnly := &mcp.ToolAnnotations{ReadOnlyHint: true, OpenWorldHint: boolPtr(false)}
@@ -695,6 +697,7 @@ func newMCPServer() *mcp.Server {
 	}, mcpGetProfile)
 
 	registerProfileContentTools(server, readOnly)
+	registerMetricTools(server, readOnly)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "list_associations",
