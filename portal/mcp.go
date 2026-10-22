@@ -648,7 +648,12 @@ func newMCPServer() *mcp.Server {
 	server := mcp.NewServer(&mcp.Implementation{Name: "jtso", Version: config.JtsoVersion}, &mcp.ServerOptions{
 		Instructions: "JTSO (Junos Telemetry Stack Orchestrator) management. " +
 			"Routers are identified by their shortname. A router must exist in the inventory before profiles can be associated with it, " +
-			"and must have no association before it can be removed. Changing associations reconfigures the telegraf stack in the background.",
+			"and must have no association before it can be removed. Changing associations reconfigures the telegraf stack in the background. " +
+			"A profile (list_profiles, get_profile) declares, per platform family, one or more telegraf templates selected by Junos version " +
+			"('all' is the fallback, a specific constraint like '>=22.2' wins), plus grafana dashboards. " +
+			"Use get_profile_config to see what a template collects (gNMI paths, NETCONF RPCs), how it is processed and what is exported, " +
+			"compare_profile_configs to diff two families or versions, and search_profiles to find which profile collects a given sensor. " +
+			"These tools read the installed profiles live, so answers always reflect the profiles currently deployed.",
 	})
 
 	readOnly := &mcp.ToolAnnotations{ReadOnlyHint: true, OpenWorldHint: boolPtr(false)}
@@ -688,6 +693,8 @@ func newMCPServer() *mcp.Server {
 		Description: "Show the details of a profile: description, telegraf configurations per family and version constraint, grafana dashboards and routers using it.",
 		Annotations: readOnly,
 	}, mcpGetProfile)
+
+	registerProfileContentTools(server, readOnly)
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "list_associations",

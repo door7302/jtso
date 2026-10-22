@@ -321,6 +321,19 @@ func CheckVersion(searchVersion string, routerVersion string) bool {
 
 }
 
+// SelectConfig returns the telegraf template applied to a router version and its constraint:
+// the first matching specific constraint wins, "all" is the fallback. Empty when nothing applies.
+func SelectConfig(list []Config, routerVersion string) (conf string, version string) {
+	for _, c := range list {
+		if c.Version == "all" && version == "" {
+			conf, version = c.Config, "all"
+		} else if CheckVersion(c.Version, routerVersion) && (version == "" || version == "all") {
+			conf, version = c.Config, c.Version
+		}
+	}
+	return conf, version
+}
+
 func getLeaf(path string) string {
 	if strings.Contains(path, "/") {
 		parts := strings.Split(path, "/")
@@ -856,23 +869,8 @@ func ConfigureStack(cfg *config.ConfigContainer, family string) error {
 				filenameList = ActiveProfiles[p].Definition.TelCfg.VevoCfg
 			}
 
-			// Check if a profile has as specific version for the given rtr
-			savedVersion := ""
-			profilesFilename[i] = ""
-
-			for _, c := range filenameList {
-				// Save all config if present as a fallback solution if specific version not found
-				if c.Version == "all" && savedVersion == "" {
-					profilesFilename[i] = c.Config
-					savedVersion = "all"
-				} else {
-					result := CheckVersion(c.Version, rtr.Version)
-					if result && (savedVersion == "" || savedVersion == "all") {
-						profilesFilename[i] = c.Config
-						savedVersion = c.Version
-					}
-				}
-			}
+			conf, savedVersion := SelectConfig(filenameList, rtr.Version)
+			profilesFilename[i] = conf
 
 			if savedVersion != "" {
 				profileKeys.Assos[i] = p + "_" + savedVersion
