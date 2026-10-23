@@ -472,7 +472,7 @@ const RateTemplate = `
   suffix = "_rate"
   factor = 1.0
   retention = "30m"
-  delta_min = "2s"
+  delta_min = "1s"
   fields = [
   {{- range $index, $name := .Fields}}
   {{- if $index}},{{end}}
