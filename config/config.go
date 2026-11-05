@@ -10,7 +10,7 @@ import (
 )
 
 // this is config displayed on the main page
-const JTSO_VERSION string = "1.2.4"
+const JTSO_VERSION string = "1.2.5"
 
 type PortalConfig struct {
 	Https          bool
@@ -61,6 +61,10 @@ type JTTConfig struct {
 	ClientKey string
 }
 
+type RateConfig struct {
+	DeltaMin int
+}
+
 type ConfigContainer struct {
 	Kapacitor  *KapacitorConfig
 	Chronograf *ChronografConfig
@@ -71,6 +75,7 @@ type ConfigContainer struct {
 	Gnmi       *GnmiConfig
 	Plugins    *[]PluginConfig
 	JTT        *JTTConfig
+	Rate       *RateConfig
 }
 
 func NewConfigContainer(f string) *ConfigContainer {
@@ -124,6 +129,9 @@ func NewConfigContainer(f string) *ConfigContainer {
 	viper.SetDefault("plugins.jtt.client_crt", "client.crt")
 	viper.SetDefault("plugins.jtt.client_key", "client.key")
 
+	// Set default value for rate
+	viper.SetDefault("rate.delta_min", 0)
+
 	return &ConfigContainer{
 		Grafana: &GrafanaConfig{
 			Port: viper.GetInt("modules.grafana.port"),
@@ -161,6 +169,9 @@ func NewConfigContainer(f string) *ConfigContainer {
 			UseSSL:    viper.GetBool("plugins.jtt.use_ssl"),
 			ClientCrt: viper.GetString("plugins.jtt.client_crt"),
 			ClientKey: viper.GetString("plugins.jtt.client_key"),
+		},
+		Rate: &RateConfig{
+			DeltaMin: viper.GetInt("rate.delta_min"),
 		},
 	}
 }

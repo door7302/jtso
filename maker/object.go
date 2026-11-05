@@ -451,6 +451,7 @@ type Rate struct {
 	Order    int      `json:"order"`
 	Namepass []string `json:"namepass"`
 	Fields   []string `json:"fields"`
+	DeltaMin int
 }
 
 // Go Template
@@ -472,7 +473,7 @@ const RateTemplate = `
   suffix = "_rate"
   factor = 1.0
   retention = "30m"
-  delta_min = "1s"
+  delta_min = "{{.DeltaMin}}s"
   fields = [
   {{- range $index, $name := .Fields}}
   {{- if $index}},{{end}}

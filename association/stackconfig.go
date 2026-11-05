@@ -648,6 +648,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		telegrafOnDemand.ConverterList = append(telegrafOnDemand.ConverterList, *converter)
 	}
 	if rate.Order != 0 {
+		rate.DeltaMin = cfg.Rate.DeltaMin
 		telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
 	}
 	telegrafOnDemand.InfluxList = append(telegrafOnDemand.InfluxList, *influx)
@@ -1044,6 +1045,9 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 					mergedCfg.NetconfList[i].Username = sqlite.ActiveCred.NetconfUser
 					mergedCfg.NetconfList[i].Password = sqlite.ActiveCred.NetconfPwd
 				}
+			}
+			for i := range mergedCfg.RateList {
+				mergedCfg.RateList[i].DeltaMin = cfg.Rate.DeltaMin
 			}
 			// Add Kafka output if needed
 			if sqlite.ActiveKafkaConfig.Enabled == 1 && collection.Kafka {
