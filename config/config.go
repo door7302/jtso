@@ -10,7 +10,7 @@ import (
 )
 
 // this is config displayed on the main page
-const JTSO_VERSION string = "1.2.5"
+const JTSO_VERSION string = "1.2.6"
 
 type PortalConfig struct {
 	Https          bool

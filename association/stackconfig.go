@@ -877,7 +877,7 @@ func ConfigueStack(cfg *config.ConfigContainer, family string) error {
 		sort.Strings(profileKeys.Assos)
 
 		// Create a unique profile key (string format for map indexing)
-		profileKey := fmt.Sprintf("%s_%v", rtr.Family, profileKeys)
+		profileKey := fmt.Sprintf("%s_%v", rtr.Family, profileKeys.Assos)
 
 		// Store profile slice before hashing to prevent later issues
 		if _, exists := profileSetIndex[profileKey]; !exists {
