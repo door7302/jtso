@@ -60,6 +60,7 @@ type Admin struct {
 	// Native Container devices
 	CRPDDebug int
 	CPTXDebug int
+	CSRXDebug int
 	// VM devices
 	VMXDebug    int
 	VSRXDebug   int
@@ -153,6 +154,8 @@ func (a Admin) DebugFor(instance string) int {
 		return a.CRPDDebug
 	case "cptx":
 		return a.CPTXDebug
+	case "csrx":
+		return a.CSRXDebug
 	case "vmx":
 		return a.VMXDebug
 	case "vsrx":
@@ -168,7 +171,7 @@ func (a Admin) DebugFor(instance string) int {
 }
 
 // adminColumns is the canonical column order of the administration table and must match Admin scanning
-const adminColumns = "id, mxdebug, ptxdebug, acxdebug, exdebug, qfxdebug, srxdebug, crpddebug, cptxdebug, vmxdebug, vsrxdebug, vjunosdebug, vevodebug, ondemanddebug, ondemandconf"
+const adminColumns = "id, mxdebug, ptxdebug, acxdebug, exdebug, qfxdebug, srxdebug, crpddebug, cptxdebug, vmxdebug, vsrxdebug, vjunosdebug, vevodebug, ondemanddebug, ondemandconf, csrxdebug"
 
 const createAdmin string = `
 		CREATE TABLE IF NOT EXISTS administration (
@@ -186,7 +189,8 @@ const createAdmin string = `
 		vjunosdebug INTEGER,
 		vevodebug INTEGER,
 		ondemanddebug INTEGER,
-		ondemandconf TEXT
+		ondemandconf TEXT,
+		csrxdebug INTEGER
 		);`
 
 // tableColumns returns the set of column names of a table
@@ -226,6 +230,12 @@ func migrateAdministration() error {
 	if _, ok := cols["ondemandconf"]; !ok {
 		if _, err := db.Exec("ALTER TABLE administration ADD COLUMN ondemandconf TEXT DEFAULT '';"); err != nil {
 			logger.Log.Errorf("Error adding ondemandconf column - err: %v", err)
+			return err
+		}
+	}
+	if _, ok := cols["csrxdebug"]; !ok {
+		if _, err := db.Exec("ALTER TABLE administration ADD COLUMN csrxdebug INTEGER DEFAULT 0;"); err != nil {
+			logger.Log.Errorf("Error adding csrxdebug column - err: %v", err)
 			return err
 		}
 	}
@@ -699,7 +709,7 @@ func UpdateDebugMode(instance string, debug int) error {
 	// Validate instance against allowlist to prevent SQL injection
 	allowedInstances := map[string]bool{
 		"mx": true, "ptx": true, "acx": true, "ex": true,
-		"qfx": true, "srx": true, "crpd": true, "cptx": true,
+		"qfx": true, "srx": true, "crpd": true, "cptx": true, "csrx": true,
 		"vmx": true, "vsrx": true, "vjunos": true, "vevo": true,
 		"ondemand": true,
 	}
@@ -959,7 +969,7 @@ func loadAllInternal(secretRotation bool) error {
 	i = rows.Next()
 	if !i {
 		// nothing in the DB regarding administration  - add default one
-		if _, err := db.Exec("INSERT INTO administration ("+adminColumns+") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ""); err != nil {
+		if _, err := db.Exec("INSERT INTO administration ("+adminColumns+") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", 0); err != nil {
 			logger.Log.Errorf("Error while adding default administration - err: %v", err)
 			return err
 		}
@@ -987,6 +997,7 @@ func loadAllInternal(secretRotation bool) error {
 		&ActiveAdmin.VEVODebug,
 		&ActiveAdmin.ONDEMANDDebug,
 		&ActiveAdmin.OndemandConfig,
+		&ActiveAdmin.CSRXDebug,
 	)
 	if err != nil {
 		logger.Log.Errorf("Error while parsing administration rows - err: %v", err)

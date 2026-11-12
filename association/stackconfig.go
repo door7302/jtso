@@ -38,6 +38,7 @@ var PathMap = map[string]string{
 	"qfx":      "/var/shared/telegraf/qfx/telegraf.d/",
 	"srx":      "/var/shared/telegraf/srx/telegraf.d/",
 	"crpd":     "/var/shared/telegraf/crpd/telegraf.d/",
+	"csrx":     "/var/shared/telegraf/csrx/telegraf.d/",
 	"cptx":     "/var/shared/telegraf/cptx/telegraf.d/",
 	"vmx":      "/var/shared/telegraf/vmx/telegraf.d/",
 	"vsrx":     "/var/shared/telegraf/vsrx/telegraf.d/",
@@ -47,7 +48,7 @@ var PathMap = map[string]string{
 }
 
 // Families lists every Telegraf instance, in the order used when reconfiguring "all"
-var Families = []string{"mx", "ptx", "acx", "ex", "qfx", "srx", "crpd", "cptx", "vmx", "vsrx", "vjunos", "vevo", "ondemand"}
+var Families = []string{"mx", "ptx", "acx", "ex", "qfx", "srx", "crpd", "csrx", "cptx", "vmx", "vsrx", "vjunos", "vevo", "ondemand"}
 
 var Collections map[string]map[string]sqlite.Collection
 
@@ -215,6 +216,8 @@ func ManageDebug(instance string) error {
 		currentState = sqlite.ActiveAdmin.SRXDebug
 	case "crpd":
 		currentState = sqlite.ActiveAdmin.CRPDDebug
+	case "csrx":
+		currentState = sqlite.ActiveAdmin.CSRXDebug
 	case "cptx":
 		currentState = sqlite.ActiveAdmin.CPTXDebug
 	case "vmx":
@@ -514,9 +517,21 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		if e.Interval == 0 {
 			mode = "on_change"
 		}
+
+		origin := ""
+		subPath := e.Path
+		for _, o := range []string{"genstate", "openconfig", "juniper"} {
+			if strings.HasPrefix(e.Path, o+":") {
+				origin = o
+				subPath = strings.TrimPrefix(e.Path, o+":")
+				break
+			}
+		}
+
 		sub := maker.Subscription{
 			Name:     "ONDEMAND",
-			Path:     strings.TrimSuffix(e.Path, "/"),
+			Path:     strings.TrimSuffix(subPath, "/"),
+			Origin:   origin,
 			Mode:     mode,
 			Interval: e.Interval,
 		}
@@ -624,6 +639,13 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 			if len(tagsToAlias) >= 3 {
 				tagsToAlias = tagsToAlias[:len(tagsToAlias)-3]
 			}
+			// No tag: fall back to the field name so Grafana doesn't show the raw series name
+			if tagsToAlias == "" {
+				tagsToAlias = finalField
+				if f.Rate {
+					tagsToAlias += "_rate"
+				}
+			}
 
 			// auto detect some unit
 			unit := "none"
@@ -692,6 +714,7 @@ func ConfigureOndemand(cfg *config.ConfigContainer, profile ondemand.RunningProf
 		telegrafOnDemand.ConverterList = append(telegrafOnDemand.ConverterList, *converter)
 	}
 	if rate.Order != 0 {
+		rate.DeltaMin = cfg.Rate.DeltaMin
 		telegrafOnDemand.RateList = append(telegrafOnDemand.RateList, *rate)
 	}
 	telegrafOnDemand.PrometheusList = append(telegrafOnDemand.PrometheusList, *prometheus)
@@ -857,6 +880,8 @@ func ConfigureStack(cfg *config.ConfigContainer, family string) error {
 				filenameList = ActiveProfiles[p].Definition.TelCfg.SrxCfg
 			case "crpd":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.CrpdCfg
+			case "csrx":
+				filenameList = ActiveProfiles[p].Definition.TelCfg.CcsrxCfg
 			case "cptx":
 				filenameList = ActiveProfiles[p].Definition.TelCfg.CptxCfg
 			case "vmx":
@@ -884,7 +909,7 @@ func ConfigureStack(cfg *config.ConfigContainer, family string) error {
 		sort.Strings(profileKeys.Assos)
 
 		// Create a unique profile key (string format for map indexing)
-		profileKey := fmt.Sprintf("%s_%v", rtr.Family, profileKeys)
+		profileKey := fmt.Sprintf("%s_%v", rtr.Family, profileKeys.Assos)
 
 		// Store profile slice before hashing to prevent later issues
 		if _, exists := profileSetIndex[profileKey]; !exists {
@@ -1068,6 +1093,9 @@ func ConfigureStack(cfg *config.ConfigContainer, family string) error {
 					mergedCfg.NetconfList[i].Username = sqlite.ActiveCred.NetconfUser
 					mergedCfg.NetconfList[i].Password = sqlite.ActiveCred.NetconfPwd
 				}
+			}
+			for i := range mergedCfg.RateList {
+				mergedCfg.RateList[i].DeltaMin = cfg.Rate.DeltaMin
 			}
 			// Add Kafka output if needed
 			if sqlite.ActiveKafkaConfig.Enabled == 1 && collection.Kafka {

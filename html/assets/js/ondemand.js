@@ -221,7 +221,13 @@ function sanityCheckXPath(xpath) {
         return { valid: false, reason: "XPath must be a string" };
     }
 
-    const trimmed = xpath.trim();
+    let trimmed = xpath.trim();
+
+    // Optional origin prefix (openconfig:/, juniper:/, genstate:/) is stripped before validation
+    const originMatch = trimmed.match(/^(openconfig|juniper|genstate):(\/.*)$/);
+    if (originMatch) {
+        trimmed = originMatch[2];
+    }
 
     // Rule 1 & 2: not empty and not "/"
     if (!trimmed || trimmed === "/") {
@@ -297,7 +303,7 @@ function provisionMonitorTables(data) {
         // Get tags 
         const tagTable = [];
 
-        field.inherit_tags.forEach(tag => {
+        (field.inherit_tags || []).forEach(tag => {
             if (!uniqueTags.includes(tag)) {
                 uniqueTags.push(tag);
             }
@@ -813,7 +819,7 @@ function renderResultTable(data) {
             fieldsWrap.appendChild(badge);
 
             // Get tags 
-            field.inherit_tags.forEach(tag => {
+            (field.inherit_tags || []).forEach(tag => {
                 if (!uniqueTags.includes(tag)) {
                     uniqueTags.push(tag);
                 }
@@ -1030,7 +1036,7 @@ function renderPreview() {
             </span>
         `;
         // Get tags 
-        f.inherit_tags.forEach(tag => {
+        (f.inherit_tags || []).forEach(tag => {
             if (!uniqueTags.includes(tag)) {
                 uniqueTags.push(tag);
             }

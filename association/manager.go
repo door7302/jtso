@@ -30,8 +30,9 @@ type Telegraf struct {
 	QfxCfg []Config `json:"qfx"`
 	SrxCfg []Config `json:"srx"`
 
-	CrpdCfg []Config `json:"crpd"`
-	CptxCfg []Config `json:"cptx"`
+	CrpdCfg  []Config `json:"crpd"`
+	CptxCfg  []Config `json:"cptx"`
+	CcsrxCfg []Config `json:"csrx"`
 
 	VmxCfg    []Config `json:"vmx"`
 	VsrxCfg   []Config `json:"vsrx"`

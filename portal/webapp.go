@@ -382,6 +382,16 @@ func checkCompatibility(r *AddProfile, fam string, version string) (bool, string
 					errString += "There is no Telegraf config for profile " + i + " for this CRPD version.</br>"
 				}
 			}
+		case "csrx":
+			if len(allTele.CcsrxCfg) == 0 {
+				errString += "There is no Telegraf config for profile " + i + " for the CSRX platform.</br>"
+			} else {
+				if checkRouterSupport(allTele.CcsrxCfg, version) {
+					valid = true
+				} else {
+					errString += "There is no Telegraf config for profile " + i + " for this CSRX version.</br>"
+				}
+			}
 		case "cptx":
 			if len(allTele.CptxCfg) == 0 {
 				errString += "There is no Telegraf config for profile " + i + " for the CPTX platform.</br>"
@@ -472,9 +482,10 @@ func routeIndex(c echo.Context) error {
 	MXDebug, PTXDebug, ACXDebug, EXDebug, QFXDebug, SRXDebug := "grey", "grey", "grey", "grey", "grey", "grey"
 
 	// Native Container devices
-	teleCrpd, teleCptx := "f8cecc", "f8cecc"
-	numCRPD, numCPTX := 0, 0
-	CRPDDebug, CPTXDebug := "grey", "grey"
+	// Native Container devices
+	teleCrpd, teleCptx, teleCsrx := "f8cecc", "f8cecc", "f8cecc"
+	numCRPD, numCPTX, numCSRX := 0, 0, 0
+	CRPDDebug, CPTXDebug, CSRXDebug := "grey", "grey", "grey"
 
 	// Virtual VM devices
 	teleVmx, teleVsrx, teleVjunos, teleVevo := "f8cecc", "f8cecc", "f8cecc", "f8cecc"
@@ -510,6 +521,9 @@ func routeIndex(c echo.Context) error {
 	}
 	if sqlite.ActiveAdmin.CRPDDebug == 1 {
 		CRPDDebug = "red"
+	}
+	if sqlite.ActiveAdmin.CSRXDebug == 1 {
+		CSRXDebug = "red"
 	}
 	if sqlite.ActiveAdmin.CPTXDebug == 1 {
 		CPTXDebug = "red"
@@ -562,6 +576,10 @@ func routeIndex(c echo.Context) error {
 		case "/telegraf_crpd":
 			if container.State == "running" {
 				teleCrpd = "ccffcc"
+			}
+		case "/telegraf_csrx":
+			if container.State == "running" {
+				teleCsrx = "ccffcc"
 			}
 		case "/telegraf_cptx":
 			if container.State == "running" {
@@ -634,6 +652,10 @@ func routeIndex(c echo.Context) error {
 			if r.Profile == 1 {
 				numCRPD++
 			}
+		case "csrx":
+			if r.Profile == 1 {
+				numCSRX++
+			}
 		case "cptx":
 			if r.Profile == 1 {
 				numCPTX++
@@ -665,10 +687,10 @@ func routeIndex(c echo.Context) error {
 	teleVersion := container.GetVersionLabel("jts_telegraf")
 
 	return c.Render(http.StatusOK, "index.html", map[string]interface{}{"TeleMx": teleMx, "TelePtx": telePtx, "TeleAcx": teleAcx, "TeleEx": teleEx, "TeleQfx": teleQfx, "TeleSrx": teleSrx,
-		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVevo": teleVevo, "TeleOnDemand": teleOnDemand,
+		"TeleCrpd": teleCrpd, "TeleCptx": teleCptx, "TeleCsrx": teleCsrx, "TeleVmx": teleVmx, "TeleVsrx": teleVsrx, "TeleVjunos": teleVjunos, "TeleVevo": teleVevo, "TeleOnDemand": teleOnDemand,
 		"Grafana": grafana, "Prometheus": prometheus, "Jtso": jtso, "NumMX": numMX, "NumPTX": numPTX, "NumACX": numACX, "NumEX": numEX, "NumQFX": numQFX,
-		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVEVO": numVEVO, "NumONDEMAND": numONDEMAND,
-		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug,
+		"NumSRX": numSRX, "NumCRPD": numCRPD, "NumCPTX": numCPTX, "NumCSRX": numCSRX, "NumVMX": numVMX, "NumVSRX": numVSRX, "NumVJUNOS": numVJUNOS, "NumVEVO": numVEVO, "NumONDEMAND": numONDEMAND,
+		"MXDebug": MXDebug, "PTXDebug": PTXDebug, "ACXDebug": ACXDebug, "EXDebug": EXDebug, "QFXDebug": QFXDebug, "SRXDebug": SRXDebug, "CRPDDebug": CRPDDebug, "CPTXDebug": CPTXDebug, "CSRXDebug": CSRXDebug,
 		"VMXDebug": VMXDebug, "VSRXDebug": VSRXDebug, "VJUNOSDebug": VJUNOSDebug, "VEVODebug": VEVODebug, "ONDEMANDDebug": ONDEMANDDebug,
 		"GrafanaPort": grafanaPort, "JTS_VERS": jtsVersion, "JTSO_VERS": jtsoVersion, "JTS_TELE_VERS": teleVersion,
 		"JTTEnabled": collectCfg.cfg.JTT.URL != ""})
@@ -2017,6 +2039,7 @@ func routeUptDoc(c echo.Context) error {
 	renderTele(&tele, "QFX", "qfx", p.Definition.TelCfg.QfxCfg, r.Profile)
 	renderTele(&tele, "SRX", "srx", p.Definition.TelCfg.SrxCfg, r.Profile)
 	renderTele(&tele, "CRPD", "crpd", p.Definition.TelCfg.CrpdCfg, r.Profile)
+	renderTele(&tele, "CSRX", "csrx", p.Definition.TelCfg.CcsrxCfg, r.Profile)
 	renderTele(&tele, "CPTX", "cptx", p.Definition.TelCfg.CptxCfg, r.Profile)
 	renderTele(&tele, "VMX", "vmx", p.Definition.TelCfg.VmxCfg, r.Profile)
 	renderTele(&tele, "VSRX", "vsrx", p.Definition.TelCfg.VsrxCfg, r.Profile)
